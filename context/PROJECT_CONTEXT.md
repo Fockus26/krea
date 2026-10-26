@@ -75,10 +75,10 @@ una red social ruidosa.
 
 ## Repo and deployment
 
-- Repo: PENDING (se crea en el kickoff, privado)
+- Repo: https://github.com/Fockus26/krea (private) · `main` sin protección (403 en plan gratuito)
 - Versioning: no versioning (portal interno)
-- Vercel: PENDING (cuenta de César)
-- Production: PENDING · Previews: one per PR
+- Vercel: proyecto `Fockus26/krea` en la cuenta de César, conectado a GitHub
+- Production: PENDING (URL `*.vercel.app` tras el primer merge a `main`) · Previews: one per PR
 - DNS managed by: PENDING
 - Maintenance: does not apply en v1
 - Local `context/` backup: branch `context-state` (private repo)

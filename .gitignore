@@ -58,3 +58,5 @@ context/plans/
 
 # Claude Desktop worktrees (web-agent-kit)
 .claude/worktrees/
+.vercel
+.env*
