@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>KREA · Alumnos</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/d04b561f582ecc0dde089e2a2bdf187f">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&amp;family=Poppins:wght@600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="k" data-accent="{{accent}}" data-theme="{{theme}}" style="width: 100%; min-height: 100%; font-family: 'Nunito Sans', system-ui, sans-serif; color: var(--text); position: relative">
+<div class="app">
+  <aside class="side" aria-label="Navegación del profesor">
+    <a class="brand" href="Panel.dc.html" aria-label="KREA, ir al panel"><span class="logo" style="--w: 132px"><span class="ink"></span><span class="spl"></span></span></a>
+    <nav aria-label="Secciones">
+      <a class="nav" href="Panel.dc.html"><span class="i i-panel" aria-hidden="true"></span>Panel</a>
+      <a class="nav" href="Evaluar.dc.html"><span class="i i-evaluar" aria-hidden="true"></span>Evaluar<span class="chip chip-acc num" style="margin-left: auto; height: 22px">7</span></a>
+      <a class="nav" href="TareasProfe.dc.html"><span class="i i-tareas" aria-hidden="true"></span>Tareas</a>
+      <a class="nav" href="#" aria-current="page"><span class="i i-perfil" aria-hidden="true"></span>Alumnos</a>
+      <a class="nav" href="Equipos.dc.html"><span class="i i-equipo" aria-hidden="true"></span>Equipos</a>
+      <a class="nav" href="Puntos.dc.html"><span class="i i-puntos" aria-hidden="true"></span>Puntos</a>
+      <a class="nav" href="Ranking.dc.html"><span class="i i-trofeo" aria-hidden="true"></span>Ranking</a>
+      <a class="nav" href="Premios.dc.html"><span class="i i-premio" aria-hidden="true"></span>Premios</a>
+    </nav>
+    <div class="who"><img class="av" src="/_blob/271b2a1f1bf609e892400fc4bc5ede99" alt="" style="--s: 40px"><span class="grow"><span class="t-small-b" style="display: block">[Nombre del profe]</span><span class="t-small t-2" style="display: block">Profesor · 5A y 5C</span></span></div>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <a href="Panel.dc.html" aria-label="KREA, ir al panel"><span class="logo" style="--w: 88px"><span class="ink"></span><span class="spl"></span></span></a>
+      <span class="spacer"></span>
+      <button class="btn btn-ghost btn-icon" type="button" aria-label="Abrir menú" aria-haspopup="dialog"><span class="i i-24 i-menu" aria-hidden="true"></span></button>
+    </header>
+
+    <main class="wrap wrap-wide">
+      <section class="stack-8" aria-labelledby="h-al">
+        <p class="t-eyebrow">69 estudiantes · 2 secciones</p>
+        <h1 id="h-al" class="t-h1">Alumnos</h1>
+      </section>
+
+      <section class="row wrap-row" style="gap: 12px" aria-label="Filtros">
+        <div class="seg" role="radiogroup" aria-label="Sección"><button type="button" role="radio" aria-checked="true" aria-pressed="true">5A · 35</button><button type="button" role="radio" aria-checked="false">5C · 34</button></div>
+        <div class="field grow" style="min-width: 240px; max-width: 420px"><label class="sr" for="q">Buscar por nombre o cédula</label><div class="input"><span class="i i-buscar" aria-hidden="true"></span><input id="q" type="search" placeholder="Buscar por nombre o cédula" value="mé"></div></div>
+        <span class="t-small t-2" role="status">5 resultados para «mé»</span>
+      </section>
+
+      <div class="tbl-wrap" role="region" aria-label="Tabla de alumnos de 5A" tabindex="0">
+        <table class="tbl">
+          <thead><tr><th scope="col">Alumno</th><th scope="col">Cédula</th><th scope="col">Equipo</th><th scope="col" class="c">Base</th><th scope="col" class="c">Nota individual</th><th scope="col" class="r">Puntos</th><th scope="col" class="r"><span class="sr">Acciones</span></th></tr></thead>
+          <tbody>
+            <tr><td><span class="row"><img class="av" src="/_blob/45c7ffcb037dd0500286f7762e72ce9d" alt="" style="--s: 36px"><span class="t-small-b" style="font-size: 14px">María Gabriela Méndez Chacón</span></span></td><td class="num">34.099.118</td><td>5A-G2 Repostería</td><td class="c num">20</td><td class="c"><span class="gp gp-sm" style="--g: #D1E505">11,5</span></td><td class="r num t-small-b">30,5</td><td class="r"><button class="btn btn-ghost btn-sm" type="button"><span class="i i-lapiz" aria-hidden="true"></span>Editar<span class="sr"> a María Gabriela Méndez</span></button></td></tr>
+            <tr class="is-hover"><td><span class="row"><img class="av" src="/_blob/0ba138f26163e3b1ed558cb46fd33626" alt="" style="--s: 36px"><span class="t-small-b" style="font-size: 14px">María de los Ángeles Méndez Chacón</span></span></td><td class="num">34.098.906</td><td>5A-G4 Mascotas</td><td class="c num">20</td><td class="c"><span class="row-8" style="justify-content: center; gap: 6px"><span class="gp gp-sm" style="--g: #F9A800">8</span><span class="i i-16 i-alerta" style="color: var(--error)" role="img" aria-label="Raspada"></span></span></td><td class="r num t-small-b">15</td><td class="r"><button class="btn btn-ghost btn-sm" type="button"><span class="i i-lapiz" aria-hidden="true"></span>Editar<span class="sr"> a María de los Ángeles Méndez</span></button></td></tr>
+            <tr><td><span class="row"><img class="av" src="/_blob/76d5f763ed680e3627094844ab48f0c9" alt="" style="--s: 36px"><span class="t-small-b" style="font-size: 14px">Kerlyz Yulieth Cárdenas Méndez</span></span></td><td class="num">34.835.073</td><td>5A-G3 Ropa</td><td class="c num">20</td><td class="c"><span class="gp gp-sm gp-pend">Pendiente</span></td><td class="r num t-small-b">18</td><td class="r"><button class="btn btn-ghost btn-sm" type="button"><span class="i i-lapiz" aria-hidden="true"></span>Editar<span class="sr"> a Kerlyz Cárdenas</span></button></td></tr>
+            <tr><td><span class="row"><img class="av" src="/_blob/ef23c89e43f1b89b8119de49e9a1c5cb" alt="" style="--s: 36px"><span class="t-small-b" style="font-size: 14px">Jailyn Verónica Martínez Méndez</span></span></td><td class="num">37.575.127</td><td>5A-G3 Ropa</td><td class="c"><span class="chip chip-base" style="height: 24px">15</span></td><td class="c"><span class="gp gp-sm gp-pend">Pendiente</span></td><td class="r num t-small-b">18</td><td class="r"><button class="btn btn-ghost btn-sm" type="button"><span class="i i-lapiz" aria-hidden="true"></span>Editar<span class="sr"> a Jailyn Martínez</span></button></td></tr>
+            <tr><td><span class="row"><img class="av" src="/_blob/e5ff21ad4eabad8664523eabd1443a0e" alt="" style="--s: 36px"><span class="t-small-b" style="font-size: 14px">Gabriel Alejandro Gil Corredor</span></span></td><td class="num">33.456.636</td><td><span class="chip chip-warn" style="height: 24px">Sin equipo</span></td><td class="c num">20</td><td class="c"><span class="gp gp-sm gp-pend">Pendiente</span></td><td class="r num t-small-b">0</td><td class="r"><button class="btn btn-ghost btn-sm" type="button"><span class="i i-lapiz" aria-hidden="true"></span>Editar<span class="sr"> a Gabriel Gil</span></button></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="t-small t-2 only-m row-8"><span class="i i-16 i-flecha" aria-hidden="true"></span>Desliza la tabla para ver más columnas.</p>
+    </main>
+
+    <nav class="bnav" aria-label="Navegación del profesor">
+      <a href="Panel.dc.html"><span class="pill-ic"><span class="i i-panel" aria-hidden="true"></span></span>Panel</a>
+      <a href="Evaluar.dc.html"><span class="pill-ic"><span class="i i-evaluar" aria-hidden="true"></span></span>Evaluar</a>
+      <a href="#" aria-current="page"><span class="pill-ic"><span class="i i-perfil" aria-hidden="true"></span></span>Alumnos</a>
+      <a href="Puntos.dc.html"><span class="pill-ic"><span class="i i-puntos" aria-hidden="true"></span></span>Puntos</a>
+      <a href="Ranking.dc.html"><span class="pill-ic"><span class="i i-trofeo" aria-hidden="true"></span></span>Ranking</a>
+    </nav>
+  </div>
+</div>
+
+<sc-if value="{{dialog}}" hint-placeholder-val="{{ true }}">
+  <div style="position: absolute; inset: 0; z-index: 50; display: grid; place-items: start center; padding: 96px 16px">
+    <div class="ov" aria-hidden="true"></div>
+    <div class="dialog stack" role="dialog" aria-modal="true" aria-labelledby="dlg" style="position: relative; max-width: 560px">
+      <div class="row" style="align-items: flex-start"><div class="grow stack-8" style="gap: 2px"><h2 id="dlg" class="t-h3">Editar alumno</h2><p class="t-small t-2">Jailyn Verónica Martínez Méndez · C.I. 37.575.127 · 5A</p></div><button class="btn btn-ghost btn-icon btn-sm" type="button" aria-label="Cerrar"><span class="i i-x" aria-hidden="true"></span></button></div>
+      <div class="g2" style="gap: 12px">
+        <div class="field"><label class="label" for="e1">Primer nombre</label><div class="input"><input id="e1" value="Jailyn"></div></div>
+        <div class="field"><label class="label" for="e2">Segundo nombre</label><div class="input"><input id="e2" value="Verónica"></div></div>
+        <div class="field"><label class="label" for="e3">Primer apellido</label><div class="input"><input id="e3" value="Martínez"></div></div>
+        <div class="field"><label class="label" for="e4">Segundo apellido</label><div class="input"><input id="e4" value="Méndez"></div></div>
+      </div>
+      <hr class="divider">
+      <div class="field">
+        <label class="label" for="e5">Base de evaluación</label>
+        <div class="row-8">
+          <button class="btn btn-secondary btn-icon" type="button" aria-label="Bajar base 0,5"><span class="i i-menos" aria-hidden="true"></span></button>
+          <div class="input is-focus" style="width: 120px"><input id="e5" inputmode="decimal" value="15" aria-describedby="e5h" style="text-align: center; font-family: var(--fh); font-weight: 700"><span class="trail t-small">/ 20</span></div>
+          <button class="btn btn-secondary btn-icon" type="button" aria-label="Subir base 0,5"><span class="i i-mas" aria-hidden="true"></span></button>
+        </div>
+        <span id="e5h" class="hint">Entre 10 y 20. Nota final = puntaje × base / 20. Cambia todas sus notas; los puntos de sus notas se recalculan.</span>
+      </div>
+      <div class="field"><label class="label" for="e6">Motivo del cambio de base <span style="color: var(--error)">*</span></label><div class="input textarea is-error"><textarea id="e6" rows="2" aria-invalid="true" aria-describedby="e6e" style="all: unset; flex: 1; min-height: 48px" placeholder="Ej. Acuerdo de conducta firmado el 20/10/2026"></textarea></div><span id="e6e" class="err"><span class="i i-16 i-alerta" aria-hidden="true"></span>Escribe por qué cambias la base: el alumno lo verá.</span></div>
+      <div class="row wrap-row" style="justify-content: flex-end; gap: 8px"><button class="btn btn-secondary" type="button">Cancelar</button><button class="btn btn-primary" type="button">Guardar cambios</button></div>
+    </div>
+  </div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"enum","options":["azul","rojo","verde","morado"],"default":"azul"},"theme":{"editor":"enum","options":["claro","oscuro"],"default":"claro"},"dialog":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":1300}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { accent: this.props.accent ?? 'azul', theme: this.props.theme ?? 'claro', dialog: this.props.dialog ?? true };
+  }
+}
+</script>
+</body>
+</html>

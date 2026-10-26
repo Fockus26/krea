@@ -14,7 +14,8 @@
       "!dist",
       "!build",
       "!**/.claude/worktrees",
-      "!design/prototype"
+      "!design/prototype",
+      "!design/canvas"
     ]
   },
   "formatter": {

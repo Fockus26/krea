@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>KREA · Perfil</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/d04b561f582ecc0dde089e2a2bdf187f">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&amp;family=Poppins:wght@600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="k" data-accent="{{accent}}" data-theme="{{theme}}" style="width: 100%; min-height: 100%; font-family: 'Nunito Sans', system-ui, sans-serif; color: var(--text)">
+<div class="app">
+  <aside class="side" aria-label="Navegación principal">
+    <a class="brand" href="Inicio.dc.html" aria-label="KREA, ir al inicio"><span class="logo" style="--w: 132px"><span class="ink"></span><span class="spl"></span></span></a>
+    <nav aria-label="Secciones">
+      <a class="nav" href="Inicio.dc.html"><span class="i i-home" aria-hidden="true"></span>Inicio</a>
+      <a class="nav" href="Notas.dc.html"><span class="i i-notas" aria-hidden="true"></span>Notas</a>
+      <a class="nav" href="Tarea.dc.html"><span class="i i-tareas" aria-hidden="true"></span>Tareas</a>
+      <a class="nav" href="Ranking.dc.html"><span class="i i-trofeo" aria-hidden="true"></span>Ranking</a>
+      <a class="nav" href="Equipo.dc.html"><span class="i i-equipo" aria-hidden="true"></span>Equipo</a>
+      <a class="nav" href="#" aria-current="page"><span class="i i-perfil" aria-hidden="true"></span>Perfil</a>
+    </nav>
+    <a class="who" href="#" style="text-decoration: none; color: inherit"><img class="av" src="/_blob/115eee73145e2e67e2badad57b896a41" alt="" style="--s: 40px"><span class="grow"><span class="t-small-b" style="display: block">Yeilin Duarte</span><span class="t-small t-2" style="display: block">5A · Estudiante</span></span></a>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <a href="Inicio.dc.html" aria-label="KREA, ir al inicio"><span class="logo" style="--w: 88px"><span class="ink"></span><span class="spl"></span></span></a>
+      <span class="spacer"></span>
+    </header>
+
+    <main class="wrap wrap-narrow" style="margin-left: 0">
+      <section class="card card-hero" aria-labelledby="h-me">
+        <div class="row wrap-row" style="gap: 20px">
+          <img class="av av-ring" src="/_blob/115eee73145e2e67e2badad57b896a41" alt="Tu avatar" style="--s: 96px">
+          <div class="stack-8 grow" style="min-width: 200px">
+            <p class="t-eyebrow">Mi perfil</p>
+            <h1 id="h-me" class="t-h2">Yeilin Marilyn Duarte Moncayo</h1>
+            <div class="row wrap-row" style="gap: 8px">
+              <span class="chip num">C.I. 33.272.397</span>
+              <span class="chip">Sección 5A</span>
+              <span class="chip chip-cap"><span class="i i-corona" aria-hidden="true"></span>Capitana · 5A-G2</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card stack" aria-labelledby="h-datos">
+        <div class="sec-h" style="margin: 0"><h2 id="h-datos" class="t-h3">Tus datos</h2><span class="t-small t-2 row-8" style="gap: 6px"><span class="i i-16 i-candado" aria-hidden="true"></span>Solo tu profe puede cambiarlos</span></div>
+        <div class="g2" style="gap: 16px">
+          <div class="field"><label class="label" for="pn">Primer nombre</label><div class="input is-readonly"><input id="pn" readonly="" value="Yeilin"><span class="i i-candado" aria-hidden="true"></span></div></div>
+          <div class="field"><label class="label" for="sn">Segundo nombre</label><div class="input is-readonly"><input id="sn" readonly="" value="Marilyn"><span class="i i-candado" aria-hidden="true"></span></div></div>
+          <div class="field"><label class="label" for="pa">Primer apellido</label><div class="input is-readonly"><input id="pa" readonly="" value="Duarte"><span class="i i-candado" aria-hidden="true"></span></div></div>
+          <div class="field"><label class="label" for="sa">Segundo apellido</label><div class="input is-readonly"><input id="sa" readonly="" value="Moncayo"><span class="i i-candado" aria-hidden="true"></span></div></div>
+        </div>
+      </section>
+
+      <section class="card stack" aria-labelledby="h-av">
+        <div class="sec-h" style="margin: 0"><h2 id="h-av" class="t-h3">Tu avatar</h2><button class="btn btn-secondary btn-sm" type="button"><span class="i i-dado" aria-hidden="true"></span>Otros 8</button></div>
+        <div class="tabs-line" role="tablist" aria-label="Estilo de avatar" style="overflow-x: auto">
+          <button role="tab" aria-selected="true" type="button">Aventurero</button>
+          <button role="tab" aria-selected="false" type="button">Emoji</button>
+          <button role="tab" aria-selected="false" type="button">Robot</button>
+          <button role="tab" aria-selected="false" type="button">Retrato</button>
+        </div>
+        <div class="avgrid" role="radiogroup" aria-label="Elige tu avatar">
+          <button class="avopt" type="button" role="radio" aria-checked="true" aria-label="Opción 1, elegida"><img src="/_blob/115eee73145e2e67e2badad57b896a41" alt=""><span class="i ok-ic i-check" aria-hidden="true"></span></button>
+          <button class="avopt" type="button" role="radio" aria-checked="false" aria-label="Opción 2"><img src="/_blob/48775c7e58ca6179ffebc16860942dba" alt=""></button>
+          <button class="avopt" type="button" role="radio" aria-checked="false" aria-label="Opción 3"><img src="/_blob/7c22355e359bb2b4958c48d81f30bbbe" alt=""></button>
+          <button class="avopt" type="button" role="radio" aria-checked="false" aria-label="Opción 4"><img src="/_blob/93d96cec88c34e4bf4de33f0d3f4a202" alt=""></button>
+          <button class="avopt" type="button" role="radio" aria-checked="false" aria-label="Opción 5"><img src="/_blob/245d19f4a7158418da9bb92fdf191fa7" alt=""></button>
+          <button class="avopt" type="button" role="radio" aria-checked="false" aria-label="Opción 6"><img src="/_blob/45c278fd85d586e0be91152ee77ddfb2" alt=""></button>
+          <button class="avopt" type="button" role="radio" aria-checked="false" aria-label="Opción 7"><img src="/_blob/3920742b907c9a44649527995bd51872" alt=""></button>
+          <button class="avopt" type="button" role="radio" aria-checked="false" aria-label="Opción 8"><img src="/_blob/64cab5ffd717293204d40b3a07ed14f8" alt=""></button>
+        </div>
+        <p class="t-small t-2">Se guarda al tocarlo. Avatares de DiceBear.</p>
+      </section>
+
+      <section class="card stack" aria-labelledby="h-ap">
+        <h2 id="h-ap" class="t-h3">Apariencia</h2>
+        <div class="stack-8">
+          <p class="label" id="l-acc">Color de acento</p>
+          <div class="row wrap-row" role="radiogroup" aria-labelledby="l-acc" style="gap: 16px">
+            <div class="stack-8" style="align-items: center; gap: 6px"><button class="swatch-opt" type="button" role="radio" aria-checked="{{cAzul}}" aria-label="Azul" style="background: #295AC3"><sc-if value="{{isAzul}}" hint-placeholder-val="{{ true }}"><span class="i i-check" aria-hidden="true"></span></sc-if></button><span class="t-small-b">Azul</span></div>
+            <div class="stack-8" style="align-items: center; gap: 6px"><button class="swatch-opt" type="button" role="radio" aria-checked="{{cRojo}}" aria-label="Rojo" style="background: #EE0400"><sc-if value="{{isRojo}}" hint-placeholder-val="{{ false }}"><span class="i i-check" aria-hidden="true"></span></sc-if></button><span class="t-small-b">Rojo</span></div>
+            <div class="stack-8" style="align-items: center; gap: 6px"><button class="swatch-opt" type="button" role="radio" aria-checked="{{cVerde}}" aria-label="Verde" style="background: #115445"><sc-if value="{{isVerde}}" hint-placeholder-val="{{ false }}"><span class="i i-check" aria-hidden="true"></span></sc-if></button><span class="t-small-b">Verde</span></div>
+            <div class="stack-8" style="align-items: center; gap: 6px"><button class="swatch-opt" type="button" role="radio" aria-checked="{{cMorado}}" aria-label="Morado" style="background: #734AD1"><sc-if value="{{isMorado}}" hint-placeholder-val="{{ false }}"><span class="i i-check" aria-hidden="true"></span></sc-if></button><span class="t-small-b">Morado</span></div>
+          </div>
+        </div>
+        <div class="stack-8">
+          <p class="label" id="l-th">Tema</p>
+          <div class="seg seg-block" role="radiogroup" aria-labelledby="l-th">
+            <button type="button" role="radio" aria-checked="{{tClaro}}" aria-pressed="{{tClaro}}"><span class="i i-sol" aria-hidden="true"></span>Claro</button>
+            <button type="button" role="radio" aria-checked="{{tOscuro}}" aria-pressed="{{tOscuro}}"><span class="i i-luna" aria-hidden="true"></span>Oscuro</button>
+            <button type="button" role="radio" aria-checked="false" aria-pressed="false"><span class="i i-sistema" aria-hidden="true"></span>Sistema</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card stack" aria-labelledby="h-seg">
+        <h2 id="h-seg" class="t-h3">Seguridad</h2>
+        <div class="row wrap-row" style="gap: 12px">
+          <button class="btn btn-secondary" type="button"><span class="i i-candado" aria-hidden="true"></span>Cambiar contraseña</button>
+          <button class="btn btn-ghost" type="button" style="color: var(--error)"><span class="i i-salir" aria-hidden="true"></span>Cerrar sesión</button>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bnav" aria-label="Navegación principal">
+      <a href="Inicio.dc.html"><span class="pill-ic"><span class="i i-home" aria-hidden="true"></span></span>Inicio</a>
+      <a href="Notas.dc.html"><span class="pill-ic"><span class="i i-notas" aria-hidden="true"></span></span>Notas</a>
+      <a href="Ranking.dc.html"><span class="pill-ic"><span class="i i-trofeo" aria-hidden="true"></span></span>Ranking</a>
+      <a href="Equipo.dc.html"><span class="pill-ic"><span class="i i-equipo" aria-hidden="true"></span></span>Equipo</a>
+      <a href="#" aria-current="page"><span class="pill-ic"><span class="i i-perfil" aria-hidden="true"></span></span>Perfil</a>
+    </nav>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"enum","options":["azul","rojo","verde","morado"],"default":"azul"},"theme":{"editor":"enum","options":["claro","oscuro"],"default":"claro"},"$preview":{"width":1440,"height":1600}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const a = this.props.accent ?? 'azul';
+    const t = this.props.theme ?? 'claro';
+    return {
+      accent: a, theme: t,
+      isAzul: a === 'azul', isRojo: a === 'rojo', isVerde: a === 'verde', isMorado: a === 'morado',
+      cAzul: String(a === 'azul'), cRojo: String(a === 'rojo'), cVerde: String(a === 'verde'), cMorado: String(a === 'morado'),
+      tClaro: String(t === 'claro'), tOscuro: String(t === 'oscuro')
+    };
+  }
+}
+</script>
+</body>
+</html>

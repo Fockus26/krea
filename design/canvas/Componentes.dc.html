@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>KREA · Componentes y estados</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/d04b561f582ecc0dde089e2a2bdf187f">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&amp;family=Poppins:wght@600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="k board" data-accent="{{accent}}" data-theme="{{theme}}" style="width: 1440px; min-height: 2700px; font-family: 'Nunito Sans', system-ui, sans-serif; color: var(--text)">
+  <header class="stack-8">
+    <p class="t-eyebrow">Componentes · todos los estados</p>
+    <h1 class="t-h1">Biblioteca de KREA</h1>
+    <p class="t-2">Las clases <code>is-hover</code>, <code>is-focus</code> y <code>is-active</code> solo existen en este tablero para mostrar el estado; en código son <code>:hover</code>, <code>:focus-visible</code> y <code>:active</code>.</p>
+  </header>
+
+  <section class="card stack-24" aria-labelledby="c-btn">
+    <h2 id="c-btn" class="t-h2">Botones</h2>
+    <div style="display: grid; grid-template-columns: 120px repeat(6, minmax(0, 1fr)); gap: 16px; align-items: center">
+      <span></span><span class="t-eyebrow">Reposo</span><span class="t-eyebrow">Hover</span><span class="t-eyebrow">Foco</span><span class="t-eyebrow">Activo</span><span class="t-eyebrow">Cargando</span><span class="t-eyebrow">Deshabilitado</span>
+      <span class="t-small-b">Primario</span>
+      <button class="btn btn-primary" type="button">Entrar</button>
+      <button class="btn btn-primary is-hover" type="button">Entrar</button>
+      <button class="btn btn-primary is-focus" type="button">Entrar</button>
+      <button class="btn btn-primary is-active" type="button">Entrar</button>
+      <button class="btn btn-primary is-loading" type="button" aria-busy="true"><span class="spin" aria-hidden="true"></span>Entrando…</button>
+      <button class="btn btn-primary" type="button" disabled="">Entrar</button>
+      <span class="t-small-b">Secundario</span>
+      <button class="btn btn-secondary" type="button">Ver equipo</button>
+      <button class="btn btn-secondary is-hover" type="button">Ver equipo</button>
+      <button class="btn btn-secondary is-focus" type="button">Ver equipo</button>
+      <button class="btn btn-secondary is-active" type="button">Ver equipo</button>
+      <button class="btn btn-secondary is-loading" type="button" aria-busy="true"><span class="spin" aria-hidden="true"></span>Cargando…</button>
+      <button class="btn btn-secondary" type="button" disabled="">Ver equipo</button>
+      <span class="t-small-b">Fantasma</span>
+      <button class="btn btn-ghost" type="button">Ver todas</button>
+      <button class="btn btn-ghost is-hover" type="button">Ver todas</button>
+      <button class="btn btn-ghost is-focus" type="button">Ver todas</button>
+      <button class="btn btn-ghost is-active" type="button">Ver todas</button>
+      <button class="btn btn-ghost" type="button" aria-busy="true"><span class="spin" aria-hidden="true"></span>Cargando…</button>
+      <button class="btn btn-ghost" type="button" disabled="" style="color: var(--text-dis); background: none">Ver todas</button>
+      <span class="t-small-b">Peligro</span>
+      <button class="btn btn-danger" type="button"><span class="i i-salir" aria-hidden="true"></span>Cerrar sesión</button>
+      <button class="btn btn-danger is-hover" type="button" style="filter: brightness(.92)"><span class="i i-salir" aria-hidden="true"></span>Cerrar sesión</button>
+      <button class="btn btn-danger is-focus" type="button"><span class="i i-salir" aria-hidden="true"></span>Cerrar sesión</button>
+      <button class="btn btn-danger" type="button" style="transform: translateY(1px)"><span class="i i-salir" aria-hidden="true"></span>Cerrar sesión</button>
+      <button class="btn btn-danger" type="button" aria-busy="true"><span class="spin" aria-hidden="true"></span>Saliendo…</button>
+      <button class="btn btn-danger" type="button" disabled=""><span class="i i-salir" aria-hidden="true"></span>Cerrar sesión</button>
+    </div>
+    <div class="row wrap-row" style="gap: 16px">
+      <button class="btn btn-primary btn-sm" type="button">Pequeño · 36</button>
+      <button class="btn btn-primary" type="button">Mediano · 44</button>
+      <button class="btn btn-primary btn-lg" type="button">Grande · 52</button>
+      <button class="btn btn-secondary btn-icon" type="button" aria-label="Copiar código"><span class="i i-copiar" aria-hidden="true"></span></button>
+      <button class="btn btn-ghost btn-icon btn-sm" type="button" aria-label="Eliminar pregunta"><span class="i i-papelera" aria-hidden="true"></span></button>
+      <button class="btn btn-primary" type="button" style="width: 360px"><span class="i i-check" aria-hidden="true"></span>Guardar nota y seguir</button>
+    </div>
+  </section>
+
+  <section class="card stack-24" aria-labelledby="c-form">
+    <h2 id="c-form" class="t-h2">Campos de formulario</h2>
+    <div class="g3" style="gap: 24px">
+      <div class="field"><label class="label" for="f1">Cédula · reposo</label><div class="input"><input id="f1" inputmode="numeric" placeholder="Ej. 33272397"></div><span class="hint">Solo números, sin puntos.</span></div>
+      <div class="field"><label class="label" for="f2">Cédula · foco</label><div class="input is-focus"><input id="f2" inputmode="numeric" value="3327"></div><span class="hint">Solo números, sin puntos.</span></div>
+      <div class="field"><label class="label" for="f3">Cédula · llena</label><div class="input"><input id="f3" inputmode="numeric" value="33272397"></div><span class="hint">Solo números, sin puntos.</span></div>
+      <div class="field"><label class="label" for="f4">Cédula · error</label><div class="input is-error"><input id="f4" aria-invalid="true" aria-describedby="f4e" value="33.272.397"><span class="i i-alerta" aria-hidden="true" style="color: var(--error)"></span></div><span id="f4e" class="err"><span class="i i-16 i-alerta" aria-hidden="true"></span>La cédula lleva solo números: de 7 a 9 dígitos.</span></div>
+      <div class="field"><label class="label" for="f5">Contraseña · éxito</label><div class="input is-success"><input id="f5" type="password" value="krea2026!"><button class="btn btn-ghost btn-icon btn-sm" type="button" aria-label="Mostrar contraseña" aria-pressed="false"><span class="i i-ojo" aria-hidden="true"></span></button></div><span class="ok"><span class="i i-16 i-check" aria-hidden="true"></span>Las contraseñas coinciden.</span></div>
+      <div class="field"><label class="label" for="f6">Primer nombre · solo lectura</label><div class="input is-readonly"><input id="f6" readonly="" value="Yeilin"><span class="i i-candado" aria-hidden="true"></span></div><span class="hint">Solo tu profe puede cambiarlo.</span></div>
+      <div class="field"><label class="label" for="f7">Comentario (opcional)</label><div class="input textarea"><textarea id="f7" rows="3" style="all: unset; flex: 1; min-height: 72px">¡Muy buen cliente ideal! Agrega su edad y dónde compra.</textarea></div><span class="hint">Lo verá debajo de su respuesta · 58 / 280</span></div>
+      <div class="field"><label class="label" for="f8">Motivo</label><div class="input"><select id="f8"><option>Participación destacada (+2)</option></select><span class="i i-chev-abajo" aria-hidden="true"></span></div><span class="hint">Propone el valor: puedes cambiarlo.</span></div>
+      <div class="field"><label class="label" for="f9">Buscar · deshabilitado</label><div class="input is-disabled" aria-disabled="true"><span class="i i-buscar" aria-hidden="true"></span><input id="f9" disabled="" placeholder="Nombre o cédula"></div><span class="hint">Se activa al cargar la lista.</span></div>
+    </div>
+    <div class="row wrap-row" style="gap: 24px; align-items: flex-start">
+      <div class="stack-8"><span class="t-small-b">Enviando</span><button class="btn btn-primary" type="button" aria-busy="true" style="width: 280px"><span class="spin" aria-hidden="true"></span>Enviando enlace…</button></div>
+      <div class="stack-8" style="width: 420px"><span class="t-small-b">Error de envío (formulario)</span><div class="alert alert-err" role="alert"><span class="i i-alerta" aria-hidden="true"></span><span>No pudimos enviar el enlace. Revisa tu conexión e inténtalo otra vez.</span></div></div>
+      <div class="stack-8" style="width: 420px"><span class="t-small-b">Éxito</span><div class="alert alert-ok" role="status"><span class="i i-check" aria-hidden="true"></span><span>Contraseña guardada. Ya puedes entrar con ella.</span></div></div>
+    </div>
+  </section>
+
+  <section class="g2">
+    <div class="card stack" aria-labelledby="c-pill">
+      <h2 id="c-pill" class="t-h2">Píldora de nota y chips</h2>
+      <div class="row wrap-row" style="gap: 12px">
+        <span class="gp gp-sm" style="--g: #57C110">15</span>
+        <span class="gp" style="--g: #17A127">18,5</span>
+        <span class="gp gp-lg" style="--g: #189C31">19</span>
+        <span class="gp gp-xl" style="--g: #17A127">18,5</span>
+      </div>
+      <div class="row wrap-row" style="gap: 12px">
+        <span class="row-8"><span class="gp gp-lg" style="--g: #F9A800">8</span><span class="chip chip-err"><span class="i i-alerta" aria-hidden="true"></span>Raspado</span></span>
+        <span class="gp gp-lg gp-pend"><span class="i i-reloj" aria-hidden="true"></span>Pendiente</span>
+        <span class="row-8"><span class="gp gp-lg" style="--g: #57C110">13,9</span><span class="chip chip-base">Base 15</span></span>
+      </div>
+      <div class="row wrap-row" style="gap: 8px">
+        <span class="chip chip-cap"><span class="i i-corona" aria-hidden="true"></span>Capitán</span>
+        <span class="chip"><span class="i i-perfil" aria-hidden="true"></span>Individual</span>
+        <span class="chip"><span class="i i-equipo" aria-hidden="true"></span>Grupal</span>
+        <span class="chip chip-ok"><span class="i i-check" aria-hidden="true"></span>Entregada</span>
+        <span class="chip chip-warn"><span class="i i-reloj" aria-hidden="true"></span>Por entregar</span>
+        <span class="chip chip-err"><span class="i i-x" aria-hidden="true"></span>Vencida</span>
+        <span class="chip chip-prize"><span class="i i-premio" aria-hidden="true"></span>Cuenta Canva Pro por 3 meses</span>
+        <span class="chip chip-acc"><span class="i i-texto" aria-hidden="true"></span>Texto</span>
+        <span class="chip chip-acc"><span class="i i-imagen" aria-hidden="true"></span>Imagen</span>
+        <span class="chip">Borrador</span><span class="chip chip-ok">Abierta</span><span class="chip chip-acc">Evaluada</span>
+        <span class="chip-tu chip">tú</span>
+      </div>
+    </div>
+    <div class="card stack" aria-labelledby="c-tabs">
+      <h2 id="c-tabs" class="t-h2">Pestañas y navegación</h2>
+      <div class="seg" role="tablist" aria-label="Vista del ranking"><button role="tab" aria-selected="true" type="button">Estudiantes</button><button role="tab" aria-selected="false" type="button">Equipos</button></div>
+      <div class="seg" role="radiogroup" aria-label="Sección"><button role="radio" aria-checked="true" aria-pressed="true" type="button">5A</button><button role="radio" aria-checked="false" type="button">5C</button></div>
+      <div class="tabs-line" role="tablist" aria-label="Estilo de avatar"><button role="tab" aria-selected="true" type="button">Aventurero</button><button role="tab" aria-selected="false" type="button">Emoji</button><button role="tab" aria-selected="false" type="button">Robot</button><button role="tab" aria-selected="false" type="button">Retrato</button></div>
+      <div class="row wrap-row" style="gap: 8px; align-items: stretch">
+        <div class="card-flat stack-8" style="width: 240px; padding: 8px">
+          <a class="nav-demo row-8" href="#" aria-current="page" style="height: 44px; padding: 0 12px; border-radius: 12px; background: var(--accent-soft-2); color: var(--text); font-weight: 700; text-decoration: none"><span class="i i-home t-ink" aria-hidden="true"></span>Activo</a>
+          <a class="row-8" href="#" style="height: 44px; padding: 0 12px; border-radius: 12px; background: var(--surface-2); color: var(--text); font-weight: 600; text-decoration: none"><span class="i i-notas" aria-hidden="true"></span>Hover</a>
+          <a class="row-8 is-focus" href="#" style="height: 44px; padding: 0 12px; border-radius: 12px; color: var(--text-2); font-weight: 600; text-decoration: none"><span class="i i-trofeo" aria-hidden="true"></span>Foco</a>
+          <a class="row-8" href="#" style="height: 44px; padding: 0 12px; border-radius: 12px; color: var(--text-2); font-weight: 600; text-decoration: none"><span class="i i-equipo" aria-hidden="true"></span>Reposo</a>
+        </div>
+        <nav class="bnav" aria-label="Ejemplo barra inferior" style="position: static; width: 390px; display: grid; border-radius: 16px; align-self: flex-end">
+          <a href="#" aria-current="page"><span class="pill-ic"><span class="i i-home" aria-hidden="true"></span></span>Inicio</a>
+          <a href="#"><span class="pill-ic"><span class="i i-notas" aria-hidden="true"></span></span>Notas</a>
+          <a href="#"><span class="pill-ic"><span class="i i-trofeo" aria-hidden="true"></span></span>Ranking</a>
+          <a href="#"><span class="pill-ic"><span class="i i-equipo" aria-hidden="true"></span></span>Equipo</a>
+          <a href="#"><span class="pill-ic"><span class="i i-perfil" aria-hidden="true"></span></span>Perfil</a>
+        </nav>
+      </div>
+    </div>
+  </section>
+
+  <section class="g2">
+    <div class="card stack" aria-labelledby="c-rank">
+      <div class="sec-h"><h2 id="c-rank" class="t-h2">Filas del ranking</h2><span class="live"><span class="pulse" aria-hidden="true"></span>En vivo</span></div>
+      <div>
+        <div class="rk rk-top"><span class="pos">4</span><img class="av" src="/_blob/45c7ffcb037dd0500286f7762e72ce9d" alt=""><span class="grow"><span class="nm" style="display: block">María Méndez</span><span class="sub" style="display: block">Top 10 · 5A-G2 Repostería</span></span><span class="delta delta-up"><span class="i i-sube" aria-hidden="true"></span>2<span class="sr"> puestos arriba</span></span><span class="pts">30,5</span></div>
+        <div class="rk rk-top rk-me"><span class="pos">1</span><img class="av" src="/_blob/115eee73145e2e67e2badad57b896a41" alt=""><span class="grow"><span class="nm row-8" style="display: flex">Yeilin Duarte <span class="chip chip-tu">tú</span></span><span class="sub" style="display: block">Tu fila · borde 2 px acento</span></span><span class="delta delta-eq">=<span class="sr"> sin cambio</span></span><span class="pts">37,5</span></div>
+        <div class="rk rk-top"><span class="pos">5</span><img class="av" src="/_blob/93d96cec88c34e4bf4de33f0d3f4a202" alt=""><span class="grow"><span class="nm" style="display: block">Ángel Pernia</span><span class="sub" style="display: block">Empate en el puesto 5</span></span><span class="chip" style="height: 22px; font-size: 12px">Empate</span><span class="pts">30</span></div>
+        <div class="rk"><span class="pos">16</span><img class="av" src="/_blob/48775c7e58ca6179ffebc16860942dba" alt=""><span class="grow"><span class="nm" style="display: block">Jorge Quintero</span><span class="sub" style="display: block">Fila normal (11–30)</span></span><span class="delta delta-down"><span class="i i-baja" aria-hidden="true"></span>1<span class="sr"> puesto abajo</span></span><span class="pts">17</span></div>
+        <div class="risk-sep"><span class="i i-16 i-alerta" aria-hidden="true"></span>Zona de riesgo · 5 últimos</div>
+        <div class="rk rk-risk"><span class="pos">31</span><img class="av" src="/_blob/245d19f4a7158418da9bb92fdf191fa7" alt=""><span class="grow"><span class="nm" style="display: block">Klenyerber Corredor</span><span class="sub" style="display: block">Avatar en gris · fondo surface-2</span></span><span class="i i-baja" aria-hidden="true" style="color: var(--error)"></span><span class="pts">10,5</span></div>
+      </div>
+    </div>
+    <div class="card stack" aria-labelledby="c-meter">
+      <h2 id="c-meter" class="t-h2">Medidores y puntaje</h2>
+      <div class="meter meter-under" role="status"><span class="i i-alerta state-under" aria-hidden="true"></span><span class="num t-h3">14 / 20</span><div class="bar" aria-hidden="true"><i style="--p: 70%"></i></div><span class="t-small-b state-under">Faltan 6</span></div>
+      <div class="meter meter-over" role="status"><span class="i i-x state-over" aria-hidden="true"></span><span class="num t-h3">22 / 20</span><div class="bar" aria-hidden="true"><i></i></div><span class="t-small-b state-over">Te pasaste por 2</span></div>
+      <div class="meter meter-exact" role="status"><span class="i i-check state-exact" aria-hidden="true"></span><span class="num t-h3">20 / 20</span><div class="bar" aria-hidden="true"><i></i></div><span class="t-small-b state-exact">Suma exacta</span></div>
+      <div class="stack-8">
+        <div class="row"><span class="t-small-b grow">Barra por pregunta · 3,5 / 4</span><span class="num t-small-b">87 %</span></div>
+        <div class="bar bar-g" role="img" aria-label="3,5 de 4 puntos"><i style="--p: 87.5%; --g: #17A127"></i></div>
+      </div>
+      <div class="stack-8">
+        <span class="t-small-b" id="sc-l">Puntaje · pregunta de 4 pts (grupo de radio)</span>
+        <div class="score" role="radiogroup" aria-labelledby="sc-l">
+          <button type="button" role="radio" aria-checked="false">0</button><button type="button" role="radio" aria-checked="false">0,5</button><button type="button" role="radio" aria-checked="false">1</button>
+          <button type="button" role="radio" aria-checked="false" class="is-hover">1,5</button><button type="button" role="radio" aria-checked="false">2</button><button type="button" role="radio" aria-checked="false">2,5</button>
+          <button type="button" role="radio" aria-checked="true">3</button><button type="button" role="radio" aria-checked="false" class="is-focus">3,5</button><button type="button" role="radio" aria-checked="false">4</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="g3">
+    <div class="card stack" aria-labelledby="c-av">
+      <h2 id="c-av" class="t-h2">Avatares y logos</h2>
+      <div class="row wrap-row" style="align-items: flex-end">
+        <img class="av" src="/_blob/115eee73145e2e67e2badad57b896a41" alt="" style="--s: 32px">
+        <img class="av" src="/_blob/115eee73145e2e67e2badad57b896a41" alt="" style="--s: 40px">
+        <img class="av av-ring" src="/_blob/115eee73145e2e67e2badad57b896a41" alt="" style="--s: 64px">
+        <img class="av" src="/_blob/115eee73145e2e67e2badad57b896a41" alt="" style="--s: 96px">
+      </div>
+      <div class="row wrap-row" style="align-items: flex-end">
+        <span class="tl tl-fb" style="--s: 40px; --tc: #8A3B12" role="img" aria-label="Sin logo: R">R</span>
+        <span class="tl tl-fb" style="--s: 56px; --tc: #1F5E8C" role="img" aria-label="Sin logo: M">M</span>
+        <span class="tl tl-photo" style="--s: 64px" role="img" aria-label="Logo del equipo (foto)"></span>
+        <span class="tl tl-fb" style="--s: 96px; --tc: #6A3FB0" role="img" aria-label="Sin logo: C">C</span>
+      </div>
+      <p class="t-small t-2">Logo: recorte cuadrado, radio 28 %, <code>object-fit: cover</code>, borde interior 1 px rgb(0 0 0 / .08). Sin logo: inicial del tema en blanco sobre 1 de 6 colores fijos (≥ 4,5:1).</p>
+    </div>
+    <div class="card stack" aria-labelledby="c-fb">
+      <h2 id="c-fb" class="t-h2">Avisos</h2>
+      <div class="alert alert-info"><span class="i i-info" aria-hidden="true"></span><span>La entrega <b>Yeilin Duarte</b>, capitana de tu equipo.</span></div>
+      <div class="alert alert-warn"><span class="i i-reloj" aria-hidden="true"></span><span>Vence mañana a las 11:59 p. m.</span></div>
+      <div class="alert alert-err" role="alert"><span class="i i-sin-red" aria-hidden="true"></span><span>No se guardó la nota: sin conexión. <a href="#">Reintentar</a></span></div>
+      <div class="toast" role="status"><span class="i i-check" aria-hidden="true" style="color: #5BD68A"></span><span class="grow">Nota guardada · 18,5</span><button class="btn btn-ghost btn-sm" type="button" style="color: inherit">Deshacer</button></div>
+    </div>
+    <div class="card stack" aria-labelledby="c-sk">
+      <h2 id="c-sk" class="t-h2">Carga y vacío</h2>
+      <div class="stack-8" aria-busy="true" aria-label="Cargando notas">
+        <div class="row"><div class="sk" style="width: 44px; height: 44px; border-radius: 50%"></div><div class="grow stack-8"><div class="sk" style="width: 60%; height: 14px"></div><div class="sk" style="width: 40%; height: 12px"></div></div><div class="sk" style="width: 64px; height: 36px; border-radius: 999px"></div></div>
+        <div class="row"><div class="sk" style="width: 44px; height: 44px; border-radius: 50%"></div><div class="grow stack-8"><div class="sk" style="width: 70%; height: 14px"></div><div class="sk" style="width: 30%; height: 12px"></div></div><div class="sk" style="width: 64px; height: 36px; border-radius: 999px"></div></div>
+      </div>
+      <div class="empty" style="padding: 16px 0 0"><span class="blob"><span class="i i-32 i-chispa" aria-hidden="true"></span></span><p class="t-h4">¡Todo entregado!</p><p class="t-small t-2">Cuando tu profe publique una tarea nueva, aparece aquí.</p></div>
+    </div>
+  </section>
+
+  <section class="g2">
+    <div class="card stack" aria-labelledby="c-dlg">
+      <h2 id="c-dlg" class="t-h2">Diálogo (modal) · 24 px de radio</h2>
+      <div style="position: relative; height: 460px; border-radius: 16px; overflow: hidden; background: var(--bg); display: grid; place-items: center; padding: 24px">
+        <div class="ov" aria-hidden="true"></div>
+        <div class="dialog stack" role="dialog" aria-modal="true" aria-labelledby="dlg-t" style="position: relative">
+          <div class="row"><h3 id="dlg-t" class="t-h3 grow">Editar alumno</h3><button class="btn btn-ghost btn-icon btn-sm" type="button" aria-label="Cerrar"><span class="i i-x" aria-hidden="true"></span></button></div>
+          <div class="g2" style="gap: 12px">
+            <div class="field"><label class="label" for="d1">Nombres</label><div class="input"><input id="d1" value="Yeilin Marilyn"></div></div>
+            <div class="field"><label class="label" for="d2">Apellidos</label><div class="input"><input id="d2" value="Duarte Moncayo"></div></div>
+          </div>
+          <div class="field"><label class="label" for="d3">Base de evaluación (10–20)</label><div class="input"><input id="d3" inputmode="decimal" value="15"><span class="trail t-small">/ 20</span></div></div>
+          <div class="field"><label class="label" for="d4">Motivo del cambio de base</label><div class="input"><input id="d4" value="Acuerdo de conducta del 20/10/2026"></div></div>
+          <div class="row" style="justify-content: flex-end"><button class="btn btn-secondary" type="button">Cancelar</button><button class="btn btn-primary" type="button">Guardar cambios</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="card stack" aria-labelledby="c-sheet">
+      <h2 id="c-sheet" class="t-h2">Navegación abierta en móvil (profesor)</h2>
+      <div style="position: relative; width: 390px; height: 560px; border-radius: 24px; overflow: hidden; background: var(--bg); box-shadow: inset 0 0 0 1px var(--divider)">
+        <div class="ov" aria-hidden="true"></div>
+        <div role="dialog" aria-modal="true" aria-label="Menú" style="position: absolute; left: 0; right: 0; bottom: 0; background: var(--surface); border-radius: 24px 24px 0 0; padding: 8px 16px 24px; box-shadow: var(--shadow-3)">
+          <div style="width: 40px; height: 4px; border-radius: 999px; background: var(--surface-3); margin: 4px auto 12px" aria-hidden="true"></div>
+          <div class="row" style="margin-bottom: 8px"><span class="t-h3 grow">Menú</span><button class="btn btn-ghost btn-icon btn-sm" type="button" aria-label="Cerrar menú"><span class="i i-x" aria-hidden="true"></span></button></div>
+          <nav class="stack-8" style="gap: 2px" aria-label="Todas las secciones">
+            <a class="row" href="#" style="height: 48px; padding: 0 12px; border-radius: 12px; color: var(--text); text-decoration: none; font-weight: 600"><span class="i i-panel" aria-hidden="true"></span>Panel</a>
+            <a class="row" href="#" style="height: 48px; padding: 0 12px; border-radius: 12px; color: var(--text); text-decoration: none; font-weight: 600"><span class="i i-evaluar" aria-hidden="true"></span>Evaluar</a>
+            <a class="row" href="#" aria-current="page" style="height: 48px; padding: 0 12px; border-radius: 12px; background: var(--accent-soft-2); color: var(--text); text-decoration: none; font-weight: 700"><span class="i i-tareas t-ink" aria-hidden="true"></span>Tareas</a>
+            <a class="row" href="#" style="height: 48px; padding: 0 12px; border-radius: 12px; color: var(--text); text-decoration: none; font-weight: 600"><span class="i i-equipo" aria-hidden="true"></span>Equipos</a>
+            <a class="row" href="#" style="height: 48px; padding: 0 12px; border-radius: 12px; color: var(--text); text-decoration: none; font-weight: 600"><span class="i i-premio" aria-hidden="true"></span>Premios</a>
+            <hr class="divider" style="margin: 8px 0">
+            <a class="row" href="#" style="height: 48px; padding: 0 12px; border-radius: 12px; color: var(--error); text-decoration: none; font-weight: 700"><span class="i i-salir" aria-hidden="true"></span>Cerrar sesión</a>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"enum","options":["azul","rojo","verde","morado"],"default":"azul"},"theme":{"editor":"enum","options":["claro","oscuro"],"default":"claro"},"$preview":{"width":1440,"height":2700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { accent: this.props.accent ?? 'azul', theme: this.props.theme ?? 'claro' };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,461 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-10-25T23:05:00Z"
+  },
+  "title": "KREA — Diseño",
+  "launch": {
+    "view": "canvas",
+    "page": "sistema"
+  },
+  "pages": [
+    {
+      "id": "sistema",
+      "name": "Sistema y marca"
+    },
+    {
+      "id": "estudiante",
+      "name": "Estudiante"
+    },
+    {
+      "id": "profesor",
+      "name": "Profesor"
+    },
+    {
+      "id": "estados",
+      "name": "Estados y momentos"
+    },
+    {
+      "id": "acentos",
+      "name": "Acentos"
+    }
+  ],
+  "boards": {
+    "Main.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 1900,
+      "title": "Tokens",
+      "page": "sistema"
+    },
+    "Componentes.dc.html": {
+      "x": 1520,
+      "y": 0,
+      "w": 1440,
+      "h": 2700,
+      "title": "Componentes y estados",
+      "page": "sistema"
+    },
+    "Marca.dc.html": {
+      "x": 3040,
+      "y": 0,
+      "w": 1440,
+      "h": 1700,
+      "title": "Isotipo, favicon y Open Graph",
+      "page": "sistema"
+    },
+    "Correo.dc.html": {
+      "x": 4560,
+      "y": 0,
+      "w": 1440,
+      "h": 1500,
+      "title": "Correo · Restablecer contraseña",
+      "page": "sistema"
+    },
+    "Ingresar.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 1000,
+      "title": "Ingresar y recuperar · 1440",
+      "page": "estudiante",
+      "expand": "fill"
+    },
+    "Ingresar-movil.dc.html": {
+      "x": 1520,
+      "y": 0,
+      "w": 390,
+      "h": 3500,
+      "title": "Ingresar y recuperar · 390",
+      "page": "estudiante"
+    },
+    "Inicio.dc.html": {
+      "x": 0,
+      "y": 3620,
+      "w": 1440,
+      "h": 1100,
+      "title": "Inicio · 1440",
+      "page": "estudiante",
+      "expand": "fill"
+    },
+    "Inicio-movil.dc.html": {
+      "x": 1520,
+      "y": 3620,
+      "w": 390,
+      "h": 1900,
+      "title": "Inicio · 390",
+      "page": "estudiante"
+    },
+    "Notas.dc.html": {
+      "x": 0,
+      "y": 5640,
+      "w": 1440,
+      "h": 1000,
+      "title": "Mis notas · 1440",
+      "page": "estudiante",
+      "expand": "fill"
+    },
+    "Notas-movil.dc.html": {
+      "x": 1520,
+      "y": 5640,
+      "w": 390,
+      "h": 1400,
+      "title": "Mis notas · 390",
+      "page": "estudiante"
+    },
+    "DetalleNota.dc.html": {
+      "x": 0,
+      "y": 7160,
+      "w": 1440,
+      "h": 1800,
+      "title": "Detalle de nota · 1440",
+      "page": "estudiante",
+      "expand": "fill"
+    },
+    "DetalleNota-movil.dc.html": {
+      "x": 1520,
+      "y": 7160,
+      "w": 390,
+      "h": 3000,
+      "title": "Detalle de nota (Base 15) · 390",
+      "page": "estudiante"
+    },
+    "Tarea.dc.html": {
+      "x": 0,
+      "y": 10280,
+      "w": 1440,
+      "h": 1900,
+      "title": "Entregar tarea (capitana) · 1440",
+      "page": "estudiante",
+      "expand": "fill"
+    },
+    "Tarea-movil.dc.html": {
+      "x": 1520,
+      "y": 10280,
+      "w": 390,
+      "h": 3500,
+      "title": "Tarea grupal (no capitán) y entregada · 390",
+      "page": "estudiante"
+    },
+    "Equipo.dc.html": {
+      "x": 0,
+      "y": 13900,
+      "w": 1440,
+      "h": 1300,
+      "title": "Mi equipo · 1440",
+      "page": "estudiante",
+      "expand": "fill"
+    },
+    "Equipo-movil.dc.html": {
+      "x": 1520,
+      "y": 13900,
+      "w": 390,
+      "h": 2100,
+      "title": "Mi equipo · 390",
+      "page": "estudiante"
+    },
+    "Ranking.dc.html": {
+      "x": 0,
+      "y": 16120,
+      "w": 1440,
+      "h": 2800,
+      "title": "Ranking en vivo · 1440",
+      "page": "estudiante",
+      "expand": "fill"
+    },
+    "Ranking-movil.dc.html": {
+      "x": 1520,
+      "y": 16120,
+      "w": 390,
+      "h": 4300,
+      "title": "Ranking en vivo · 390",
+      "page": "estudiante"
+    },
+    "Perfil.dc.html": {
+      "x": 0,
+      "y": 20540,
+      "w": 1440,
+      "h": 1600,
+      "title": "Perfil · 1440",
+      "page": "estudiante",
+      "expand": "fill"
+    },
+    "Perfil-movil.dc.html": {
+      "x": 1520,
+      "y": 20540,
+      "w": 390,
+      "h": 2600,
+      "title": "Perfil · 390",
+      "page": "estudiante"
+    },
+    "Panel.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 1100,
+      "title": "Panel del profesor · 1440",
+      "page": "profesor",
+      "expand": "fill"
+    },
+    "Panel-movil.dc.html": {
+      "x": 1520,
+      "y": 0,
+      "w": 390,
+      "h": 2100,
+      "title": "Panel del profesor · 390",
+      "page": "profesor"
+    },
+    "Evaluar.dc.html": {
+      "x": 0,
+      "y": 2220,
+      "w": 1440,
+      "h": 2200,
+      "title": "Evaluar entrega · 1440",
+      "page": "profesor",
+      "expand": "fill"
+    },
+    "Evaluar-movil.dc.html": {
+      "x": 1520,
+      "y": 2220,
+      "w": 390,
+      "h": 3600,
+      "title": "Evaluar entrega · 390",
+      "page": "profesor"
+    },
+    "Alumnos.dc.html": {
+      "x": 0,
+      "y": 5940,
+      "w": 1440,
+      "h": 1300,
+      "title": "Alumnos + diálogo Editar · 1440",
+      "page": "profesor",
+      "expand": "fill"
+    },
+    "Alumnos-movil.dc.html": {
+      "x": 1520,
+      "y": 5940,
+      "w": 390,
+      "h": 1800,
+      "title": "Alumnos · 390",
+      "page": "profesor"
+    },
+    "Equipos.dc.html": {
+      "x": 0,
+      "y": 7860,
+      "w": 1440,
+      "h": 1700,
+      "title": "Equipos · 1440",
+      "page": "profesor",
+      "expand": "fill"
+    },
+    "Equipos-movil.dc.html": {
+      "x": 1520,
+      "y": 7860,
+      "w": 390,
+      "h": 3000,
+      "title": "Equipos · 390",
+      "page": "profesor"
+    },
+    "TareasProfe.dc.html": {
+      "x": 0,
+      "y": 10980,
+      "w": 1440,
+      "h": 1000,
+      "title": "Tareas del profesor · 1440",
+      "page": "profesor",
+      "expand": "fill"
+    },
+    "TareasProfe-movil.dc.html": {
+      "x": 1520,
+      "y": 10980,
+      "w": 390,
+      "h": 1600,
+      "title": "Tareas del profesor · 390",
+      "page": "profesor"
+    },
+    "Constructor.dc.html": {
+      "x": 0,
+      "y": 12700,
+      "w": 1440,
+      "h": 2000,
+      "title": "Constructor de tarea · 1440",
+      "page": "profesor",
+      "expand": "fill"
+    },
+    "Constructor-movil.dc.html": {
+      "x": 1520,
+      "y": 12700,
+      "w": 390,
+      "h": 3000,
+      "title": "Constructor de tarea · 390",
+      "page": "profesor"
+    },
+    "Puntos.dc.html": {
+      "x": 0,
+      "y": 15820,
+      "w": 1440,
+      "h": 1300,
+      "title": "Ajustes de puntos · 1440",
+      "page": "profesor",
+      "expand": "fill"
+    },
+    "Puntos-movil.dc.html": {
+      "x": 1520,
+      "y": 15820,
+      "w": 390,
+      "h": 2300,
+      "title": "Ajustes de puntos · 390",
+      "page": "profesor"
+    },
+    "Premios.dc.html": {
+      "x": 0,
+      "y": 18240,
+      "w": 1440,
+      "h": 900,
+      "title": "Premios · 1440",
+      "page": "profesor",
+      "expand": "fill"
+    },
+    "Premios-movil.dc.html": {
+      "x": 1520,
+      "y": 18240,
+      "w": 390,
+      "h": 1300,
+      "title": "Premios · 390",
+      "page": "profesor"
+    },
+    "Estados.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 2000,
+      "title": "Pantallas de estado · 1440",
+      "page": "estados"
+    },
+    "Estados-movil.dc.html": {
+      "x": 1520,
+      "y": 0,
+      "w": 1800,
+      "h": 960,
+      "title": "Pantallas de estado · 390",
+      "page": "estados"
+    },
+    "Vacios.dc.html": {
+      "x": 3400,
+      "y": 0,
+      "w": 1440,
+      "h": 2000,
+      "title": "Vacíos, carga y errores en pantalla",
+      "page": "estados"
+    },
+    "Momentos.dc.html": {
+      "x": 4920,
+      "y": 0,
+      "w": 1440,
+      "h": 2200,
+      "title": "Momentos del ranking",
+      "page": "estados"
+    },
+    "AvatarEstados.dc.html": {
+      "x": 6440,
+      "y": 0,
+      "w": 1440,
+      "h": 1100,
+      "title": "Selector de avatar · estados",
+      "page": "estados"
+    },
+    "Extremos.dc.html": {
+      "x": 7960,
+      "y": 0,
+      "w": 1440,
+      "h": 2200,
+      "title": "Contenido extremo",
+      "page": "estados"
+    },
+    "Acentos-Inicio.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1760,
+      "h": 2000,
+      "title": "Inicio · 4 acentos × claro/oscuro",
+      "page": "acentos"
+    },
+    "Acentos-Detalle.dc.html": {
+      "x": 1880,
+      "y": 0,
+      "w": 1760,
+      "h": 2000,
+      "title": "Detalle de nota · 4 acentos × claro/oscuro",
+      "page": "acentos"
+    },
+    "Acentos-Ranking.dc.html": {
+      "x": 3760,
+      "y": 0,
+      "w": 1760,
+      "h": 2000,
+      "title": "Ranking · 4 acentos × claro/oscuro",
+      "page": "acentos"
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Componentes.dc.html",
+    "Marca.dc.html",
+    "Correo.dc.html",
+    "Ingresar.dc.html",
+    "Ingresar-movil.dc.html",
+    "Inicio.dc.html",
+    "Inicio-movil.dc.html",
+    "Notas.dc.html",
+    "Notas-movil.dc.html",
+    "DetalleNota.dc.html",
+    "DetalleNota-movil.dc.html",
+    "Tarea.dc.html",
+    "Tarea-movil.dc.html",
+    "Equipo.dc.html",
+    "Equipo-movil.dc.html",
+    "Ranking.dc.html",
+    "Ranking-movil.dc.html",
+    "Perfil.dc.html",
+    "Perfil-movil.dc.html",
+    "Panel.dc.html",
+    "Panel-movil.dc.html",
+    "Evaluar.dc.html",
+    "Evaluar-movil.dc.html",
+    "Alumnos.dc.html",
+    "Alumnos-movil.dc.html",
+    "Equipos.dc.html",
+    "Equipos-movil.dc.html",
+    "TareasProfe.dc.html",
+    "TareasProfe-movil.dc.html",
+    "Constructor.dc.html",
+    "Constructor-movil.dc.html",
+    "Puntos.dc.html",
+    "Puntos-movil.dc.html",
+    "Premios.dc.html",
+    "Premios-movil.dc.html",
+    "Estados.dc.html",
+    "Estados-movil.dc.html",
+    "Vacios.dc.html",
+    "Momentos.dc.html",
+    "AvatarEstados.dc.html",
+    "Extremos.dc.html",
+    "Acentos-Inicio.dc.html",
+    "Acentos-Detalle.dc.html",
+    "Acentos-Ranking.dc.html"
+  ],
+  "notes": {},
+  "designSystems": []
+}

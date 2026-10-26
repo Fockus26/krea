@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>KREA · Tokens</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/d04b561f582ecc0dde089e2a2bdf187f">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&amp;family=Poppins:wght@600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="k board" data-accent="{{accent}}" data-theme="claro" style="width: 1440px; min-height: 1900px; font-family: 'Nunito Sans', system-ui, sans-serif; color: #221D2B">
+
+  <header style="display: flex; align-items: flex-end; justify-content: space-between; gap: 32px">
+    <div class="stack-8">
+      <span class="logo" style="--w: 220px" role="img" aria-label="KREA Escuela Creativa"><span class="ink"></span><span class="spl"></span></span>
+      <p class="t-eyebrow" style="margin-top: 16px">Sistema visual · v1 · 25/10/2026</p>
+      <h1 class="t-h1">Tokens de KREA</h1>
+      <p class="t-2" style="max-width: 720px">Todo valor de la app sale de aquí. El acento es una variable: los componentes leen <code>--accent</code>, <code>--accent-ink</code>, <code>--on-accent</code> y <code>--splash</code>, nunca un hex.</p>
+    </div>
+    <div class="row-8">
+      <span class="chip chip-acc">Base 4 px</span><span class="chip chip-acc">WCAG 2.1 AA</span><span class="chip chip-acc">Claro · Oscuro · Sistema</span>
+    </div>
+  </header>
+
+  <section class="card stack" aria-labelledby="t-acc">
+    <div class="sec-h"><h2 id="t-acc" class="t-h2">Acentos elegibles</h2><span class="anno">Ratio = contraste medido</span></div>
+    <div class="g4">
+      <sc-for list="{{accents}}" as="a" hint-placeholder-count="4">
+        <div class="stack-8">
+          <p class="t-h4">{{a.name}}</p>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+            <div class="swatch" style="background: {{a.light}}; display: grid; place-items: center; color: #FFFFFF; font: 700 13px/18px 'Nunito Sans'">Aa {{a.rWhite}}</div>
+            <div class="swatch" style="background: {{a.dark}}; display: grid; place-items: center; color: #14121A; font: 700 13px/18px 'Nunito Sans'">Aa {{a.rDark}}</div>
+          </div>
+          <div class="t-small t-2">accent claro <b class="num" style="color: #221D2B">{{a.light}}</b> · texto blanco</div>
+          <div class="t-small t-2">accent-ink <b class="num" style="color: #221D2B">{{a.ink}}</b> · {{a.rInk}} sobre #F6F4FA</div>
+          <div class="t-small t-2">accent oscuro <b class="num" style="color: #221D2B">{{a.dark}}</b> · texto #14121A</div>
+          <div class="row-8"><span style="width: 16px; height: 16px; border-radius: 50%; background: {{a.splash}}; box-shadow: inset 0 0 0 1px rgb(0 0 0 / .1)"></span><span class="t-small t-2">splash <b class="num" style="color: #221D2B">{{a.splash}}</b> · decorativo</span></div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <section class="g2">
+    <div class="card stack" aria-labelledby="t-neu">
+      <h2 id="t-neu" class="t-h2">Neutros y estados · claro</h2>
+      <div class="g3" style="gap: 12px">
+        <sc-for list="{{neutralsL}}" as="n" hint-placeholder-count="9">
+          <div class="stack-8" style="gap: 4px"><div class="swatch" style="background: {{n.hex}}; height: 40px"></div><span class="t-small-b">{{n.name}}</span><span class="t-small t-2">{{n.hex}} · {{n.note}}</span></div>
+        </sc-for>
+      </div>
+    </div>
+    <div class="card stack" aria-labelledby="t-neud" style="background: #1E1B26; color: #F4F1F8; border: 1px solid #2E2A38">
+      <h2 id="t-neud" class="t-h2">Neutros y estados · oscuro</h2>
+      <div class="g3" style="gap: 12px">
+        <sc-for list="{{neutralsD}}" as="n" hint-placeholder-count="9">
+          <div class="stack-8" style="gap: 4px"><div class="swatch" style="background: {{n.hex}}; height: 40px; box-shadow: inset 0 0 0 1px rgb(255 255 255 / .12)"></div><span class="t-small-b">{{n.name}}</span><span class="t-small" style="color: #ABA5B8">{{n.hex}} · {{n.note}}</span></div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section class="card stack" aria-labelledby="t-grade">
+    <div class="sec-h"><h2 id="t-grade" class="t-h2">Escala de notas · degradado continuo HSL</h2><span class="anno">Igual en claro y oscuro · texto #111111 700 · peor caso 4,76:1 (nota 20)</span></div>
+    <div style="height: 40px; border-radius: 999px; background: linear-gradient(90deg, #FF0A0A 0%, #FF2008 5.3%, #FF3606 10.5%, #FF4C03 15.8%, #FF6301 21.1%, #FE7A00 26.3%, #FC9100 31.6%, #F9A800 36.8%, #F7BE00 42.1%, #F5D400 47.4%, #E7EA04 52.6%, #BDE007 57.9%, #97D50A 63.2%, #75CB0D 68.4%, #57C110 73.7%, #3CB812 78.9%, #25AE14 84.2%, #17A51C 89.5%, #189C31 94.7%, #1A9342 100%)" role="img" aria-label="Degradado de 1 rojo a 10 amarillo a 20 verde"></div>
+    <div class="row wrap-row" style="gap: 8px">
+      <sc-for list="{{grades}}" as="g" hint-placeholder-count="8">
+        <div class="stack-8" style="align-items: center; gap: 4px"><span class="gp" style="--g: {{g.hex}}">{{g.n}}</span><span class="t-small t-2 num">{{g.hex}}</span></div>
+      </sc-for>
+      <div class="stack-8" style="align-items: center; gap: 4px"><span class="gp gp-pend"><span class="i i-reloj" aria-hidden="true"></span>Pendiente</span><span class="t-small t-2">borde 2 px punteado</span></div>
+    </div>
+    <p class="t-small t-2">1→10: tono 0°→52°, sat 100 %, lum 52 %→48 %. 10→20: tono 52°→140°, sat 100 %→70 %, lum 48 %→34 %. Menos de 10 = raspado: la píldora va acompañada del chip <span class="chip chip-err" style="height: 22px"><span class="i i-alerta" aria-hidden="true"></span>Raspado</span>.</p>
+  </section>
+
+  <section class="g2">
+    <div class="card stack" aria-labelledby="t-type">
+      <h2 id="t-type" class="t-h2">Tipografía</h2>
+      <div class="stack-8" style="gap: 12px">
+        <div class="row" style="align-items: baseline"><span class="t-display">18,5</span><span class="anno">display · Poppins 700 · 48/56 → 56/64 → 64/72 · −0.02em · tabular</span></div>
+        <div class="row" style="align-items: baseline"><span class="t-h1">¡Hola, Yeilin!</span><span class="anno">h1 · Poppins 700 · 26/32 → 32/40 → 38/46</span></div>
+        <div class="row" style="align-items: baseline"><span class="t-h2">Por entregar</span><span class="anno">h2 · Poppins 600 · 21/28 → 24/32 → 28/36</span></div>
+        <div class="row" style="align-items: baseline"><span class="t-h3">Identidad de marca</span><span class="anno">h3 · Poppins 600 · 18/24 → 19/26 → 21/28</span></div>
+        <div class="row" style="align-items: baseline"><span class="t-h4">¿Qué problema resuelven?</span><span class="anno">h4 · Poppins 600 · 16/22</span></div>
+        <div class="row" style="align-items: baseline"><span class="t-body">Tu profe dejó un comentario en esta pregunta.</span><span class="anno">body · Nunito Sans 400 · 16/24 → 17/26 (1920)</span></div>
+        <div class="row" style="align-items: baseline"><span class="t-small">Entregada el 21/10/2026</span><span class="anno">small · 400 · 13/18 → 14/20</span></div>
+        <div class="row" style="align-items: baseline"><span class="t-eyebrow">Sección 5A</span><span class="anno">eyebrow · 700 · 12/16 · +0.08em · mayúsculas</span></div>
+      </div>
+    </div>
+    <div class="card stack" aria-labelledby="t-space">
+      <h2 id="t-space" class="t-h2">Espacio, forma, sombra y movimiento</h2>
+      <div class="row wrap-row" style="align-items: flex-end; gap: 16px">
+        <sc-for list="{{spaces}}" as="s" hint-placeholder-count="8">
+          <div class="stack-8" style="align-items: center; gap: 4px"><div style="width: {{s.px}}; height: {{s.px}}; background: var(--accent-soft-2); border-radius: 4px"></div><span class="t-small t-2 num">{{s.n}}</span></div>
+        </sc-for>
+      </div>
+      <div class="row wrap-row" style="gap: 16px">
+        <div class="stack-8" style="align-items: center; gap: 4px"><div style="width: 72px; height: 48px; border-radius: 10px; box-shadow: inset 0 0 0 2px var(--accent)"></div><span class="t-small t-2">10 · input, chip</span></div>
+        <div class="stack-8" style="align-items: center; gap: 4px"><div style="width: 72px; height: 48px; border-radius: 12px; box-shadow: inset 0 0 0 2px var(--accent)"></div><span class="t-small t-2">12 · nav, botón sm</span></div>
+        <div class="stack-8" style="align-items: center; gap: 4px"><div style="width: 72px; height: 48px; border-radius: 16px; box-shadow: inset 0 0 0 2px var(--accent)"></div><span class="t-small t-2">16 · tarjeta, botón</span></div>
+        <div class="stack-8" style="align-items: center; gap: 4px"><div style="width: 72px; height: 48px; border-radius: 24px; box-shadow: inset 0 0 0 2px var(--accent)"></div><span class="t-small t-2">24 · modal, nota, podio</span></div>
+        <div class="stack-8" style="align-items: center; gap: 4px"><div style="width: 72px; height: 48px; border-radius: 999px; box-shadow: inset 0 0 0 2px var(--accent)"></div><span class="t-small t-2">full · píldora</span></div>
+      </div>
+      <div class="row wrap-row" style="gap: 16px">
+        <div style="width: 120px; height: 64px; border-radius: 16px; background: #FFFFFF; box-shadow: var(--shadow-1); display: grid; place-items: center" class="t-small t-2">shadow-1</div>
+        <div style="width: 120px; height: 64px; border-radius: 16px; background: #FFFFFF; box-shadow: var(--shadow-2); display: grid; place-items: center" class="t-small t-2">shadow-2</div>
+        <div style="width: 120px; height: 64px; border-radius: 16px; background: #FFFFFF; box-shadow: var(--shadow-3); display: grid; place-items: center" class="t-small t-2">shadow-3</div>
+      </div>
+      <ul class="stack-8 t-small">
+        <li><b>150 ms</b> rápido · hover, foco, chips — <span class="num">cubic-bezier(.2,.8,.2,1)</span></li>
+        <li><b>250 ms</b> normal · tabs, diálogos, hojas</li>
+        <li><b>600 ms</b> cambio de puesto · filas del ranking</li>
+        <li><b>1200 ms</b> celebración · podio, confeti — rebote <span class="num">cubic-bezier(.34,1.56,.64,1)</span></li>
+        <li><b>Movimiento reducido</b>: todo a 0 ms y aviso por texto</li>
+      </ul>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"enum","options":["azul","rojo","verde","morado"],"default":"azul"},"$preview":{"width":1440,"height":1900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      accent: this.props.accent ?? 'azul',
+      accents: [
+        { name: 'Azul (por defecto)', light: '#295AC3', ink: '#295AC3', dark: '#7AA2F7', splash: '#00E5F5', rWhite: '6,28:1', rInk: '5,75:1', rDark: '7,37:1' },
+        { name: 'Rojo', light: '#EE0400', ink: '#C80300', dark: '#FF6B5E', splash: '#FFC23D', rWhite: '4,51:1', rInk: '5,55:1', rDark: '6,64:1' },
+        { name: 'Verde', light: '#115445', ink: '#115445', dark: '#4FC4A6', splash: '#A0F25A', rWhite: '8,83:1', rInk: '8,09:1', rDark: '8,64:1' },
+        { name: 'Morado', light: '#734AD1', ink: '#734AD1', dark: '#A98BF0', splash: '#FF8AD8', rWhite: '5,79:1', rInk: '5,30:1', rDark: '6,75:1' }
+      ],
+      neutralsL: [
+        { name: 'background', hex: '#F6F4FA', note: 'fondo' }, { name: 'surface', hex: '#FFFFFF', note: 'tarjetas' }, { name: 'surface-2', hex: '#F0EDF6', note: 'filas, respuestas' },
+        { name: 'text', hex: '#221D2B', note: '15,05:1 / bg' }, { name: 'text-2', hex: '#5E5869', note: '6,26:1 / bg' }, { name: 'input border', hex: '#8C8697', note: '3,52:1 / surface' },
+        { name: 'success', hex: '#157A3B', note: '5,41:1' }, { name: 'warning', hex: '#9A5B00', note: '5,43:1' }, { name: 'error', hex: '#C80300', note: '6,05:1' },
+        { name: 'secondary', hex: '#FFC23D', note: 'texto #221D2B 10,2:1' }, { name: 'selección', hex: '#E4DCF7', note: 'texto 12,42:1' }, { name: 'scrollbar', hex: '#7A7486', note: 'sobre #ECE9F2 3,75:1' }
+      ],
+      neutralsD: [
+        { name: 'background', hex: '#14121A', note: 'fondo' }, { name: 'surface', hex: '#1E1B26', note: 'tarjetas' }, { name: 'surface-2', hex: '#26222F', note: 'filas, respuestas' },
+        { name: 'text', hex: '#F4F1F8', note: '16,61:1 / bg' }, { name: 'text-2', hex: '#ABA5B8', note: '7,78:1 / bg' }, { name: 'input border', hex: '#8A8496', note: '4,69:1 / surface' },
+        { name: 'success', hex: '#5BD68A', note: '9,22:1' }, { name: 'warning', hex: '#FFC23D', note: '10,51:1' }, { name: 'error', hex: '#FF6B5E', note: '6,06:1' },
+        { name: 'secondary', hex: '#FFC23D', note: 'texto #221D2B 10,2:1' }, { name: 'selección', hex: '#3B3350', note: 'texto 10,58:1' }, { name: 'scrollbar', hex: '#6E687A', note: 'sobre #1E1B26 3,16:1' }
+      ],
+      grades: [
+        { n: '1', hex: '#FF0A0A' }, { n: '5', hex: '#FF6301' }, { n: '8', hex: '#F9A800' }, { n: '10', hex: '#F5D400' },
+        { n: '12', hex: '#BDE007' }, { n: '15', hex: '#57C110' }, { n: '18', hex: '#17A51C' }, { n: '20', hex: '#1A9342' }
+      ],
+      spaces: [
+        { n: '4', px: '4px' }, { n: '8', px: '8px' }, { n: '12', px: '12px' }, { n: '16', px: '16px' }, { n: '24', px: '24px' },
+        { n: '32', px: '32px' }, { n: '40', px: '40px' }, { n: '48', px: '48px' }, { n: '64', px: '64px' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
