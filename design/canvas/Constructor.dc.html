@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>KREA · Constructor de tarea</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/d04b561f582ecc0dde089e2a2bdf187f">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&amp;family=Poppins:wght@600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="k" data-accent="{{accent}}" data-theme="{{theme}}" style="width: 100%; min-height: 100%; font-family: 'Nunito Sans', system-ui, sans-serif; color: var(--text)">
+<div class="app">
+  <aside class="side" aria-label="Navegación del profesor">
+    <a class="brand" href="Panel.dc.html" aria-label="KREA, ir al panel"><span class="logo" style="--w: 132px"><span class="ink"></span><span class="spl"></span></span></a>
+    <nav aria-label="Secciones">
+      <a class="nav" href="Panel.dc.html"><span class="i i-panel" aria-hidden="true"></span>Panel</a>
+      <a class="nav" href="Evaluar.dc.html"><span class="i i-evaluar" aria-hidden="true"></span>Evaluar<span class="chip chip-acc num" style="margin-left: auto; height: 22px">7</span></a>
+      <a class="nav" href="TareasProfe.dc.html" aria-current="page"><span class="i i-tareas" aria-hidden="true"></span>Tareas</a>
+      <a class="nav" href="Alumnos.dc.html"><span class="i i-perfil" aria-hidden="true"></span>Alumnos</a>
+      <a class="nav" href="Equipos.dc.html"><span class="i i-equipo" aria-hidden="true"></span>Equipos</a>
+      <a class="nav" href="Puntos.dc.html"><span class="i i-puntos" aria-hidden="true"></span>Puntos</a>
+      <a class="nav" href="Ranking.dc.html"><span class="i i-trofeo" aria-hidden="true"></span>Ranking</a>
+      <a class="nav" href="Premios.dc.html"><span class="i i-premio" aria-hidden="true"></span>Premios</a>
+    </nav>
+    <div class="who"><img class="av" src="/_blob/271b2a1f1bf609e892400fc4bc5ede99" alt="" style="--s: 40px"><span class="grow"><span class="t-small-b" style="display: block">[Nombre del profe]</span><span class="t-small t-2" style="display: block">Profesor · 5A y 5C</span></span></div>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <a href="TareasProfe.dc.html" class="btn btn-ghost btn-icon" aria-label="Volver a Tareas" style="margin-left: -8px"><span class="i i-chev-izq" aria-hidden="true"></span></a>
+      <span class="t-h4 grow">Nueva tarea</span>
+      <button class="btn btn-ghost btn-sm" type="button">Guardar borrador</button>
+    </header>
+
+    <main class="wrap wrap-wide">
+      <section class="stack-8" aria-labelledby="h-nt">
+        <nav aria-label="Ruta" class="only-d"><a href="TareasProfe.dc.html" class="t-small-b row-8" style="gap: 4px; text-decoration: none"><span class="i i-16 i-chev-izq" aria-hidden="true"></span>Tareas</a></nav>
+        <h1 id="h-nt" class="t-h1">Nueva tarea</h1>
+        <p class="t-2">Las preguntas tienen que sumar exactamente 20 puntos para publicar.</p>
+      </section>
+
+      <div class="meter {{mCls}} sticky-top only-m" role="status" aria-live="polite">
+        <span class="i {{mIcon}} {{sCls}}" aria-hidden="true"></span><span class="num t-h4">{{sum}} / 20</span><div class="bar" aria-hidden="true"><i style="--p: {{pct}}"></i></div><span class="t-small-b {{sCls}}">{{msg}}</span>
+      </div>
+
+      <div class="g-side">
+        <div class="stack-24">
+          <section class="card stack" aria-labelledby="h-datos">
+            <h2 id="h-datos" class="t-h3">Datos</h2>
+            <div class="field"><label class="label" for="ti">Título</label><div class="input"><input id="ti" value="Plan de redes sociales"></div></div>
+            <div class="g2" style="gap: 16px">
+              <div class="field"><span class="label" id="l-tipo">Tipo</span><div class="seg seg-block" role="radiogroup" aria-labelledby="l-tipo"><button type="button" role="radio" aria-checked="false"><span class="i i-perfil" aria-hidden="true"></span>Individual</button><button type="button" role="radio" aria-checked="true" aria-pressed="true"><span class="i i-equipo" aria-hidden="true"></span>Grupal</button></div></div>
+              <div class="field"><label class="label" for="fe">Fecha de entrega</label><div class="input"><span class="i i-calendario" aria-hidden="true"></span><input id="fe" value="14/11/2026" inputmode="numeric" placeholder="dd/mm/aaaa"></div></div>
+            </div>
+            <div class="g2" style="gap: 16px">
+              <div class="field"><label class="label" for="se">Sección</label><div class="input"><select id="se"><option>5A y 5C</option></select><span class="i i-chev-abajo" aria-hidden="true"></span></div></div>
+              <div class="field"><label class="label" for="pr">Premio <span class="t-2" style="font-weight: 400">(solo grupal, opcional)</span></label><div class="input"><span class="i i-premio" aria-hidden="true"></span><input id="pr" placeholder="Ej. Cuenta Canva Pro por 3 meses"></div><span class="hint">Lo gana el equipo con mejor nota.</span></div>
+            </div>
+          </section>
+
+          <section aria-labelledby="h-qs" class="stack">
+            <div class="sec-h" style="margin: 0"><h2 id="h-qs" class="t-h2">Preguntas · 4</h2></div>
+            <ol class="stack">
+              <sc-for list="{{qs}}" as="q" hint-placeholder-count="4">
+                <li class="card q">
+                  <div class="q-head"><span class="q-num" aria-hidden="true">{{q.n}}</span><label class="t-h4 grow" for="{{q.id}}">Pregunta {{q.n}}</label><button class="btn btn-ghost btn-icon btn-sm" type="button" aria-label="Eliminar pregunta {{q.n}}" style="color: var(--error)"><span class="i i-papelera" aria-hidden="true"></span></button></div>
+                  <div class="input textarea" style="min-height: 72px"><textarea id="{{q.id}}" rows="2" style="all: unset; flex: 1; min-height: 48px">{{q.text}}</textarea></div>
+                  <div class="row wrap-row" style="gap: 16px; align-items: flex-end">
+                    <div class="field"><span class="label">Formato de respuesta</span><div class="seg" role="radiogroup" aria-label="Formato de la pregunta {{q.n}}"><button type="button" role="radio" aria-checked="{{q.isText}}" aria-pressed="{{q.isText}}"><span class="i i-texto" aria-hidden="true"></span>Texto</button><button type="button" role="radio" aria-checked="{{q.isImg}}" aria-pressed="{{q.isImg}}"><span class="i i-imagen" aria-hidden="true"></span>Imagen</button></div></div>
+                    <div class="field"><span class="label">Valor</span><div class="row-8"><button class="btn btn-secondary btn-icon" type="button" aria-label="Restar 0,5 a la pregunta {{q.n}}"><span class="i i-menos" aria-hidden="true"></span></button><div class="input" style="width: 84px"><input value="{{q.val}}" inputmode="decimal" aria-label="Valor de la pregunta {{q.n}} en puntos" style="text-align: center; font-family: var(--fh); font-weight: 700"></div><button class="btn btn-secondary btn-icon" type="button" aria-label="Sumar 0,5 a la pregunta {{q.n}}"><span class="i i-mas" aria-hidden="true"></span></button><span class="t-small t-2">pts</span></div></div>
+                  </div>
+                </li>
+              </sc-for>
+            </ol>
+            <button class="drop" type="button" style="justify-content: center; background: none; cursor: pointer; font: 700 15px/20px var(--fb); color: var(--accent-ink); border-color: var(--accent-ink)"><span class="i i-mas" aria-hidden="true"></span>Agregar pregunta</button>
+          </section>
+        </div>
+
+        <aside class="stack-24 sticky-top only-d">
+          <section class="card stack" aria-labelledby="h-suma" style="box-shadow: var(--shadow-2)">
+            <h2 id="h-suma" class="t-eyebrow">Suma de valores</h2>
+            <div class="row" style="align-items: baseline; gap: 8px"><span class="t-display {{sCls}}">{{sum}}</span><span class="t-h3 t-2 num">/ 20</span></div>
+            <div class="bar {{mCls}}" style="height: 10px" aria-hidden="true"><i style="--p: {{pct}}; background: {{barColor}}"></i></div>
+            <p class="t-small-b row-8 {{sCls}}" role="status"><span class="i i-16 {{mIcon}}" aria-hidden="true"></span>{{msg}}</p>
+          </section>
+          <div class="stack-8">
+            <button class="btn btn-primary btn-lg btn-block" type="button" disabled="{{pubDisabled}}"><span class="i i-enviar" aria-hidden="true"></span>Publicar tarea</button>
+            <button class="btn btn-secondary btn-block" type="button">Guardar borrador</button>
+            <p class="t-small t-2" style="text-align: center">Al publicar, las secciones elegidas la ven en «Por entregar».</p>
+          </div>
+        </aside>
+      </div>
+
+      <div class="actionbar only-m no-nav">
+        <div class="grow"><p class="t-small-b {{sCls}}">{{msg}}</p></div>
+        <button class="btn btn-primary" type="button" disabled="{{pubDisabled}}">Publicar tarea</button>
+      </div>
+    </main>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"enum","options":["azul","rojo","verde","morado"],"default":"azul"},"theme":{"editor":"enum","options":["claro","oscuro"],"default":"claro"},"suma":{"editor":"enum","options":["faltan","pasada","exacta"],"default":"faltan"},"$preview":{"width":1440,"height":2000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = this.props.suma ?? 'faltan';
+    const vals = st === 'exacta' ? [4, 6, 4, 6] : st === 'pasada' ? [4, 8, 4, 6] : [4, 6, 2, 2];
+    const sum = vals.reduce((a, b) => a + b, 0);
+    const texts = [
+      ['¿En qué red social van a publicar primero y por qué?', 'texto'],
+      ['Sube una publicación de ejemplo hecha por el equipo.', 'imagen'],
+      ['Hagan un calendario de una semana: qué publican cada día, a qué hora y con qué objetivo. Expliquen por qué eligieron esos horarios pensando en su cliente ideal.', 'texto'],
+      ['Escriban 3 textos cortos para acompañar sus publicaciones.', 'texto']
+    ];
+    const map = {
+      faltan: { mCls: 'meter-under', sCls: 'state-under', mIcon: 'i-alerta', msg: 'Faltan ' + (20 - sum), barColor: 'var(--warning)' },
+      pasada: { mCls: 'meter-over', sCls: 'state-over', mIcon: 'i-x', msg: 'Te pasaste por ' + (sum - 20), barColor: 'var(--error)' },
+      exacta: { mCls: 'meter-exact', sCls: 'state-exact', mIcon: 'i-check', msg: 'Suma exacta', barColor: 'var(--success)' }
+    }[st];
+    return Object.assign({
+      accent: this.props.accent ?? 'azul', theme: this.props.theme ?? 'claro',
+      sum: String(sum), pct: Math.min(100, sum / 20 * 100) + '%', pubDisabled: st !== 'exacta',
+      qs: texts.map((t, i) => ({ n: i + 1, id: 'q' + (i + 1), text: t[0], isText: String(t[1] === 'texto'), isImg: String(t[1] === 'imagen'), val: String(vals[i]) }))
+    }, map);
+  }
+}
+</script>
+</body>
+</html>

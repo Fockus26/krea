@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>KREA · Pantallas de estado · móvil</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/d04b561f582ecc0dde089e2a2bdf187f">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&amp;family=Poppins:wght@600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="k" data-accent="{{accent}}" data-theme="{{theme}}" style="width: 1800px; min-height: 960px; padding: 40px; display: flex; gap: 40px; align-items: flex-start; container-type: normal; font-family: 'Nunito Sans', system-ui, sans-serif; color: var(--text)">
+
+  <div class="stack-8"><p class="frame-lbl">404 · estudiante</p>
+    <div class="phone"><div class="status">
+      <div class="status-top" style="padding: 0 16px; height: 56px"><span class="logo" style="--w: 80px" role="img" aria-label="KREA"><span class="ink"></span><span class="spl"></span></span><span style="flex: 1"></span><img class="av" src="/_blob/115eee73145e2e67e2badad57b896a41" alt="Tu perfil" style="--s: 32px"></div>
+      <div class="status-body" style="padding: 32px 20px">
+        <p class="status-code" aria-hidden="true" style="font-size: 80px">404</p>
+        <p class="t-eyebrow">Error 404</p>
+        <h1 class="t-h1">Esta página se fue de recreo</h1>
+        <p class="t-2">La dirección no existe o esa tarea ya no está publicada.</p>
+        <div class="stack-8" style="width: 100%; margin-top: 8px"><a class="btn btn-primary btn-lg btn-block" href="#">Ir al inicio</a><a class="btn btn-secondary btn-lg btn-block" href="#">Mis notas</a></div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="stack-8"><p class="frame-lbl">500 · con código</p>
+    <div class="phone"><div class="status">
+      <div class="status-top" style="padding: 0 16px; height: 56px"><span class="logo" style="--w: 80px" role="img" aria-label="KREA"><span class="ink"></span><span class="spl"></span></span></div>
+      <div class="status-body" style="padding: 32px 20px">
+        <p class="status-code" aria-hidden="true" style="font-size: 80px">500</p>
+        <p class="t-eyebrow">Error 500</p>
+        <h1 class="t-h1">Algo se nos rompió por dentro</h1>
+        <p class="t-2">No es tu culpa. Intenta de nuevo; si sigue pasando, mándale este código a tu profe.</p>
+        <span class="codebox" style="align-self: stretch; justify-content: space-between">KR-500-7F3A9C<button class="btn btn-ghost btn-sm" type="button"><span class="i i-copiar" aria-hidden="true"></span>Copiar</button></span>
+        <div class="stack-8" style="width: 100%; margin-top: 8px"><a class="btn btn-primary btn-lg btn-block" href="#"><span class="i i-recargar" aria-hidden="true"></span>Reintentar</a><a class="btn btn-secondary btn-lg btn-block" href="#">Ir al inicio</a></div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="stack-8"><p class="frame-lbl">Sin conexión · nada en caché</p>
+    <div class="phone"><div class="status">
+      <div class="status-top" style="padding: 0 16px; height: 56px"><span class="logo" style="--w: 80px" role="img" aria-label="KREA"><span class="ink"></span><span class="spl"></span></span></div>
+      <div class="status-body" style="padding: 32px 20px">
+        <span class="empty" style="padding: 0; align-items: flex-start"><span class="blob" style="margin: 0"><span class="i i-32 i-sin-red" aria-hidden="true"></span></span></span>
+        <p class="t-eyebrow">Sin conexión</p>
+        <h1 class="t-h1">Se te fue la señal</h1>
+        <p class="t-2">Revisa esto y vuelve a intentar:</p>
+        <ul class="stack-8 t-small"><li class="row-8"><span class="i i-16 i-check t-ink" aria-hidden="true"></span>Activa los datos o conéctate a un wifi.</li><li class="row-8"><span class="i i-16 i-check t-ink" aria-hidden="true"></span>Si te queda poco saldo, prueba más tarde.</li></ul>
+        <div class="stack-8" style="width: 100%; margin-top: 8px"><button class="btn btn-primary btn-lg btn-block" type="button"><span class="i i-recargar" aria-hidden="true"></span>Reintentar</button></div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="stack-8"><p class="frame-lbl">Sin conexión · con notas guardadas</p>
+    <div class="phone">
+      <dc-import name="Inicio" accent="{{accent}}" theme="{{theme}}" hint-size="390px,844px"></dc-import>
+      <div role="status" style="position: absolute; left: 12px; right: 12px; top: 64px; z-index: 40; display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 14px; background: #221D2B; color: #F4F1F8; box-shadow: var(--shadow-3); font: 600 14px/20px var(--fb)">
+        <span class="i i-sin-red" aria-hidden="true" style="color: #FFC23D"></span><span class="grow">Sin conexión. Ves tus notas de las 4:20 p. m.</span><button class="btn btn-sm" type="button" style="background: rgb(255 255 255 / .14); color: #F4F1F8; height: 32px">Reintentar</button>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"enum","options":["azul","rojo","verde","morado"],"default":"azul"},"theme":{"editor":"enum","options":["claro","oscuro"],"default":"claro"},"$preview":{"width":1800,"height":960}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { accent: this.props.accent ?? 'azul', theme: this.props.theme ?? 'claro' };
+  }
+}
+</script>
+</body>
+</html>

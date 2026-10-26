@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>KREA · Ajustes de puntos</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/d04b561f582ecc0dde089e2a2bdf187f">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&amp;family=Poppins:wght@600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="k" data-accent="{{accent}}" data-theme="{{theme}}" style="width: 100%; min-height: 100%; font-family: 'Nunito Sans', system-ui, sans-serif; color: var(--text)">
+<div class="app">
+  <aside class="side" aria-label="Navegación del profesor">
+    <a class="brand" href="Panel.dc.html" aria-label="KREA, ir al panel"><span class="logo" style="--w: 132px"><span class="ink"></span><span class="spl"></span></span></a>
+    <nav aria-label="Secciones">
+      <a class="nav" href="Panel.dc.html"><span class="i i-panel" aria-hidden="true"></span>Panel</a>
+      <a class="nav" href="Evaluar.dc.html"><span class="i i-evaluar" aria-hidden="true"></span>Evaluar<span class="chip chip-acc num" style="margin-left: auto; height: 22px">7</span></a>
+      <a class="nav" href="TareasProfe.dc.html"><span class="i i-tareas" aria-hidden="true"></span>Tareas</a>
+      <a class="nav" href="Alumnos.dc.html"><span class="i i-perfil" aria-hidden="true"></span>Alumnos</a>
+      <a class="nav" href="Equipos.dc.html"><span class="i i-equipo" aria-hidden="true"></span>Equipos</a>
+      <a class="nav" href="#" aria-current="page"><span class="i i-puntos" aria-hidden="true"></span>Puntos</a>
+      <a class="nav" href="Ranking.dc.html"><span class="i i-trofeo" aria-hidden="true"></span>Ranking</a>
+      <a class="nav" href="Premios.dc.html"><span class="i i-premio" aria-hidden="true"></span>Premios</a>
+    </nav>
+    <div class="who"><img class="av" src="/_blob/271b2a1f1bf609e892400fc4bc5ede99" alt="" style="--s: 40px"><span class="grow"><span class="t-small-b" style="display: block">[Nombre del profe]</span><span class="t-small t-2" style="display: block">Profesor · 5A y 5C</span></span></div>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <a href="Panel.dc.html" aria-label="KREA, ir al panel"><span class="logo" style="--w: 88px"><span class="ink"></span><span class="spl"></span></span></a>
+      <span class="spacer"></span>
+      <button class="btn btn-ghost btn-icon" type="button" aria-label="Abrir menú" aria-haspopup="dialog"><span class="i i-24 i-menu" aria-hidden="true"></span></button>
+    </header>
+
+    <main class="wrap wrap-wide">
+      <section class="stack-8" aria-labelledby="h-pts">
+        <p class="t-eyebrow">Puntos del ranking · no cambian la nota</p>
+        <h1 id="h-pts" class="t-h1">Ajustes de puntos</h1>
+      </section>
+
+      <div class="g-home">
+        <form class="card stack-24" aria-labelledby="h-form" action="#" novalidate="">
+          <h2 id="h-form" class="t-h3">Nuevo ajuste</h2>
+          <div class="row wrap-row" style="gap: 16px">
+            <div class="field"><span class="label" id="l-a">Ajustar a</span><div class="seg" role="radiogroup" aria-labelledby="l-a"><button type="button" role="radio" aria-checked="true" aria-pressed="true"><span class="i i-perfil" aria-hidden="true"></span>Alumno</button><button type="button" role="radio" aria-checked="false"><span class="i i-equipo" aria-hidden="true"></span>Equipo</button></div></div>
+            <div class="field"><span class="label" id="l-s">Sección</span><div class="seg" role="radiogroup" aria-labelledby="l-s"><button type="button" role="radio" aria-checked="true" aria-pressed="true">5A</button><button type="button" role="radio" aria-checked="false">5C</button></div></div>
+          </div>
+          <div class="field"><label class="label" for="quien">¿A quién?</label><div class="input"><img class="av" src="/_blob/48775c7e58ca6179ffebc16860942dba" alt="" style="--s: 28px"><input id="quien" role="combobox" aria-expanded="false" value="Jorge Quintero"><span class="t-small t-2 num">17 pts</span><span class="i i-chev-abajo" aria-hidden="true"></span></div></div>
+
+          <fieldset style="border: 0; padding: 0; margin: 0" class="stack-8">
+            <legend class="label" style="margin-bottom: 8px">Motivo <span style="color: var(--error)">*</span></legend>
+            <div class="g2" style="gap: 8px" role="radiogroup" aria-label="Motivo">
+              <sc-for list="{{reasons}}" as="r" hint-placeholder-count="8">
+                <button type="button" role="radio" aria-checked="{{r.on}}" class="row" style="justify-content: space-between; min-height: 52px; padding: 8px 12px; border-radius: 12px; border: 1px solid {{r.border}}; background: {{r.bg}}; text-align: left; cursor: pointer; font: 600 15px/20px var(--fb); box-shadow: {{r.ring}}">
+                  <span class="row-8"><sc-if value="{{r.isOn}}" hint-placeholder-val="{{ false }}"><span class="i i-check t-ink" aria-hidden="true"></span></sc-if>{{r.label}}</span>
+                  <span class="{{r.cls}}" style="height: 24px">{{r.val}}</span>
+                </button>
+              </sc-for>
+            </div>
+          </fieldset>
+
+          <div class="row wrap-row" style="gap: 16px; align-items: flex-end">
+            <div class="field"><label class="label" for="pv">Puntos</label><div class="row-8"><button class="btn btn-secondary btn-icon" type="button" aria-label="Restar 0,5"><span class="i i-menos" aria-hidden="true"></span></button><div class="input" style="width: 96px"><input id="pv" value="+2" inputmode="decimal" style="text-align: center; font-family: var(--fh); font-weight: 700; color: var(--success)"></div><button class="btn btn-secondary btn-icon" type="button" aria-label="Sumar 0,5"><span class="i i-mas" aria-hidden="true"></span></button></div><span class="hint">Propuesto por el motivo. Pasos de 0,5.</span></div>
+            <div class="field grow" style="min-width: 240px"><label class="label" for="det">Detalle <span class="t-2" style="font-weight: 400">(obligatorio en «Otro»)</span></label><div class="input"><input id="det" value="Explicó su moodboard a toda la clase"></div></div>
+          </div>
+
+          <div class="alert alert-ok" role="status"><span class="i i-tendencia" aria-hidden="true"></span><span><b>Jorge Quintero</b> pasa de 17 a <b>19 pts</b> y sube del puesto 16 al 11. Su nota no cambia.</span></div>
+          <button class="btn btn-primary btn-lg" type="submit" style="align-self: flex-start"><span class="i i-check" aria-hidden="true"></span>Aplicar ajuste</button>
+        </form>
+
+        <section class="card" aria-labelledby="h-hist">
+          <div class="sec-h"><h2 id="h-hist" class="t-h3">Historial</h2><button class="btn btn-ghost btn-sm" type="button"><span class="i i-filtro" aria-hidden="true"></span>Filtrar</button></div>
+          <ul class="list">
+            <li class="li" style="align-items: flex-start"><span class="chip chip-ok num" style="min-width: 52px; justify-content: center"><span class="i i-mas" aria-hidden="true"></span>2</span><span class="grow"><span class="t-h4" style="display: block">Jorge Quintero</span><span class="t-small" style="display: block">Participación destacada</span><span class="t-small t-2">25/10/2026, 10:15 a. m. · [Nombre del profe]</span></span></li>
+            <li class="li" style="align-items: flex-start"><span class="chip chip-err num" style="min-width: 52px; justify-content: center"><span class="i i-menos" aria-hidden="true"></span>1</span><span class="grow"><span class="t-h4" style="display: block">Klenyerber Corredor</span><span class="t-small" style="display: block">Uso del celular</span><span class="t-small t-2">25/10/2026, 9:40 a. m.</span></span></li>
+            <li class="li" style="align-items: flex-start"><span class="chip chip-ok num" style="min-width: 52px; justify-content: center"><span class="i i-mas" aria-hidden="true"></span>1</span><span class="grow"><span class="t-h4" style="display: block">Equipo 5A-G3 Ropa</span><span class="t-small" style="display: block">Ayudó a un compañero</span><span class="t-small t-2">24/10/2026, 11:05 a. m.</span></span></li>
+            <li class="li" style="align-items: flex-start"><span class="chip chip-err num" style="min-width: 52px; justify-content: center"><span class="i i-menos" aria-hidden="true"></span>2</span><span class="grow"><span class="t-h4" style="display: block">Gabriel Gil</span><span class="t-small" style="display: block">No estuvo en clase</span><span class="t-small t-2">23/10/2026, 7:30 a. m.</span></span></li>
+            <li class="li" style="align-items: flex-start"><span class="chip chip-err num" style="min-width: 52px; justify-content: center"><span class="i i-menos" aria-hidden="true"></span>1</span><span class="grow"><span class="t-h4" style="display: block">Equipo 5C-G1</span><span class="t-small" style="display: block">Otro: "Entregaron la maqueta sin nombres"</span><span class="t-small t-2">23/10/2026, 8:10 a. m.</span></span></li>
+          </ul>
+        </section>
+      </div>
+    </main>
+
+    <nav class="bnav" aria-label="Navegación del profesor">
+      <a href="Panel.dc.html"><span class="pill-ic"><span class="i i-panel" aria-hidden="true"></span></span>Panel</a>
+      <a href="Evaluar.dc.html"><span class="pill-ic"><span class="i i-evaluar" aria-hidden="true"></span></span>Evaluar</a>
+      <a href="Alumnos.dc.html"><span class="pill-ic"><span class="i i-perfil" aria-hidden="true"></span></span>Alumnos</a>
+      <a href="#" aria-current="page"><span class="pill-ic"><span class="i i-puntos" aria-hidden="true"></span></span>Puntos</a>
+      <a href="Ranking.dc.html"><span class="pill-ic"><span class="i i-trofeo" aria-hidden="true"></span></span>Ranking</a>
+    </nav>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"enum","options":["azul","rojo","verde","morado"],"default":"azul"},"theme":{"editor":"enum","options":["claro","oscuro"],"default":"claro"},"$preview":{"width":1440,"height":1300}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const R = [['Participación destacada', 2], ['Ayudó a un compañero', 1], ['Trabajo extra', 2], ['No estuvo en clase', -2], ['No prestó atención', -1], ['Uso del celular', -1], ['Falta de respeto', -3], ['Otro', null]];
+    return {
+      accent: this.props.accent ?? 'azul', theme: this.props.theme ?? 'claro',
+      reasons: R.map(([label, v], i) => {
+        const on = i === 0;
+        return {
+          label, isOn: on, on: String(on),
+          val: v === null ? '± escribe' : (v > 0 ? '+' : '−') + Math.abs(v),
+          cls: v === null ? 'chip' : v > 0 ? 'chip chip-ok' : 'chip chip-err',
+          border: on ? 'var(--accent)' : 'var(--input)', bg: on ? 'var(--accent-soft)' : 'var(--surface)', ring: on ? 'inset 0 0 0 1px var(--accent)' : 'none'
+        };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>KREA · Ranking en vivo</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/d04b561f582ecc0dde089e2a2bdf187f">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&amp;family=Poppins:wght@600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="k" data-accent="{{accent}}" data-theme="{{theme}}" style="width: 100%; min-height: 100%; font-family: 'Nunito Sans', system-ui, sans-serif; color: var(--text)">
+<div class="app">
+  <aside class="side" aria-label="Navegación principal">
+    <a class="brand" href="Inicio.dc.html" aria-label="KREA, ir al inicio"><span class="logo" style="--w: 132px"><span class="ink"></span><span class="spl"></span></span></a>
+    <nav aria-label="Secciones">
+      <a class="nav" href="Inicio.dc.html"><span class="i i-home" aria-hidden="true"></span>Inicio</a>
+      <a class="nav" href="Notas.dc.html"><span class="i i-notas" aria-hidden="true"></span>Notas</a>
+      <a class="nav" href="Tarea.dc.html"><span class="i i-tareas" aria-hidden="true"></span>Tareas</a>
+      <a class="nav" href="#" aria-current="page"><span class="i i-trofeo" aria-hidden="true"></span>Ranking</a>
+      <a class="nav" href="Equipo.dc.html"><span class="i i-equipo" aria-hidden="true"></span>Equipo</a>
+      <a class="nav" href="Perfil.dc.html"><span class="i i-perfil" aria-hidden="true"></span>Perfil</a>
+    </nav>
+    <a class="who" href="Perfil.dc.html" style="text-decoration: none; color: inherit"><img class="av" src="{{meAv}}" alt="" style="--s: 40px"><span class="grow"><span class="t-small-b" style="display: block">{{meName}}</span><span class="t-small t-2" style="display: block">5A · Estudiante</span></span></a>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <a href="Inicio.dc.html" aria-label="KREA, ir al inicio"><span class="logo" style="--w: 88px"><span class="ink"></span><span class="spl"></span></span></a>
+      <span class="spacer"></span>
+      <span class="live"><span class="pulse" aria-hidden="true"></span>En vivo</span>
+    </header>
+
+    <main class="wrap">
+      <section class="stack" aria-labelledby="h-rk">
+        <div class="row wrap-row" style="justify-content: space-between; gap: 12px">
+          <div class="stack-8">
+            <p class="t-eyebrow">Sección 5A · 35 estudiantes</p>
+            <h1 id="h-rk" class="t-h1 row-8" style="gap: 12px">Ranking <span class="live only-d flex"><span class="pulse" aria-hidden="true"></span>En vivo</span></h1>
+          </div>
+          <div class="seg" role="tablist" aria-label="Vista del ranking">
+            <button role="tab" type="button" aria-selected="{{selS}}"><span class="i i-perfil" aria-hidden="true"></span>Estudiantes</button>
+            <button role="tab" type="button" aria-selected="{{selT}}"><span class="i i-equipo" aria-hidden="true"></span>Equipos</button>
+          </div>
+        </div>
+        <details class="card-flat only-m" style="padding: 12px 16px" open="">
+          <summary class="t-small-b row-8" style="cursor: pointer; list-style: none; min-height: 28px"><span class="i i-info t-ink" aria-hidden="true"></span>¿Cómo se calculan los puntos?<span class="i i-16 i-chev-abajo" aria-hidden="true" style="margin-left: auto; transform: rotate(180deg)"></span></summary>
+          <p class="t-small" style="margin-top: 8px">Cada nota de 10 o más suma esos mismos puntos; una nota menor de 10 suma 0. Tus profes también suman o restan por conducta, siempre con un motivo. Eso no cambia tu nota.</p>
+        </details>
+      </section>
+
+      <div class="g-side">
+        <div class="stack-24">
+          <sc-if value="{{isStudents}}" hint-placeholder-val="{{ true }}">
+            <section class="card card-hero" aria-label="Podio" style="padding-bottom: 0; overflow: hidden">
+              <ol class="podium">
+                <li class="pod pod-2"><img class="av" src="/_blob/64cab5ffd717293204d40b3a07ed14f8" alt="" style="--s: 64px"><span class="nm">Heymi Sierra</span><span class="pts">32,5 pts</span><span class="step" aria-label="Puesto 2">2</span></li>
+                <li class="pod pod-1"><span class="i i-32 i-corona crown" aria-hidden="true"></span><img class="av av-ring" src="/_blob/115eee73145e2e67e2badad57b896a41" alt="" style="--s: 80px"><span class="nm">Yeilin Duarte{{podTu}}</span><span class="pts">37,5 pts</span><span class="step" aria-label="Puesto 1">1</span></li>
+                <li class="pod pod-3"><img class="av" src="/_blob/9b4d192fa77a9192a337f2bd8e190cac" alt="" style="--s: 64px"><span class="nm">Franyer Hernández</span><span class="pts">32 pts</span><span class="step" aria-label="Puesto 3">3</span></li>
+              </ol>
+            </section>
+
+            <section aria-labelledby="h-list">
+              <h2 id="h-list" class="sr">Puestos 4 a 35</h2>
+              <ol>
+                <sc-for list="{{rows}}" as="r" hint-placeholder-count="12">
+                  <sc-if value="{{r.sep}}" hint-placeholder-val="{{ false }}"><li class="risk-sep" aria-hidden="true"><span class="i i-16 i-alerta"></span>Zona de riesgo · 5 últimos</li></sc-if>
+                  <li class="{{r.cls}}">
+                    <span class="pos">{{r.pos}}</span>
+                    <img class="av" src="{{r.av}}" alt="">
+                    <span class="grow"><span class="nm row-8" style="display: flex; gap: 6px">{{r.name}}<sc-if value="{{r.me}}" hint-placeholder-val="{{ false }}"><span class="chip chip-tu">tú</span></sc-if></span><span class="sub" style="display: block">{{r.team}}</span></span>
+                    <span class="{{r.dcls}}"><sc-if value="{{r.up}}" hint-placeholder-val="{{ false }}"><span class="i i-sube" aria-hidden="true"></span></sc-if><sc-if value="{{r.down}}" hint-placeholder-val="{{ false }}"><span class="i i-baja" aria-hidden="true"></span></sc-if>{{r.dtxt}}<span class="sr">{{r.dsr}}</span></span>
+                    <span class="pts">{{r.pts}}</span>
+                  </li>
+                </sc-for>
+              </ol>
+            </section>
+          </sc-if>
+
+          <sc-if value="{{isTeams}}" hint-placeholder-val="{{ false }}">
+            <section class="card card-hero" aria-label="Podio de equipos" style="padding-bottom: 0; overflow: hidden">
+              <ol class="podium">
+                <li class="pod pod-2"><span class="tl tl-fb" style="--s: 64px; --tc: #1F5E8C" role="img" aria-label="Sin logo">R</span><span class="nm">5A-G3 Ropa</span><span class="pts">18 pts</span><span class="step" aria-label="Puesto 2">2</span></li>
+                <li class="pod pod-1"><span class="i i-32 i-corona crown" aria-hidden="true"></span><span class="tl tl-fb" style="--s: 80px; --tc: #8A3B12" role="img" aria-label="Sin logo">R</span><span class="nm">5A-G2 Repostería</span><span class="pts">19 pts</span><span class="step" aria-label="Puesto 1">1</span></li>
+                <li class="pod pod-3"><span class="tl tl-photo" style="--s: 64px" role="img" aria-label="Logo de 5A-G1 Barbería"></span><span class="nm">5A-G1 Barbería</span><span class="pts">17 pts</span><span class="step" aria-label="Puesto 3, empatado">3</span></li>
+              </ol>
+            </section>
+            <ol>
+              <li class="rk rk-top"><span class="pos">3</span><span class="tl tl-fb" style="--s: 40px; --tc: #0E6B5C" role="img" aria-label="Sin logo">C</span><span class="grow"><span class="nm" style="display: block">5A-G5 Celulares</span><span class="sub" style="display: block">5 integrantes · capitán Christian Sepúlveda</span></span><span class="chip" style="height: 22px; font-size: 12px">Empate</span><span class="pts">17</span></li>
+              <li class="rk rk-top"><span class="pos">5</span><span class="tl tl-fb" style="--s: 40px; --tc: #6A3FB0" role="img" aria-label="Sin logo">M</span><span class="grow"><span class="nm" style="display: block">5A-G4 Mascotas</span><span class="sub" style="display: block">5 integrantes · capitana Delianyely Romero</span></span><span class="delta delta-eq">=<span class="sr"> sin cambio</span></span><span class="pts">15</span></li>
+              <li class="rk rk-top"><span class="pos">6</span><span class="tl tl-fb" style="--s: 40px; --tc: #A3361F" role="img" aria-label="Sin logo">C</span><span class="grow"><span class="nm" style="display: block">5A-G6 Comida Rápida</span><span class="sub" style="display: block">6 integrantes · capitana Heymi Sierra</span></span><span class="delta delta-down"><span class="i i-baja" aria-hidden="true"></span>1<span class="sr"> puesto abajo</span></span><span class="pts">14</span></li>
+            </ol>
+          </sc-if>
+        </div>
+
+        <aside class="stack-24">
+          <section class="card stack only-d" aria-labelledby="h-how">
+            <h2 id="h-how" class="t-h3">Cómo se calculan</h2>
+            <ul class="stack-8 t-small">
+              <li class="row-8" style="align-items: flex-start"><span class="gp gp-sm" style="--g: #57C110">15</span><span>Cada nota de 10 o más suma esos mismos puntos.</span></li>
+              <li class="row-8" style="align-items: flex-start"><span class="gp gp-sm" style="--g: #F9A800">8</span><span>Una nota menor de 10 suma 0.</span></li>
+              <li class="row-8" style="align-items: flex-start"><span class="chip chip-ok" style="height: 26px">+2</span><span>Tus profes suman o restan por conducta, siempre con un motivo. Eso no cambia tu nota.</span></li>
+            </ul>
+          </section>
+          <section class="card stack" aria-labelledby="h-mov">
+            <h2 id="h-mov" class="t-h3">Últimos movimientos</h2>
+            <ul class="stack-8 t-small" aria-live="polite">
+              <li class="row-8"><span class="delta delta-up"><span class="i i-sube" aria-hidden="true"></span>2</span><span class="grow">María Méndez subió al puesto 4</span><span class="t-2">hace 2 min</span></li>
+              <li class="row-8"><span class="delta delta-up"><span class="i i-sube" aria-hidden="true"></span>1</span><span class="grow">Heymi Sierra subió al puesto 2</span><span class="t-2">hace 2 min</span></li>
+              <li class="row-8"><span class="chip chip-ok" style="height: 22px">+2</span><span class="grow">Jorge Quintero · Participación destacada</span><span class="t-2">hace 9 min</span></li>
+              <li class="row-8"><span class="delta delta-down"><span class="i i-baja" aria-hidden="true"></span>2</span><span class="grow">Valentina Gámez bajó al puesto 27</span><span class="t-2">hace 15 min</span></li>
+            </ul>
+          </section>
+        </aside>
+      </div>
+    </main>
+
+    <nav class="bnav" aria-label="Navegación principal">
+      <a href="Inicio.dc.html"><span class="pill-ic"><span class="i i-home" aria-hidden="true"></span></span>Inicio</a>
+      <a href="Notas.dc.html"><span class="pill-ic"><span class="i i-notas" aria-hidden="true"></span></span>Notas</a>
+      <a href="#" aria-current="page"><span class="pill-ic"><span class="i i-trofeo" aria-hidden="true"></span></span>Ranking</a>
+      <a href="Equipo.dc.html"><span class="pill-ic"><span class="i i-equipo" aria-hidden="true"></span></span>Equipo</a>
+      <a href="Perfil.dc.html"><span class="pill-ic"><span class="i i-perfil" aria-hidden="true"></span></span>Perfil</a>
+    </nav>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"enum","options":["azul","rojo","verde","morado"],"default":"azul"},"theme":{"editor":"enum","options":["claro","oscuro"],"default":"claro"},"tab":{"editor":"enum","options":["estudiantes","equipos"],"default":"estudiantes"},"me":{"editor":"enum","options":["Yeilin","Jorge"],"default":"Yeilin"},"$preview":{"width":1440,"height":2800}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const B = '/_blob/';
+    const AV = ['45c7ffcb037dd0500286f7762e72ce9d','93d96cec88c34e4bf4de33f0d3f4a202','76d5f763ed680e3627094844ab48f0c9','3920742b907c9a44649527995bd51872','271b2a1f1bf609e892400fc4bc5ede99','7c22355e359bb2b4958c48d81f30bbbe','44c8548cc9fe889f7bb2a877efa852a9','ef23c89e43f1b89b8119de49e9a1c5cb','0ba138f26163e3b1ed558cb46fd33626','81986c917a5a6061e8f31daa46d2e998','f51d321c9ab094995d8978295bf0ee92','45b249fb514ea7b27140c7e463dbf099','48775c7e58ca6179ffebc16860942dba','30ca0db36b1d3592f621f36d05944f3a','52a5a2ca80d4d569d4050f8419e28f1b','8f0cb6eaa21449eec8a04ab7f21f13ad','f5a6b0cad053b34967f0cd09e2ed3edb','0eea61bd0bdde9e16033f00cc9215b42','4d7d8b2a878e5587ee17663cf1fdbd5a','a46b17bcefb78125668ccb863a9e536e','e5ff21ad4eabad8664523eabd1443a0e','3d517905d5a217f4289bf856dba6d837','252c917b1dd1daab2852287760b2121a','fc83ecd8f084772b72876d32a5c1814a','45c278fd85d586e0be91152ee77ddfb2','63e40f0d789a50194a28753e85cd1eca','999ab8818deaafd09c5d3f6a52e8e20f','245d19f4a7158418da9bb92fdf191fa7','e541d082c4110579ab2948c5fa14c8c9','93d96cec88c34e4bf4de33f0d3f4a202','7c22355e359bb2b4958c48d81f30bbbe','ef23c89e43f1b89b8119de49e9a1c5cb'];
+    const data = [
+      [4,'María Méndez','5A-G2 Repostería','30,5','up',2],[5,'Ángel Pernia','5A-G3 Ropa','30','tie',0],[5,'Yulianie Ramírez','5A-G5 Celulares','30','tie',0],
+      [7,'Wendoly Ponce','5A-G2 Repostería','29','tie',0],[7,'Eider Becerra','5A-G4 Mascotas','29','tie',0],[9,'Génesis Díaz','5A-G1 Barbería','28,5','down',1],
+      [10,'Cristofer Carvajal','5A-G5 Celulares','27','eq',0],[11,'Lidny Rico','5A-G2 Repostería','19','eq',0],[12,'Zaida Carrero','5A-G3 Ropa','18','eq',0],
+      [12,'Gregori Sayago','5A-G3 Ropa','18','eq',0],[12,'Kerlyz Cárdenas','5A-G3 Ropa','18','eq',0],[12,'Jailyn Martínez','5A-G3 Ropa','18','eq',0],
+      [16,'Jorge Quintero','5A-G1 Barbería','17','up',3],[16,'Christopher Gamboa','5A-G1 Barbería','17','eq',0],[16,'Félix Ruiz','5A-G1 Barbería','17','eq',0],
+      [16,'Christian Sepúlveda','5A-G5 Celulares','17','eq',0],[16,'Jesús Beltrán','5A-G5 Celulares','17','eq',0],[16,'Keiver Parada','5A-G1 Barbería','17','eq',0],
+      [16,'Celeny Correa','5A-G5 Celulares','17','eq',0],[23,'Luniel Morón','5A-G4 Mascotas','15','eq',0],[23,'Delianyely Romero','5A-G4 Mascotas','15','eq',0],
+      [23,'María de los Ángeles Méndez','5A-G4 Mascotas','15','eq',0],[23,'Isangela Rincón','5A-G4 Mascotas','15','eq',0],[27,'Camila Flórez','5A-G6 Comida Rápida','14','eq',0],
+      [27,'Ángela Huerfano','5A-G6 Comida Rápida','14','eq',0],[27,'Cristopher Zambano','5A-G6 Comida Rápida','14','eq',0],[27,'Valentina Gámez','5A-G6 Comida Rápida','14','down',2],
+      [31,'Klenyerber Corredor','Sin equipo','10,5','eq',0],[32,'Gabriel Gil','Sin equipo','0','eq',0],[32,'Jesús Ramírez','Sin equipo','0','eq',0],
+      [32,'Jhosman Castro','Sin equipo','0','eq',0],[32,'Airam Castañeda','Sin equipo','0','eq',0]
+    ];
+    const me = this.props.me ?? 'Yeilin';
+    const meIsJorge = me === 'Jorge';
+    const tab = this.props.tab ?? 'estudiantes';
+    const rows = data.map((d, i) => {
+      const [pos, name, team, pts, mv, n] = d;
+      const isMe = meIsJorge && name === 'Jorge Quintero';
+      const risk = i >= data.length - 5;
+      const top = pos <= 10;
+      let cls = 'rk' + (top ? ' rk-top' : '') + (risk ? ' rk-risk' : '') + (isMe ? ' rk-me' : '');
+      const dcls = mv === 'up' ? 'delta delta-up' : mv === 'down' ? 'delta delta-down' : mv === 'tie' ? 'chip' : 'delta delta-eq';
+      const dtxt = mv === 'up' || mv === 'down' ? String(n) : mv === 'tie' ? 'Empate' : '';
+      const dsr = mv === 'up' ? ' subió ' + n + ' puestos' : mv === 'down' ? ' bajó ' + n + ' puestos' : mv === 'tie' ? ' empatado' : ' sin cambio';
+      return { pos, name, team, pts, av: B + AV[i % AV.length], cls, dcls, dtxt, dsr, up: mv === 'up', down: mv === 'down', me: isMe, sep: i === data.length - 5 };
+    });
+    return {
+      accent: this.props.accent ?? 'azul', theme: this.props.theme ?? 'claro',
+      isStudents: tab === 'estudiantes', isTeams: tab === 'equipos', selS: String(tab === 'estudiantes'), selT: String(tab === 'equipos'),
+      rows, podTu: meIsJorge ? '' : ' (tú)',
+      meName: meIsJorge ? 'Jorge Quintero' : 'Yeilin Duarte',
+      meAv: meIsJorge ? B + '48775c7e58ca6179ffebc16860942dba' : B + '115eee73145e2e67e2badad57b896a41'
+    };
+  }
+}
+</script>
+</body>
+</html>

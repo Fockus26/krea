@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>KREA · Momentos del ranking</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/d04b561f582ecc0dde089e2a2bdf187f">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&amp;family=Poppins:wght@600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="k board" data-accent="{{accent}}" data-theme="{{theme}}" style="width: 1440px; min-height: 2200px; font-family: 'Nunito Sans', system-ui, sans-serif; color: var(--text)">
+  <header class="stack-8">
+    <p class="t-eyebrow">Ranking en vivo · storyboards</p>
+    <h1 class="t-h1">Momentos del ranking</h1>
+    <p class="t-2" style="max-width: 900px">Cada momento en 3 cuadros: antes → durante → después. Solo se animan <code>transform</code> y <code>opacity</code>. Las filas que no cambian de puesto no se mueven. Un único anuncio por cambio en la región <code>aria-live="polite"</code>.</p>
+  </header>
+
+  <section class="card stack" aria-labelledby="m1">
+    <div class="sec-h" style="margin: 0"><h2 id="m1" class="t-h2">1 · Subir de puesto dentro del top 10</h2><span class="chip chip-acc">600 ms · cubic-bezier(.2,.8,.2,1)</span></div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px">
+      <div class="stack-8"><p class="frame-lbl">Antes · t = 0</p>
+        <div><div class="rk rk-top"><span class="pos">4</span><img class="av" src="/_blob/93d96cec88c34e4bf4de33f0d3f4a202" alt=""><span class="nm">Ángel Pernia</span><span></span><span class="pts">30</span></div>
+        <div class="rk rk-top"><span class="pos">5</span><img class="av" src="/_blob/76d5f763ed680e3627094844ab48f0c9" alt=""><span class="nm">Yulianie Ramírez</span><span></span><span class="pts">30</span></div>
+        <div class="rk rk-top"><span class="pos">6</span><img class="av" src="/_blob/45c7ffcb037dd0500286f7762e72ce9d" alt=""><span class="nm">María Méndez</span><span></span><span class="pts">29</span></div></div>
+      </div>
+      <div class="stack-8"><p class="frame-lbl">Durante · 0–600 ms</p>
+        <div style="position: relative; height: 200px">
+          <div class="rk rk-top" style="position: absolute; left: 0; right: 0; top: 64px; opacity: .9"><span class="pos">4</span><img class="av" src="/_blob/93d96cec88c34e4bf4de33f0d3f4a202" alt=""><span class="nm">Ángel Pernia</span><span></span><span class="pts">30</span></div>
+          <div class="rk rk-top" style="position: absolute; left: 0; right: 0; top: 128px; opacity: .9"><span class="pos">5</span><img class="av" src="/_blob/76d5f763ed680e3627094844ab48f0c9" alt=""><span class="nm">Yulianie Ramírez</span><span></span><span class="pts">30</span></div>
+          <div class="rk rk-top" style="position: absolute; left: 0; right: 0; top: 24px; z-index: 2; transform: scale(1.03); box-shadow: var(--shadow-3)"><span class="pos">↑</span><img class="av" src="/_blob/45c7ffcb037dd0500286f7762e72ce9d" alt=""><span class="nm">María Méndez</span><span class="delta delta-up"><span class="i i-sube" aria-hidden="true"></span>2</span><span class="pts">30,5</span></div>
+        </div>
+      </div>
+      <div class="stack-8"><p class="frame-lbl">Después · 600–1800 ms</p>
+        <div><div class="rk rk-top mv-glow" style="box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 40%, transparent)"><span class="pos">4</span><img class="av" src="/_blob/45c7ffcb037dd0500286f7762e72ce9d" alt=""><span class="nm">María Méndez</span><span class="delta delta-up"><span class="i i-sube" aria-hidden="true"></span>2</span><span class="pts">30,5</span></div>
+        <div class="rk rk-top"><span class="pos">5</span><img class="av" src="/_blob/93d96cec88c34e4bf4de33f0d3f4a202" alt=""><span class="nm">Ángel Pernia</span><span class="delta delta-down"><span class="i i-baja" aria-hidden="true"></span>1</span><span class="pts">30</span></div>
+        <div class="rk rk-top"><span class="pos">5</span><img class="av" src="/_blob/76d5f763ed680e3627094844ab48f0c9" alt=""><span class="nm">Yulianie Ramírez</span><span class="delta delta-down"><span class="i i-baja" aria-hidden="true"></span>1</span><span class="pts">30</span></div></div>
+      </div>
+    </div>
+    <p class="t-small t-2">La fila que sube se eleva (scale 1,03 + shadow-3, z-index 2) y se traslada con FLIP; las desplazadas bajan a la vez sin sombra. Los puntos cuentan hacia arriba en 600 ms (tabular-nums, sin saltos de ancho). El chip ▲2 queda 10 s y se desvanece en 250 ms. Brillo de acento 1200 ms una vez.</p>
+  </section>
+
+  <section class="card stack" aria-labelledby="m2">
+    <div class="sec-h" style="margin: 0"><h2 id="m2" class="t-h2">2 · Entrar al podio (celebración)</h2><span class="chip chip-acc">600 ms subir + 1200 ms celebración · rebote cubic-bezier(.34,1.56,.64,1)</span></div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; align-items: end">
+      <div class="stack-8"><p class="frame-lbl">Antes</p>
+        <ol class="podium" style="padding-top: 16px"><li class="pod pod-2"><img class="av" src="/_blob/9b4d192fa77a9192a337f2bd8e190cac" alt="" style="--s: 48px"><span class="nm">Franyer</span><span class="step" style="height: 72px">2</span></li><li class="pod pod-1"><img class="av" src="/_blob/115eee73145e2e67e2badad57b896a41" alt="" style="--s: 56px"><span class="nm">Yeilin</span><span class="step" style="height: 100px">1</span></li><li class="pod pod-3"><img class="av" src="/_blob/45c7ffcb037dd0500286f7762e72ce9d" alt="" style="--s: 48px"><span class="nm">María</span><span class="step" style="height: 56px">3</span></li></ol>
+        <div class="rk rk-top"><span class="pos">4</span><img class="av" src="/_blob/64cab5ffd717293204d40b3a07ed14f8" alt=""><span class="nm">Heymi Sierra</span><span></span><span class="pts">30</span></div>
+      </div>
+      <div class="stack-8"><p class="frame-lbl">Durante · Heymi +2,5 → 32,5</p>
+        <div style="position: relative">
+          <ol class="podium" style="padding-top: 16px"><li class="pod pod-2"><img class="av mv-pop" src="/_blob/64cab5ffd717293204d40b3a07ed14f8" alt="" style="--s: 56px; box-shadow: 0 0 0 4px var(--splash)"><span class="nm">Heymi</span><span class="step" style="height: 72px; transform: scaleY(1.06); transform-origin: bottom">2</span></li><li class="pod pod-1"><img class="av" src="/_blob/115eee73145e2e67e2badad57b896a41" alt="" style="--s: 56px"><span class="nm">Yeilin</span><span class="step" style="height: 100px">1</span></li><li class="pod pod-3"><img class="av" src="/_blob/9b4d192fa77a9192a337f2bd8e190cac" alt="" style="--s: 48px"><span class="nm">Franyer</span><span class="step" style="height: 56px">3</span></li></ol>
+          <span aria-hidden="true" class="confetti" style="left: 12%; top: 6px; background: var(--splash); transform: rotate(18deg)"></span>
+          <span aria-hidden="true" class="confetti" style="left: 22%; top: 30px; background: var(--secondary); transform: rotate(-30deg)"></span>
+          <span aria-hidden="true" class="confetti" style="left: 30%; top: 0; background: var(--accent); transform: rotate(60deg)"></span>
+          <span aria-hidden="true" class="confetti" style="left: 8%; top: 50px; background: #57C110; transform: rotate(-12deg)"></span>
+          <span aria-hidden="true" class="confetti" style="left: 38%; top: 40px; background: var(--splash); transform: rotate(40deg)"></span>
+          <span aria-hidden="true" class="confetti" style="left: 3%; top: 18px; background: var(--secondary); transform: rotate(75deg)"></span>
+        </div>
+      </div>
+      <div class="stack-8"><p class="frame-lbl">Después · aviso</p>
+        <div class="toast" role="status"><span class="i i-trofeo" aria-hidden="true" style="color: #FFC23D"></span><span class="grow">¡Heymi Sierra entró al podio! Puesto 2</span></div>
+        <div class="rk rk-top"><span class="pos">4</span><img class="av" src="/_blob/45c7ffcb037dd0500286f7762e72ce9d" alt=""><span class="nm">María Méndez</span><span class="delta delta-down"><span class="i i-baja" aria-hidden="true"></span>1</span><span class="pts">30,5</span></div>
+      </div>
+    </div>
+    <p class="t-small t-2">Confeti: 24 piezas 8 × 14 px en 4 colores (splash, secondary, accent, #57C110), caen 120–240 px con rotación, opacidad 1 → 0 en 1200 ms, nacen detrás del avatar que entra. El avatar hace pop (scale .6 → 1, rebote). Si el cambio lo vio la persona que entró: además vibración del teléfono 40 ms (si el navegador lo permite).</p>
+  </section>
+
+  <section class="card stack" aria-labelledby="m3">
+    <div class="sec-h" style="margin: 0"><h2 id="m3" class="t-h2">3 · Caer a la zona de riesgo (animación «grave»)</h2><span class="chip chip-err">600 ms bajar + 400 ms temblor</span></div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px">
+      <div class="stack-8"><p class="frame-lbl">Antes</p>
+        <div><div class="rk"><span class="pos">30</span><img class="av" src="/_blob/45c278fd85d586e0be91152ee77ddfb2" alt=""><span class="nm">Valentina Gámez</span><span></span><span class="pts">14</span></div>
+        <div class="risk-sep"><span class="i i-16 i-alerta" aria-hidden="true"></span>Zona de riesgo</div>
+        <div class="rk rk-risk"><span class="pos">31</span><img class="av" src="/_blob/245d19f4a7158418da9bb92fdf191fa7" alt=""><span class="nm">Klenyerber Corredor</span><span></span><span class="pts">10,5</span></div></div>
+      </div>
+      <div class="stack-8"><p class="frame-lbl">Durante · Valentina −4 (ajustes)</p>
+        <div><div class="rk"><span class="pos">30</span><img class="av" src="/_blob/245d19f4a7158418da9bb92fdf191fa7" alt=""><span class="nm">Klenyerber Corredor</span><span></span><span class="pts">10,5</span></div>
+        <div class="risk-sep"><span class="i i-16 i-alerta" aria-hidden="true"></span>Zona de riesgo</div>
+        <div class="rk rk-risk mv-shake" style="transform: translateX(-4px)"><span class="pos">31</span><img class="av" src="/_blob/45c278fd85d586e0be91152ee77ddfb2" alt=""><span class="nm">Valentina Gámez</span><span class="delta delta-down"><span class="i i-baja" aria-hidden="true"></span>1</span><span class="pts">10</span></div></div>
+      </div>
+      <div class="stack-8"><p class="frame-lbl">Después</p>
+        <div class="rk rk-risk" style="box-shadow: inset 0 0 0 2px var(--error)"><span class="pos">31</span><img class="av" src="/_blob/45c278fd85d586e0be91152ee77ddfb2" alt=""><span class="grow"><span class="nm" style="display: block">Valentina Gámez</span><span class="sub" style="display: block; color: var(--error)">Entró a la zona de riesgo</span></span><span class="i i-alerta" aria-hidden="true" style="color: var(--error)"></span><span class="pts">10</span></div>
+        <p class="t-small t-2">Si es tu fila: aviso «Bajaste a la zona de riesgo. Entrega lo pendiente para subir» con enlace a Por entregar.</p>
+      </div>
+    </div>
+    <p class="t-small t-2">Tono apagado: avatar en gris (grayscale 1, opacidad .75 solo en la imagen), fondo surface-2. El texto mantiene su contraste (nunca se aplica opacidad al texto). Temblor: translateX −4, 4, −3, 2, 0 px en 400 ms, una sola vez. Sin confeti ni sonido.</p>
+  </section>
+
+  <section class="g2">
+    <div class="card stack" aria-labelledby="m4">
+      <h2 id="m4" class="t-h2">4 · Empate</h2>
+      <div><div class="rk rk-top"><span class="pos">5</span><img class="av" src="/_blob/93d96cec88c34e4bf4de33f0d3f4a202" alt=""><span class="nm">Ángel Pernia</span><span class="chip" style="height: 22px; font-size: 12px">Empate</span><span class="pts">30</span></div>
+      <div class="rk rk-top"><span class="pos">5</span><img class="av" src="/_blob/76d5f763ed680e3627094844ab48f0c9" alt=""><span class="nm">Yulianie Ramírez</span><span class="chip" style="height: 22px; font-size: 12px">Empate</span><span class="pts">30</span></div>
+      <div class="rk rk-top"><span class="pos">7</span><img class="av" src="/_blob/3920742b907c9a44649527995bd51872" alt=""><span class="nm">Wendoly Ponce</span><span class="chip" style="height: 22px; font-size: 12px">Empate</span><span class="pts">29</span></div></div>
+      <p class="t-small t-2">Ranking de competencia (1-2-2-4): mismo número de puesto, el siguiente salta. Dentro del empate, orden alfabético por primer apellido. El chip «Empate» solo en el top 10; del 11 en adelante basta el número repetido. Un empate no anima a nadie.</p>
+    </div>
+    <div class="card stack" aria-labelledby="m5">
+      <h2 id="m5" class="t-h2">5 · Movimiento reducido</h2>
+      <div class="k no-motion" data-accent="{{accent}}" data-theme="{{theme}}" style="container-type: normal; background: transparent">
+        <div class="rk rk-top" style="box-shadow: inset 0 0 0 2px var(--accent)"><span class="pos">2</span><img class="av" src="/_blob/64cab5ffd717293204d40b3a07ed14f8" alt=""><span class="nm">Heymi Sierra</span><span class="delta delta-up"><span class="i i-sube" aria-hidden="true"></span>2</span><span class="pts">32,5</span></div>
+        <div class="alert alert-info" role="status" aria-live="polite" style="margin-top: 12px"><span class="i i-info" aria-hidden="true"></span><span><b>Heymi subió al puesto 2.</b> María Méndez bajó al 4.</span></div>
+      </div>
+      <p class="t-small t-2">Con <code>prefers-reduced-motion: reduce</code>: la lista se reordena al instante, sin traslación, sin confeti, sin temblor, sin pulso del «En vivo». La fila cambiada queda con borde de acento 2 px durante 3 s y el cambio se anuncia en texto (el mismo texto que lee el lector de pantalla).</p>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"enum","options":["azul","rojo","verde","morado"],"default":"azul"},"theme":{"editor":"enum","options":["claro","oscuro"],"default":"claro"},"$preview":{"width":1440,"height":2200}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { accent: this.props.accent ?? 'azul', theme: this.props.theme ?? 'claro' };
+  }
+}
+</script>
+</body>
+</html>

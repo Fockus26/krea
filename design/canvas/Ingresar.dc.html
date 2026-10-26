@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>KREA · Ingresar y recuperar contraseña</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/d04b561f582ecc0dde089e2a2bdf187f">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&amp;family=Poppins:wght@600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="k" data-accent="{{accent}}" data-theme="{{theme}}" style="width: 100%; min-height: 100%; font-family: 'Nunito Sans', system-ui, sans-serif; color: var(--text)">
+<div class="auth">
+  <main class="auth-main">
+    <div class="auth-card">
+      <span class="logo logo-m" style="--w: 140px" role="img" aria-label="KREA Escuela Creativa"><span class="ink"></span><span class="spl"></span></span>
+
+      <sc-if value="{{isLogin}}" hint-placeholder-val="{{ true }}"><div class="stack-24">
+        <div class="stack-8">
+          <p class="t-eyebrow">Escuela Creativa · 5.º año</p>
+          <h1 class="t-h1">¡Hola de nuevo!</h1>
+          <p class="t-2">Entra con tu cédula y la contraseña que te dio tu profe.</p>
+        </div>
+        <form class="stack" style="gap: 20px" action="#" novalidate="">
+          <div class="field"><label class="label" for="ced">Cédula</label><div class="input"><input id="ced" name="cedula" inputmode="numeric" autocomplete="username" maxlength="9" placeholder="Ej. 33272397"></div><span class="hint">Solo números, sin puntos.</span></div>
+          <div class="field">
+            <label class="label" for="pw">Contraseña</label>
+            <div class="input"><input id="pw" name="password" type="password" autocomplete="current-password" placeholder="Tu contraseña"><button class="btn btn-ghost btn-icon btn-sm" type="button" aria-label="Mostrar contraseña" aria-pressed="false" style="margin-right: -8px"><span class="i i-ojo" aria-hidden="true"></span></button></div>
+            <a href="#" class="t-small-b" style="align-self: flex-end; margin-top: 4px">Olvidé mi contraseña</a>
+          </div>
+          <button class="btn btn-primary btn-lg btn-block" type="submit">Entrar</button>
+        </form>
+        <p class="t-small t-2">¿Eres profe? Entras aquí mismo con tu cédula y te llevamos a tu panel.</p>
+      </div></sc-if>
+
+      <sc-if value="{{isRecover}}" hint-placeholder-val="{{ false }}"><div class="stack-24">
+        <a href="#" class="btn btn-ghost btn-sm" style="align-self: flex-start; margin-left: -12px"><span class="i i-chev-izq" aria-hidden="true"></span>Volver a entrar</a>
+        <div class="stack-8">
+          <h1 class="t-h1">Recupera tu contraseña</h1>
+          <p class="t-2">Escribe tu cédula y te enviamos un enlace al correo que tu profe tiene registrado.</p>
+        </div>
+        <form class="stack" style="gap: 20px" action="#" novalidate="">
+          <div class="field"><label class="label" for="ced2">Cédula</label><div class="input is-error"><input id="ced2" inputmode="numeric" aria-invalid="true" aria-describedby="ced2e" value="332723"><span class="i i-alerta" aria-hidden="true" style="color: var(--error)"></span></div><span id="ced2e" class="err"><span class="i i-16 i-alerta" aria-hidden="true"></span>Faltan dígitos: la cédula tiene de 7 a 9 números.</span></div>
+          <button class="btn btn-primary btn-lg btn-block" type="submit">Enviar enlace</button>
+        </form>
+      </div></sc-if>
+
+      <sc-if value="{{isSent}}" hint-placeholder-val="{{ false }}"><div class="stack-24">
+        <span class="empty" style="align-items: flex-start; padding: 0"><span class="blob"><span class="i i-32 i-correo" aria-hidden="true"></span></span></span>
+        <div class="stack-8">
+          <h1 class="t-h1">Revisa tu correo</h1>
+          <p class="t-2">Enviamos un enlace a <b style="color: var(--text)">y••••@gmail.com</b>. Vence en <b style="color: var(--text)">1 hora</b> y sirve una sola vez.</p>
+        </div>
+        <ul class="stack-8">
+          <li class="row-8" style="align-items: flex-start"><span class="i i-info t-ink" aria-hidden="true" style="margin-top: 2px"></span><span>¿No llega en 5 minutos? Revisa <b>Spam</b> o <b>Promociones</b>.</span></li>
+          <li class="row-8" style="align-items: flex-start"><span class="i i-candado t-ink" aria-hidden="true" style="margin-top: 2px"></span><span>¿Ya no usas ese correo? Pídele a tu profe que te asigne una contraseña nueva en clase.</span></li>
+        </ul>
+        <div class="stack-8">
+          <a class="btn btn-primary btn-lg btn-block" href="#">Volver a entrar</a>
+          <button class="btn btn-ghost btn-block" type="button" disabled="" style="background: none">Reenviar enlace en 0:45</button>
+        </div>
+      </div></sc-if>
+
+      <sc-if value="{{isNew}}" hint-placeholder-val="{{ false }}"><div class="stack-24">
+        <div class="stack-8">
+          <h1 class="t-h1">Crea tu nueva contraseña</h1>
+          <p class="t-2">Mínimo 8 caracteres. Algo que recuerdes y que nadie adivine.</p>
+        </div>
+        <form class="stack" style="gap: 20px" action="#" novalidate="">
+          <div class="field">
+            <label class="label" for="n1">Nueva contraseña</label>
+            <div class="input"><input id="n1" type="password" autocomplete="new-password" value="krea2026!" aria-describedby="n1h"><button class="btn btn-ghost btn-icon btn-sm" type="button" aria-label="Mostrar contraseña" aria-pressed="false" style="margin-right: -8px"><span class="i i-ojo" aria-hidden="true"></span></button></div>
+            <span id="n1h" class="ok"><span class="i i-16 i-check" aria-hidden="true"></span>9 caracteres · cumple el mínimo</span>
+          </div>
+          <div class="field">
+            <label class="label" for="n2">Repite la contraseña</label>
+            <div class="input is-success"><input id="n2" type="password" autocomplete="new-password" value="krea2026!" aria-describedby="n2h"><span class="i i-check" aria-hidden="true" style="color: var(--success)"></span></div>
+            <span id="n2h" class="ok"><span class="i i-16 i-check" aria-hidden="true"></span>Las contraseñas coinciden.</span>
+          </div>
+          <button class="btn btn-primary btn-lg btn-block" type="submit">Guardar contraseña</button>
+        </form>
+      </div></sc-if>
+    </div>
+  </main>
+
+  <aside class="auth-brand" aria-hidden="true">
+    <span style="position: absolute; right: -140px; bottom: -160px; width: 520px; height: 520px; border-radius: 50%; background: var(--splash); opacity: .22"></span>
+    <span style="position: absolute; right: 120px; top: 120px; width: 40px; height: 40px; border-radius: 50%; background: var(--splash); opacity: .55"></span>
+    <span class="logo" style="--w: 260px"><span class="ink"></span><span class="spl"></span></span>
+    <div class="stack" style="position: relative; max-width: 520px">
+      <p style="font: 700 44px/52px var(--fh); letter-spacing: -.01em">Tus notas, tu equipo y el ranking en vivo.</p>
+      <p class="t-body">Mira pregunta por pregunta cómo te evaluaron y cuánto le sumas a tu equipo.</p>
+      <div class="row-8" style="margin-top: 8px"><span class="gp gp-lg" style="--g: #17A127">18,5</span><span class="gp gp-lg" style="--g: #57C110">15</span><span class="gp gp-lg" style="--g: #F5D400">10</span></div>
+    </div>
+    <p class="t-small" style="position: relative">Escuela Creativa del liceo · 5.º año, secciones A y C</p>
+  </aside>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"enum","options":["azul","rojo","verde","morado"],"default":"azul"},"theme":{"editor":"enum","options":["claro","oscuro"],"default":"claro"},"screen":{"editor":"enum","options":["login","recuperar","enviado","nueva"],"default":"login"},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.props.screen ?? 'login';
+    return {
+      accent: this.props.accent ?? 'azul', theme: this.props.theme ?? 'claro',
+      isLogin: s === 'login', isRecover: s === 'recuperar', isSent: s === 'enviado', isNew: s === 'nueva'
+    };
+  }
+}
+</script>
+</body>
+</html>

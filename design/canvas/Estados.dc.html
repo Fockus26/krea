@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>KREA · Pantallas de estado</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/d04b561f582ecc0dde089e2a2bdf187f">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&amp;family=Poppins:wght@600;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="k board" data-accent="{{accent}}" data-theme="{{theme}}" style="width: 1440px; min-height: 2000px; font-family: 'Nunito Sans', system-ui, sans-serif; color: var(--text)">
+  <header class="stack-8">
+    <p class="t-eyebrow">Familia de pantallas de estado · cada marco es un recorte a tamaño real (660 × 520) de la pantalla de 1440</p>
+    <h1 class="t-h1">404 · 500 · Sin conexión</h1>
+    <p class="t-2">Misma anatomía en todas: cabecera mínima (64 px) con logo, etiqueta, título con la voz de la marca, una línea sobre lo que pasó y hasta dos acciones. Contenido alineado a la izquierda, máx. 640 px, centrado vertical.</p>
+  </header>
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px">
+    <sc-for list="{{screens}}" as="s" hint-placeholder-count="6">
+      <div class="stack-8">
+        <p class="frame-lbl">{{s.label}}</p>
+        <div class="status" style="height: 520px; border-radius: 24px; overflow: hidden; background: var(--bg); box-shadow: 0 0 0 1px var(--divider), var(--shadow-1)">
+          <div class="status-top">
+            <span class="logo" style="--w: 88px" role="img" aria-label="KREA"><span class="ink"></span><span class="spl"></span></span>
+            <span style="flex: 1"></span>
+            <sc-if value="{{s.session}}" hint-placeholder-val="{{ true }}"><img class="av" src="{{s.av}}" alt="Tu perfil" style="--s: 32px"></sc-if>
+            <sc-if value="{{s.noSession}}" hint-placeholder-val="{{ false }}"><a class="btn btn-ghost btn-sm" href="Ingresar.dc.html">Iniciar sesión</a></sc-if>
+          </div>
+          <div class="status-body" style="padding: 32px 48px">
+            <sc-if value="{{s.isCode}}" hint-placeholder-val="{{ true }}"><p class="status-code" aria-hidden="true">{{s.big}}</p></sc-if>
+            <sc-if value="{{s.isIcon}}" hint-placeholder-val="{{ false }}"><span class="empty" style="padding: 0; align-items: flex-start"><span class="blob" style="margin: 0"><span class="i i-32 i-sin-red" aria-hidden="true"></span></span></span></sc-if>
+            <p class="t-eyebrow">{{s.eyebrow}}</p>
+            <h2 class="t-h1">{{s.title}}</h2>
+            <p class="t-2" style="max-width: 520px">{{s.line}}</p>
+            <sc-if value="{{s.hasCode}}" hint-placeholder-val="{{ false }}">
+              <div class="row-8"><span class="codebox">KR-500-7F3A9C<button class="btn btn-ghost btn-icon btn-sm" type="button" aria-label="Copiar código KR-500-7F3A9C"><span class="i i-copiar" aria-hidden="true"></span></button></span><span class="t-small t-2">25/10/2026, 4:22 p. m.</span></div>
+            </sc-if>
+            <sc-if value="{{s.hasCheck}}" hint-placeholder-val="{{ false }}">
+              <ul class="stack-8 t-small"><li class="row-8"><span class="i i-16 i-check t-ink" aria-hidden="true"></span>Activa los datos o conéctate a un wifi.</li><li class="row-8"><span class="i i-16 i-check t-ink" aria-hidden="true"></span>Si te queda poco saldo, prueba más tarde.</li><li class="row-8"><span class="i i-16 i-reloj t-ink" aria-hidden="true"></span>Última actualización: hoy, 4:20 p. m.</li></ul>
+            </sc-if>
+            <div class="row wrap-row" style="gap: 8px; margin-top: 8px">
+              <a class="btn btn-primary" href="#"><sc-if value="{{s.retry}}" hint-placeholder-val="{{ false }}"><span class="i i-recargar" aria-hidden="true"></span></sc-if>{{s.a1}}</a>
+              <a class="btn btn-secondary" href="#">{{s.a2}}</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"enum","options":["azul","rojo","verde","morado"],"default":"azul"},"theme":{"editor":"enum","options":["claro","oscuro"],"default":"claro"},"$preview":{"width":1440,"height":2000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = '/_blob/115eee73145e2e67e2badad57b896a41';
+    const pr = '/_blob/271b2a1f1bf609e892400fc4bc5ede99';
+    const nf = { big: '404', eyebrow: 'Error 404', title: 'Esta página se fue de recreo', line: 'La dirección no existe o esa tarea ya no está publicada.', isCode: true, isIcon: false, hasCode: false, hasCheck: false, retry: false };
+    const se = { big: '500', eyebrow: 'Error 500', title: 'Algo se nos rompió por dentro', isCode: true, isIcon: false, hasCheck: false, retry: true, a1: 'Reintentar', a2: 'Ir al inicio' };
+    const S = [
+      Object.assign({}, nf, { label: '404 · con sesión · estudiante', session: true, noSession: false, av: st, a1: 'Ir al inicio', a2: 'Mis notas' }),
+      Object.assign({}, nf, { label: '404 · con sesión · profesor', session: true, noSession: false, av: pr, a1: 'Ir al inicio', a2: 'Evaluar' }),
+      Object.assign({}, nf, { label: '404 · sin sesión', session: false, noSession: true, av: st, a1: 'Ir al inicio', a2: 'Iniciar sesión' }),
+      Object.assign({}, se, { label: '500 · con código', session: true, noSession: false, av: st, hasCode: true, line: 'No es tu culpa. Intenta de nuevo; si sigue pasando, mándale este código a tu profe.' }),
+      Object.assign({}, se, { label: '500 · sin código', session: true, noSession: false, av: st, hasCode: false, line: 'No es tu culpa. Intenta de nuevo en un momento.' }),
+      { label: 'Sin conexión', session: true, noSession: false, av: st, isCode: false, isIcon: true, eyebrow: 'Sin conexión', title: 'Se te fue la señal', line: 'Las notas que ya cargaste se siguen viendo. Lo nuevo aparece cuando vuelva la conexión.', hasCode: false, hasCheck: true, retry: true, a1: 'Reintentar', a2: 'Ver mis notas guardadas', big: '' }
+    ];
+    return { accent: this.props.accent ?? 'azul', theme: this.props.theme ?? 'claro', screens: S };
+  }
+}
+</script>
+</body>
+</html>
