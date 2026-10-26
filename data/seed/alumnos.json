@@ -1,0 +1,692 @@
+[
+  {
+    "cedula": "32828381",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Jorge Enrique",
+    "apellidos": "Quintero Arenas",
+    "notaIndividual": null,
+    "grupoId": "5a-g1",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33217923",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Luniel Alessandro",
+    "apellidos": "Morón Hernández",
+    "notaIndividual": null,
+    "grupoId": "5a-g4",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33272371",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Franyer Jesús",
+    "apellidos": "Hernández Suárez",
+    "notaIndividual": 18.0,
+    "grupoId": "5a-g6",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33272397",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Yeilin Marilyn",
+    "apellidos": "Duarte Moncayo",
+    "notaIndividual": 18.5,
+    "grupoId": "5a-g2",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33282883",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Heymi Gabriela",
+    "apellidos": "Sierra Pabón",
+    "notaIndividual": 18.5,
+    "grupoId": "5a-g6",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33368217",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Camila Anahí",
+    "apellidos": "Flórez Gutiérrez",
+    "notaIndividual": null,
+    "grupoId": "5a-g6",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33456636",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Gabriel Alejandro",
+    "apellidos": "Gil Corredor",
+    "notaIndividual": null,
+    "grupoId": null,
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33498239",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Wendoly Tatiana",
+    "apellidos": "Ponce Suárez",
+    "notaIndividual": 10.0,
+    "grupoId": "5a-g2",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33606641",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Ángela Yisell",
+    "apellidos": "Huerfano Bohórquez",
+    "notaIndividual": null,
+    "grupoId": "5a-g6",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33695344",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Cristopher Emmanuel",
+    "apellidos": "Zambano García",
+    "notaIndividual": null,
+    "grupoId": "5a-g6",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33696102",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Christopher Antonio",
+    "apellidos": "Gamboa Jaimes",
+    "notaIndividual": null,
+    "grupoId": "5a-g1",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33737154",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Cristofer David",
+    "apellidos": "Carvajal Vivas",
+    "notaIndividual": 10.0,
+    "grupoId": "5a-g5",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33775395",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Ángel Santiago",
+    "apellidos": "Pernia Velasco",
+    "notaIndividual": 12.0,
+    "grupoId": "5a-g3",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33775449",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Jesús David",
+    "apellidos": "Ramírez Chaparro",
+    "notaIndividual": null,
+    "grupoId": null,
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33775743",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Lidny Dajamis",
+    "apellidos": "Rico Guerrero",
+    "notaIndividual": null,
+    "grupoId": "5a-g2",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33845692",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Jhosman Josué",
+    "apellidos": "Castro Salcedo",
+    "notaIndividual": null,
+    "grupoId": null,
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33975264",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Eider Jesús",
+    "apellidos": "Becerra Delgado",
+    "notaIndividual": 14.0,
+    "grupoId": "5a-g4",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33987614",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Klenyerber Josué",
+    "apellidos": "Corredor Velasco",
+    "notaIndividual": 10.5,
+    "grupoId": null,
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33988019",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Félix Adrián",
+    "apellidos": "Ruiz Fajardo",
+    "notaIndividual": null,
+    "grupoId": "5a-g1",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33988608",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Delianyely Sofía",
+    "apellidos": "Romero Serrano",
+    "notaIndividual": null,
+    "grupoId": "5a-g4",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "34098906",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "María de los Ángeles",
+    "apellidos": "Méndez Chacón",
+    "notaIndividual": 8.0,
+    "grupoId": "5a-g4",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "34099118",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "María Gabriela",
+    "apellidos": "Méndez Chacón",
+    "notaIndividual": 11.5,
+    "grupoId": "5a-g2",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "34125601",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Christian Johany",
+    "apellidos": "Sepúlveda Flórez",
+    "notaIndividual": null,
+    "grupoId": "5a-g5",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "34125858",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Génesis Julibeth",
+    "apellidos": "Díaz Barrios",
+    "notaIndividual": 11.5,
+    "grupoId": "5a-g1",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "34126088",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Zaida Isabella",
+    "apellidos": "Carrero Torra",
+    "notaIndividual": null,
+    "grupoId": "5a-g3",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "34158888",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Isangela Mariana",
+    "apellidos": "Rincón Flórez",
+    "notaIndividual": null,
+    "grupoId": "5a-g4",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "34159636",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Jesús Antonio",
+    "apellidos": "Beltrán Ríos",
+    "notaIndividual": null,
+    "grupoId": "5a-g5",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "34401070",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Gregori Isaac",
+    "apellidos": "Sayago Romero",
+    "notaIndividual": null,
+    "grupoId": "5a-g3",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "34469487",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Yulianie Yusbet",
+    "apellidos": "Ramírez Franco",
+    "notaIndividual": 13.0,
+    "grupoId": "5a-g5",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "34834242",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Keiver Morel",
+    "apellidos": "Parada Arias",
+    "notaIndividual": null,
+    "grupoId": "5a-g1",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "34834531",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Celeny Dridimar",
+    "apellidos": "Correa Cortés",
+    "notaIndividual": null,
+    "grupoId": "5a-g5",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "34835073",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Kerlyz Yulieth",
+    "apellidos": "Cárdenas Méndez",
+    "notaIndividual": null,
+    "grupoId": "5a-g3",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "34911639",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Valentina Consolación",
+    "apellidos": "Gámez Rodríguez",
+    "notaIndividual": null,
+    "grupoId": "5a-g6",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "35066755",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Airam de Nazaret",
+    "apellidos": "Castañeda Guerrero",
+    "notaIndividual": null,
+    "grupoId": null,
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "37575127",
+    "anio": 5,
+    "seccion": "5A",
+    "nombres": "Jailyn Verónica",
+    "apellidos": "Martínez Méndez",
+    "notaIndividual": null,
+    "grupoId": "5a-g3",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "32408800",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Jeanpier Ismael",
+    "apellidos": "Villegas Márquez",
+    "notaIndividual": null,
+    "grupoId": "5c-g4",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33214862",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Branger Antonio",
+    "apellidos": "Saray Hernández",
+    "notaIndividual": null,
+    "grupoId": "5c-g1",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33302491",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Gabriel Santiago",
+    "apellidos": "Caro Romero",
+    "notaIndividual": null,
+    "grupoId": "5c-g6",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33368124",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Carlos José",
+    "apellidos": "Díaz Jaimes",
+    "notaIndividual": null,
+    "grupoId": "5c-g6",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33411128",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Katherine Michael",
+    "apellidos": "Montoya Anaya",
+    "notaIndividual": null,
+    "grupoId": "5c-g3",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33439121",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Yoanyulis Daniela",
+    "apellidos": "Torres Morillo",
+    "notaIndividual": null,
+    "grupoId": "5c-g1",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33439127",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "María de los Ángeles",
+    "apellidos": "Escalante Pineda",
+    "notaIndividual": null,
+    "grupoId": "5c-g1",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33695751",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Danielle Smith",
+    "apellidos": "Quintero Torres",
+    "notaIndividual": null,
+    "grupoId": "5c-g5",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33775260",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Maikely Saraid",
+    "apellidos": "Serrano Jaimes",
+    "notaIndividual": null,
+    "grupoId": null,
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33776128",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "María Gabriela",
+    "apellidos": "Hurtado Acevedo",
+    "notaIndividual": null,
+    "grupoId": "5c-g4",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33844862",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Moisés de Jesús",
+    "apellidos": "Yuncoza Mejía",
+    "notaIndividual": null,
+    "grupoId": "5c-g1",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33845528",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Kleiver Emmanuel",
+    "apellidos": "Morales Oliveros",
+    "notaIndividual": null,
+    "grupoId": "5c-g3",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33975241",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Jesús Manuel",
+    "apellidos": "Lobo Peña",
+    "notaIndividual": null,
+    "grupoId": "5c-g2",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "33988846",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Jessuly Yulibeth",
+    "apellidos": "Delgado Delgado",
+    "notaIndividual": null,
+    "grupoId": "5c-g5",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "34096047",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Braymar Brlayanna",
+    "apellidos": "Duarte Jaimes",
+    "notaIndividual": null,
+    "grupoId": "5c-g4",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "34096573",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Shenae Angelik",
+    "apellidos": "Ruiz Ramírez",
+    "notaIndividual": null,
+    "grupoId": "5c-g4",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "34096685",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Gerald Samuel",
+    "apellidos": "Palencia Santiago",
+    "notaIndividual": null,
+    "grupoId": "5c-g2",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "34098815",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Jhon Alejandro",
+    "apellidos": "Espinel Villamizar",
+    "notaIndividual": null,
+    "grupoId": "5c-g6",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "34099172",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Breisner Eduardo",
+    "apellidos": "Valero Rodríguez",
+    "notaIndividual": null,
+    "grupoId": "5c-g4",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "34125706",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Yuleici Valentina",
+    "apellidos": "Castillo Bastos",
+    "notaIndividual": null,
+    "grupoId": "5c-g5",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "34132735",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Jhosnas Jessier",
+    "apellidos": "Rivero Tarazona",
+    "notaIndividual": null,
+    "grupoId": "5c-g2",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "34158819",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Ana Camila",
+    "apellidos": "Contreras Colmenares",
+    "notaIndividual": null,
+    "grupoId": "5c-g5",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "34158964",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Emanuel José",
+    "apellidos": "Arias Casique",
+    "notaIndividual": null,
+    "grupoId": "5c-g1",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "34159672",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Isaac Leonardo",
+    "apellidos": "Castillo Arciniegas",
+    "notaIndividual": null,
+    "grupoId": "5c-g3",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "34181045",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Nairuby Stephany",
+    "apellidos": "Fuenmayor Espinoza",
+    "notaIndividual": null,
+    "grupoId": "5c-g6",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "34244341",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Romer Jesús",
+    "apellidos": "Gutiérrez Torres",
+    "notaIndividual": null,
+    "grupoId": "5c-g6",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "34661917",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Josneiker Alexander",
+    "apellidos": "Torres Sánchez",
+    "notaIndividual": null,
+    "grupoId": "5c-g2",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "34716801",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Kerly Yohana",
+    "apellidos": "Zafra Villamizar",
+    "notaIndividual": null,
+    "grupoId": "5c-g3",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "34834923",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "María Beatriz",
+    "apellidos": "Arroyo Rodríguez",
+    "notaIndividual": null,
+    "grupoId": "5c-g6",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "34911636",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Gabriela Estafany",
+    "apellidos": "Colmenares Lárez",
+    "notaIndividual": null,
+    "grupoId": "5c-g3",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "35172135",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Deliany Eliana",
+    "apellidos": "Florián Martínez",
+    "notaIndividual": null,
+    "grupoId": "5c-g2",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "36089516",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Yofran Reneyro",
+    "apellidos": "Domínguez Carrillo",
+    "notaIndividual": null,
+    "grupoId": "5c-g4",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "36845732",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Tatiana",
+    "apellidos": "Granados Ardila",
+    "notaIndividual": null,
+    "grupoId": "5c-g1",
+    "baseEvaluacion": 20
+  },
+  {
+    "cedula": "36902901",
+    "anio": 5,
+    "seccion": "5C",
+    "nombres": "Mawily Wilmary",
+    "apellidos": "Zambrano Rico",
+    "notaIndividual": null,
+    "grupoId": "5c-g3",
+    "baseEvaluacion": 20
+  }
+]

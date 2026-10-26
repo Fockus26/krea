@@ -39,3 +39,22 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# PR screenshots (web-agent-kit)
+.pr-shots/
+.pr-shots.json
+
+# QA scripts and logs (web-agent-kit)
+.qa/
+
+# local working state of context/ - backup: bun run context:backup (web-agent-kit)
+context/CURRENT_PHASE.md
+context/CONTENT_CHECKLIST.md
+context/KIT_FEEDBACK.md
+context/GIT_STATE.md
+context/*_INVENTORY.md
+context/PHASE_LOG/
+context/plans/
+
+# Claude Desktop worktrees (web-agent-kit)
+.claude/worktrees/

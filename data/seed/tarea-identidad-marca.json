@@ -1,0 +1,129 @@
+{
+  "id": "identidad-de-marca",
+  "titulo": "Identidad de marca",
+  "tipo": "individual",
+  "preguntas": [
+    {
+      "id": "p1",
+      "enunciado": "¿Como se llama la marca?",
+      "formato": "texto",
+      "valor": 1
+    },
+    {
+      "id": "p2",
+      "enunciado": "¿Por que nacio esta marca?",
+      "formato": "texto",
+      "valor": 1
+    },
+    {
+      "id": "p3",
+      "enunciado": "¿Que producto o servicio vende?",
+      "formato": "texto",
+      "valor": 3
+    },
+    {
+      "id": "p4",
+      "enunciado": "¿Cual es el cliente ideal?",
+      "formato": "texto",
+      "valor": 3
+    },
+    {
+      "id": "p5",
+      "enunciado": "¿Cual es la personalidad de la marca?",
+      "formato": "texto",
+      "valor": 2
+    },
+    {
+      "id": "p6",
+      "enunciado": "¿Que problema resuelven?",
+      "formato": "texto",
+      "valor": 4
+    },
+    {
+      "id": "p7",
+      "enunciado": "¿Cual es el elemento diferenciador?",
+      "formato": "texto",
+      "valor": 4
+    },
+    {
+      "id": "p8",
+      "enunciado": "¿Cuales son los 3 valeores principales?",
+      "formato": "texto",
+      "valor": 2
+    }
+  ],
+  "evaluaciones": [
+    {
+      "alumno": "Angeles Mendez",
+      "puntos": [0.5, 0.5, 1.5, 1.0, 0.5, 2.0, 1.0, 1.0],
+      "nota": 8.0,
+      "cedula": "34098906"
+    },
+    {
+      "alumno": "Genesis Díaz",
+      "puntos": [1.0, 1.0, 1.5, 1.0, 2.0, 2.0, 1.0, 2.0],
+      "nota": 11.5,
+      "cedula": "34125858"
+    },
+    {
+      "alumno": "David Carvajal",
+      "puntos": [1.0, 1.0, 2.0, 2.5, 1.0, 2.0, 0, 0.5],
+      "nota": 10.0,
+      "cedula": "33737154"
+    },
+    {
+      "alumno": "Angel Pernia",
+      "puntos": [1.0, 1.0, 2.0, 1.0, 2.0, 1.0, 2.5, 1.5],
+      "nota": 12.0,
+      "cedula": "33775395"
+    },
+    {
+      "alumno": "Maria Gabriela",
+      "puntos": [0.5, 1.0, 2.0, 2.0, 2.0, 1.0, 1.0, 2.0],
+      "nota": 11.5,
+      "cedula": "34099118"
+    },
+    {
+      "alumno": "Eider Becerra",
+      "puntos": [1.0, 1.0, 3.0, 2.5, 0.5, 2.0, 2.5, 1.5],
+      "nota": 14.0,
+      "cedula": "33975264"
+    },
+    {
+      "alumno": "Heymi Sierra",
+      "puntos": [1.0, 1.0, 3.0, 3.0, 2.0, 4.0, 4.0, 0.5],
+      "nota": 18.5,
+      "cedula": "33282883"
+    },
+    {
+      "alumno": "Kleinyerver Corredor",
+      "puntos": [1.0, 1.0, 0, 1.0, 1.0, 2.0, 3.5, 1.0],
+      "nota": 10.5,
+      "cedula": "33987614"
+    },
+    {
+      "alumno": "Yulianie Ramirez",
+      "puntos": [1.0, 1.0, 3.0, 2.0, 1.0, 1.0, 2.5, 1.5],
+      "nota": 13.0,
+      "cedula": "34469487"
+    },
+    {
+      "alumno": "Yeilin Duarte",
+      "puntos": [1.0, 1.0, 2.0, 3.0, 2.0, 3.5, 4.0, 2.0],
+      "nota": 18.5,
+      "cedula": "33272397"
+    },
+    {
+      "alumno": "Franyerth Jesus",
+      "puntos": [0.5, 1.0, 3.0, 3.0, 2.0, 4.0, 4.0, 0.5],
+      "nota": 18.0,
+      "cedula": "33272371"
+    },
+    {
+      "alumno": "Wendoly Ponce",
+      "puntos": [1.0, 0.5, 2.0, 1.5, 1.0, 1.0, 2.0, 1.0],
+      "nota": 10.0,
+      "cedula": "33498239"
+    }
+  ]
+}
