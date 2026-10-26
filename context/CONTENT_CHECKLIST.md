@@ -4,7 +4,7 @@
 
 | # | What is missing | Where (file/component) | Flagged by | Phase | Status |
 |---|---|---|---|---|---|
-| 1 | Isotipo (la "K" con gotas), favicon, apple touch icon, imagen OG | `public/brand/` | project-kickoff | Claude Design | Pending |
+| 1 | Isotipo (la "K" con gotas), favicon, apple touch icon, imagen OG | `public/brand/` | project-kickoff | Claude Design | Done en diseño: la "a" con gotas, `design/assets/brand/` (OG: plantilla en HANDOFF §5) |
 | 2 | Logos de cada equipo (los sube el profesor) | Storage `equipos/<id>/logo` | project-kickoff | Fase 07 | Pending |
 | 3 | Email real de cada estudiante y profesor (para restablecer contraseña) | `usuarios.email` | project-kickoff | Fase 07 | Pending |
 | 4 | Contraseñas iniciales asignadas por los profesores | seed de Auth | project-kickoff | Fase 07 | Pending |
@@ -15,3 +15,7 @@
 | 9 | Respuestas reales de la tarea "Identidad de marca" (el Excel solo trae puntajes) | `entregas` | import-excel | Fase 07 | Pending |
 | 10 | Significado de "Ajuste Capitán −1" en el Excel (5C-G1, G4, G6) | `grupos.ajusteCapitan` | import-excel | Fase 07 | Pending |
 | 11 | Dominio y remitente del correo | Vercel / Firebase | project-kickoff | Fase 07 | Pending |
+| 12 | Tareas de ejemplo del diseño ("Presentación de la marca", "Logo y paleta del emprendimiento", "Moodboard de la marca", "Plan de redes sociales") y sus preguntas | lienzo / `design/canvas/` | design | Fase 05 | Pending (placeholder) |
+| 13 | Respuestas de ejemplo en Detalle de nota, Entrega y Evaluar (Brasa Express, repostería) | `design/canvas/` | design | Fase 05 | Pending (placeholder) |
+| 14 | Correo de contacto del liceo para el pie del correo y remitente | HANDOFF §5c | design | Fase 07 | Pending |
+| 15 | Copy del pie de créditos de avatares DiceBear (CC BY 4.0) | Perfil | design | Fase 05 | Pending (propuesta en HANDOFF §9 #12) |

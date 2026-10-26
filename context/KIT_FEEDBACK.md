@@ -32,3 +32,4 @@ When César asks for it (or when closing phase 09): the **`kit-feedback`** skill
 (`/kit-feedback`). It builds the report with the unsent rows, grouped by kit piece with the
 most repeated first, and opens a PR on the kit's repo with the `kit-feedback` label. Sent
 rows get marked with `→ PR <owner/repo#N>` in "Proposal" (they are not deleted).
+| 1 | 2026-10-25 | Gap | 1 | new-project.ps1 · .gitattributes | En Windows con core.autocrlf=true, al cambiar de rama los archivos quedan en CRLF y `bun run lint` (Biome) falla en local aunque el CI pase | La plantilla de .gitattributes debería traer `* text=auto eol=lf` |

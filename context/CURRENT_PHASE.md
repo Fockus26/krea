@@ -9,11 +9,12 @@
 
 | Unit | Branch | Status | Log |
 |---|---|---|---|
-| Kickoff + prototipo + brief | `design/kickoff` | open | `PHASE_LOG/design-kickoff.md` |
+| Kickoff + prototipo + brief | `design/kickoff` | merged (#1) | `PHASE_LOG/design-kickoff.md` |
+| Diseño + handoff | `design/handoff` | PR abierto | `PHASE_LOG/design-handoff.md` |
 
 ## Blocked (actions for César or external)
 
-- Pegar `design/BRIEF-krea.md` en Claude Design y traer el handoff a `design/HANDOFF.md`.
+- Revisar el diseño y `design/HANDOFF.md` §9 (12 preguntas abiertas: redondeo con base, base en grupales, empates de premio…).
 - Crear el proyecto Firebase (Auth, Firestore, Storage) y cargar las claves en Vercel.
 - Emails reales de los estudiantes para "Olvidé mi contraseña" (checklist #3).
 - Instalar Java (emuladores de Firebase para `qa:local`).
