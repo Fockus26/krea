@@ -60,3 +60,4 @@ context/plans/
 .claude/worktrees/
 .vercel
 .env*
+!.env.example
