@@ -1,2 +1,3 @@
-* text=auto
+# Todo el texto en LF, también en Windows con core.autocrlf=true: Biome exige LF.
+* text=auto eol=lf
 *.sh text eol=lf
