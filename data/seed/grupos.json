@@ -1,0 +1,110 @@
+[
+  {
+    "id": "5a-g1",
+    "nombre": "5A-G1 Barbería",
+    "seccion": "5A",
+    "tema": "Barbería",
+    "capitanCedula": "33696102",
+    "ajusteCapitan": 0,
+    "notaGrupal": 17.0
+  },
+  {
+    "id": "5a-g2",
+    "nombre": "5A-G2 Repostería",
+    "seccion": "5A",
+    "tema": "Repostería",
+    "capitanCedula": "33272397",
+    "ajusteCapitan": 0,
+    "notaGrupal": 19.0
+  },
+  {
+    "id": "5a-g3",
+    "nombre": "5A-G3 Ropa",
+    "seccion": "5A",
+    "tema": "Ropa",
+    "capitanCedula": "34126088",
+    "ajusteCapitan": 0,
+    "notaGrupal": 18.0
+  },
+  {
+    "id": "5a-g4",
+    "nombre": "5A-G4 Mascotas",
+    "seccion": "5A",
+    "tema": "Mascotas",
+    "capitanCedula": "33988608",
+    "ajusteCapitan": 0,
+    "notaGrupal": 15.0
+  },
+  {
+    "id": "5a-g5",
+    "nombre": "5A-G5 Celulares",
+    "seccion": "5A",
+    "tema": "Celulares",
+    "capitanCedula": "34125601",
+    "ajusteCapitan": 0,
+    "notaGrupal": 17.0
+  },
+  {
+    "id": "5a-g6",
+    "nombre": "5A-G6 Comida Rápida",
+    "seccion": "5A",
+    "tema": "Comida Rápida",
+    "capitanCedula": "33282883",
+    "ajusteCapitan": 0,
+    "notaGrupal": 14.0
+  },
+  {
+    "id": "5c-g1",
+    "nombre": "5C-G1",
+    "seccion": "5C",
+    "tema": null,
+    "capitanCedula": "33844862",
+    "ajusteCapitan": -1.0,
+    "notaGrupal": null
+  },
+  {
+    "id": "5c-g2",
+    "nombre": "5C-G2",
+    "seccion": "5C",
+    "tema": null,
+    "capitanCedula": "34132735",
+    "ajusteCapitan": 0,
+    "notaGrupal": null
+  },
+  {
+    "id": "5c-g3",
+    "nombre": "5C-G3 Repostería",
+    "seccion": "5C",
+    "tema": "Repostería",
+    "capitanCedula": "36902901",
+    "ajusteCapitan": 0,
+    "notaGrupal": null
+  },
+  {
+    "id": "5c-g4",
+    "nombre": "5C-G4 Veterinaria",
+    "seccion": "5C",
+    "tema": "Veterinaria",
+    "capitanCedula": "33776128",
+    "ajusteCapitan": -1.0,
+    "notaGrupal": null
+  },
+  {
+    "id": "5c-g5",
+    "nombre": "5C-G5 Tienda de celulares",
+    "seccion": "5C",
+    "tema": "Tienda de celulares",
+    "capitanCedula": "34125706",
+    "ajusteCapitan": 0,
+    "notaGrupal": null
+  },
+  {
+    "id": "5c-g6",
+    "nombre": "5C-G6 Cafetería",
+    "seccion": "5C",
+    "tema": "Cafetería",
+    "capitanCedula": "34181045",
+    "ajusteCapitan": -1.0,
+    "notaGrupal": null
+  }
+]

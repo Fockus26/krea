@@ -1,0 +1,100 @@
+# Design Rules — KREA
+
+> Non-negotiable rules. Every agent and every skill follows them without exception.
+>
+> If a specific case needs to break a rule, **it is a new decision** that goes through César
+> and gets recorded in `decisions/` — not a silent exception inside a component.
+
+## Accessibility — WCAG 2.1 AA
+
+- Normal text: contrast ≥ **4.5:1** against its real background.
+- Large text (≥24px, or ≥19px bold): ≥ **3:1**.
+- Input borders, informative icons and focus rings: ≥ **3:1**.
+- **No state is conveyed only by color.** Error, success, selected, active: color **+**
+  icon, text or shape.
+- Focus always visible, designed — not the default outline or its absence.
+- No horizontal scroll at **320px** width.
+- At 400% zoom the content reflows into one column.
+- `prefers-reduced-motion` respected.
+- Every control has an accessible name.
+- Selected text (`::selection`) with the `selection` tokens, ≥ 4.5:1, in light and dark.
+- Scrollbar with the `scrollbar` tokens, thumb ≥ 3:1 against the track, in light and dark.
+- Status screens (404, 500, offline, maintenance) with the site's design and their real
+  HTTP status — see the kit's `reference/STATUS-SCREENS.md`.
+
+Cases that fail again and again, check them explicitly: the brand's `main` or `light` shade
+used as text on a light background · status chips and badges · input placeholders · text
+over an image or gradient · disabled text.
+
+## Breakpoints
+
+| Name | Width | Notes |
+|---|---|---|
+| xs | 0 | base, mobile first (la mayoría de estudiantes) |
+| sm | 640px | |
+| md | 768px | the one that breaks layouts most: neither mobile nor desktop |
+| lg | 1024px | aparece la barra lateral de navegación |
+| xl | 1280px | |
+| 2xl | 1536px | |
+| 3xl | 1920px | |
+
+**QA verification widths** (different from the breakpoints — they are real devices):
+320 · 360 · 390 · 430 · 768 · 1024 · 1280 · 1440 · 1920 · 2560 · 3840
+
+## Tokens
+
+- **Zero magic values.** Every color, spacing, radius, shadow and font size comes from the
+  tokens. If `mt-[13px]` or `text-[#3a7bd5]` shows up, either the token exists and was not
+  used, or a token is missing and that is a decision to record.
+- Base spacing unit: 4px — every spacing is a multiple.
+- See `DESIGN_TOKENS.md`, `COLORS.md`, `TYPOGRAPHY.md`.
+
+## Components
+
+- Before creating a new one, check `COMPONENTS_INVENTORY.md`. Two components that do the
+  same thing under different names is the system's most expensive debt.
+- **The project's library before reimplementing** a primitive by hand: the keyboard and
+  focus behavior is already solved there.
+- Composite widgets follow the matching WAI-ARIA Authoring Practices pattern.
+
+## Code
+
+- **bun** as manager and runner. Never npm, yarn or pnpm.
+- **Context7** checked before using any library's API.
+- Server Components by default; `'use client'` as low in the tree as possible.
+- Strict TypeScript, zero `any`.
+- **Component library:** shadcn/ui — see `PROJECT_CONTEXT.md`.
+- **Styling system:** Tailwind. Only one, never both.
+- **Nobody starts the dev server.** César starts it. Agents ask for it to be running and
+  wait for confirmation.
+
+## Content
+
+- **No agent invents final content**: no copy, no real `alt`, no prices, no contact details,
+  no testimonials. A flagged placeholder + a row in `CONTENT_CHECKLIST.md`.
+- **Zero lorem ipsum.** A realistic placeholder, in the project's language, with the length
+  of the final text. A layout validated with lorem breaks when the real copy arrives.
+
+## Git
+
+- Nothing gets committed without César's explicit approval (in `pr` mode, his approval is
+  the PR review).
+- Automatic push only when the base branch is **not** `main`.
+- Nothing destructive: no `reset --hard`, no `push --force`, no deleting branches, no
+  rewriting history.
+
+## This project's specific rules
+
+- **El acento es una variable, nunca un color fijo** (`--accent`, `--accent-ink`,
+  `--accent-contrast`, `--krea-logo-ink`, `--krea-logo-splash`). Toda pantalla se revisa con
+  los 4 acentos × claro/oscuro (D001).
+- **El color de una nota sale de `gradeColor(n)`** y va como fondo de píldora con texto
+  #111111; nunca como color de texto y nunca sin el número (D004).
+- **Nota ≠ puntos.** La nota (0–20, sobre su base) no se toca con ajustes de conducta; los
+  ajustes solo mueven los puntos del ranking (D006, D007).
+- **Todo ajuste de puntos lleva motivo** del catálogo; sin motivo no se guarda (D007).
+- **La suma de una tarea es exactamente 20**; el editor no deja publicar otra cosa (D004).
+- **Decimales con coma** en toda la UI (`18,5`).
+- Las animaciones del ranking usan solo `transform` y `opacity`; con reduced motion se anuncian
+  por texto.
+- Nombres y apellidos del estudiante son de solo lectura para él; solo el profesor los edita.
