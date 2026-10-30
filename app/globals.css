@@ -1305,6 +1305,27 @@ body {
   bottom: calc(var(--h-bnav) + env(safe-area-inset-bottom, 0px));
 }
 
+/* ---------- Sección Tareas del profesor (HANDOFF §3; lienzo Constructor.dc.html; D116) ---------- */
+/*
+ * < lg el medidor del constructor va sticky a 64 y la barra de acción sobre la barra inferior,
+ * como en Evaluar: el foco (al añadir, eliminar o al primer inválido) no puede quedar debajo
+ * (D020). Mismos altos que Evaluar (`--h-review-meter`/`--h-review-action`, D104): el medidor y
+ * la barra tienen la misma forma.
+ */
+@media (width < 64rem) {
+  html:has([data-slot="task-builder"]) {
+    scroll-padding-top: calc(4rem + var(--h-review-meter));
+    scroll-padding-bottom: calc(
+      var(--h-bnav) +
+      var(--h-review-action) +
+      env(safe-area-inset-bottom, 0px)
+    );
+  }
+  [data-slot="task-builder"] [id] {
+    scroll-margin-top: 1rem;
+  }
+}
+
 /* ---------- Sección Ingresar y recuperar (HANDOFF §3; krea.css .auth; D070) ---------- */
 :root {
   --w-auth-brand: 37.5rem; /* 600: panel de marca ≥ 1024 */

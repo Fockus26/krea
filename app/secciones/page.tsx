@@ -57,6 +57,16 @@ const PANTALLAS: ReadonlyArray<{ href: string; titulo: string; ruta: string }> =
       ruta: "/profe/evaluar/[entrega]",
     },
     {
+      href: "/secciones/tareas-profe",
+      titulo: "Tareas (profesor)",
+      ruta: "/profe/tareas",
+    },
+    {
+      href: "/secciones/tareas-profe/borrador",
+      titulo: "Constructor de tareas",
+      ruta: "/profe/tareas/[id]",
+    },
+    {
       href: "/secciones/alumnos",
       titulo: "Alumnos (profesor)",
       ruta: "/profe/alumnos",
