@@ -141,7 +141,11 @@ function Section({
 
 export default function TokensPage() {
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-4 py-10 md:px-8">
+    <main
+      id="contenido"
+      tabIndex={-1}
+      className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-4 py-10 md:px-8"
+    >
       <header className="flex flex-col gap-2">
         <p className="text-eyebrow text-text-2">Referencia interna</p>
         <h1 className="text-h1">Tokens de KREA</h1>

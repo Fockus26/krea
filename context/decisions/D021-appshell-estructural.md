@@ -1,0 +1,5 @@
+# D021 · Components · `AppShell` estructural por rol, sin contenido de navegación; páginas provisionales conservan su `<main>` · Implemented
+
+**Decision:** `components/layout/AppShell.tsx` (server component) recibe `role`, `width` y los slots `sidebar`, `topbar`, `bottomNav`. Pinta `<nav aria-label="Principal">` lateral solo ≥ lg, `<header>` topbar sticky y `<nav aria-label="Principal">` inferior sticky solo < lg (un slot vacío no pinta landmark), y un único `<main id="contenido">` con el contenedor del rol (`lib/layout.ts`). La barra inferior va en flujo y sticky: reserva sola 72 px + `env(safe-area-inset-bottom)`. `/` y `/tokens` no usan el shell (portada provisional y página interna) y conservan su `<main id="contenido">`.
+**Why:** los ítems, íconos y la tarjeta de usuario llegan con las fases 03–04. Un único `<main>` por ruta mantiene el skip link válido en ambos casos.
+**Discarded alternative:** barra inferior `position: fixed` con padding extra en `main` — duplica la reserva y cubre el final del contenido con zoom o fuentes grandes.

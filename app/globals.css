@@ -49,6 +49,8 @@
   --shadow-1: 0 1px 2px rgb(34 29 43 / 0.06), 0 2px 8px rgb(34 29 43 / 0.05);
   --shadow-2: 0 6px 20px rgb(34 29 43 / 0.1);
   --shadow-3: 0 18px 48px rgb(34 29 43 / 0.18);
+  /* Barra inferior (HANDOFF §2.7): sombra solo en claro; en oscuro gana borde */
+  --shadow-bnav: 0 -4px 16px rgb(34 29 43 / 0.06);
 
   /* Porcentajes de los tintes (los usan los derivados de la capa 5) */
   --tint-1: 12%;
@@ -111,6 +113,7 @@
   --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
   --shadow-2: 0 6px 20px rgb(0 0 0 / 0.4);
   --shadow-3: 0 18px 48px rgb(0 0 0 / 0.5);
+  --shadow-bnav: none;
 
   --tint-1: 16%;
   --tint-2: 28%;
@@ -163,6 +166,7 @@
     --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
     --shadow-2: 0 6px 20px rgb(0 0 0 / 0.4);
     --shadow-3: 0 18px 48px rgb(0 0 0 / 0.5);
+    --shadow-bnav: none;
 
     --tint-1: 16%;
     --tint-2: 28%;
@@ -269,6 +273,58 @@
   --z-offline: 40;
   --z-overlay: 50;
   --z-toast: 60;
+
+  /* Layout (HANDOFF §2.7 y §4). Los cortes van en media queries: md 48rem, lg 64rem, xl 90rem, 3xl 120rem */
+  --h-topbar: 3.5rem; /* 56; 64 desde md */
+  --h-bnav: 4.5rem; /* 72, más env(safe-area-inset-bottom) */
+  --w-side: 15.5rem; /* 248; 264 desde xl */
+  --w-container-student: 70rem; /* 1120; 1280 desde 3xl */
+  --w-container-teacher: 80rem; /* 1280; 1440 desde 3xl */
+  --w-container-reading: 47.5rem; /* 760 */
+  --w-side-col: 22.5rem; /* 360: columna lateral de g-side */
+  --page-px: 1rem; /* padding lateral 16/24/32/40 */
+  --page-pt: 1rem; /* padding superior del contenido 16/24/32/40 */
+  --page-pb: 2rem; /* padding inferior del contenido 32/48/64/80 */
+  --gap-section: 1.5rem; /* entre secciones 24; 32 desde md */
+  --gap-grid: 1rem; /* gutter de grillas 16; 24 desde md */
+  /* scroll-margin-top de anclas: alto de la topbar + respiro (<lg); solo respiro en ≥lg */
+  --scroll-offset: calc(var(--h-topbar) + 1rem);
+}
+
+@media (width >= 48rem) {
+  :root {
+    --h-topbar: 4rem;
+    --page-px: 1.5rem;
+    --page-pt: 1.5rem;
+    --page-pb: 3rem;
+    --gap-section: 2rem;
+    --gap-grid: 1.5rem;
+  }
+}
+
+@media (width >= 64rem) {
+  :root {
+    --page-px: 2rem;
+    --page-pt: 2rem;
+    --page-pb: 4rem;
+    --scroll-offset: 1rem; /* la barra lateral no tapa nada */
+  }
+}
+
+@media (width >= 90rem) {
+  :root {
+    --w-side: 16.5rem; /* 264 */
+    --page-px: 2.5rem;
+    --page-pt: 2.5rem;
+    --page-pb: 5rem;
+  }
+}
+
+@media (width >= 120rem) {
+  :root {
+    --w-container-student: 80rem;
+    --w-container-teacher: 90rem;
+  }
 }
 
 /* Movimiento reducido: duraciones a 0 (los cambios de puesto se anuncian con texto) */
@@ -333,6 +389,7 @@
   --ease-krea: var(--ease);
   --ease-bounce: var(--bounce);
 
+  --breakpoint-xl: 90rem; /* HANDOFF §4: 1440 (Tailwind trae 1280) */
   --breakpoint-3xl: 120rem;
 }
 
@@ -563,6 +620,139 @@
   font-variant-numeric: tabular-nums;
   @media (width >= 48rem) {
     font-size: 4rem;
+  }
+}
+
+/* ---------- Layout (HANDOFF §4; referencia: design/canvas/krea.css:139-184) ---------- */
+/* Contenedores por rol: centrados, ancho máximo desde tokens. min-w-0 para no desbordar a 320 px */
+@utility container-student {
+  width: 100%;
+  min-width: 0;
+  max-width: var(--w-container-student);
+  margin-inline: auto;
+}
+@utility container-teacher {
+  width: 100%;
+  min-width: 0;
+  max-width: var(--w-container-teacher);
+  margin-inline: auto;
+}
+@utility container-reading {
+  width: 100%;
+  min-width: 0;
+  max-width: var(--w-container-reading);
+  margin-inline: auto;
+}
+/* Padding del contenido de página (lateral, superior e inferior) */
+@utility page-pad {
+  padding-inline: var(--page-px);
+  padding-top: var(--page-pt);
+  padding-bottom: var(--page-pb);
+}
+/* Columna de secciones con el ritmo vertical de §4 */
+@utility page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-section);
+}
+/* Grillas: 1 columna en móvil; los cortes son md 768 y lg 1024 */
+@utility g2 {
+  display: grid;
+  gap: var(--gap-grid);
+  grid-template-columns: minmax(0, 1fr);
+  @media (width >= 48rem) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@utility g3 {
+  display: grid;
+  gap: var(--gap-grid);
+  grid-template-columns: minmax(0, 1fr);
+  @media (width >= 48rem) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  @media (width >= 64rem) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@utility g4 {
+  display: grid;
+  gap: var(--gap-grid);
+  grid-template-columns: minmax(0, 1fr);
+  @media (width >= 48rem) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  @media (width >= 64rem) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@utility g-home {
+  display: grid;
+  gap: var(--gap-grid);
+  grid-template-columns: minmax(0, 1fr);
+  @media (width >= 64rem) {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    align-items: start;
+  }
+}
+@utility g-side {
+  display: grid;
+  gap: var(--gap-grid);
+  grid-template-columns: minmax(0, 1fr);
+  @media (width >= 64rem) {
+    grid-template-columns: minmax(0, 1fr) var(--w-side-col);
+    column-gap: 2rem;
+    align-items: start;
+  }
+}
+/* Alturas y anchos de la navegación (AppShell) */
+@utility h-topbar {
+  height: var(--h-topbar);
+}
+@utility w-side {
+  width: var(--w-side);
+}
+/* Barra inferior: 72 px + zona segura; el padding inferior de 8 px del lienzo se suma a la zona segura */
+@utility h-bnav {
+  height: calc(var(--h-bnav) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+}
+@utility shadow-bnav {
+  box-shadow: var(--shadow-bnav);
+}
+/* Topbar translúcida: --bg al 92 % (HANDOFF §2.7) */
+@utility bg-topbar {
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+}
+/* Alto de la ventana: 100vh de respaldo y 100dvh donde exista */
+@utility h-screen-side {
+  height: 100vh;
+  height: 100dvh;
+}
+/* Saltar al contenido: fuera de pantalla hasta recibir foco; sin animación */
+@utility skip-link {
+  position: fixed;
+  top: 0.5rem;
+  inset-inline-start: 0.5rem;
+  z-index: var(--z-toast);
+  padding: 0.75rem 1rem;
+  border-radius: var(--r-sm);
+  background: var(--accent);
+  color: var(--on-accent);
+  transform: translateY(-200%);
+  &:focus {
+    transform: translateY(0);
+  }
+}
+
+/* Anclas: no quedan bajo la topbar sticky (<lg); en ≥lg solo un respiro */
+[id] {
+  scroll-margin-top: var(--scroll-offset);
+}
+/* Smooth scroll solo con movimiento permitido (en reduce, salto directo) */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
   }
 }
 
