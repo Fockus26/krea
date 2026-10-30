@@ -30,13 +30,20 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="es-VE"
       className={`${poppins.variable} ${nunito.variable} h-full antialiased`}
+      data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
       <head>
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: constante estática, sin datos del usuario */}
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {/* Primer foco del documento (provisional, fila 19 del checklist) */}
+        <a href="#contenido" className="skip-link text-label">
+          Saltar al contenido
+        </a>
+        {children}
+      </body>
     </html>
   );
 }
