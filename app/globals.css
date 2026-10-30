@@ -1,26 +1,604 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * KREA — tokens (design/HANDOFF.md §1). Los valores hex viven SOLO en este archivo.
+ *
+ * Capas, de menor a mayor prioridad:
+ *   1. Claro (por defecto y data-theme="light")
+ *   2. Acento en claro      [data-accent="rojo|verde|morado"] (azul = sin atributo)
+ *   3. Oscuro explícito     [data-theme="dark"] (+ acento)
+ *   4. Sistema              sin data-theme + prefers-color-scheme: dark (mismos valores que 3;
+ *                           CSS no permite agrupar un selector con un @media: un test los compara)
+ *   5. Derivados            mezclas color-mix() que dependen del acento/tema de cada elemento
+ *
+ * Los selectores de acento/tema también valen sobre un elemento anidado (la página /tokens
+ * muestra cada combinación con su propio data-theme/data-accent).
+ */
+
+/* ---------- 1. Claro ---------- */
+:root,
+[data-theme="light"] {
+  --bg: #f6f4fa;
+  --surface: #ffffff;
+  --surface-2: #f0edf6;
+  --surface-3: #e9e5f1;
+  --text: #221d2b;
+  --text-2: #5e5869;
+  --text-dis: #8c8697;
+  --divider: #e6e2ee;
+  --input: #8c8697;
+  --success: #157a3b;
+  --warning: #9a5b00;
+  --error: #c80300;
+  --secondary: #ffc23d;
+  --on-secondary: #221d2b;
+  --grade-ink: #111111;
+  --sel-bg: #e4dcf7;
+  --sel-text: #221d2b;
+  --scroll-thumb: #7a7486;
+  --scroll-track: #ece9f2;
+  --toast-bg: #221d2b;
+  --toast-text: #f4f1f8;
+
+  --accent: #295ac3;
+  --accent-ink: #295ac3;
+  --on-accent: #ffffff;
+  --splash: #00e5f5;
+  --focus: var(--accent-ink);
+
+  --shadow-1: 0 1px 2px rgb(34 29 43 / 0.06), 0 2px 8px rgb(34 29 43 / 0.05);
+  --shadow-2: 0 6px 20px rgb(34 29 43 / 0.1);
+  --shadow-3: 0 18px 48px rgb(34 29 43 / 0.18);
+
+  /* Porcentajes de los tintes (los usan los derivados de la capa 5) */
+  --tint-1: 12%;
+  --tint-2: 22%;
+  --tint-ok: 10%;
+  --tint-warn: 10%;
+  --tint-err: 12%;
+  --tint-prize: 30%;
+  --tint-alert-err: 10%;
+  --tint-alert-warn: 26%;
+  --tint-alert-ok: 12%;
+  --hover-mix: #000000;
+
+  color-scheme: light;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ---------- 2. Acento en claro ---------- */
+[data-accent="rojo"] {
+  --accent: #ee0400;
+  --accent-ink: #c80300;
+  --splash: #ffc23d;
+}
+[data-accent="verde"] {
+  --accent: #115445;
+  --accent-ink: #115445;
+  --splash: #a0f25a;
+}
+[data-accent="morado"] {
+  --accent: #734ad1;
+  --accent-ink: #734ad1;
+  --splash: #ff8ad8;
 }
 
+/* ---------- 3. Oscuro explícito ---------- */
+[data-theme="dark"] {
+  --bg: #14121a;
+  --surface: #1e1b26;
+  --surface-2: #26222f;
+  --surface-3: #2e2a38;
+  --text: #f4f1f8;
+  --text-2: #aba5b8;
+  --text-dis: #6e687a;
+  --divider: #2e2a38;
+  --input: #8a8496;
+  --success: #5bd68a;
+  --warning: #ffc23d;
+  --error: #ff6b5e;
+  --sel-bg: #3b3350;
+  --sel-text: #f4f1f8;
+  --scroll-thumb: #6e687a;
+  --scroll-track: #1e1b26;
+  --toast-bg: #f4f1f8;
+  --toast-text: #221d2b;
+
+  --accent: #7aa2f7;
+  --accent-ink: #7aa2f7;
+  --on-accent: #14121a;
+
+  /* Tarjetas: sombra mínima; el componente Card añade borde 1 px --divider (HANDOFF §1.5) */
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-2: 0 6px 20px rgb(0 0 0 / 0.4);
+  --shadow-3: 0 18px 48px rgb(0 0 0 / 0.5);
+
+  --tint-1: 16%;
+  --tint-2: 28%;
+  --tint-ok: 14%;
+  --tint-warn: 14%;
+  --tint-prize: 18%;
+  --hover-mix: #ffffff;
+
+  color-scheme: dark;
+}
+[data-theme="dark"][data-accent="rojo"] {
+  --accent: #ff6b5e;
+  --accent-ink: #ff6b5e;
+}
+[data-theme="dark"][data-accent="verde"] {
+  --accent: #4fc4a6;
+  --accent-ink: #4fc4a6;
+}
+[data-theme="dark"][data-accent="morado"] {
+  --accent: #a98bf0;
+  --accent-ink: #a98bf0;
+}
+
+/* ---------- 4. Sistema (= oscuro cuando el SO lo pide y no hay tema explícito) ---------- */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not([data-theme="light"]) {
+    --bg: #14121a;
+    --surface: #1e1b26;
+    --surface-2: #26222f;
+    --surface-3: #2e2a38;
+    --text: #f4f1f8;
+    --text-2: #aba5b8;
+    --text-dis: #6e687a;
+    --divider: #2e2a38;
+    --input: #8a8496;
+    --success: #5bd68a;
+    --warning: #ffc23d;
+    --error: #ff6b5e;
+    --sel-bg: #3b3350;
+    --sel-text: #f4f1f8;
+    --scroll-thumb: #6e687a;
+    --scroll-track: #1e1b26;
+    --toast-bg: #f4f1f8;
+    --toast-text: #221d2b;
+
+    --accent: #7aa2f7;
+    --accent-ink: #7aa2f7;
+    --on-accent: #14121a;
+
+    --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-2: 0 6px 20px rgb(0 0 0 / 0.4);
+    --shadow-3: 0 18px 48px rgb(0 0 0 / 0.5);
+
+    --tint-1: 16%;
+    --tint-2: 28%;
+    --tint-ok: 14%;
+    --tint-warn: 14%;
+    --tint-prize: 18%;
+    --hover-mix: #ffffff;
+
+    color-scheme: dark;
+  }
+  :root:not([data-theme="light"])[data-accent="rojo"] {
+    --accent: #ff6b5e;
+    --accent-ink: #ff6b5e;
+  }
+  :root:not([data-theme="light"])[data-accent="verde"] {
+    --accent: #4fc4a6;
+    --accent-ink: #4fc4a6;
+  }
+  :root:not([data-theme="light"])[data-accent="morado"] {
+    --accent: #a98bf0;
+    --accent-ink: #a98bf0;
   }
 }
 
+/* ---------- 5. Derivados (se resuelven en cada elemento con tema/acento propio) ---------- */
+:root,
+[data-theme],
+[data-accent] {
+  --accent-soft: color-mix(
+    in srgb,
+    var(--accent) var(--tint-1),
+    var(--surface)
+  );
+  --accent-soft-2: color-mix(
+    in srgb,
+    var(--accent) var(--tint-2),
+    var(--surface)
+  );
+  --accent-hover: color-mix(in srgb, var(--accent) 88%, var(--hover-mix));
+
+  --chip-ok-bg: color-mix(
+    in srgb,
+    var(--success) var(--tint-ok),
+    var(--surface)
+  );
+  --chip-warn-bg: color-mix(
+    in srgb,
+    var(--warning) var(--tint-warn),
+    var(--surface)
+  );
+  --chip-err-bg: color-mix(
+    in srgb,
+    var(--error) var(--tint-err),
+    var(--surface)
+  );
+  --chip-prize-bg: color-mix(
+    in srgb,
+    var(--secondary) var(--tint-prize),
+    var(--surface)
+  );
+  /* Avisos: HANDOFF §1.2 solo mide el claro; en oscuro usan los mismos porcentajes (D016) */
+  --alert-err-bg: color-mix(
+    in srgb,
+    var(--error) var(--tint-alert-err),
+    var(--surface)
+  );
+  --alert-warn-bg: color-mix(
+    in srgb,
+    var(--secondary) var(--tint-alert-warn),
+    var(--surface)
+  );
+  --alert-ok-bg: color-mix(
+    in srgb,
+    var(--success) var(--tint-alert-ok),
+    var(--surface)
+  );
+}
+
+/* ---------- Tokens que no dependen del tema ---------- */
+:root {
+  /* Radios (HANDOFF §1.5) */
+  --r-sm: 10px;
+  --r-nav: 12px;
+  --r-md: 16px;
+  --r-lg: 24px;
+  --r-full: 999px;
+
+  /* Movimiento */
+  --d-fast: 150ms;
+  --d-normal: 250ms;
+  --d-rank: 600ms;
+  --d-celebrate: 1200ms;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* z-index con nombre */
+  --z-content: 0;
+  --z-table-head: 1;
+  --z-rank-moving: 2;
+  --z-sticky: 20;
+  --z-action-bar: 25;
+  --z-topbar: 30;
+  --z-popover: 40;
+  --z-offline: 40;
+  --z-overlay: 50;
+  --z-toast: 60;
+}
+
+/* Movimiento reducido: duraciones a 0 (los cambios de puesto se anuncian con texto) */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --d-fast: 0ms;
+    --d-normal: 0ms;
+    --d-rank: 0ms;
+    --d-celebrate: 0ms;
+  }
+}
+
+/* ---------- Tailwind v4: exposición de los tokens ---------- */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-text: var(--text);
+  --color-text-2: var(--text-2);
+  --color-text-dis: var(--text-dis);
+  --color-divider: var(--divider);
+  --color-input: var(--input);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-secondary: var(--secondary);
+  --color-on-secondary: var(--on-secondary);
+  --color-grade-ink: var(--grade-ink);
+  --color-sel-bg: var(--sel-bg);
+  --color-sel-text: var(--sel-text);
+  --color-toast-bg: var(--toast-bg);
+  --color-toast-text: var(--toast-text);
+
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-on-accent: var(--on-accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-soft-2: var(--accent-soft-2);
+  --color-accent-hover: var(--accent-hover);
+  --color-splash: var(--splash);
+  --color-focus: var(--focus);
+
+  --color-chip-ok: var(--chip-ok-bg);
+  --color-chip-warn: var(--chip-warn-bg);
+  --color-chip-err: var(--chip-err-bg);
+  --color-chip-prize: var(--chip-prize-bg);
+  --color-alert-err: var(--alert-err-bg);
+  --color-alert-warn: var(--alert-warn-bg);
+  --color-alert-ok: var(--alert-ok-bg);
+
+  --radius-sm: var(--r-sm);
+  --radius-nav: var(--r-nav);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+  --radius-pill: var(--r-full);
+
+  --font-heading: var(--font-poppins), system-ui, sans-serif;
+  --font-body: var(--font-nunito), system-ui, sans-serif;
+  --font-sans: var(--font-nunito), system-ui, sans-serif;
+
+  --ease-krea: var(--ease);
+  --ease-bounce: var(--bounce);
+
+  --breakpoint-3xl: 120rem;
+}
+
+/* Las sombras cambian con el tema: Tailwind incrustaría el valor claro si fueran del tema,
+   así que las clases leen la variable --shadow-N directamente. */
+@utility shadow-1 {
+  box-shadow: var(--shadow-1);
+}
+@utility shadow-2 {
+  box-shadow: var(--shadow-2);
+}
+@utility shadow-3 {
+  box-shadow: var(--shadow-3);
+}
+
+/* ---------- Utilidades: duración, z-index, cifras ---------- */
+@utility duration-fast {
+  transition-duration: var(--d-fast);
+}
+@utility duration-normal {
+  transition-duration: var(--d-normal);
+}
+@utility duration-rank {
+  transition-duration: var(--d-rank);
+}
+@utility duration-celebrate {
+  transition-duration: var(--d-celebrate);
+}
+@utility z-table-head {
+  z-index: var(--z-table-head);
+}
+@utility z-rank-moving {
+  z-index: var(--z-rank-moving);
+}
+@utility z-sticky {
+  z-index: var(--z-sticky);
+}
+@utility z-action-bar {
+  z-index: var(--z-action-bar);
+}
+@utility z-topbar {
+  z-index: var(--z-topbar);
+}
+@utility z-popover {
+  z-index: var(--z-popover);
+}
+@utility z-offline {
+  z-index: var(--z-offline);
+}
+@utility z-overlay {
+  z-index: var(--z-overlay);
+}
+@utility z-toast {
+  z-index: var(--z-toast);
+}
+/* Todas las cifras (notas, puntos, puestos, cédulas, contadores) */
+@utility nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Utilidades de tipografía por rol (HANDOFF §1.4) ----------
+   Tamaño/alto de línea: < 768 · ≥ 768 · ≥ 1920. 1rem = 16px. */
+@utility text-display {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 3rem; /* 48/56 */
+  line-height: 3.5rem;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  @media (width >= 48rem) {
+    font-size: 3.5rem; /* 56/64 */
+    line-height: 4rem;
+  }
+  @media (width >= 120rem) {
+    font-size: 4rem; /* 64/72 */
+    line-height: 4.5rem;
+  }
+}
+@utility text-h1 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.625rem; /* 26/32 */
+  line-height: 2rem;
+  letter-spacing: -0.01em;
+  @media (width >= 48rem) {
+    font-size: 2rem; /* 32/40 */
+    line-height: 2.5rem;
+  }
+  @media (width >= 120rem) {
+    font-size: 2.375rem; /* 38/46 */
+    line-height: 2.875rem;
+  }
+}
+@utility text-h2 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 1.3125rem; /* 21/28 */
+  line-height: 1.75rem;
+  @media (width >= 48rem) {
+    font-size: 1.5rem; /* 24/32 */
+    line-height: 2rem;
+  }
+  @media (width >= 120rem) {
+    font-size: 1.75rem; /* 28/36 */
+    line-height: 2.25rem;
+  }
+}
+@utility text-h3 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 1.125rem; /* 18/24 */
+  line-height: 1.5rem;
+  @media (width >= 48rem) {
+    font-size: 1.1875rem; /* 19/26 */
+    line-height: 1.625rem;
+  }
+  @media (width >= 120rem) {
+    font-size: 1.3125rem; /* 21/28 */
+    line-height: 1.75rem;
+  }
+}
+@utility text-h4 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 1rem; /* 16/22 en todos los anchos */
+  line-height: 1.375rem;
+}
+@utility text-body {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 1rem; /* 16/24 */
+  line-height: 1.5rem;
+  @media (width >= 120rem) {
+    font-size: 1.0625rem; /* 17/26 */
+    line-height: 1.625rem;
+  }
+}
+@utility text-body-strong {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 1rem; /* 16/24 */
+  line-height: 1.5rem;
+  @media (width >= 120rem) {
+    font-size: 1.0625rem;
+    line-height: 1.625rem;
+  }
+}
+@utility text-label {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.875rem; /* 14/20 */
+  line-height: 1.25rem;
+}
+@utility text-small {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 0.8125rem; /* 13/18 */
+  line-height: 1.125rem;
+  @media (width >= 120rem) {
+    font-size: 0.875rem; /* 14/20 */
+    line-height: 1.25rem;
+  }
+}
+@utility text-small-b {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.8125rem; /* 13/18 */
+  line-height: 1.125rem;
+  @media (width >= 120rem) {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+}
+@utility text-eyebrow {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.75rem; /* 12/16 */
+  line-height: 1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+/* Botón: 15/20 md · 14 sm · 16 lg (alto de línea 20 en los tres, como el lienzo) */
+@utility text-button {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.9375rem;
+  line-height: 1.25rem;
+}
+@utility text-button-sm {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+@utility text-button-lg {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.25rem;
+}
+/* Píldora de nota: Poppins 700, cifras tabulares (alto de línea 20 salvo xl, como el lienzo) */
+@utility text-grade-sm {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.875rem; /* 14/20 */
+  line-height: 1.25rem;
+  font-variant-numeric: tabular-nums;
+}
+@utility text-grade-md {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1rem; /* 16/20 */
+  line-height: 1.25rem;
+  font-variant-numeric: tabular-nums;
+}
+@utility text-grade-lg {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.375rem; /* 22/20 */
+  line-height: 1.25rem;
+  font-variant-numeric: tabular-nums;
+}
+@utility text-grade-xl {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 3.5rem; /* 56/64; 64 desde 768 */
+  line-height: 4rem;
+  font-variant-numeric: tabular-nums;
+  @media (width >= 48rem) {
+    font-size: 4rem;
+  }
+}
+
+/* ---------- Base ---------- */
+html {
+  background: var(--bg);
+  color: var(--text);
+  scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+::selection {
+  background: var(--sel-bg);
+  color: var(--sel-text);
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--scroll-track);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+  border-radius: var(--r-full);
 }
