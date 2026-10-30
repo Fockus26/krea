@@ -1,0 +1,5 @@
+# D109 · Sections · Alumnos: una vista `/secciones/alumnos`, filtros en cliente y guardado local sin Firestore · Implemented
+
+**Decision:** Una sola ruta `/secciones/alumnos` (`Vista rol="profesor" ruta="/profe/alumnos"`) con `PageHeader` (eyebrow "69 estudiantes · 2 secciones", h1 "Alumnos") y `StudentsDirectory` (cliente): recibe los 69 alumnos por props (`lib/demo/alumnos.ts`), la sección y la búsqueda filtran con `useState`. "Guardar cambios" actualiza ese estado local (nombres, apellidos, base) y cierra el diálogo; el motivo no se persiste (la fase 07 lo escribe en el historial). La nota individual no se recalcula al cambiar la base en la vista previa: el seed guarda la nota final, no el puntaje. No hay variante con el diálogo abierto por ruta: `Dialog` es de interacción y abrirlo por defecto exigiría `defaultOpen` en una fila concreta.
+**Why:** HANDOFF §3 Alumnos y D066/D069/D072. El brief deja elegir el diálogo por ruta o no.
+**Discarded alternative:** `/secciones/alumnos/[estado]` con `5a`, `5c`, `editar` — `5a`/`5c` ya son un clic del segmentado y `editar` obligaría a un estado de apertura que no es de la pantalla final.
