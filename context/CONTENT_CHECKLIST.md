@@ -59,3 +59,5 @@
 | 54 | Textos del índice `/secciones` («Referencia interna · fase 04», ayuda, «Todavía no hay pantallas montadas.») | `app/secciones/page.tsx` | orchestrate F04 W1 | Interno (no se publica) | Pending |
 | 56 | Copy no definido por el lienzo en auth: «Escribe tu contraseña.», «Faltan n caracteres»/«Falta 1 carácter», «Escribe una contraseña de al menos 8 caracteres.», bajada de «Este enlace ya venció», «Entrando…», «Enviando…», «Guardando…» | `lib/auth.ts`, `components/sections/auth/*` | orchestrate F04 W2 | Fase 05 (revisión de copy) | Pending |
 | 57 | Correo de ejemplo de «Revisa tu correo» (`yeilin@gmail.com`) | `app/secciones/ingresar/[estado]/page.tsx` | orchestrate F04 W2 | Fase 07 (correos reales, fila 3) | Pending |
+| 59 | Copy de Inicio que el lienzo no define: «Tienes 1 tarea por entregar. Vence el …», «Bajaste n puestos esta semana»; género del capitán («Capitán»/«Capitana», D075) | `lib/inicio.ts` | orchestrate F04 W3 | Decisión de César | Pending |
+| 60 | Movimiento semanal de ejemplo (+2 puestos) y estilos de avatar de los integrantes en la vista previa | `lib/demo/inicio.ts` | orchestrate F04 W3 | Fase 07 | Pending |

@@ -5,18 +5,20 @@
 
 ## Now
 
-**Phase:** 04 — Secciones · **Ola:** 1 de 4 · **Plan:** `context/plans/phase-04-secciones.md` · **Track:** Product
-**Sin QA hasta el final del proyecto** (César, 2026-10-29). Fase 03 cerrada el 2026-10-30 (#9–#18 + PR de cierre).
-Sesión cloud: las unidades de la ola van en serie (PR → CI verde → squash).
+**Phase:** 04 — Secciones · **Ola:** 2 de 4 (ola 1 cerrada: #20–#22) · **Plan:** `context/plans/phase-04-secciones.md` · **Track:** Product
+**Sin QA hasta el final del proyecto** (César, 2026-10-29). Fase 03 cerrada el 2026-10-30 (#9–#19).
+Sesión cloud: las unidades de una ola van en serie (PR → CI verde → squash).
 
 | Unit | Branch | Status |
 |---|---|---|
-| Cierre fase 03 (tokens, z-index, grep) | `claude/trusting-brahmagupta-1b8h8o` | en curso |
-| W1 base de secciones (`lib/demo`, PageHeader, GradeRow, ActionBar, `/secciones`) | ídem (cloud) | pendiente |
-| W2 Ingresar / Recuperar | ídem (cloud) | pendiente |
-| W3 Inicio del estudiante | ídem (cloud) | pendiente |
+| Cierre fase 03 | `claude/…` (cloud) | merged (#19) |
+| W1 base de secciones | ídem | merged (#20) |
+| W2 Ingresar / Recuperar | ídem | merged (#21) |
+| W3 Inicio del estudiante | ídem | merged (#22) |
 
 ## Blocked (actions for César or external)
+
+- Género del capitán: el seed no lo trae; hoy «Capitán» por defecto (D075). ¿Campo editable por el profe o texto neutro?
 
 - Confirmar si la base aplica a notas grupales por integrante (provisional: no, D014).
 - HANDOFF §9 restantes (#3–#12: empates de premio, borrador compartido, entrega tardía…): se preguntan al llegar a su fase.

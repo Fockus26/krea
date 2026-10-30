@@ -27,9 +27,9 @@ ejemplo tipados ni una ruta para ver secciones. No hay entorno DOM de pruebas: l
 
 | Ola | Unidades (rama · qué · archivos) | Depende de | Estado |
 |---|---|---|---|
-| 1 | `feat/sec-base` · `lib/demo/` (datos de ejemplo tipados desde el seed + placeholders), `PageHeader` (eyebrow, h1, ayuda, acciones), `GradeRow` (fila de nota compartida Inicio/Mis notas/Mi equipo, §8), `ActionBar` (§4), índice `/secciones` · `lib/demo/*`, `components/sections/shared/*`, `app/secciones/{layout,page}.tsx` | fase 03 | pendiente |
-| 1 | `feat/sec-ingresar` · Ingresar, Recuperar, Enviado, Nueva (+ panel de marca ≥ 1024, errores de servidor como estados) · `components/sections/auth/*`, `lib/auth-copy.ts`, `app/secciones/ingresar/page.tsx` | W1 | pendiente |
-| 1 | `feat/sec-inicio` · Saludo, Tarjeta de puntos, Mis notas, Por entregar, Mi equipo (`g-home` ≥ 1024) · `components/sections/inicio/*`, `lib/inicio.ts`, `app/secciones/inicio/page.tsx` | W1 | pendiente |
+| 1 | `feat/sec-base` · `lib/demo/` (datos de ejemplo tipados desde el seed + placeholders), `PageHeader` (eyebrow, h1, ayuda, acciones), `GradeRow` (fila de nota compartida Inicio/Mis notas/Mi equipo, §8), `ActionBar` (§4), índice `/secciones` · `lib/demo/*`, `components/sections/shared/*`, `app/secciones/{layout,page}.tsx` | fase 03 | cerrada (#20) |
+| 1 | `feat/sec-ingresar` · Ingresar, Recuperar, Enviado, Nueva (+ panel de marca ≥ 1024, errores de servidor como estados) · `components/sections/auth/*`, `lib/auth-copy.ts`, `app/secciones/ingresar/[estado]/page.tsx` | W1 | cerrada (#21) |
+| 1 | `feat/sec-inicio` · Saludo, Tarjeta de puntos, Mis notas, Por entregar, Mi equipo (`g-home` ≥ 1024) · `components/sections/inicio/*`, `lib/inicio.ts`, `app/secciones/inicio/page.tsx` | W1 | cerrada (#22) |
 | 2 | `feat/sec-notas` · Mis notas (leyenda + lista con segmentado) y Detalle de nota (resumen con base + preguntas) | ola 1 (`GradeRow`) | pendiente |
 | 2 | `feat/sec-tareas` · `/tareas` (Por entregar / Entregadas) y entrega (encabezado, premio, aviso de capitán, preguntas, barra de acción, diálogo, Entregada) | ola 1 (`ActionBar`) | pendiente |
 | 2 | `feat/sec-equipo` · Mi equipo (cabecera, integrantes, notas y premios, vacío) | ola 1 | pendiente |
@@ -78,16 +78,25 @@ Reglas de reparto:
 - Revisar con teclado real (fase 09): flechas del `ToggleGroup` (D038).
 - Archivo sin uso: `components/ui/toggle.tsx` (#11) — señalado, no se borra.
 
-## Ola actual: 1
+## Ola actual: 2 (la ola 1 cerró con #20–#22; antes, #19 cerró la fase 03)
 
-- Brief y prompts: no aplica en la nube (las unidades corren en esta sesión, en serie).
-- PRs: —
+- En la nube: unidades en serie en una sesión, cada una PR → CI verde → squash. Fuera de la nube: brief y prompts como en la fase 03.
 - QA: no aplica (decisión de César)
+
+## Para la ola 2 (lo dejó la ola 1)
+
+- Leer D066 (secciones por props + `/secciones/<pantalla>` con `Vista`), D067 (`ActionBar`), D068 (`GradeRow`, ahora con `detalle`), D069 (datos de ejemplo: `lib/demo/`), D072 (variantes de una vista = `/secciones/<pantalla>/[estado]` con `generateStaticParams`: **`searchParams` rompe el prerender con `cacheComponents`**), D075 (género del capitán por prop).
+- Datos listos en `lib/demo/`: `alumnoPorCedula`, `equipoDe`, `integrantes` (capitán primero), `puntosAlumno`, `rankingAlumnos/Equipos`, `notasDe` (orden de Mis notas), `porEntregar`, `TAREA_IDENTIDAD` (puntajes por pregunta reales; Heymi Sierra para Detalle). `lib/fecha.ts` `formatFecha`.
+- Patrón de una sección: componente en `components/sections/<pantalla>/`, textos/lógica en `lib/<pantalla>.ts` con pruebas, props de ejemplo en `lib/demo/<pantalla>.ts`, vista en `app/secciones/<pantalla>/page.tsx` + una línea en `PANTALLAS` de `app/secciones/page.tsx`.
+- `Card` no tiene `asChild`: el `h2` va en `CardTitle level={2}` dentro de `CardHeader`. Vacíos: copy del lienzo `design/canvas/Vacios.dc.html`.
+- Chips con texto largo (premios): `h-auto min-h-7 py-1 whitespace-normal` para que envuelvan a 320.
+- Verificación sin servidor: `bun run build` y buscar en `.next/server/app/secciones/<pantalla>.html` (un `<h1>`, un `<main>`, textos).
 
 ## Cierres
 
 | Ola | PRs | QA | Pasa a la siguiente | Datos sin borrar |
 |---|---|---|---|---|
+| 1 | #20 base, #21 ingresar, #22 inicio (+ #19 cierre de la fase 03) | no aplica (César: QA solo al final) | notas de «Para la ola 2»; D075 pendiente de César | ninguno |
 
 ## Prompt de inicio de la siguiente ola
 
