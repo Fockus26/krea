@@ -1,0 +1,5 @@
+# D048 · Brand · Logo e Isotipo con máscaras CSS sobre dos capas de `public/brand` (sin SVG en línea, sin hex) · Implemented
+
+**Decision:** `krea-logo-ink.svg` y `krea-logo-splash.svg` (las dos capas de `krea-logo.svg`, D002, rellenas de negro porque solo cuenta el alfa) se usan como `mask` de un `span` con `bg-accent` / `bg-on-accent` (tinta) y `bg-splash` (gotas), como hace el lienzo (`.logo`, `.iso`). `Logo` (`size`: topbar 88 · lateral 132 · login-movil 140 · login-panel 260; `sobreAcento`) e `Isotipo` (recorte x 1322–1792, y 120–720; baldosa radio 22 %) siguen el acento por CSS, no por prop. `role="img"` + `aria-label` salvo `decorativo`. `krea-logo.svg` original se conserva (favicon/OG, siempre azul).
+**Why:** el SVG en línea son ~75 KB de trazado dentro de un componente; la máscara reutiliza los archivos cacheables y mantiene la tinta ligada a los tokens. Los archivos nuevos llevan `#000` solo como máscara, fuera de `app/`.
+**Discarded alternative:** SVG en línea con `fill="var(--accent)"` — funciona igual pero duplica el trazado en el bundle de cada página con logo.
