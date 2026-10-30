@@ -5,13 +5,13 @@
 
 ## Now
 
-**Phase:** 01 — Tokens cerrada (main @ e905b5e) · **Sigue:** fase 02 — Layout base · **Track:** Product
+**Phase:** 02 — Layout base · ola 1 de 1 · plan `context/plans/phase-02-layout-base.md` · **Track:** Product
 **Sin QA hasta el final del proyecto** (César, 2026-10-29).
 
 | Unit | Branch | Status | Slot |
 |---|---|---|---|
-| W1 tokens + fuentes + `/tokens` | `feat/tokens` | merged (#6) | — |
-| W2 utilidades de nota/ranking | `feat/utilidades-nota` | merged (#5) | — |
+| W1 contenedores, skip link, landmarks, `AppShell` | `feat/layout-base` | PR #7 abierto | wt1 |
+| W2 seo init: metadata, favicons, manifest, OG, robots | `feat/marca-seo` | PR #8 abierto | wt2 |
 
 ## Blocked (actions for César or external)
 
@@ -19,11 +19,13 @@
 - HANDOFF §9 restantes (#3–#12: empates de premio, borrador compartido, entrega tardía…): se preguntan al llegar a su fase.
 - Crear el proyecto Firebase (Auth, Firestore, Storage) y cargar las claves en Vercel.
 - Emails reales de los estudiantes para "Olvidé mi contraseña" (checklist #3).
+- Revisar en #8: indexación solo `/ingresar` (D023, provisional) y descripción de metadata (fila 22).
+- Fijar `NEXT_PUBLIC_SITE_URL` en Vercel cuando haya dominio (fila 21).
 - Instalar Java (emuladores de Firebase para `qa:local`).
 
 ## Next
 
-- Fase 02 (layout base) con `/orchestrate fase 02` en otra sesión; las fases 02–06 se orquestan en olas.
+- Fase 03 (componentes) con `/orchestrate fase 03` en otra sesión, al mergear la fase 02.
 - Fase 07: esquema Firestore desde `data/seed/` + reglas de seguridad por rol.
 
 ## Phases
@@ -31,7 +33,7 @@
 | # | Phase | Status |
 |---|---|---|
 | 01 | Tokens | closed |
-| 02 | Base layout | pending |
+| 02 | Base layout | in progress |
 | 03 | Components | pending |
 | 04 | Sections | pending |
 | 05 | Pages | pending |

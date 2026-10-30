@@ -21,3 +21,7 @@
 | 15 | Copy del pie de créditos de avatares DiceBear (CC BY 4.0) | Perfil | design | Fase 05 | Pending (propuesta en HANDOFF §9 #12) |
 | 16 | Copy provisional de la portada `app/page.tsx` ("KREA", "Portal de notas de la Escuela Creativa", "Ver tokens") y de `/tokens` | `app/page.tsx`, `app/tokens/` | frontend (W1, PR #6) | Fase 05 | Pending (placeholder) |
 | 17 | Alto de línea 20 px de botón lg y píldoras sm/lg tomado de `krea.css` (no está en HANDOFF §1.4); `alert-*` en oscuro sin medir | `app/globals.css` | frontend (W1, PR #6) | Fase 09 | Pending (confirmar con diseño) |
+| 19 | Texto del skip link "Saltar al contenido" | `app/layout.tsx` | frontend (W1, PR #7) | Fase 09 | Pending (placeholder) |
+| 20 | `aria-label="Principal"` de los `<nav>` del `AppShell` | `components/layout/AppShell.tsx` | frontend (W1, PR #7) | Fase 04 | Pending (placeholder) |
+| 21 | Dominio final del portal (`NEXT_PUBLIC_SITE_URL` en Vercel) | `lib/site.ts` | frontend (W2, PR #8) | Fase 07 | Pending (acción de César) |
+| 22 | Descripción de `metadata` "Portal de la Escuela Creativa · 5.º año" | `app/layout.tsx` | frontend (W2, PR #8) | Fase 09 | Pending (placeholder) |
