@@ -1,0 +1,5 @@
+# D030 · Components · Input = envoltorio `div` (props `leading`/`trailing`) y estados por atributos; caja común en `control.ts` · Implemented
+
+**Decision:** `Input` renderiza una caja de 48 px (`div`) con ícono líder, `<input>` y elemento final; `ref` y atributos nativos van al `<input>`; `className` va a la caja e `inputClassName` al input. Textarea y SelectTrigger comparten `components/ui/control.ts` (`controlState`, `controlClasses`, pura y con pruebas). Estado: `aria-invalid` (borde 2 `--error`, padding 13, ícono alerta), `disabled`/`readOnly` (fondo `--surface-2`, borde punteado, candado; gana sobre error), éxito (`success`, borde `--success`). Foco: borde `--accent-ink` + halo `ring-3 ring-accent/28`, sin outline.
+**Why:** el ícono y el elemento final necesitan una caja con `focus-within`; los estados salen de atributos para que el accesible y el visual no se separen.
+**Discarded alternative:** `InputGroup` aparte (más piezas para el mismo resultado). Halo con `color-mix` escrito: `ring-accent/28` ya lo genera sin hex ni `[Npx]`.
