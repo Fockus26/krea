@@ -16,6 +16,7 @@ export function GradeRow({
   titulo,
   tipo,
   fecha,
+  detalle,
   nota,
   base,
   chips,
@@ -26,6 +27,8 @@ export function GradeRow({
   tipo: "individual" | "grupal";
   /** Ya formateada (dd/mm/aaaa). */
   fecha: string;
+  /** Dato entre el tipo y la fecha: el equipo en las grupales ("Grupal · 5A-G2 Repostería · …"). */
+  detalle?: string;
   /** Nota final (con base aplicada); `null` = Pendiente. */
   nota: number | null;
   base?: number;
@@ -43,7 +46,9 @@ export function GradeRow({
           <span className="text-small flex flex-wrap items-center gap-x-1.5 text-text-2">
             <Icon aria-hidden="true" className="size-4 shrink-0" />
             <span>
-              {tipoTareaTexto(tipo)} · {fecha}
+              {[tipoTareaTexto(tipo), detalle, fecha]
+                .filter(Boolean)
+                .join(" · ")}
             </span>
           </span>
           {chips ? (

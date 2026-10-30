@@ -17,6 +17,7 @@ const PANTALLAS: ReadonlyArray<{ href: string; titulo: string; ruta: string }> =
       titulo: "Ingresar y recuperar",
       ruta: "/ingresar",
     },
+    { href: "/secciones/inicio", titulo: "Inicio del estudiante", ruta: "/" },
   ];
 
 export default function SeccionesPage() {

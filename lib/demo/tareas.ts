@@ -10,6 +10,7 @@ import {
   TAREA_IDENTIDAD,
 } from "@/lib/demo/seed";
 import { comparaFecha } from "@/lib/fecha";
+import type { AvanceEntrega } from "@/lib/inicio";
 
 export type TipoTarea = "individual" | "grupal";
 export type EstadoTarea = "abierta" | "evaluada";
@@ -107,10 +108,7 @@ export const TAREAS: readonly DemoTarea[] = [
   },
 ];
 
-/** Avance del alumno en una tarea abierta (placeholder: el borrador vive en el teléfono, §3). */
-export type AvanceEntrega = "sin-empezar" | "borrador";
-
-/** Placeholder: qué tareas tiene empezadas el alumno de la vista previa. */
+/** PLACEHOLDER: qué tareas tiene empezadas el alumno de la vista previa (el borrador vive en el teléfono, §3). */
 export const AVANCE_DEMO: Readonly<Record<string, AvanceEntrega>> = {
   "presentacion-producto": "borrador",
   competencia: "sin-empezar",
