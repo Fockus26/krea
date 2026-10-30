@@ -34,10 +34,10 @@ ejemplo tipados ni una ruta para ver secciones. No hay entorno DOM de pruebas: l
 | 2 | `feat/sec-tareas` · `/tareas` (Por entregar / Entregadas) y entrega (encabezado, premio, aviso de capitán, preguntas, barra de acción, diálogo, Entregada) | ola 1 (`ActionBar`) | cerrada (#24) |
 | 2 | `feat/sec-equipo` · Mi equipo (cabecera, integrantes, notas y premios, vacío) | ola 1 | cerrada (#25) |
 | 2 | `feat/sec-perfil` · Perfil (identidad, datos, avatar, apariencia, seguridad) | ola 1 | cerrada (#26) |
-| 3 | `feat/sec-ranking` · Ranking estudiantes/equipos (encabezado, podio, lista, zona de riesgo, aside «Cómo se calculan» + «Últimos movimientos») | ola 1 | pendiente |
-| 3 | `feat/sec-profe-panel` · Panel del profesor (saludo por hora, métricas `g3`, Por evaluar, Últimos ajustes) | ola 1 | pendiente |
-| 3 | `feat/sec-evaluar` · Evaluar entrega (cabecera, medidor fijo, preguntas con `ScorePicker` en `QuestionCardReview`, acción) + `GradePill` 88×64 de Total en vivo + `NumberStepper` con `value: null` | ola 1 (`ActionBar`) | pendiente |
-| 3 | `feat/sec-alumnos` · Alumnos (filtros, búsqueda sin tildes, tabla, diálogo Editar con base y motivo) | ola 1 | pendiente |
+| 3 | `feat/sec-ranking` · Ranking estudiantes/equipos (encabezado, podio, lista, zona de riesgo, aside «Cómo se calculan» + «Últimos movimientos») | ola 1 | cerrada (#28) |
+| 3 | `feat/sec-profe-panel` · Panel del profesor (saludo por hora, métricas `g3`, Por evaluar, Últimos ajustes) | ola 1 | cerrada (#29) |
+| 3 | `feat/sec-evaluar` · Evaluar entrega (cabecera, medidor fijo, preguntas con `ScorePicker` en `QuestionCardReview`, acción) + `GradePill` 88×64 de Total en vivo + `NumberStepper` con `value: null` | ola 1 (`ActionBar`) | cerrada (#30) |
+| 3 | `feat/sec-alumnos` · Alumnos (filtros, búsqueda sin tildes, tabla, diálogo Editar con base y motivo) | ola 1 | cerrada (#27) |
 | 4 | `feat/sec-equipos-profe` · Equipos del profesor (tarjetas, capitán, mover, Sin equipo, subir logo) | ola 3 | pendiente |
 | 4 | `feat/sec-tareas-profe` · Lista de tareas y constructor (Datos, Preguntas, suma = 20, publicar) | ola 3 | pendiente |
 | 4 | `feat/sec-puntos` · Ajustes de puntos (formulario con motivos fijos, vista previa, historial con anular) | ola 3 | pendiente |
@@ -78,9 +78,9 @@ Reglas de reparto:
 - Revisar con teclado real (fase 09): flechas del `ToggleGroup` (D038).
 - Archivo sin uso: `components/ui/toggle.tsx` (#11) — señalado, no se borra.
 
-## Ola actual: 3 (la ola 2 cerró con #23–#26; la ola 1 con #20–#22)
+## Ola actual: 4 (la ola 3 cerró con #27–#30; la 2 con #23–#26; la 1 con #20–#22)
 
-- En la nube: unidades en serie en una sesión, cada una PR → CI verde → squash. Fuera de la nube: brief y prompts como en la fase 03.
+- En local con el pool (como la ola 3): brief + prompts en `context/plans/orchestration-<fecha>-f04-ola4*.md`, workers en paralelo, César mergea. En la nube: unidades en serie.
 - QA: no aplica (decisión de César)
 
 ## Para la ola 2 (lo dejó la ola 1)
@@ -100,15 +100,25 @@ Reglas de reparto:
 - `GradePill` sigue pintando el chip Raspado al lado de la píldora: la opción de ocultarlo es de `feat/sec-evaluar` (Detalle, D080, la aprovecharía).
 - Enunciados del seed sin tildes (fila 64): la vista usa los del lienzo en `lib/demo/notas.ts`; Evaluar puede reutilizar `ENUNCIADOS_LIENZO` si lo exporta.
 
+## Para la ola 4 (lo dejó la ola 3)
+
+- Leer D095 (segmentados que cambian de ruta = enlaces con `aria-current`, no radiogroup), D099 (filtro local con `ToggleGroup` + `<output>` de frase estable), D100 (tarjetas enlace), D101 (`DemoAjuste` en `lib/demo/ajustes.ts`: **`feat/sec-puntos` lo reutiliza**, no crea otro), D102 (`GradePill` `size="total"` y `raspado` chip/icono/ninguno), D103 (`NumberStepper` `value: number | null`, `aria-labelledby`), D104–D105 (Evaluar: `LiveTotal`, Ctrl+Enter, toast con Deshacer y Toaster local en `app/secciones/evaluar/layout.tsx`), D106–D109 (Alumnos: búsqueda sin tildes en `lib/alumnos.ts`, un `Dialog` por fila, motivo condicional).
+- Datos nuevos: `lib/demo/evaluar.ts` (`COLA` de 7 `DemoEntrega`), `lib/demo/panel.ts`, `lib/demo/alumnos.ts` (69 alumnos; base 15 de Jailyn placeholder), `lib/demo/ranking.ts`. `lib/ranking-vista.ts` para el ranking de equipos (Premios/Equipos pueden reutilizar subtítulo «n integrantes · capitán»).
+- `feat/sec-tareas-profe`: el medidor del constructor es `SumMeter` (no `LiveTotal`, §8 no unificar); `NumberStepper` ya admite `null` para valores sin poner. Un `Select` en `/secciones` hereda tema/acento del documento (no hace falta `PortalScope`).
+- `feat/sec-puntos`: «Nuevo ajuste» del Panel enlaza a `/profe/puntos`; motivos fijos y vista previa «Eso no cambia tu nota» (D007).
+- **Choques en paralelo:** la línea de `PANTALLAS` en `app/secciones/page.tsx` chocó en 3 de 4 PRs (tres unidades tras la misma línea). En la ola 4, dar a cada unidad un ancla distinta o resolverlo al mergear (2 min por PR). Las anclas distintas de `globals.css` funcionaron.
+- Seed de 5C sin notas evaluadas: ranking 5C todo empatado en 0 (backlog). Topbar móvil sin chip «En vivo» ni X de Evaluar (backlog, fase 05).
+
 ## Cierres
 
 | Ola | PRs | QA | Pasa a la siguiente | Datos sin borrar |
 |---|---|---|---|---|
 | 1 | #20 base, #21 ingresar, #22 inicio (+ #19 cierre de la fase 03) | no aplica (César: QA solo al final) | notas de «Para la ola 2»; D075 pendiente de César | ninguno |
 | 2 | #23 notas, #24 tareas, #25 equipo, #26 perfil | no aplica (César: QA solo al final) | notas de «Para la ola 3»; filas 64, 67, 69, 73 esperan a César | ninguno |
+| 3 | #27 alumnos, #28 ranking, #29 panel, #30 evaluar (local, pool wt1–wt4) | no aplica (César: QA solo al final) | notas de «Para la ola 4»; backlog: 5C sin notas, topbar móvil (En vivo, X), toast sobre `ActionBar` | ninguno |
 
 ## Prompt de inicio de la siguiente ola
 
 ```
-/orchestrate ola 3 de la fase 04. Plan: context/plans/phase-04-secciones.md
+/orchestrate ola 4 de la fase 04. Plan: context/plans/phase-04-secciones.md
 ```
