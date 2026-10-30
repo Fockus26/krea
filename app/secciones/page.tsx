@@ -24,6 +24,12 @@ const PANTALLAS: ReadonlyArray<{ href: string; titulo: string; ruta: string }> =
       titulo: "Detalle de nota",
       ruta: "/notas/[tarea]",
     },
+    { href: "/secciones/tareas", titulo: "Tareas", ruta: "/tareas" },
+    {
+      href: "/secciones/tareas/capitan",
+      titulo: "Entrega de tarea",
+      ruta: "/tareas/[tarea]",
+    },
   ];
 
 export default function SeccionesPage() {

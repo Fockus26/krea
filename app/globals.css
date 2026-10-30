@@ -1320,3 +1320,23 @@ body {
   line-height: 3.25rem;
   letter-spacing: -0.01em;
 }
+
+/* ---------- Sección Tareas y entrega (HANDOFF §3; lienzo Tarea.dc.html; D082) ---------- */
+:root {
+  --w-done-border: 2px; /* borde interior de la tarjeta Entregada */
+  --r-done: 1.125rem; /* 18: cuadro del Check de Entregada */
+}
+/* Premio: secundario 22 % sobre la superficie (en claro #FFF2D4, texto 14,78:1) */
+@utility bg-prize-card {
+  background-color: color-mix(
+    in srgb,
+    var(--secondary) var(--tint-2),
+    var(--surface)
+  );
+}
+@utility shadow-done {
+  box-shadow: inset 0 0 0 var(--w-done-border) var(--success);
+}
+@utility rounded-done {
+  border-radius: var(--r-done);
+}
