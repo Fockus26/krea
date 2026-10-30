@@ -11,6 +11,7 @@
 | GradeLegend · GradesList (Mis notas) · GradeSummary · QuestionList · BackLink (Detalle) | `components/sections/notas/` | Mis notas (`/secciones/notas`), Detalle (`/secciones/notas/[estado]`) | F04 ola 2 (notas) | Done | D078–D080; filtro local, Raspado por la píldora |
 | TaskHeader · PrizeCard · CaptainNotice · TaskAnswerForm · TaskDelivered · DeliveredTasks (+ PendingTasks de Inicio) | `components/sections/tareas/` | Tareas (`/secciones/tareas`), Entrega (`/secciones/tareas/[estado]`) | F04 ola 2 (tareas) | Done | D082; borrador local de textos; BackLink → shared |
 | TeamHero · TeamMembers · TeamGrades · TeamPrizes | `components/sections/equipo/` | Mi equipo (`/secciones/equipo/[estado]`) | F04 ola 2 (equipo) | Done | D086; premio solo con ganador único |
+| ProfileIdentity · ProfileData · AvatarPicker · AppearanceSettings · SecuritySettings | `components/sections/perfil/` | Perfil (`/secciones/perfil`) | F04 ola 2 (perfil) | Done | D090; `lib/apariencia.ts` compartido con el índice |
 | RankingList + Podium | — | Ranking | — | Pending | prototipo: `#/ranking` |
 | TaskBuilder | — | Tareas (profesor) | — | Pending | prototipo: `#/profe/tareas/nueva` |
 | GradingPanel | — | Evaluar entregas | — | Pending | prototipo: `#/profe/evaluar` |
