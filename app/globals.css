@@ -1340,3 +1340,41 @@ body {
 @utility rounded-done {
   border-radius: var(--r-done);
 }
+
+/* ---------- Sección Perfil (HANDOFF §3 Perfil; lienzo Perfil.dc.html; D090) ---------- */
+/* Muestras de acento: colores claros FIJOS en los dos temas (el acento de cada opción, no el actual) */
+:root {
+  --swatch-azul: #295ac3;
+  --swatch-rojo: #ee0400;
+  --swatch-verde: #115445;
+  --swatch-morado: #734ad1;
+  --swatch-ink: #ffffff; /* check sobre la muestra */
+  --w-swatch-ring: 3px; /* anillo --text de la muestra elegida, separado 3 px */
+}
+@utility bg-swatch-azul {
+  background-color: var(--swatch-azul);
+}
+@utility bg-swatch-rojo {
+  background-color: var(--swatch-rojo);
+}
+@utility bg-swatch-verde {
+  background-color: var(--swatch-verde);
+}
+@utility bg-swatch-morado {
+  background-color: var(--swatch-morado);
+}
+@utility text-swatch-ink {
+  color: var(--swatch-ink);
+}
+/* Elegido: separación de superficie + anillo --text (3 + 3 px) */
+@utility shadow-swatch {
+  box-shadow:
+    0 0 0 var(--w-swatch-ring) var(--surface),
+    0 0 0 calc(var(--w-swatch-ring) * 2) var(--text);
+}
+/* Avatar elegido: separación de superficie + anillo --accent (3 + 3 px) */
+@utility shadow-avatar-opt {
+  box-shadow:
+    0 0 0 var(--w-swatch-ring) var(--surface),
+    0 0 0 calc(var(--w-swatch-ring) * 2) var(--accent);
+}
