@@ -28,7 +28,7 @@ const toastClassNames = {
   toast: [
     // mín. 52 alto · padding 12 16 · radio 16 · máx. 420 · --shadow-3 · 600 15/20
     "flex w-full max-w-105 min-h-13 items-center gap-3 rounded-md px-4 py-3",
-    "bg-toast-bg font-body text-[0.9375rem]/5 font-semibold text-toast-text shadow-3",
+    "bg-toast-bg text-nav text-toast-text shadow-3",
     // §6: entra translateY(16 → 0) + opacidad 250; sale solo con opacidad 150.
     // Con reduced motion las duraciones valen 0 (D017): aparece y desaparece sin movimiento.
     "transition-[transform,opacity,height]! duration-normal! ease-krea!",

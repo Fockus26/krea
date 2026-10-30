@@ -37,7 +37,7 @@ export function QuestionHeader({
     <div className={cn("flex items-start gap-3", className)}>
       <span
         data-slot="question-number"
-        className="grid size-8 shrink-0 place-items-center rounded-sm bg-accent-soft-2 font-heading text-[0.9375rem] leading-none font-bold text-text"
+        className="grid size-8 shrink-0 place-items-center rounded-sm bg-accent-soft-2 text-score text-text"
       >
         <span className="sr-only">Pregunta </span>
         {numero}

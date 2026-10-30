@@ -43,7 +43,7 @@ export function NavItemLink({
       href={item.href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "group/nav relative isolate flex items-center gap-3 rounded-nav px-3 font-body text-[0.9375rem] leading-5 font-semibold text-text-2 no-underline",
+        "group/nav relative isolate flex items-center gap-3 rounded-nav px-3 text-nav text-text-2 no-underline",
         "transition-colors duration-fast ease-krea hover:bg-surface-2 hover:text-text",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
         "aria-[current=page]:font-bold aria-[current=page]:text-text",

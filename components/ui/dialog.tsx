@@ -47,12 +47,11 @@ function DialogClose({
 }
 
 /*
- * Overlay rgb(20 18 26 / .55) del handoff: no hay token. Se aproxima con la tinta más
- * oscura de cada tema (claro: --text #221D2B; oscuro: --bg #14121A, exacto) al 55 %.
- * Token pendiente `--scrim` (D037). Lo comparte la hoja inferior.
+ * Overlay rgb(20 18 26 / .55) del handoff: token `--scrim`, igual en los dos temas (D037).
+ * Lo comparte la hoja inferior.
  */
 const overlayClasses =
-  "fixed inset-0 z-overlay bg-text/55 dark:bg-bg/55 data-[state=open]:animate-overlay-in data-[state=closed]:animate-overlay-out";
+  "fixed inset-0 z-overlay bg-scrim data-[state=open]:animate-overlay-in data-[state=closed]:animate-overlay-out";
 
 function DialogOverlay({
   className,

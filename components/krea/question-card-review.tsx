@@ -60,7 +60,7 @@ export function QuestionCardReview({
           titleId={headingId}
         />
         {respuesta.tipo === "texto" ? (
-          <p className="rounded-nav bg-surface-2 px-3.5 py-3 text-[0.9375rem] leading-[1.375rem] text-text">
+          <p className="rounded-nav bg-surface-2 px-3.5 py-3 text-callout text-text">
             {respuesta.texto}
           </p>
         ) : (

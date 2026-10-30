@@ -64,7 +64,7 @@ export function Logo({
 }
 
 const isotipoCva = cva(
-  "relative block shrink-0 overflow-hidden rounded-[22%] bg-accent",
+  "relative block shrink-0 overflow-hidden rounded-iso bg-accent",
   {
     variants: {
       size: {

@@ -170,7 +170,7 @@ export function ImageUpload({
                 className="size-full object-cover"
               />
             ) : null}
-            <span className="text-small-b nums absolute bottom-2 left-2 max-w-[calc(100%-1rem)] truncate rounded-sm bg-grade-ink/70 px-2 py-1 text-white">
+            <span className="text-small-b nums absolute bottom-2 left-2 max-w-[calc(100%-1rem)] truncate rounded-sm bg-scrim-chip px-2 py-1 text-on-scrim">
               {file.name} · {formatFileSize(file.size)}
             </span>
           </div>
