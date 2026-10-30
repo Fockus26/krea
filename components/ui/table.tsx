@@ -1,51 +1,70 @@
-"use client";
-
+import { MoveHorizontal } from "lucide-react";
 import type * as React from "react";
 import { cn } from "@/lib/utils";
 
-function Table({ className, ...props }: React.ComponentProps<"table">) {
+/*
+ * Table — HANDOFF §2.15; medidas en design/canvas/krea.css:419-428.
+ * El contenedor desplazable es una región con nombre y enfocable (el teclado puede desplazarla).
+ * `position: relative` es obligatorio: un `sr-only` dentro (absoluto) se saldría y crearía scroll
+ * horizontal de página a 320 px (§8). El `<th>` sticky pega respecto a este contenedor.
+ */
+function Table({
+  label,
+  hint = true,
+  className,
+  containerClassName,
+  ...props
+}: Omit<React.ComponentProps<"table">, "aria-label"> & {
+  /** Nombre accesible de la región desplazable (obligatorio). */
+  label: string;
+  /** Pista "Desliza la tabla…" bajo la tabla en < 1024 (§2.15). */
+  hint?: boolean;
+  containerClassName?: string;
+}) {
   return (
-    <div
-      data-slot="table-container"
-      className="relative w-full overflow-x-auto"
-    >
-      <table
-        data-slot="table"
-        className={cn("w-full caption-bottom text-sm", className)}
-        {...props}
-      />
-    </div>
+    <>
+      <section
+        data-slot="table-container"
+        // biome-ignore lint/a11y/noNoninteractiveTabindex: región desplazable enfocable por teclado (§2.15)
+        tabIndex={0}
+        aria-label={label}
+        className={cn(
+          "relative w-full overflow-x-auto rounded-md bg-surface shadow-1 dark:border dark:border-divider dark:shadow-none",
+          "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
+          containerClassName,
+        )}
+      >
+        <table
+          data-slot="table"
+          className={cn(
+            "w-full min-w-190 border-separate border-spacing-0 text-sm",
+            className,
+          )}
+          {...props}
+        />
+      </section>
+      {hint ? (
+        <p
+          data-slot="table-hint"
+          className="mt-2 flex items-center gap-2 text-small text-text-2 lg:hidden"
+        >
+          <MoveHorizontal aria-hidden="true" className="size-4 shrink-0" />
+          Desliza la tabla para ver más columnas
+        </p>
+      ) : null}
+    </>
   );
 }
 
 function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
-  return (
-    <thead
-      data-slot="table-header"
-      className={cn("[&_tr]:border-b", className)}
-      {...props}
-    />
-  );
+  return <thead data-slot="table-header" className={className} {...props} />;
 }
 
 function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
   return (
     <tbody
       data-slot="table-body"
-      className={cn("[&_tr:last-child]:border-0", className)}
-      {...props}
-    />
-  );
-}
-
-function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
-  return (
-    <tfoot
-      data-slot="table-footer"
-      className={cn(
-        "border-t bg-muted/50 font-medium [&>tr]:last:border-b-0",
-        className,
-      )}
+      className={cn("[&_tr:last-child_td]:border-b-0", className)}
       {...props}
     />
   );
@@ -56,7 +75,7 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
     <tr
       data-slot="table-row"
       className={cn(
-        "border-b transition-colors hover:bg-muted/50 has-aria-expanded:bg-muted/50 data-[state=selected]:bg-muted",
+        "transition-colors duration-fast ease-krea hover:bg-surface-2",
         className,
       )}
       {...props}
@@ -64,12 +83,18 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
   );
 }
 
-function TableHead({ className, ...props }: React.ComponentProps<"th">) {
+/** `numeric`: alineada a la derecha con cifras tabulares (puedes pisar con `text-center`). */
+function TableHead({
+  numeric = false,
+  className,
+  ...props
+}: React.ComponentProps<"th"> & { numeric?: boolean }) {
   return (
     <th
       data-slot="table-head"
       className={cn(
-        "h-10 px-2 text-left align-middle font-medium whitespace-nowrap text-foreground [&:has([role=checkbox])]:pr-0",
+        "sticky top-0 z-table-head h-11 border-b border-divider bg-surface px-3 text-left align-middle text-eyebrow tracking-[0.06em] whitespace-nowrap text-text-2 first:pl-4 last:pr-4",
+        numeric && "nums text-right",
         className,
       )}
       {...props}
@@ -77,12 +102,17 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
   );
 }
 
-function TableCell({ className, ...props }: React.ComponentProps<"td">) {
+function TableCell({
+  numeric = false,
+  className,
+  ...props
+}: React.ComponentProps<"td"> & { numeric?: boolean }) {
   return (
     <td
       data-slot="table-cell"
       className={cn(
-        "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0",
+        "h-15 border-b border-divider px-3 py-2 align-middle first:pl-4 last:pr-4",
+        numeric && "nums text-right",
         className,
       )}
       {...props}
@@ -97,7 +127,7 @@ function TableCaption({
   return (
     <caption
       data-slot="table-caption"
-      className={cn("mt-4 text-sm text-muted-foreground", className)}
+      className={cn("mt-4 text-small text-text-2", className)}
       {...props}
     />
   );
@@ -107,7 +137,6 @@ export {
   Table,
   TableHeader,
   TableBody,
-  TableFooter,
   TableHead,
   TableRow,
   TableCell,

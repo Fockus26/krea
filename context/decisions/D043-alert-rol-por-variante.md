@@ -1,0 +1,5 @@
+# D043 · Components · Alert info/ok/warn/err: ícono propio por variante y rol por defecto `alert` solo en err, `status` en el resto · Implemented
+
+**Decision:** `components/ui/alert.tsx` dibuja el ícono (Info, CircleCheck, TriangleAlert, OctagonAlert, 20 px, `aria-hidden`) según la variante, de modo que el estado no va solo por color. El rol sale de `alertRole(variant)` (`lib/alert.ts`, con prueba): `alert` en `err`, `status` en las demás; la prop `role` lo sobreescribe. Fondos con los tokens de D016 (`bg-accent-soft`, `bg-alert-ok|warn|err`); `err` añade borde interior 1,5 px con `--w-btn-border` (mismo grosor del lienzo). El tamaño 15/22 no es un rol tipográfico de D017: va como `text-[0.9375rem] leading-[1.375rem]`, pendiente de token (se anota en el reporte).
+**Why:** HANDOFF §2.14: errores `role="alert"`, informativos `role="status"`; el crudo ponía `role="alert"` siempre y anunciaría de forma asertiva avisos que no lo son.
+**Discarded alternative:** `role="alert"` por defecto en todas — interrumpe al lector de pantalla con información no urgente.
