@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { BackLink } from "@/components/sections/notas/back-link";
 import { GradeSummary } from "@/components/sections/notas/grade-summary";
 import { QuestionList } from "@/components/sections/notas/question-list";
+import { BackLink } from "@/components/sections/shared/back-link";
 import { CEDULA_DETALLE, CEDULA_RASPADO, detalleDe } from "@/lib/demo/notas";
 import { Estados } from "../../_vista/estados";
 import { Vista } from "../../_vista/vista";

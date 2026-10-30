@@ -2,7 +2,7 @@ import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 
 /**
- * Migas del Detalle en escritorio ("‹ Mis notas", HANDOFF §3 Detalle). En móvil el volver vive
+ * Migas de las pantallas de detalle en escritorio ("‹ Mis notas", "‹ Tareas", HANDOFF §3). En móvil el volver vive
  * en la topbar, así que aquí solo aparece ≥ 1024.
  */
 export function BackLink({
