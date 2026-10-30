@@ -25,3 +25,6 @@
 | 20 | `aria-label="Principal"` de los `<nav>` del `AppShell` | `components/layout/AppShell.tsx` | frontend (W1, PR #7) | Fase 04 | Pending (placeholder) |
 | 21 | Dominio final del portal (`NEXT_PUBLIC_SITE_URL` en Vercel) | `lib/site.ts` | frontend (W2, PR #8) | Fase 07 | Pending (acción de César) |
 | 22 | Descripción de `metadata` "Portal de la Escuela Creativa · 5.º año" | `app/layout.tsx` | frontend (W2, PR #8) | Fase 09 | Pending (placeholder) |
+| 23 | Textos internos de `/componentes` (encabezado, descripciones, "Pendiente — fase 03, ola N", "Ver tokens", spinner "Cargando el ranking") — página interna noindex | `app/componentes/page.tsx`, `app/componentes/_familias/*.tsx` | frontend (W1, PR #9) | Fase 03 | Pending (placeholder) |
+| 24 | Textos en inglés de los primitivos crudos de shadcn ("Close" de diálogo y hoja, otros `sr-only`): traducir al tematizar | `components/ui/dialog.tsx`, `components/ui/sheet.tsx` y demás crudos | frontend (W1, PR #9) | Fase 03 ola 2 | Pending |
+| 25 | Etiquetas de ejemplo de botones ("Entrar/Entrando…", "Copiar código KR-500-7F3A9C", "Se activa al puntuar las 5."…): solo muestras del diseño | `app/componentes/_familias/botones.tsx` | frontend (W1, PR #9) | Fase 03 | Muestra (del diseño) |

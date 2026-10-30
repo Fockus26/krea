@@ -5,13 +5,12 @@
 
 ## Now
 
-**Phase:** 02 — Layout base cerrada (main @ f37f6f6) · **Sigue:** fase 03 — Componentes · **Track:** Product
-**Sin QA hasta el final del proyecto** (César, 2026-10-29).
+**Phase:** 03 — Componentes · **Ola:** 1 de 3 · **Plan:** `context/plans/phase-03-componentes.md` · **Track:** Product
+**Sin QA hasta el final del proyecto** (César, 2026-10-29). Brief/prompts: `context/plans/orchestration-2026-10-29-f03*.md`
 
 | Unit | Branch | Status | Slot |
 |---|---|---|---|
-| W1 contenedores, skip link, landmarks, `AppShell` | `feat/layout-base` | merged (#7) | — |
-| W2 seo init: metadata, favicons, manifest, OG, robots | `feat/marca-seo` | merged (#8) | — |
+| W1 shadcn init, deps de la fase, `cn`, `dark:`, movimiento, Button, `/componentes` | `feat/ui-base` | PR #9 abierto (revisión de César) | wt1 |
 
 ## Blocked (actions for César or external)
 
@@ -25,7 +24,7 @@
 
 ## Next
 
-- Fase 03 (componentes) con `/orchestrate fase 03. Plan de la fase 02 cerrado: context/plans/phase-02-layout-base.md` en otra sesión.
+- Fase 03 ola 2 (5 unidades, `wt init -Count 5`) tras el merge de `feat/ui-base`: `/orchestrate ola 2 de la fase 03. Plan: context/plans/phase-03-componentes.md`
 - Fase 07: esquema Firestore desde `data/seed/` + reglas de seguridad por rol.
 
 ## Phases
@@ -34,7 +33,7 @@
 |---|---|---|
 | 01 | Tokens | closed |
 | 02 | Base layout | closed |
-| 03 | Components | pending |
+| 03 | Components | in progress (ola 1/3) |
 | 04 | Sections | pending |
 | 05 | Pages | pending |
 | 06 | States | pending |
