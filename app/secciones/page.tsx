@@ -31,11 +31,21 @@ const PANTALLAS: ReadonlyArray<{ href: string; titulo: string; ruta: string }> =
       ruta: "/tareas/[tarea]",
     },
     {
+      href: "/secciones/ranking/estudiantes",
+      titulo: "Ranking",
+      ruta: "/ranking",
+    },
+    {
       href: "/secciones/equipo/con-equipo",
       titulo: "Mi equipo",
       ruta: "/equipo",
     },
     { href: "/secciones/perfil", titulo: "Perfil", ruta: "/perfil" },
+    {
+      href: "/secciones/profe/manana",
+      titulo: "Panel del profesor",
+      ruta: "/profe",
+    },
     {
       href: "/secciones/evaluar/grupal",
       titulo: "Evaluar entrega",
