@@ -2,60 +2,45 @@
 
 import { useEffect, useState } from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import {
+  ACENTOS,
+  aplicarAcento,
+  aplicarTema,
+  CLAVE_ACENTO,
+  CLAVE_TEMA,
+  esAcento,
+  esTema,
+  leerPreferencia,
+} from "@/lib/apariencia";
 
 // Selector de tema y acento de las vistas previas (D001: revisar 4 acentos × claro/oscuro).
 // Escribe las mismas claves que lee el script anti-parpadeo del layout raíz, así que el
-// cambio se mantiene al abrir cada pantalla. Perfil tendrá el selector real (fase 04 ola 2).
+// cambio se mantiene al abrir cada pantalla. El selector real es el de Perfil (`AppearanceSettings`).
 const TEMAS = [
   ["system", "Sistema"],
   ["light", "Claro"],
   ["dark", "Oscuro"],
 ] as const;
-const ACENTOS = [
-  ["azul", "Azul"],
-  ["rojo", "Rojo"],
-  ["verde", "Verde"],
-  ["morado", "Morado"],
-] as const;
-
-function leer(clave: string, defecto: string): string {
-  try {
-    return localStorage.getItem(clave) ?? defecto;
-  } catch {
-    return defecto;
-  }
-}
-
-function guardar(clave: string, valor: string | null) {
-  try {
-    if (valor === null) localStorage.removeItem(clave);
-    else localStorage.setItem(clave, valor);
-  } catch {
-    // Sin almacenamiento (modo privado): el cambio vale solo para esta pestaña
-  }
-}
 
 export function Apariencia() {
   const [tema, setTema] = useState("system");
   const [acento, setAcento] = useState("azul");
 
   useEffect(() => {
-    setTema(leer("krea-theme", "system"));
-    setAcento(leer("krea-accent", "azul"));
+    setTema(leerPreferencia(CLAVE_TEMA, "system"));
+    setAcento(leerPreferencia(CLAVE_ACENTO, "azul"));
   }, []);
 
   function cambiarTema(valor: string) {
+    if (!esTema(valor)) return;
     setTema(valor);
-    const raiz = document.documentElement;
-    if (valor === "system") raiz.removeAttribute("data-theme");
-    else raiz.setAttribute("data-theme", valor);
-    guardar("krea-theme", valor === "system" ? null : valor);
+    aplicarTema(valor);
   }
 
   function cambiarAcento(valor: string) {
+    if (!esAcento(valor)) return;
     setAcento(valor);
-    document.documentElement.setAttribute("data-accent", valor);
-    guardar("krea-accent", valor);
+    aplicarAcento(valor);
   }
 
   return (
@@ -85,7 +70,7 @@ export function Apariencia() {
           onValueChange={cambiarAcento}
           aria-labelledby="apariencia-acento"
         >
-          {ACENTOS.map(([valor, texto]) => (
+          {ACENTOS.map(({ valor, texto }) => (
             <ToggleGroupItem key={valor} value={valor}>
               {texto}
             </ToggleGroupItem>

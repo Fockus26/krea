@@ -50,8 +50,11 @@ const twMerge = extendTailwindMerge<"text-role">({
         "btn-primary",
         "btn-outline",
         "btn-outline-dis",
+        "done",
+        "swatch",
+        "avatar-opt",
       ],
-      radius: ["nav", "pill"],
+      radius: ["nav", "pill", "done"],
       ease: ["krea", "bounce"],
     },
     classGroups: {
