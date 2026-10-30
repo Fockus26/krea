@@ -15,11 +15,11 @@ No hay entorno DOM de pruebas (`happy-dom`/`jsdom`): las pruebas son de lógica 
 | Ola | Unidades (rama · qué · archivos) | Depende de | Estado |
 |---|---|---|---|
 | 1 | `feat/ui-base` · shadcn init (Radix) + **todas** las dependencias de la fase + archivos crudos de shadcn que usarán las olas 2–3, `cn`, variante `dark:`, bloque de movimiento compartido (keyframes/utilidades §6), token texto-sobre-error, `Button` + `Spinner` completos (§2.1), página `/componentes` con un archivo por familia (stubs) · `components.json`, `package.json`, `bun.lock`, `lib/utils.ts`, `app/globals.css`, `components/ui/*` (crudos), `components/ui/button.tsx`, `components/ui/spinner.tsx`, `app/componentes/**` | — | cerrada (#9) |
-| 2 | `feat/ui-formularios` · Label, Input, Textarea, Select, campo con ayuda/error/éxito, contraseña con ojo, cédula, `NumberStepper` (§2.2) · `components/ui/{input,textarea,select,label,field,…}.tsx`, `app/componentes/_familias/formularios.tsx` | 1 | pendiente |
-| 2 | `feat/ui-overlays` · Dialog, Sheet (hoja inferior), DropdownMenu, Toaster/Sonner (§2.13, §2.14 toast, §6) · `components/ui/{dialog,sheet,dropdown-menu,sonner}.tsx`, `_familias/overlays.tsx` | 1 | pendiente |
-| 2 | `feat/ui-chips-tabs` · Badge/chips (todas las variantes + estados de tarea/entrega), `GradePill` (§2.3), Tabs de línea, segmentado (Tabs `tablist` y ToggleGroup `radiogroup`, `seg-block`) (§2.4, §2.6) · `components/ui/{badge,tabs,toggle-group}.tsx`, `components/krea/grade-pill.tsx`, `_familias/chips.tsx` | 1 | pendiente |
-| 2 | `feat/ui-contenedores` · Card (`hero`, `flat`, lista interna), Alert, Skeleton, Table con contenedor desplazable, `EmptyState` (§2.8, §2.14, §2.15) · `components/ui/{card,alert,skeleton,table,separator}.tsx`, `components/krea/empty-state.tsx`, `_familias/contenedores.tsx` | 1 | pendiente |
-| 2 | `feat/ui-identidad` · Avatar (tamaños, anillo "tú", pila +n, DiceBear D010), `TeamLogo` (respaldo 6 colores como tokens), Logo/Isotipo con acento (§2.5) · `components/ui/avatar.tsx`, `components/krea/{team-logo,logo}.tsx`, `lib/dicebear.ts`, tokens en `globals.css` (bloque propio), `_familias/identidad.tsx` | 1 | pendiente |
+| 2 | `feat/ui-formularios` · Label, Input, Textarea, Select, campo con ayuda/error/éxito, contraseña con ojo, cédula, `NumberStepper` (§2.2) · `components/ui/{input,textarea,select,label,field,…}.tsx`, `app/componentes/_familias/formularios.tsx` | 1 | en curso ||
+| 2 | `feat/ui-overlays` · Dialog, Sheet (hoja inferior), DropdownMenu, Toaster/Sonner (§2.13, §2.14 toast, §6) · `components/ui/{dialog,sheet,dropdown-menu,sonner}.tsx`, `_familias/overlays.tsx` | 1 | en curso ||
+| 2 | `feat/ui-chips-tabs` · Badge/chips (todas las variantes + estados de tarea/entrega), `GradePill` (§2.3), Tabs de línea, segmentado (Tabs `tablist` y ToggleGroup `radiogroup`, `seg-block`) (§2.4, §2.6) · `components/ui/{badge,tabs,toggle-group}.tsx`, `components/krea/grade-pill.tsx`, `_familias/chips.tsx` | 1 | en curso ||
+| 2 | `feat/ui-contenedores` · Card (`hero`, `flat`, lista interna), Alert, Skeleton, Table con contenedor desplazable, `EmptyState` (§2.8, §2.14, §2.15) · `components/ui/{card,alert,skeleton,table,separator}.tsx`, `components/krea/empty-state.tsx`, `_familias/contenedores.tsx` | 1 | en curso ||
+| 2 | `feat/ui-identidad` · Avatar (tamaños, anillo "tú", pila +n, DiceBear D010), `TeamLogo` (respaldo 6 colores como tokens), Logo/Isotipo con acento (§2.5) · `components/ui/avatar.tsx`, `components/krea/{team-logo,logo}.tsx`, `lib/dicebear.ts`, tokens en `globals.css` (bloque propio), `_familias/identidad.tsx` | 1 | en curso ||
 | 3 | `feat/ui-ranking` · `RankRow` (top 10, propia, 11–30, zona de riesgo, delta, empate), `Podium` (estudiantes y equipos) (§2.9–2.10) · `components/krea/{rank-row,podium,rank-delta}.tsx`, `_familias/ranking.tsx` | 2 (avatar, logo, badge) | pendiente |
 | 3 | `feat/ui-evaluacion` · `ScorePicker` (≤6 botones / >6 stepper + atajos), `SumMeter`, total en vivo, barra por pregunta (§2.11–2.12) · `components/krea/{score-picker,sum-meter,live-total,question-bar}.tsx`, `_familias/evaluacion.tsx` | 2 (toggle-group, stepper, grade-pill) | pendiente |
 | 3 | `feat/ui-preguntas` · cabecera compartida + `QuestionCard` detalle/responder/evaluar **sin unificar cuerpos** (§2.16, §8), `ImageUpload` con compresión en cliente (§2.17); el puntaje de "evaluar" entra como slot (no importa `ScorePicker`) · `components/krea/question-*.tsx`, `components/krea/image-upload.tsx`, `lib/image.ts`, `_familias/preguntas.tsx` | 2 (textarea, badge, alert, button) | pendiente |
@@ -55,6 +55,7 @@ Pool: hoy wt1/wt2. La ola 2 necesita 5 slots → `wt init -Count 5` al inicio de
 
 - Brief y prompts: `context/plans/orchestration-2026-10-29-f03.md` / `…-f03-prompts.md`
 - Ola 1: PR #9 W1 ui-base — mergeado (main @ fec1d1a); wt1 liberado
+- Ola 2: W2–W6 lanzados en wt1–wt5 (prompts W2–W6 en `…-f03-prompts.md`, bloque "Ola 2")
 - QA: no aplica (decisión de César)
 
 ## Cierres
@@ -66,6 +67,12 @@ Pool: hoy wt1/wt2. La ola 2 necesita 5 slots → `wt init -Count 5` al inicio de
 ## Cierre de la fase (después de la ola 3, lo hace el orquestador)
 
 - `grep -rnE '\[[0-9]+px\]|\[#[0-9a-fA-F]{3,8}\]' components/` limpio.
+- Tokens que la ola 2 dejó sin crear (no podían tocar `globals.css`): rol tipográfico 15/22 (Alert, #10: `text-[0.9375rem] leading-[1.375rem]`), `--r-grade-xl` 28 px (GradePill, #11: `rounded-[1.75rem]` en `lib/grade-pill.ts`), `--scrim` rgb(20 18 26/.55) + `--color-scrim` (#14, D037: `overlayClasses` de `dialog.tsx` → `bg-scrim`).
+- z-index: `--z-popover` (40) < `--z-overlay` (50): un menú o Select abierto dentro de un Dialog queda detrás (#14, afecta a #13).
+- Fase 05: un solo `<Toaster />` sin `id` en el AppShell (D035).
+- `SelectContent` (#13) sale por portal fuera del `Escenario`: aplicarle el mismo arreglo de tema/acento en portales que W3 deje para overlays.
+- Revisar con teclado real: flechas del `ToggleGroup` (D038, bandera + `click()` en `onFocus`).
+- Archivos sin uso señalados: `components/ui/toggle.tsx` (#11).
 - `/componentes` con todas las familias y estados; `COMPONENTS_INVENTORY.md` completo.
 - Revisión `a11y` por código de los widgets compuestos (patrones WAI-ARIA) y de las transiciones con reduced motion.
 

@@ -5,12 +5,17 @@
 
 ## Now
 
-**Phase:** 03 — Componentes · **Ola:** 2 de 3 (ola 1 cerrada, main @ fec1d1a) · **Plan:** `context/plans/phase-03-componentes.md` · **Track:** Product
+**Phase:** 03 — Componentes · **Ola:** 2 de 3 en curso (5 workers sobre main @ fec1d1a) · **Plan:** `context/plans/phase-03-componentes.md` · **Track:** Product
 **Sin QA hasta el final del proyecto** (César, 2026-10-29). Brief/prompts: `context/plans/orchestration-2026-10-29-f03*.md`
 
 | Unit | Branch | Status | Slot |
 |---|---|---|---|
 | W1 shadcn init, deps de la fase, `cn`, `dark:`, movimiento, Button, `/componentes` | `feat/ui-base` | merged (#9) | — |
+| W2 Label, Input, Textarea, Select, Field, contraseña, cédula, NumberStepper | `feat/ui-formularios` | PR #13 abierto | wt1 |
+| W3 Dialog, Sheet, DropdownMenu, Toaster | `feat/ui-overlays` | PR #14 abierto | wt2 |
+| W4 Badge, StatusBadge, GradePill, Tabs, ToggleGroup | `feat/ui-chips-tabs` | PR #11 abierto | wt3 |
+| W5 Card, Alert, Skeleton, Table, Separator, EmptyState | `feat/ui-contenedores` | PR #10 abierto | wt4 |
+| W6 Avatar, AvatarStack, TeamLogo, Logo/Isotipo | `feat/ui-identidad` | PR #12 abierto | wt5 |
 
 ## Blocked (actions for César or external)
 
@@ -24,7 +29,7 @@
 
 ## Next
 
-- Fase 03 ola 2 (5 unidades, `wt init -Count 5`), en otra sesión: `/orchestrate ola 2 de la fase 03. Plan: context/plans/phase-03-componentes.md`
+- Fase 03 ola 2: consolidar los 5 PRs (W2–W6); luego ola 3 en otra sesión.
 - Fase 07: esquema Firestore desde `data/seed/` + reglas de seguridad por rol.
 
 ## Phases

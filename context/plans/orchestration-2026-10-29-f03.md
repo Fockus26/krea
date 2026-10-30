@@ -1,6 +1,6 @@
 # Orquestación del 2026-10-29 (fase 03) — brief compartido para los workers
 
-> Fase 03, ola 1 de 3 — plan: `context/plans/phase-03-componentes.md`
+> Fase 03 — plan: `context/plans/phase-03-componentes.md` · ola 1 cerrada (#9, main @ fec1d1a) · **ola 2 en curso** (W2–W6)
 
 > **Todo worker** lee esto antes de empezar. Su prompt trae solo lo específico de su unidad.
 > Carpeta principal del repo: `C:\Users\Cesar\Documents\Work\krea` (ahí viven los archivos
@@ -12,16 +12,28 @@
 
 | # | Rama | Qué | Ola | Slot / puerto |
 |---|---|---|---|---|
-| W1 | `feat/ui-base` | shadcn init + dependencias de toda la fase, `cn`, variante `dark:`, movimiento compartido, `Button`/`Spinner`, página `/componentes` | 1 | lo asigna `wt take` |
+| W1 | `feat/ui-base` | shadcn init + dependencias de toda la fase, `cn`, variante `dark:`, movimiento compartido, `Button`/`Spinner`, página `/componentes` | 1 | mergeado (#9) |
+| W2 | `feat/ui-formularios` | Label, Input, Textarea, Select, campo con ayuda/error/éxito, contraseña, cédula, `NumberStepper` (§2.2) | 2 | lo asigna `wt take` |
+| W3 | `feat/ui-overlays` | Dialog, Sheet (hoja inferior), DropdownMenu, Toaster de Sonner (§2.13, §2.14 toast) | 2 | ídem |
+| W4 | `feat/ui-chips-tabs` | Badge/chips, `GradePill`, Tabs de línea, segmentado (Tabs y ToggleGroup) (§2.3, §2.4, §2.6) | 2 | ídem |
+| W5 | `feat/ui-contenedores` | Card, Alert, Skeleton, Table desplazable, Separator, `EmptyState` (§2.8, §2.14, §2.15) | 2 | ídem |
+| W6 | `feat/ui-identidad` | Avatar (tamaños, anillo, pila +n, DiceBear), `TeamLogo`, Logo/Isotipo (§2.5) | 2 | ídem |
 
-Ola de una sola unidad: lo que deja W1 (dependencias, `components.json`, archivos crudos de shadcn,
-bloque de movimiento, estructura de `/componentes`) es la base sobre la que corren en paralelo las olas 2 y 3.
+Lo que dejó W1 (dependencias, `components.json`, archivos crudos de shadcn, bloque de movimiento D027,
+estructura de `/componentes` D029) es la base. **Ola 2:** las cinco unidades corren en paralelo; cada una
+toca solo sus archivos (los de su prompt). Nadie toca `package.json`, `bun.lock`, `lib/utils.ts`,
+`app/componentes/page.tsx` ni `_familias/{familia,escenario}.tsx`; `app/globals.css` solo W6, en un bloque nuevo propio.
 
 ## Números reservados
 
 | Unidad | IDs de decisión | Filas de `CONTENT_CHECKLIST` |
 |---|---|---|
 | W1 | D025–D029 | 23–25 |
+| W2 | D030–D033 | 26–28 |
+| W3 | D034–D037 | 29–31 |
+| W4 | D038–D041 | 32–34 |
+| W5 | D042–D045 | 35–37 |
+| W6 | D046–D049 | 38–40 |
 
 No uses números fuera de tu rango (D018 quedó sin usar a propósito).
 
