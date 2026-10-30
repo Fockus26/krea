@@ -1,0 +1,5 @@
+# D032 · Components · NumberStepper: controlado (`value`/`onChange`/`min`/`max`/`step`), lógica en `lib/stepper.ts`, campo `spinbutton` · Implemented
+
+**Decision:** `NumberStepper` (`components/krea/number-stepper.tsx`) props: `value`, `onChange`, `min`, `max`, `step=0,5`, `unit`, `label`, `id`, `disabled`, `readOnly`. Campo `type="text"` + `inputMode="decimal"` con `role="spinbutton"` y `aria-valuenow/min/max/text`. Muestra con coma; escribe "17,5" o "17.5"; `onChange` solo con valores dentro del rango mientras se escribe; al salir/Enter corrige al paso y rango. ↑/↓ un paso; − y + se deshabilitan en los límites (el foco pasa al campo). `ScorePicker` (ola 3) para valores > 6 puede usar el componente o los helpers puros `snapToStep`, `parseDecimal`, `formatDecimal(n, step)`, `stepValue`, `atMin`, `atMax`.
+**Why:** valores en pasos de 0,5 (D004) y base 10–20 (D006). `formatDecimal` propio (no `formatNota`) porque sigue los decimales de cualquier paso.
+**Discarded alternative:** `type="number"` (spinners nativos y coma decimal rotos).
