@@ -24,6 +24,7 @@ export const TEXT_ROLES = [
   "grade-sm",
   "grade-md",
   "grade-lg",
+  "grade-total",
   "grade-xl",
 ] as const;
 
