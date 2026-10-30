@@ -70,3 +70,23 @@ Degradado continuo, no por rangos. `gradeColor(n)` en HSL:
 
 - D001: #EE0400 como texto sobre #F6F4FA da 4.13:1 → el texto rojo usa `accent-ink` #C80300.
 - Las gotas (`splash`) son decorativas y no tienen requisito de contraste (el logo tiene `<title>`).
+- **Texto normal sobre `accent-soft-2` va en `--text`**, no en el acento (`accent-ink` ahí da 4,09:1 en rojo claro y 3,77:1 en morado oscuro: solo íconos o texto ≥ 19 px en negrita). Sobre `accent-soft` sí vale `accent-ink` (≥ 4,74:1).
+- `--grade-ink` es #111111 en claro y oscuro (no se invierte). El toast sí invierte (`--toast-bg`/`--toast-text`).
+
+## Implementación (`app/globals.css`, D015–D016)
+
+Los hex viven solo en `globals.css` (un test lo comprueba). Variables CSS = nombres del handoff
+(`--bg`, `--surface`, `--accent`…); Tailwind las expone con `@theme inline` como `--color-*`:
+clases `bg-bg`, `bg-surface`, `bg-surface-2/3`, `text-text`, `text-text-2`, `text-text-dis`,
+`border-divider`, `border-input`, `text-success|warning|error`, `bg-secondary`,
+`text-on-secondary`, `text-grade-ink`, `bg-accent`, `text-on-accent`, `text-accent-ink`,
+`bg-accent-soft`, `bg-accent-soft-2`, `bg-accent-hover`, `bg-splash`, `bg-chip-ok|warn|err|prize`,
+`bg-alert-err|warn|ok`, `bg-toast-bg`, `text-toast-text`.
+
+- Tema: `<html data-theme="light|dark">`; sin atributo = sistema (`prefers-color-scheme`).
+  Acento: `<html data-accent="rojo|verde|morado">` (azul = sin atributo o `azul`). Se guardan
+  en `localStorage` (`krea-theme`, `krea-accent`) y un script inline los aplica antes de pintar.
+- Tintes: `color-mix(in srgb, <color> N%, var(--surface))` con N en `--tint-*` (acento 12/22 %
+  claro y 16/28 % oscuro; chips ok/warn 10 % claro y 14 % oscuro; err 12 %; premio 30/18 %;
+  avisos 10/26/12 %, en oscuro sin medir todavía).
+- Referencia visual: ruta `/tokens` (no indexada).
