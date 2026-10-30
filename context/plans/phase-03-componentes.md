@@ -15,11 +15,11 @@ No hay entorno DOM de pruebas (`happy-dom`/`jsdom`): las pruebas son de lógica 
 | Ola | Unidades (rama · qué · archivos) | Depende de | Estado |
 |---|---|---|---|
 | 1 | `feat/ui-base` · shadcn init (Radix) + **todas** las dependencias de la fase + archivos crudos de shadcn que usarán las olas 2–3, `cn`, variante `dark:`, bloque de movimiento compartido (keyframes/utilidades §6), token texto-sobre-error, `Button` + `Spinner` completos (§2.1), página `/componentes` con un archivo por familia (stubs) · `components.json`, `package.json`, `bun.lock`, `lib/utils.ts`, `app/globals.css`, `components/ui/*` (crudos), `components/ui/button.tsx`, `components/ui/spinner.tsx`, `app/componentes/**` | — | cerrada (#9) |
-| 2 | `feat/ui-formularios` · Label, Input, Textarea, Select, campo con ayuda/error/éxito, contraseña con ojo, cédula, `NumberStepper` (§2.2) · `components/ui/{input,textarea,select,label,field,…}.tsx`, `app/componentes/_familias/formularios.tsx` | 1 | en curso ||
-| 2 | `feat/ui-overlays` · Dialog, Sheet (hoja inferior), DropdownMenu, Toaster/Sonner (§2.13, §2.14 toast, §6) · `components/ui/{dialog,sheet,dropdown-menu,sonner}.tsx`, `_familias/overlays.tsx` | 1 | en curso ||
-| 2 | `feat/ui-chips-tabs` · Badge/chips (todas las variantes + estados de tarea/entrega), `GradePill` (§2.3), Tabs de línea, segmentado (Tabs `tablist` y ToggleGroup `radiogroup`, `seg-block`) (§2.4, §2.6) · `components/ui/{badge,tabs,toggle-group}.tsx`, `components/krea/grade-pill.tsx`, `_familias/chips.tsx` | 1 | en curso ||
-| 2 | `feat/ui-contenedores` · Card (`hero`, `flat`, lista interna), Alert, Skeleton, Table con contenedor desplazable, `EmptyState` (§2.8, §2.14, §2.15) · `components/ui/{card,alert,skeleton,table,separator}.tsx`, `components/krea/empty-state.tsx`, `_familias/contenedores.tsx` | 1 | en curso ||
-| 2 | `feat/ui-identidad` · Avatar (tamaños, anillo "tú", pila +n, DiceBear D010), `TeamLogo` (respaldo 6 colores como tokens), Logo/Isotipo con acento (§2.5) · `components/ui/avatar.tsx`, `components/krea/{team-logo,logo}.tsx`, `lib/dicebear.ts`, tokens en `globals.css` (bloque propio), `_familias/identidad.tsx` | 1 | en curso ||
+| 2 | `feat/ui-formularios` · Label, Input, Textarea, Select, campo con ayuda/error/éxito, contraseña con ojo, cédula, `NumberStepper` (§2.2) · `components/ui/{input,textarea,select,label,field,…}.tsx`, `app/componentes/_familias/formularios.tsx` | 1 | cerrada (#13) ||
+| 2 | `feat/ui-overlays` · Dialog, Sheet (hoja inferior), DropdownMenu, Toaster/Sonner (§2.13, §2.14 toast, §6) · `components/ui/{dialog,sheet,dropdown-menu,sonner}.tsx`, `_familias/overlays.tsx` | 1 | cerrada (#14) ||
+| 2 | `feat/ui-chips-tabs` · Badge/chips (todas las variantes + estados de tarea/entrega), `GradePill` (§2.3), Tabs de línea, segmentado (Tabs `tablist` y ToggleGroup `radiogroup`, `seg-block`) (§2.4, §2.6) · `components/ui/{badge,tabs,toggle-group}.tsx`, `components/krea/grade-pill.tsx`, `_familias/chips.tsx` | 1 | cerrada (#11) ||
+| 2 | `feat/ui-contenedores` · Card (`hero`, `flat`, lista interna), Alert, Skeleton, Table con contenedor desplazable, `EmptyState` (§2.8, §2.14, §2.15) · `components/ui/{card,alert,skeleton,table,separator}.tsx`, `components/krea/empty-state.tsx`, `_familias/contenedores.tsx` | 1 | cerrada (#10) ||
+| 2 | `feat/ui-identidad` · Avatar (tamaños, anillo "tú", pila +n, DiceBear D010), `TeamLogo` (respaldo 6 colores como tokens), Logo/Isotipo con acento (§2.5) · `components/ui/avatar.tsx`, `components/krea/{team-logo,logo}.tsx`, `lib/dicebear.ts`, tokens en `globals.css` (bloque propio), `_familias/identidad.tsx` | 1 | cerrada (#12) ||
 | 3 | `feat/ui-ranking` · `RankRow` (top 10, propia, 11–30, zona de riesgo, delta, empate), `Podium` (estudiantes y equipos) (§2.9–2.10) · `components/krea/{rank-row,podium,rank-delta}.tsx`, `_familias/ranking.tsx` | 2 (avatar, logo, badge) | pendiente |
 | 3 | `feat/ui-evaluacion` · `ScorePicker` (≤6 botones / >6 stepper + atajos), `SumMeter`, total en vivo, barra por pregunta (§2.11–2.12) · `components/krea/{score-picker,sum-meter,live-total,question-bar}.tsx`, `_familias/evaluacion.tsx` | 2 (toggle-group, stepper, grade-pill) | pendiente |
 | 3 | `feat/ui-preguntas` · cabecera compartida + `QuestionCard` detalle/responder/evaluar **sin unificar cuerpos** (§2.16, §8), `ImageUpload` con compresión en cliente (§2.17); el puntaje de "evaluar" entra como slot (no importa `ScorePicker`) · `components/krea/question-*.tsx`, `components/krea/image-upload.tsx`, `lib/image.ts`, `_familias/preguntas.tsx` | 2 (textarea, badge, alert, button) | pendiente |
@@ -49,13 +49,20 @@ Reglas de reparto:
 | 2 | D030–D049 | 26–40 | 4 IDs y 3 filas por unidad, en el orden de la tabla |
 | 3 | D050–D065 | 41–52 | 4 IDs y 3 filas por unidad, en el orden de la tabla |
 
-Pool: hoy wt1/wt2. La ola 2 necesita 5 slots → `wt init -Count 5` al inicio de esa sesión (o 2 tandas de slots).
+Pool: 5 slots (wt1–wt5) desde la ola 2; la ola 3 usa 4.
 
-## Ola actual: 2 (la ola 1 cerró con #9, main @ fec1d1a)
+## Para la ola 3 (lo dejó la ola 2, PRs #10–#14)
 
-- Brief y prompts: `context/plans/orchestration-2026-10-29-f03.md` / `…-f03-prompts.md`
-- Ola 1: PR #9 W1 ui-base — mergeado (main @ fec1d1a); wt1 liberado
-- Ola 2: W2–W6 lanzados en wt1–wt5 (prompts W2–W6 en `…-f03-prompts.md`, bloque "Ola 2")
+- Leer solo las decisiones que use cada unidad: D030–D033 (Field, Input `leading`/`trailing`, **API de `NumberStepper`** para ScorePicker), D034 (`PortalScope`: portales con tema/acento del escenario), D036 (Sheet solo `bottom`), D038 (ToggleGroup radiogroup: roles nativos de Radix + no deseleccionar), D040 (API de `GradePill`, `--grade-ink`), D041 (variantes de Badge, `StatusBadge`), D046–D049 (Avatar `size`/`ring`, `UserAvatar`, `AvatarStack`, `TeamLogo` por hash, `Logo`/`Isotipo` por máscara, utilidades `cq-*`).
+- **Next 16:** un archivo `"use client"` no puede exportar constantes que use un componente de servidor (rompe el prerender, no el typecheck): constantes en `lib/`.
+- **Tokens:** si una unidad no puede tocar `globals.css` y le falta un token, lo entrega en el reporte (no lo aproxima en silencio); el orquestador los añade al cierre de la fase.
+- z-index: `--z-popover` (40) < `--z-overlay` (50). Si `feat/ui-navegacion` mete un menú dentro de la hoja, lo verá: tomar nota, no arreglarlo en esa unidad.
+- Medidas impares sin token: escala fraccionaria de Tailwind v4 (`px-3.25`), nunca `[Npx]`.
+- Trampas de prompt: verificar en `node_modules` antes de afirmar qué hace una librería (la de Radix ToggleGroup era falsa).
+
+## Ola actual: 3 (la ola 2 cerró con #10–#14, main @ 5a3a1b2)
+
+- Ola 1: #9 · Ola 2: #10 contenedores, #11 chips-tabs, #12 identidad, #13 formularios, #14 overlays — mergeados; wt1–wt5 libres (pool de 5)
 - QA: no aplica (decisión de César)
 
 ## Cierres
@@ -63,6 +70,7 @@ Pool: hoy wt1/wt2. La ola 2 necesita 5 slots → `wt init -Count 5` al inicio de
 | Ola | PRs | QA | Pasa a la siguiente | Datos sin borrar |
 |---|---|---|---|---|
 | 1 | #9 | no aplica (César: QA solo al final) | notas de "Para la ola 2" | ninguno |
+| 2 | #10–#14 | no aplica (César: QA solo al final) | notas de "Para la ola 3"; tokens y z-index al cierre de la fase | ninguno |
 
 ## Cierre de la fase (después de la ola 3, lo hace el orquestador)
 
@@ -79,5 +87,5 @@ Pool: hoy wt1/wt2. La ola 2 necesita 5 slots → `wt init -Count 5` al inicio de
 ## Prompt de inicio de la siguiente ola
 
 ```
-/orchestrate ola 2 de la fase 03. Plan: context/plans/phase-03-componentes.md
+/orchestrate ola 3 de la fase 03. Plan: context/plans/phase-03-componentes.md
 ```
