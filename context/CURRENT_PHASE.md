@@ -7,7 +7,7 @@
 
 **Phase:** 04 — Secciones · **Ola:** 3 de 4 (ola 2 cerrada: #23–#26; ola 1: #20–#22) · **Plan:** `context/plans/phase-04-secciones.md` · **Track:** Product
 **Sin QA hasta el final del proyecto** (César, 2026-10-29). Fase 03 cerrada el 2026-10-30 (#9–#19).
-Sesión cloud: las unidades de una ola van en serie (PR → CI verde → squash).
+Ola 3 en local con el pool (wt1–wt4): brief `context/plans/orchestration-2026-10-30-f04-ola3.md`; César revisa y mergea.
 
 | Unit | Branch | Status |
 |---|---|---|
@@ -19,6 +19,10 @@ Sesión cloud: las unidades de una ola van en serie (PR → CI verde → squash)
 | Ola 2 · Tareas y entrega | ídem | merged (#24) |
 | Ola 2 · Mi equipo | ídem | merged (#25) |
 | Ola 2 · Perfil | ídem | merged (#26) |
+| Ola 3 · W1 Ranking | `feat/sec-ranking` (wt1) | PR #28 (review) |
+| Ola 3 · W2 Panel del profesor | `feat/sec-profe-panel` (wt2) | PR #29 (review) |
+| Ola 3 · W3 Evaluar entrega | `feat/sec-evaluar` (wt3) | PR #30 (review) |
+| Ola 3 · W4 Alumnos | `feat/sec-alumnos` (wt4) | PR #27 (review) |
 
 ## Blocked (actions for César or external)
 

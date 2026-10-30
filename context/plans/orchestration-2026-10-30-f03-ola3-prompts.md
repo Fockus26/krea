@@ -330,3 +330,71 @@ por si hay más.
 Changeset: ninguno. En el PR, "Decisión tomada / alternativa" para: `lib/nav.ts` e íconos, ruta activa por prop + envoltorio,
 cambios a `AppShell` si los hubo, Menú del profe. Acciones manuales: ninguna. Reporte final como dice el brief (inventario:
 SideNav, UserCard, TopBar, BottomNav, MenuSheet, `lib/nav.ts`).
+
+---
+
+## C3 — `chore/cierre-fase-03` (cierre de la fase 03, main @ 422ce11)
+
+Eres el worker **C3**. Rama: `chore/cierre-fase-03`. Slot y puerto: los del mensaje que te lanza.
+Decisiones: rango **D066–D069**. Filas de CONTENT_CHECKLIST: **53–54** (solo si hay copy nuevo).
+Modelo · esfuerzo: **opus · medium** (transversal: tokens + a11y en muchos archivos). Docker: **no**.
+Lee el brief de la ola 3 (`orchestration-2026-10-30-f03-ola3.md`) y sus reglas, **con un cambio**: en esta unidad
+puedes editar `app/globals.css`, `lib/utils.ts` y cualquier componente de `components/` (es el barrido de cierre); sigue
+sin tocar `package.json`/`bun.lock`. Decisiones a leer: D017 (roles tipográficos), D025 (`cn`), D030–D032, D034, D037,
+D040, D049, D050–D065 solo la que toque el archivo que editas.
+
+### Qué pide César
+> "Continúa" (tras mergear #15–#18) — el plan de la fase, sección "Cierre de la fase (después de la ola 3, lo hace el
+> orquestador)" de `context/plans/phase-03-componentes.md` (carpeta principal): léela entera, es tu lista.
+
+### Qué hacer (en este orden, un commit por bloque)
+1. **Tokens que faltan** en `app/globals.css` (con su comentario de origen, en el bloque que corresponda, claro y oscuro si
+   cambia con el tema) y **sustituir** el valor suelto en cada uso:
+   - rol tipográfico 15/22 (`text-[0.9375rem] leading-[1.375rem]` en `components/ui/alert.tsx:19`,
+     `components/krea/question-card-detail.tsx:54,67`, `question-card-review.tsx:63`);
+   - rol 15/20 600 de ítem de nav (`components/layout/nav-item-link.tsx:46`) y de toast (`components/ui/sonner.tsx:31`,
+     `text-[0.9375rem]/5`) — decide si es un solo rol; 12/16 600 de la etiqueta de la barra inferior (`bottom-nav.tsx`);
+   - número de la cabecera de pregunta Poppins 700 15 (`question-header.tsx:40`) y `text-score` Poppins 700 15/20 tabular
+     (`score-picker.tsx`, hoy `text-button font-heading nums`) — ¿el mismo rol? decide;
+   - `--r-grade-xl` 28 px (`lib/grade-pill.ts:23,31`, `rounded-[1.75rem]`);
+   - `--scrim` rgb(20 18 26/.55) + `bg-scrim` (D037: overlay de `dialog.tsx` y `sheet.tsx`, visor `image-viewer.tsx`;
+     cambia D037 a Implemented) y `--on-scrim` (#FFF) para el chip de la miniatura de `image-upload.tsx` (hoy `text-white`
+     sobre `bg-grade-ink/70`; lienzo rgb(17 17 17/.7)): mide el contraste y dilo;
+   - `--w-score-max` 1,5 px si no basta `--w-btn-border` (hoy lo reutiliza: si son el mismo valor por la misma razón,
+     déjalo y documenta);
+   - **Cada rol nuevo y los que añadió W7** (`text-rank-delta`, `text-pod-*`) entran en `TEXT_ROLES` de `lib/utils.ts`
+     para que `cn` los fusione; quita el `text-xs!` del chip "Empate" de `rank-row.tsx` si ya no hace falta. Prueba en
+     `tests/unit/utils.test.ts`.
+2. **`GradePill`**: tamaño para la tarjeta "Total en vivo" 88 × 64, número 32 (`design/canvas/Evaluar.dc.html:118`,
+   HANDOFF §3 "Evaluar entrega") y prop para no pintar el chip Raspado (el contexto ya lo dice); úsalo en
+   `components/krea/live-total.tsx` (hoy `size="lg"` + `table`). Actualiza D040 o crea la tuya.
+3. **`NumberStepper`**: admitir `value: number | null` (vacío = sin valor, no 0; D003) y `aria-labelledby`; quita el rodeo
+   de `score-picker.tsx` (0 + "Sin puntuar" + `fieldset`) si ya no hace falta. Pruebas en `tests/unit/stepper.test.ts`.
+4. **Portales y z-index**: `SelectContent` (`components/ui/select.tsx`) por `usePortalContainer` como `dropdown-menu.tsx`
+   (D034); y un Select/menú abierto dentro de un Dialog o Sheet no debe quedar detrás (`--z-popover` 40 < `--z-overlay` 50).
+   Elige la solución (p. ej. el contenido flotante sube de capa cuando su portal está dentro de un overlay) sin cambiar el
+   orden del handoff para el caso general; decisión propia.
+5. **`/componentes` completo**: en `_familias/preguntas.tsx`, sustituye el marcador "Puntaje (ScorePicker, W8)" por el
+   `ScorePicker` real enlazado con `titleId`. Revisa que las 10 familias estén y sin stubs `Pendiente`.
+6. **Listas y VoiceOver** (backlog, Medio): el reset de Tailwind quita `list-style` y Safari/VoiceOver puede dejar de anunciar
+   `ol/ul` como listas; Biome prohíbe `role="list"`. Investiga en `node_modules` la regla de Biome y decide (p. ej. regla base
+   `list-style: ""`/`list-style-type` en `globals.css`, o desactivar la regla en esas líneas con justificación). Decisión propia.
+7. **Barrido final**: `grep -rnE '\[[0-9.]+(px|rem)\]|\[#[0-9a-fA-F]{3,8}\]' components/ lib/` limpio (los `@max-[25rem]`
+   de contenedor de `tabs.tsx:88`/`toggle-group.tsx:120` son consultas de contenedor: si no hay token de ancho, déjalos y dilo);
+   `app/tokens/page.tsx`: `title: "Tokens"` (la plantilla añade " · KREA"; backlog Low).
+8. **Revisión a11y por código** de los widgets compuestos (ToggleGroup/ScorePicker radiogroup, Tabs, Dialog, Sheet,
+   DropdownMenu, Select, RankList, ImageUpload) y de las transiciones con reduced motion: tabla en el PR (widget · patrón
+   WAI-ARIA · ok / arreglado / pendiente de teclado real). Lo que necesite teclado o lector reales queda para el QA final.
+
+### Lo que NO haces
+- `components/ui/toggle.tsx` sin uso: se señala, no se borra.
+- El `<Toaster />` global (fase 05), el perfil del profesor (pregunta de la fase 05), el ranking en vivo.
+
+### Cómo verificar
+typecheck, lint, test (suite sola), build. `tests/unit/tokens.test.ts` en verde (si cambias su alcance, dilo). Sin servidor ni
+capturas (decisión de César).
+
+### Cierre
+Changeset: ninguno. PR en español "chore: cierre de la fase 03 — tokens pendientes, portales y a11y" con una tabla de cada
+punto de la lista del plan (hecho / no aplica / queda para fase N). Reporte final como dice el brief (PHASE_LOG, filas de
+checklist si hubo copy, filas de inventario que cambien, tokens creados).

@@ -14,7 +14,7 @@
 | EmptyState | `components/krea/empty-state.tsx` | /componentes | F03 ola 2 (#10) | `headingLevel` configurable |
 | Badge | `components/ui/badge.tsx` | /componentes | F03 ola 2 (#11) | 9 variantes, `asChild` |
 | StatusBadge / CaptainBadge | `components/krea/status-badge.tsx` | /componentes | F03 ola 2 (#11) | mapa puro de estados de tarea y entrega |
-| GradePill | `components/krea/grade-pill.tsx` (lógica `lib/grade-pill.ts`) | /componentes | F03 ola 2 (#11) | sm/md/lg/xl, Raspado, Pendiente, Base, modo tabla |
+| GradePill | `components/krea/grade-pill.tsx` (lógica `lib/grade-pill.ts`) | /componentes | F03 ola 2 (#11) | sm/md/lg/xl + `total` 88×64/32 y `raspado` chip/icono/ninguno (D102, F04 ola 3, #30), Pendiente, Base, modo tabla |
 | Tabs | `components/ui/tabs.tsx` | /componentes | F03 ola 2 (#11) | variantes line y segmented (+block) |
 | ToggleGroup | `components/ui/toggle-group.tsx` | /componentes | F03 ola 2 (#11) | radiogroup, `block`; `Toggle` suelto en `toggle.tsx` sin uso |
 | Avatar | `components/ui/avatar.tsx` | /componentes | F03 ola 2 (#12) | Radix; 8 tamaños, `ring`, `AVATAR_SIZES` |
@@ -29,7 +29,7 @@
 | Field | `components/ui/field.tsx` | /componentes | F03 ola 2 (#13) | id y ARIA por contexto, `announce` |
 | PasswordInput | `components/krea/password-input.tsx` | /componentes | F03 ola 2 (#13) | `autoComplete` obligatorio |
 | CedulaInput | `components/krea/cedula-input.tsx` | /componentes | F03 ola 2 (#13) | `lib/cedula.ts` |
-| NumberStepper | `components/krea/number-stepper.tsx` | /componentes | F03 ola 2 (#13) | `lib/stepper.ts`; lo reutiliza ScorePicker (ola 3) |
+| NumberStepper | `components/krea/number-stepper.tsx` | /componentes | F03 ola 2 (#13) | `lib/stepper.ts`; lo reutiliza ScorePicker (ola 3) y Alumnos; `value: number \| null`, `aria-labelledby`, `emptyText` (D103, F04 ola 3, #30) |
 | Dialog | `components/ui/dialog.tsx` | /componentes | F03 ola 2 (#14) | §2.13; < 768 arriba a 96; `overlayClasses` compartido (D037) |
 | Sheet | `components/ui/sheet.tsx` | /componentes | F03 ola 2 (#14) | solo `side="bottom"` (D036); asa decorativa; zona segura |
 | DropdownMenu | `components/ui/dropdown-menu.tsx` | /componentes | F03 ola 2 (#14) | 240 px; `variant="destructive"`; casilla, radio y submenú |
@@ -60,7 +60,7 @@
 | rank-row (utilidad) | `lib/rank-row.ts` | RankRow, RankList, Podium | F03 ola 3 (#17) | tipo de fila, textos accesibles, agrupación de anuncios |
 | ScorePicker | `components/krea/score-picker.tsx` (+ `lib/score.ts`) | /componentes; QuestionCardReview (slot `score`) | F03 ola 3 (#18) | ≤ 6 radiogroup / > 6 stepper + atajos; teclas 0–9 y `,` con búfer 1 s |
 | SumMeter | `components/krea/sum-meter.tsx` (+ `lib/meters.ts`) | /componentes; constructor | F03 ola 3 (#18) | `variant` bar/card; faltan/se pasó/exacta; `<output>` sr-only |
-| LiveTotal | `components/krea/live-total.tsx` (+ `lib/meters.ts`) | /componentes; Evaluar entrega | F03 ola 3 (#18) | `scores[]` + `base`; `variant` bar/card; nota por `notaFinal` |
+| LiveTotal | `components/krea/live-total.tsx` (+ `lib/meters.ts`) | /componentes; Evaluar entrega | F03 ola 3 (#18) | `scores[]` + `base`; `variant` bar/card; nota por `notaFinal`; tarjeta con `GradePill size="total"` y `raspado` ninguno/icono (#30) |
 | MeterBar | `components/krea/meter-bar.tsx` | SumMeter, LiveTotal | F03 ola 3 (#18) | barra interna `aria-hidden`; lo único compartido (§8) |
 
 <!-- One row per reusable component. Do not list single-section components that are not
