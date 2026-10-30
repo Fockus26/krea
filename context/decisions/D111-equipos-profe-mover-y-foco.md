@@ -1,0 +1,5 @@
+# D111 · Sections · Equipos del profesor: mover y capitán sobre un estado puro, y el foco va al título de la tarjeta · Implemented
+
+**Decision:** `moverAlumno(estado, cedula, destino)` y `cambiarCapitan` (`lib/equipos-profe.ts`) son puras e inmutables sobre `EstadoEquipos` (miembros + capitán por equipo y la lista Sin equipo). Al sacar al capitán pasa el cargo al siguiente; un equipo de 1 tiene capitán automático (el Select se oculta); el primero que entra a un equipo vacío es su capitán. Tras mover, el botón de la fila ya no existe: el menú no devuelve el foco (`onCloseAutoFocus` prevenido) y el tablero lo lleva al `h3` (`tabIndex=-1`) de la tarjeta destino; al «Quitar del equipo», al de la tarjeta de origen. Cada acción se anuncia con un toast (región viva de Sonner), sin otro `role="status"`.
+**Why:** foco en un sitio con sentido y única región viva; todo (eyebrow, «Sin equipo · n», «n integrantes») sale del mismo estado.
+**Discarded alternative:** foco a la tarjeta Sin equipo al quitar — el prompt pide origen o destino; un `role="status"` propio — duplicaría el toast.
