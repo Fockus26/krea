@@ -6,12 +6,16 @@
 ## Now
 
 **Phase:** 03 — Componentes · **Ola:** 3 de 3 (olas 1–2 cerradas, main @ 5a3a1b2) · **Plan:** `context/plans/phase-03-componentes.md` · **Track:** Product
-**Sin QA hasta el final del proyecto** (César, 2026-10-29). Brief/prompts: `context/plans/orchestration-2026-10-29-f03*.md`
+**Sin QA hasta el final del proyecto** (César, 2026-10-29). Brief/prompts ola 3: `context/plans/orchestration-2026-10-30-f03-ola3*.md`
 
 | Unit | Branch | Status | Slot |
 |---|---|---|---|
 | W1 shadcn init, deps de la fase, `cn`, `dark:`, movimiento, Button, `/componentes` | `feat/ui-base` | merged (#9) | — |
 | W2–W6 formularios, overlays, chips-tabs, contenedores, identidad | `feat/ui-*` | merged (#10–#14) | — |
+| W7 ranking (RankRow, Podium, FLIP/glow) | `feat/ui-ranking` | PR abierto (#17) | wt1 |
+| W8 evaluación (ScorePicker, SumMeter, LiveTotal) | `feat/ui-evaluacion` | PR abierto (#18) | wt2 |
+| W9 preguntas (QuestionCard ×3, QuestionBar, ImageUpload) | `feat/ui-preguntas` | PR abierto (#16) | wt3 |
+| W10 navegación (SideNav, TopBar, BottomNav, MenuSheet) | `feat/ui-navegacion` | PR abierto (#15) | wt4 |
 
 ## Blocked (actions for César or external)
 

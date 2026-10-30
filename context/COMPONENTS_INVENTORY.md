@@ -36,5 +36,32 @@
 | Toaster | `components/ui/sonner.tsx` | /componentes | F03 ola 2 (#14) | Sonner `unstyled` + tokens; montaje global en fase 05 (D035) |
 | PortalScope | `components/ui/portal-scope.tsx` | dialog, sheet, dropdown-menu | F03 ola 2 (#14) | portales heredan tema y acento del contenedor (D034) |
 
+| SideNav | `components/layout/side-nav.tsx` | /componentes; slot `sidebar` de AppShell | F03 ola 3 (#15) | logo, ítems del rol, contador Evaluar, UserCard |
+| UserCard | `components/layout/user-card.tsx` | SideNav | F03 ola 3 (#15) | enlaza a Perfil, avatar 40 |
+| TopBar | `components/layout/top-bar.tsx` | slot `topbar` | F03 ola 3 (#15) | logo o volver + título; avatar (est.) o Menú (prof.) |
+| BottomNav | `components/layout/bottom-nav.tsx` | slot `bottomNav` | F03 ola 3 (#15) | 5 columnas, píldora de ícono |
+| MenuSheet | `components/layout/menu-sheet.tsx` | TopBar del profesor | F03 ola 3 (#15) | Sheet bottom con botón «Menú»; `onSignOut` opcional |
+| NavItemLink / NavIcon | `components/layout/{nav-item-link,nav-icon}.tsx` | SideNav, MenuSheet, BottomNav | F03 ola 3 (#15) | ítem con capa activa (opacidad 150 ms); tabla clave → lucide |
+| RouteSideNav / RouteTopBar / RouteBottomNav | `components/layout/route-nav.tsx` | layouts fase 04+ | F03 ola 3 (#15) | cliente, `usePathname()` |
+| nav (utilidad) | `lib/nav.ts` | navegación | F03 ola 3 (#15) | ítems por rol y superficie, `isActive`, `counterLabel`, `rolLabel` |
+| QuestionHeader | `components/krea/question-header.tsx` | las 3 tarjetas de pregunta | F03 ola 3 (#16) | compartida; valor por variante (`lib/question.ts`); `level`; `titleId` |
+| QuestionBar | `components/krea/question-bar.tsx` | QuestionCardDetail | F03 ola 3 (#16) | `aria-hidden`; `null` = Pendiente; `hideText`; `width` sin animar |
+| QuestionCardDetail | `components/krea/question-card-detail.tsx` | `/notas/[tarea]` | F03 ola 3 (#16) | `<li>`; respuesta texto/imagen; comentario del profe |
+| QuestionCardAnswer | `components/krea/question-card-answer.tsx` | `/tareas/[tarea]` | F03 ola 3 (#16) | `<li>`; texto /600 o ImageUpload; `bloqueadaPor` (D012) |
+| QuestionCardReview | `components/krea/question-card-review.tsx` | `/profe/evaluar/[entrega]` | F03 ola 3 (#16) | `<li>`; slot `score` + `titleId`; comentario /280; imagen 280 + Ampliar |
+| ImageViewer | `components/krea/image-viewer.tsx` | QuestionCardReview | F03 ola 3 (#16) | Dialog pantalla completa con disparador «Ampliar» propio |
+| ImageUpload | `components/krea/image-upload.tsx` | QuestionCardAnswer | F03 ola 3 (#16) | controlada; valida y comprime (`lib/image.ts`); sin Storage (fase 07) |
+| RankRow | `components/krea/rank-row.tsx` | RankList, /componentes | F03 ola 3 (#17) | estudiante y equipo vía `media`; top/normal/riesgo; `esTu`, `moving`, `efecto` |
+| RankDelta | `components/krea/rank-delta.tsx` | RankRow | F03 ola 3 (#17) | chip 22, texto accesible «subió 2 puestos» |
+| RankList | `components/krea/rank-list.tsx` | /componentes | F03 ola 3 (#17) | cliente; dos `<ol>` + separador de riesgo; FLIP interno |
+| Podium | `components/krea/podium.tsx` | /componentes | F03 ola 3 (#17) | estudiantes y equipos; visual 2-1-3, DOM 1-2-3; empates |
+| RankAnnouncer | `components/krea/rank-announcer.tsx` | /componentes (simulador) | F03 ola 3 (#17) | `<output aria-live>` único por página |
+| useFlip | `components/krea/use-flip.ts` | RankList | F03 ola 3 (#17) | WAAPI solo transform; nada con reduced motion; math en `lib/flip.ts` |
+| rank-row (utilidad) | `lib/rank-row.ts` | RankRow, RankList, Podium | F03 ola 3 (#17) | tipo de fila, textos accesibles, agrupación de anuncios |
+| ScorePicker | `components/krea/score-picker.tsx` (+ `lib/score.ts`) | /componentes; QuestionCardReview (slot `score`) | F03 ola 3 (#18) | ≤ 6 radiogroup / > 6 stepper + atajos; teclas 0–9 y `,` con búfer 1 s |
+| SumMeter | `components/krea/sum-meter.tsx` (+ `lib/meters.ts`) | /componentes; constructor | F03 ola 3 (#18) | `variant` bar/card; faltan/se pasó/exacta; `<output>` sr-only |
+| LiveTotal | `components/krea/live-total.tsx` (+ `lib/meters.ts`) | /componentes; Evaluar entrega | F03 ola 3 (#18) | `scores[]` + `base`; `variant` bar/card; nota por `notaFinal` |
+| MeterBar | `components/krea/meter-bar.tsx` | SumMeter, LiveTotal | F03 ola 3 (#18) | barra interna `aria-hidden`; lo único compartido (§8) |
+
 <!-- One row per reusable component. Do not list single-section components that are not
      reused — those go in SECTION_INVENTORY.md as part of that section. -->
