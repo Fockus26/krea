@@ -4,6 +4,7 @@ export type Rol = "estudiante" | "profesor";
 export type Ancho = "default" | "lectura";
 
 export function containerClass(rol: Rol, ancho: Ancho = "default"): string {
-  if (ancho === "lectura") return "container-reading";
+  // Las pantallas de lectura del lienzo van alineadas al inicio, no centradas (D078)
+  if (ancho === "lectura") return "container-reading-start";
   return rol === "profesor" ? "container-teacher" : "container-student";
 }

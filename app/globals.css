@@ -833,6 +833,13 @@
   max-width: var(--w-container-reading);
   margin-inline: auto;
 }
+/* Lectura alineada al inicio (Mis notas, Detalle, Tarea, Perfil: `wrap-narrow` con margin-left 0 en el lienzo) */
+@utility container-reading-start {
+  width: 100%;
+  min-width: 0;
+  max-width: var(--w-container-reading);
+  margin-inline: 0 auto;
+}
 /* Padding del contenido de página (lateral, superior e inferior) */
 @utility page-pad {
   padding-inline: var(--page-px);

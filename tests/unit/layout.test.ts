@@ -15,8 +15,12 @@ describe("containerClass", () => {
   });
 
   test("lectura es igual para los dos roles", () => {
-    expect(containerClass("estudiante", "lectura")).toBe("container-reading");
-    expect(containerClass("profesor", "lectura")).toBe("container-reading");
+    expect(containerClass("estudiante", "lectura")).toBe(
+      "container-reading-start",
+    );
+    expect(containerClass("profesor", "lectura")).toBe(
+      "container-reading-start",
+    );
   });
 
   test("cada clase existe como utilidad en globals.css", () => {
