@@ -36,6 +36,11 @@ const PANTALLAS: ReadonlyArray<{ href: string; titulo: string; ruta: string }> =
       ruta: "/ranking",
     },
     {
+      href: "/secciones/premios",
+      titulo: "Premios (profesor)",
+      ruta: "/profe/premios",
+    },
+    {
       href: "/secciones/equipo/con-equipo",
       titulo: "Mi equipo",
       ruta: "/equipo",
