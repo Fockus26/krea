@@ -1291,3 +1291,9 @@ body {
   background: var(--scroll-thumb);
   border-radius: var(--r-full);
 }
+
+/* ---------- Secciones: barra de acción (HANDOFF §4; D067) ---------- */
+/* Pegada sobre la barra inferior: 72 px + zona segura */
+@utility bottom-action {
+  bottom: calc(var(--h-bnav) + env(safe-area-inset-bottom, 0px));
+}
