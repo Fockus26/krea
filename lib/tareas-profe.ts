@@ -6,6 +6,15 @@ import { comparaFecha, formatFecha } from "@/lib/fecha";
 import { NOTA_MAX } from "@/lib/grades";
 import { percent, sumMeterInfo } from "@/lib/meters";
 
+/* ---------- Rutas de la fase 05 (brief de la ola 4) ---------- */
+
+export const RUTA_TAREAS = "/profe/tareas";
+export const RUTA_NUEVA_TAREA = "/profe/tareas/nueva";
+export const RUTA_EVALUAR = "/profe/evaluar";
+/** "Ver notas" de una evaluada: el handoff no le da ruta propia; las notas viven en Alumnos (D115). */
+export const RUTA_VER_NOTAS = "/profe/alumnos";
+export const rutaTarea = (id: string) => `${RUTA_TAREAS}/${id}`;
+
 /* ---------- Lista ---------- */
 
 export type EstadoTareaProfe = "borrador" | "abierta" | "evaluada";
@@ -271,10 +280,7 @@ export function borradorReducer(
       if (estado.preguntas.length >= MAX_PREGUNTAS) return estado;
       return {
         ...estado,
-        preguntas: [
-          ...estado.preguntas,
-          preguntaVacia(`q${estado.siguiente}`),
-        ],
+        preguntas: [...estado.preguntas, preguntaVacia(`q${estado.siguiente}`)],
         siguiente: estado.siguiente + 1,
       };
     }

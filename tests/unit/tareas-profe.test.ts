@@ -76,7 +76,12 @@ describe("lista", () => {
     ).toBe("1 pregunta · venció 10/10/2026");
     expect(
       metaTarea(
-        tarea({ estado: "borrador", tipo: "grupal", fecha: null, preguntas: 10 }),
+        tarea({
+          estado: "borrador",
+          tipo: "grupal",
+          fecha: null,
+          preguntas: 10,
+        }),
         HOY_DEMO,
       ),
     ).toBe("10 preguntas · sin fecha · premio por definir");
@@ -255,17 +260,17 @@ describe("constructor: reducer", () => {
     expect(mascaraFecha("1411")).toBe("14/11");
     expect(mascaraFecha("14112026999")).toBe("14/11/2026");
     expect(mascaraFecha("ab1")).toBe("1");
-    expect(borradorReducer(lista, { tipo: "fecha", valor: "01122026" }).fecha).toBe(
-      "01/12/2026",
-    );
+    expect(
+      borradorReducer(lista, { tipo: "fecha", valor: "01122026" }).fecha,
+    ).toBe("01/12/2026");
   });
 });
 
 describe("constructor: suma y validación", () => {
   test("suma con medios puntos y sin valor", () => {
-    expect(
-      sumaValores([{ valor: 0.5 }, { valor: null }, { valor: 2.5 }]),
-    ).toBe(3);
+    expect(sumaValores([{ valor: 0.5 }, { valor: null }, { valor: 2.5 }])).toBe(
+      3,
+    );
     expect(sumaValores([{ valor: 0.1 }, { valor: 0.2 }])).toBe(0.5);
   });
 

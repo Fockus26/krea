@@ -110,7 +110,11 @@ const PROFE: Readonly<
   },
   "logo-y-paleta": {
     estado: "evaluada",
-    avance: { tipo: "evaluadas", hechas: EQUIPOS.length, total: EQUIPOS.length },
+    avance: {
+      tipo: "evaluadas",
+      hechas: EQUIPOS.length,
+      total: EQUIPOS.length,
+    },
     preguntas: 5,
   },
   "presentacion-producto": {
