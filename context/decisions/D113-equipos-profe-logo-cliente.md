@@ -1,0 +1,5 @@
+# D113 · Sections · Equipos del profesor: logo recortado en el cliente a 512 × 512, con validación propia y toast local · Implemented
+
+**Decision:** `validarLogo` (JPG/PNG/WebP, ≤ 5 MB, mensajes en español) y `recorteCuadrado(ancho, alto)` (cuadrado centrado, puro y probado) viven en `lib/equipos-profe.ts`; `dibujarLogo` los usa con `createImageBitmap` + `canvas` y devuelve un WebP de 512 × 512. `lib/image.ts` no se edita (solo JPG/PNG, 1600 px). La vista previa es `URL.createObjectURL` por equipo, revocada al reemplazar y al desmontar. El botón se llama «Subir logo de {equipo}» / «Cambiar logo de {equipo}»; el error va en un `<p role="alert">` con ícono, asociado por `aria-describedby`. Nada se sube (Storage es la fase 07). `<Toaster />` local en `app/secciones/equipos-profe/layout.tsx` (D105).
+**Why:** HANDOFF §3 Equipos pide recorte cuadrado en el cliente a 512 × 512.
+**Discarded alternative:** reutilizar `ImageUpload`/`compressImage` — acepta solo JPG/PNG, comprime a 1600 px y no recorta; un recortador con arrastre — no está en el handoff.
