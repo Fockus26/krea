@@ -30,10 +30,10 @@ ejemplo tipados ni una ruta para ver secciones. No hay entorno DOM de pruebas: l
 | 1 | `feat/sec-base` · `lib/demo/` (datos de ejemplo tipados desde el seed + placeholders), `PageHeader` (eyebrow, h1, ayuda, acciones), `GradeRow` (fila de nota compartida Inicio/Mis notas/Mi equipo, §8), `ActionBar` (§4), índice `/secciones` · `lib/demo/*`, `components/sections/shared/*`, `app/secciones/{layout,page}.tsx` | fase 03 | cerrada (#20) |
 | 1 | `feat/sec-ingresar` · Ingresar, Recuperar, Enviado, Nueva (+ panel de marca ≥ 1024, errores de servidor como estados) · `components/sections/auth/*`, `lib/auth-copy.ts`, `app/secciones/ingresar/[estado]/page.tsx` | W1 | cerrada (#21) |
 | 1 | `feat/sec-inicio` · Saludo, Tarjeta de puntos, Mis notas, Por entregar, Mi equipo (`g-home` ≥ 1024) · `components/sections/inicio/*`, `lib/inicio.ts`, `app/secciones/inicio/page.tsx` | W1 | cerrada (#22) |
-| 2 | `feat/sec-notas` · Mis notas (leyenda + lista con segmentado) y Detalle de nota (resumen con base + preguntas) | ola 1 (`GradeRow`) | pendiente |
-| 2 | `feat/sec-tareas` · `/tareas` (Por entregar / Entregadas) y entrega (encabezado, premio, aviso de capitán, preguntas, barra de acción, diálogo, Entregada) | ola 1 (`ActionBar`) | pendiente |
-| 2 | `feat/sec-equipo` · Mi equipo (cabecera, integrantes, notas y premios, vacío) | ola 1 | pendiente |
-| 2 | `feat/sec-perfil` · Perfil (identidad, datos, avatar, apariencia, seguridad) | ola 1 | pendiente |
+| 2 | `feat/sec-notas` · Mis notas (leyenda + lista con segmentado) y Detalle de nota (resumen con base + preguntas) | ola 1 (`GradeRow`) | cerrada (#23) |
+| 2 | `feat/sec-tareas` · `/tareas` (Por entregar / Entregadas) y entrega (encabezado, premio, aviso de capitán, preguntas, barra de acción, diálogo, Entregada) | ola 1 (`ActionBar`) | cerrada (#24) |
+| 2 | `feat/sec-equipo` · Mi equipo (cabecera, integrantes, notas y premios, vacío) | ola 1 | cerrada (#25) |
+| 2 | `feat/sec-perfil` · Perfil (identidad, datos, avatar, apariencia, seguridad) | ola 1 | cerrada (#26) |
 | 3 | `feat/sec-ranking` · Ranking estudiantes/equipos (encabezado, podio, lista, zona de riesgo, aside «Cómo se calculan» + «Últimos movimientos») | ola 1 | pendiente |
 | 3 | `feat/sec-profe-panel` · Panel del profesor (saludo por hora, métricas `g3`, Por evaluar, Últimos ajustes) | ola 1 | pendiente |
 | 3 | `feat/sec-evaluar` · Evaluar entrega (cabecera, medidor fijo, preguntas con `ScorePicker` en `QuestionCardReview`, acción) + `GradePill` 88×64 de Total en vivo + `NumberStepper` con `value: null` | ola 1 (`ActionBar`) | pendiente |
@@ -78,7 +78,7 @@ Reglas de reparto:
 - Revisar con teclado real (fase 09): flechas del `ToggleGroup` (D038).
 - Archivo sin uso: `components/ui/toggle.tsx` (#11) — señalado, no se borra.
 
-## Ola actual: 2 (la ola 1 cerró con #20–#22; antes, #19 cerró la fase 03)
+## Ola actual: 3 (la ola 2 cerró con #23–#26; la ola 1 con #20–#22)
 
 - En la nube: unidades en serie en una sesión, cada una PR → CI verde → squash. Fuera de la nube: brief y prompts como en la fase 03.
 - QA: no aplica (decisión de César)
@@ -92,14 +92,23 @@ Reglas de reparto:
 - Chips con texto largo (premios): `h-auto min-h-7 py-1 whitespace-normal` para que envuelvan a 320.
 - Verificación sin servidor: `bun run build` y buscar en `.next/server/app/secciones/<pantalla>.html` (un `<h1>`, un `<main>`, textos).
 
+## Para la ola 3 (lo dejó la ola 2)
+
+- Leer D078 (`width="lectura"` = 760 alineado al inicio), D082 (borrador local, `ActionBar` + diálogo), D086 (premio solo con ganador único), D090 (`ToggleGroup` como radiogroup visual; `lib/apariencia.ts`).
+- Compartidas nuevas: `components/sections/shared/back-link.tsx` (migas ≥ 1024 en pantallas de detalle). `PendingTasks` de Inicio se reutiliza en /tareas.
+- Tokens por sección al final de `app/globals.css` (bloques Tareas y Perfil). Toda sombra o radio propio nuevo que conviva con `shadow-1`/`rounded-md` en un `cn` se registra en `lib/utils.ts` (`shadow`/`radius` de tailwind-merge), si no gana el que el CSS ponga último.
+- `GradePill` sigue pintando el chip Raspado al lado de la píldora: la opción de ocultarlo es de `feat/sec-evaluar` (Detalle, D080, la aprovecharía).
+- Enunciados del seed sin tildes (fila 64): la vista usa los del lienzo en `lib/demo/notas.ts`; Evaluar puede reutilizar `ENUNCIADOS_LIENZO` si lo exporta.
+
 ## Cierres
 
 | Ola | PRs | QA | Pasa a la siguiente | Datos sin borrar |
 |---|---|---|---|---|
 | 1 | #20 base, #21 ingresar, #22 inicio (+ #19 cierre de la fase 03) | no aplica (César: QA solo al final) | notas de «Para la ola 2»; D075 pendiente de César | ninguno |
+| 2 | #23 notas, #24 tareas, #25 equipo, #26 perfil | no aplica (César: QA solo al final) | notas de «Para la ola 3»; filas 64, 67, 69, 73 esperan a César | ninguno |
 
 ## Prompt de inicio de la siguiente ola
 
 ```
-/orchestrate ola 2 de la fase 04. Plan: context/plans/phase-04-secciones.md
+/orchestrate ola 3 de la fase 04. Plan: context/plans/phase-04-secciones.md
 ```
