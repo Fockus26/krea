@@ -1,30 +1,47 @@
+import { cva, type VariantProps } from "class-variance-authority";
+import { Slot } from "radix-ui";
 import type * as React from "react";
 import { cn } from "@/lib/utils";
 
-function Card({
-  className,
-  size = "default",
-  ...props
-}: React.ComponentProps<"div"> & { size?: "default" | "sm" }) {
+/*
+ * Card — HANDOFF §2.8; medidas en design/canvas/krea.css:190-194.
+ * Sombra en claro; en oscuro sin sombra y con borde 1 px (nunca ambas, §8).
+ * No hay CardAction/CardFooter/CardContent: el handoff no los usa (la acción del
+ * encabezado es un hijo más de la fila `CardHeader`).
+ */
+const cardVariants = cva("bg-surface p-4 md:p-6", {
+  variants: {
+    variant: {
+      default:
+        "rounded-md shadow-1 dark:border dark:border-divider dark:shadow-none",
+      // Radio 24 solo para hero (y la tarjeta de puntos, que no es una Card, §8)
+      hero: "rounded-lg shadow-1 dark:border dark:border-divider dark:shadow-none",
+      flat: "rounded-md border border-divider shadow-none",
+    },
+  },
+  defaultVariants: { variant: "default" },
+});
+
+type CardProps = React.ComponentProps<"div"> &
+  VariantProps<typeof cardVariants>;
+
+function Card({ className, variant, ...props }: CardProps) {
   return (
     <div
       data-slot="card"
-      data-size={size}
-      className={cn(
-        "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
-        className,
-      )}
+      className={cn(cardVariants({ variant }), className)}
       {...props}
     />
   );
 }
 
+/** Fila título + acción: envuelve, gap 8 12, margen inferior 12. */
 function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-header"
       className={cn(
-        "group/card-header @container/card-header grid auto-rows-min items-start gap-1 rounded-t-xl px-(--card-spacing) has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto] [.border-b]:pb-(--card-spacing)",
+        "mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2",
         className,
       )}
       {...props}
@@ -32,71 +49,86 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
+const TITLE_CLASS = { 2: "text-h2", 3: "text-h3", 4: "text-h4" } as const;
+
+/** El nivel lo decide el llamador según dónde viva la tarjeta (no rompe la jerarquía). */
+function CardTitle({
+  level = 3,
+  className,
+  ...props
+}: React.ComponentProps<"h3"> & { level?: 2 | 3 | 4 }) {
+  const Heading = `h${level}` as const;
   return (
-    <div
+    <Heading
       data-slot="card-title"
-      className={cn(
-        "font-heading text-base leading-snug font-medium group-data-[size=sm]/card:text-sm",
-        className,
-      )}
+      className={cn(TITLE_CLASS[level], "text-text", className)}
       {...props}
     />
   );
 }
 
-function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
+function CardDescription({ className, ...props }: React.ComponentProps<"p">) {
   return (
-    <div
+    <p
       data-slot="card-description"
-      className={cn("text-sm text-muted-foreground", className)}
+      className={cn("text-small text-text-2", className)}
       {...props}
     />
   );
 }
 
-function CardAction({ className, ...props }: React.ComponentProps<"div">) {
+/** Lista dentro de la tarjeta: filas de 64 px mínimo separadas por 1 px. */
+function CardList({ className, ...props }: React.ComponentProps<"ul">) {
   return (
-    <div
-      data-slot="card-action"
-      className={cn(
-        "col-start-2 row-span-2 row-start-1 self-start justify-self-end",
-        className,
-      )}
+    <ul
+      data-slot="card-list"
+      className={cn("m-0 list-none p-0", className)}
       {...props}
     />
   );
 }
 
-function CardContent({ className, ...props }: React.ComponentProps<"div">) {
+/**
+ * Fila de la lista. Con `asChild` el hijo (un `<a>`/`Link`) es la fila interactiva:
+ * hover `--surface-2`, radio 12 y anillo de foco (§2.8). El separador es del `<li>`,
+ * así el hover no lo tapa.
+ */
+function CardListItem({
+  asChild = false,
+  className,
+  children,
+  ...props
+}: Omit<React.ComponentProps<"li">, "children"> & {
+  asChild?: boolean;
+  children: React.ReactNode;
+}) {
+  const Row = asChild ? Slot.Root : "div";
   return (
-    <div
-      data-slot="card-content"
-      className={cn("px-(--card-spacing)", className)}
+    <li
+      data-slot="card-list-item"
+      className="border-b border-divider last:border-b-0"
       {...props}
-    />
-  );
-}
-
-function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="card-footer"
-      className={cn(
-        "flex items-center rounded-b-xl border-t bg-muted/50 p-(--card-spacing)",
-        className,
-      )}
-      {...props}
-    />
+    >
+      <Row
+        className={cn(
+          "flex min-h-16 items-center gap-3 px-1 py-3 text-text",
+          asChild &&
+            "rounded-nav no-underline transition-colors duration-fast ease-krea hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
+          className,
+        )}
+      >
+        {children}
+      </Row>
+    </li>
   );
 }
 
 export {
   Card,
   CardHeader,
-  CardFooter,
   CardTitle,
-  CardAction,
   CardDescription,
-  CardContent,
+  CardList,
+  CardListItem,
+  cardVariants,
 };
