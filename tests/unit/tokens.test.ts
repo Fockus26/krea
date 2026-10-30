@@ -40,6 +40,7 @@ const THEME_TOKENS = [
   "success",
   "warning",
   "error",
+  "on-error",
   "secondary",
   "on-secondary",
   "grade-ink",
@@ -81,6 +82,47 @@ describe("tokens de globals.css", () => {
     expect(dark["--tint-ok"]).toBe("14%");
     expect(light["--tint-1"]).toBe("12%");
     expect(dark["--tint-2"]).toBe("28%");
+    // §2.1 danger: blanco en claro, #14121A en oscuro (6,64:1), no --on-accent
+    expect(light["--on-error"]).toBe("#ffffff");
+    expect(dark["--on-error"]).toBe("#14121a");
+  });
+
+  test("variante dark: = tema oscuro explícito o del sistema (D026)", () => {
+    const variant = css.slice(
+      css.indexOf("@custom-variant dark"),
+      css.indexOf("/* ---------- 1. Claro"),
+    );
+    expect(variant).toContain('[data-theme="dark"] *');
+    expect(variant).toContain('[data-theme="light"] [data-theme="dark"]');
+    expect(variant).toContain("@media (prefers-color-scheme: dark)");
+    expect(variant.match(/@slot;/g)?.length).toBe(3);
+  });
+
+  test("el movimiento de componentes respeta reduced motion (D027)", () => {
+    const start = css.indexOf("/* ---------- Movimiento de componentes");
+    const motion = css.slice(start, css.indexOf("/* Anclas:", start));
+    const utilities = [...motion.matchAll(/@utility ([\w-]+) \{/g)].map(
+      (m) => m[1],
+    );
+    expect(utilities.length).toBeGreaterThan(10);
+    for (const name of utilities) {
+      if (name === "origin-trigger") continue;
+      const body = motion.slice(motion.indexOf(`@utility ${name} {`));
+      const own = body.slice(0, body.indexOf("\n}\n") + 2);
+      const usesZeroedDuration =
+        /var\(--d-(fast|normal|exit|sheet-exit)\)/.test(own);
+      // Lo que no dura un token que reduce pone a 0 se apaga dentro de la propia utilidad
+      expect(usesZeroedDuration || own.includes("prefers-reduced-motion")).toBe(
+        true,
+      );
+      // Ninguna utilidad de movimiento anima algo distinto de transform/opacity
+      expect(own).not.toMatch(/animation:[^;]*(width|height|top|left|margin)/);
+    }
+    // Las keyframes solo tocan transform u opacity
+    for (const m of motion.matchAll(/@keyframes [\w-]+ \{([\s\S]*?)\n\}/g)) {
+      const props = [...m[1].matchAll(/([a-z-]+):/g)].map((p) => p[1]);
+      for (const p of props) expect(["transform", "opacity"]).toContain(p);
+    }
   });
 
   test("los 4 acentos, en claro y en oscuro, con los hex del handoff", () => {
