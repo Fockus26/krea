@@ -3,8 +3,10 @@ import { Badge } from "@/components/ui/badge";
 import {
   GRADE_PILL_PENDING_CLASSES,
   GRADE_PILL_SIZE_CLASSES,
+  type GradePillRaspado,
   type GradePillSize,
   gradePillLabel,
+  gradePillRaspado,
   gradePillState,
   showsBase,
 } from "@/lib/grade-pill";
@@ -19,6 +21,11 @@ type GradePillProps = {
   base?: number;
   /** Modo tabla: el Raspado va como ícono de 16 px en lugar del chip. */
   table?: boolean;
+  /**
+   * Aviso de Raspado: `chip` · `icono` · `ninguno` (el contexto ya lo dice, D102). Si se pasa,
+   * gana a `table`; sin él, `table` decide como siempre.
+   */
+  raspado?: GradePillRaspado;
   className?: string;
 };
 
@@ -32,9 +39,11 @@ export function GradePill({
   size = "md",
   base,
   table = false,
+  raspado,
   className,
 }: GradePillProps) {
   const state = gradePillState(nota);
+  const aviso = gradePillRaspado(raspado, table);
   const isXl = size === "xl";
 
   return (
@@ -72,8 +81,8 @@ export function GradePill({
         </span>
       )}
 
-      {state === "raspado" ? (
-        table ? (
+      {state === "raspado" && aviso !== "ninguno" ? (
+        aviso === "icono" ? (
           <TriangleAlert
             role="img"
             aria-label="Raspada"

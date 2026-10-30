@@ -37,6 +37,9 @@ export function LiveTotal({
 }: LiveTotalProps) {
   const info = liveTotalInfo(scores, base);
   const tone = info.completo ? "success" : "warning";
+  // A media evaluación la suma parcial no es una nota: sin aviso de Raspado hasta puntuar todas
+  // (el aviso de faltantes ya lo dice, D102). Completa: el ícono de la tabla (D057).
+  const raspado = info.completo ? "icono" : "ninguno";
   const live = (
     // <output> = role="status" implícito
     <output className="sr-only" aria-live="polite" aria-atomic="true">
@@ -59,8 +62,8 @@ export function LiveTotal({
       >
         <Heading className="text-eyebrow">Total en vivo</Heading>
         <div aria-hidden="true" className="flex items-center gap-4">
-          {/* §3 pide 88 × 64 (fuente 32); GradePill no tiene ese tamaño: lg (44) hasta tener token */}
-          <GradePill nota={info.nota} size="lg" table />
+          {/* §3: 88 × 64, número 32 (D102) */}
+          <GradePill nota={info.nota} size="total" raspado={raspado} />
           <div className="flex flex-col gap-0.5">
             <span className="text-h2 nums">{info.display}</span>
             <span className="text-small text-text-2">{info.baseText}</span>
@@ -92,7 +95,7 @@ export function LiveTotal({
       )}
     >
       <span aria-hidden="true" className="shrink-0">
-        <GradePill nota={info.nota} size="md" table />
+        <GradePill nota={info.nota} size="md" raspado={raspado} />
       </span>
       <div aria-hidden="true" className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex items-center justify-between gap-2">

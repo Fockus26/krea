@@ -1321,6 +1321,41 @@ body {
   letter-spacing: -0.01em;
 }
 
+/* ---------- Sección Evaluar entrega (HANDOFF §3; lienzo Evaluar.dc.html; D102–D105) ---------- */
+/* Píldora `total` de "Total en vivo": Poppins 700 32 (lienzo: `.gp-lg` + `font-size: 32px`; el
+   alto de línea 20 es el de `.gp`, que el lienzo no cambia) */
+@utility text-grade-total {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 2rem; /* 32/20 */
+  line-height: 1.25rem;
+  font-variant-numeric: tabular-nums;
+}
+/*
+ * < lg el medidor va sticky a 64 (`.sticky-top`) y la barra de acción sobre la barra inferior:
+ * el foco y los saltos a `#pregunta-n` no pueden quedar debajo (D020). El scroll-padding del
+ * documento cubre los dos bordes; el `scroll-margin-top` general de los `[id]` se reduce a un
+ * respiro para no sumarse dos veces. Los altos no están en el handoff: son los del medidor
+ * (12 + 38 + 12 = 62) y la barra de acción (12 + 44 + 12 = 68) redondeados hacia arriba.
+ */
+:root {
+  --h-review-meter: 4rem;
+  --h-review-action: 4.5rem;
+}
+@media (width < 64rem) {
+  html:has([data-slot="review-form"]) {
+    scroll-padding-top: calc(4rem + var(--h-review-meter));
+    scroll-padding-bottom: calc(
+      var(--h-bnav) +
+      var(--h-review-action) +
+      env(safe-area-inset-bottom, 0px)
+    );
+  }
+  [data-slot="review-form"] [id] {
+    scroll-margin-top: 1rem;
+  }
+}
+
 /* ---------- Sección Tareas y entrega (HANDOFF §3; lienzo Tarea.dc.html; D082) ---------- */
 :root {
   --w-done-border: 2px; /* borde interior de la tarjeta Entregada */

@@ -61,5 +61,52 @@ export function stepValue(
   return snapToStep(base + dir * step, range);
 }
 
-export const atMin = (n: number, { min }: StepRange) => n <= min;
-export const atMax = (n: number, { max }: StepRange) => n >= max;
+/** En el límite. `null` (sin valor) nunca lo está: − y + siguen activos para fijar el primero. */
+export const atMin = (n: number | null, { min }: StepRange) =>
+  n !== null && n <= min;
+export const atMax = (n: number | null, { max }: StepRange) =>
+  n !== null && n >= max;
+
+/* ---------- Sin valor (`null`, D103): p. ej. una pregunta sin puntuar (D003) ---------- */
+
+/** Texto que anuncia el campo sin valor (`aria-valuetext`). */
+export const STEPPER_EMPTY_TEXT = "Sin puntuar";
+
+/**
+ * Primer −/+ (o ↑/↓) desde `null`: el valor parte de `min`, en las dos direcciones; así el
+ * primer toque fija un valor que se ve y nunca inventa uno lejano. Con valor, un paso normal.
+ */
+export function stepFrom(
+  actual: number | null,
+  dir: 1 | -1,
+  range: StepRange,
+): number {
+  return actual === null ? range.min : stepValue(actual, dir, range);
+}
+
+/** Lo que muestra el campo: vacío sin valor (nunca "0", D003); si no, con coma. */
+export function stepperDisplay(
+  value: number | null,
+  step: number = STEP_DEFAULT,
+): string {
+  return value === null ? "" : formatDecimal(value, step);
+}
+
+/** Atributos ARIA del `spinbutton`: sin `aria-valuenow` cuando no hay valor. */
+export function stepperAria(
+  value: number | null,
+  { min, max, step = STEP_DEFAULT }: StepRange,
+  emptyText: string = STEPPER_EMPTY_TEXT,
+): {
+  "aria-valuenow": number | undefined;
+  "aria-valuemin": number;
+  "aria-valuemax": number;
+  "aria-valuetext": string;
+} {
+  return {
+    "aria-valuenow": value ?? undefined,
+    "aria-valuemin": min,
+    "aria-valuemax": max,
+    "aria-valuetext": value === null ? emptyText : formatDecimal(value, step),
+  };
+}
