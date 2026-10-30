@@ -1,0 +1,5 @@
+# D071 · Sections · Formularios de auth: errores al enviar, foco al primer inválido y `announce={false}` · Implemented
+
+**Decision:** Ingresar, Recuperar y Nueva contraseña validan al enviar (cédula 7–9 dígitos con `validateCedula`, contraseña no vacía / mínimo 8, repetición igual). Al enviar con errores, `focusPrimerInvalido` lleva el foco al primer `[aria-invalid="true"]`; los `Field` van con `announce={false}` porque el mensaje cambia mientras se corrige y no debe anunciarse en cada tecla. En Nueva contraseña el verde ("9 caracteres · cumple el mínimo", "Las contraseñas coinciden.") aparece en vivo; el rojo solo después de enviar. El error del servidor (credenciales / bloqueado) es una `Alert` err (`role="alert"`) sobre el botón y no dice qué campo falló.
+**Why:** HANDOFF §3 (validación en vivo, errores de servidor) y el patrón de `Field.announce` (§2.2). El foco al primer inválido es lo que más rápido orienta con teclado y lector.
+**Discarded alternative:** errores en rojo mientras se escribe — castiga antes de terminar; `announce` en cada cambio — repite el mensaje en cada tecla.

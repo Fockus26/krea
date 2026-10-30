@@ -1297,3 +1297,19 @@ body {
 @utility bottom-action {
   bottom: calc(var(--h-bnav) + env(safe-area-inset-bottom, 0px));
 }
+
+/* ---------- Sección Ingresar y recuperar (HANDOFF §3; krea.css .auth; D070) ---------- */
+:root {
+  --w-auth-brand: 37.5rem; /* 600: panel de marca ≥ 1024 */
+}
+@utility grid-cols-auth {
+  grid-template-columns: minmax(0, 1fr) minmax(0, var(--w-auth-brand));
+}
+/* Frase del panel de marca: Poppins 700 44/52, −0,01em */
+@utility text-claim {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 2.75rem;
+  line-height: 3.25rem;
+  letter-spacing: -0.01em;
+}
