@@ -20,6 +20,7 @@ import {
   separarMotivo,
   type TipoDestino,
 } from "@/lib/puntos";
+import { primerApellido } from "@/lib/ranking";
 
 const SECCIONES: readonly Seccion[] = ["5A", "5C"];
 
@@ -40,7 +41,7 @@ function alumnos(sec: Seccion): Candidato[] {
         seccion: a.seccion,
         nombre: nombreCorto(a),
         puntos: a.puntos,
-        primerApellido: a.primerApellido,
+        primerApellido: primerApellido(a.apellidos),
         // PLACEHOLDER: el estilo de avatar lo elige cada alumno (fila 60 del checklist)
         avatar: {
           tipo: "alumno",
