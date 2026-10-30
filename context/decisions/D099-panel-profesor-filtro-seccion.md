@@ -1,0 +1,5 @@
+# D099 · Sections · Panel del profesor: el segmentado 5A · 5C · Ambas es un `ToggleGroup` local que filtra en cliente · Implemented
+
+**Decision:** `PanelView` (cliente, único estado) guarda el filtro con `useState` y recalcula métricas y listas con `filtrarPorSeccion` (pura, en `lib/panel.ts`) sobre los datos completos que recibe por props. El segmentado es un `ToggleGroup` (radiogroup, D038/D090) con `aria-label="Sección"`. Una sola región viva (`<output class="sr-only">`) anuncia la frase estable "Mostrando la sección 5A" / "Mostrando ambas secciones", sin cifras sueltas. La ruta `5c` de la vista abre con 5C elegida (`filtroInicial`).
+**Why:** a diferencia del Ranking (D072, pestañas que cambian de contenido grande), aquí el filtro es una vista de los mismos datos y no debe recargar la página; un radiogroup que filtra en sitio es semánticamente correcto. "Ambas" suma las dos secciones (HANDOFF §9 #7).
+**Discarded alternative:** estados por ruta (`/profe/5a`) — un segmentado que navega no sería un radiogroup y el profe perdería la posición de lectura.

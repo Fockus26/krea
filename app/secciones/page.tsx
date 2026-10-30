@@ -36,6 +36,11 @@ const PANTALLAS: ReadonlyArray<{ href: string; titulo: string; ruta: string }> =
       ruta: "/equipo",
     },
     { href: "/secciones/perfil", titulo: "Perfil", ruta: "/perfil" },
+    {
+      href: "/secciones/profe/manana",
+      titulo: "Panel del profesor",
+      ruta: "/profe",
+    },
   ];
 
 export default function SeccionesPage() {
