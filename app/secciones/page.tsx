@@ -30,6 +30,11 @@ const PANTALLAS: ReadonlyArray<{ href: string; titulo: string; ruta: string }> =
       titulo: "Entrega de tarea",
       ruta: "/tareas/[tarea]",
     },
+    {
+      href: "/secciones/equipo/con-equipo",
+      titulo: "Mi equipo",
+      ruta: "/equipo",
+    },
   ];
 
 export default function SeccionesPage() {
