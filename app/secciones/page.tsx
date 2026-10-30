@@ -18,6 +18,12 @@ const PANTALLAS: ReadonlyArray<{ href: string; titulo: string; ruta: string }> =
       ruta: "/ingresar",
     },
     { href: "/secciones/inicio", titulo: "Inicio del estudiante", ruta: "/" },
+    { href: "/secciones/notas", titulo: "Mis notas", ruta: "/notas" },
+    {
+      href: "/secciones/notas/detalle",
+      titulo: "Detalle de nota",
+      ruta: "/notas/[tarea]",
+    },
   ];
 
 export default function SeccionesPage() {
