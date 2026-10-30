@@ -11,7 +11,13 @@ export const metadata: Metadata = {
 };
 
 const PANTALLAS: ReadonlyArray<{ href: string; titulo: string; ruta: string }> =
-  [];
+  [
+    {
+      href: "/secciones/ingresar/login",
+      titulo: "Ingresar y recuperar",
+      ruta: "/ingresar",
+    },
+  ];
 
 export default function SeccionesPage() {
   return (

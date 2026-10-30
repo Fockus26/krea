@@ -1,0 +1,5 @@
+# D070 · Sections · `AuthLayout` con `grid-cols-auth` (1fr / 600) y `text-claim`; panel de marca entero `aria-hidden` · Implemented
+
+**Decision:** `components/sections/auth/auth-layout.tsx` reproduce `krea.css .auth`: < 768 columna sin tarjeta y logo 140; 768–1023 tarjeta máx. 440, padding 40, radio 24, `shadow-2` (oscuro: borde sin sombra); ≥ 1024 grid `grid-cols-auth` (`--w-auth-brand` 600) con el formulario sin tarjeta y el panel de marca. Tokens nuevos en el bloque "Sección Ingresar y recuperar" de `globals.css`: `--w-auth-brand`, `grid-cols-auth`, `text-claim` (Poppins 700 44/52). El panel (logo, frase, píldoras 18,5 · 15 · 10, pie, círculos `--splash`) es `aria-hidden` entero, como el lienzo: repite lo que ya dice la página y las píldoras no son notas de nadie. `AuthLayout` no pinta `<main>`: lo pone la página.
+**Why:** HANDOFF §3 Ingresar; las píldoras decorativas leídas como "Nota 18,5 de 20" confundirían a quien usa lector.
+**Discarded alternative:** dejar la frase legible para el lector — duplica el propósito que ya da el h1 y la bajada.
