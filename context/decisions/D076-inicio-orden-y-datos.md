@@ -1,0 +1,5 @@
+# D076 · Sections · Inicio: `HomeGrid` con slots, 3 notas evaluadas y base solo en las individuales · Implemented
+
+**Decision:** `components/sections/inicio/home-grid.tsx` recibe las cinco secciones como slots: saludo (`PageHeader`) a todo el ancho y `g-home` (izquierda puntos + notas, derecha por entregar + equipo); < 1024 queda 1-2-3-4-5 en el orden del DOM y el gap entre los dos grupos es 24 también < 768 (`max-md:gap-6`; `g-home` usa el gutter de 16). "Mis notas" muestra las 3 evaluadas más recientes (`NOTAS_EN_INICIO`) con `GradeRow`; la grupal lleva el equipo en la meta ("Grupal · 5A-G2 Repostería · fecha", como el lienzo, prop `detalle`). La base escala solo las notas individuales (D014 provisional). Vacíos con el copy del lienzo Vacíos: "Aún no tienes notas", "¡Todo entregado!", "Todavía no tienes equipo". El premio largo envuelve dentro de su chip para no desbordar a 320.
+**Why:** HANDOFF §3 Inicio y §4 (entre tarjetas de una columna, 24).
+**Discarded alternative:** una sola columna con `order` CSS ≥ 1024 — el orden visual y el del DOM divergirían.

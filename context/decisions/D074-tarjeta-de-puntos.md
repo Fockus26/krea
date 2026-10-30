@@ -1,0 +1,5 @@
+# D074 · Sections · Tarjeta de puntos de Inicio: sección propia (no `Card`), eyebrow como `h2`, chip `bg-on-accent/18` · Implemented
+
+**Decision:** `components/sections/inicio/points-card.tsx` es un `<section aria-labelledby>` con fondo `--accent`, texto `--on-accent`, radio 24, `shadow-2` (sin sombra en oscuro) y los dos círculos `--splash` decorativos (160 px al 28 %, 28 px al 50 %). "Tus puntos del ranking" es el `h2` de la región con estilo eyebrow; el puesto "#1 de 35" es texto con tamaño h3 (no encabezado). "Ver ranking →" es un `Link` con `buttonVariants(ghost)` + `bg-surface text-accent-ink`. El chip "Subiste n puestos esta semana" solo aparece si el delta ≠ 0; su fondo translúcido es `bg-on-accent/18` (blanco al 18 % en claro, como el lienzo; en oscuro, la tinta oscura del `--on-accent`, que mantiene el contraste). El desglose cuenta lo que **aporta** cada nota (0 si < 10).
+**Why:** HANDOFF §8: la tarjeta de puntos no es una `Card` con otra variante. Un `h2` por tarjeta deja la jerarquía h1 → h2 igual en las cinco.
+**Discarded alternative:** `rgb(255 255 255 / .18)` literal — valor mágico; puesto como `h3` — colgaría de un `h2` que no existe.
