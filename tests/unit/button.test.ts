@@ -66,6 +66,13 @@ describe("buttonVariants (HANDOFF §2.1)", () => {
     expect(c).toContain("bg-error");
     expect(c).toContain("text-on-error");
     expect(c).not.toContain("text-on-accent");
+    expect(c).toContain("hover:not-disabled:not-aria-disabled:brightness-92");
+  });
+
+  test("ghost deshabilitado sin fondo", () => {
+    const c = classes({ variant: "ghost" });
+    expect(c).toContain("disabled:bg-transparent");
+    expect(c).not.toContain("disabled:bg-surface-3");
   });
 
   test("ghost: padding 12 solo en md", () => {

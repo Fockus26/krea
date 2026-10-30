@@ -37,8 +37,15 @@ const buttonCva = cva(
         ghost: [
           "bg-transparent text-accent-ink",
           "hover:not-disabled:not-aria-disabled:bg-accent-soft",
+          // Lámina de componentes: deshabilitado sin fondo, solo texto --text-dis
+          "disabled:bg-transparent aria-disabled:bg-transparent",
         ],
-        danger: "bg-error text-on-error",
+        // Hover y activo de danger salen de la lámina (Componentes.dc.html), no de §2.1
+        danger: [
+          "bg-error text-on-error",
+          "hover:not-disabled:not-aria-disabled:brightness-92",
+          "active:not-disabled:not-aria-disabled:translate-y-px",
+        ],
       },
       size: {
         sm: "h-9 rounded-nav px-3.5 text-button-sm",
@@ -121,6 +128,7 @@ function Button(props: ButtonProps) {
         {...data}
         className={classes}
         aria-disabled={disabled || undefined}
+        onClick={onClick}
         {...rest}
       >
         {children}
@@ -128,15 +136,17 @@ function Button(props: ButtonProps) {
     );
   }
 
+  // Cargando: sin onClick y sin submit (evita el doble envío) pero conserva el foco,
+  // a diferencia de `disabled`. Sin funciones nuevas: el botón sigue siendo de servidor.
   return (
     <button
       {...data}
-      type={type ?? "button"}
+      type={loading ? "button" : (type ?? "button")}
       className={classes}
       disabled={disabled}
       aria-busy={loading || undefined}
       data-loading={loading || undefined}
-      onClick={loading ? (event) => event.preventDefault() : onClick}
+      onClick={loading ? undefined : onClick}
       {...rest}
     >
       {/* Las dos capas ocupan la misma celda: el ancho es el de la mayor y no salta al cargar */}
