@@ -1,5 +1,13 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Nunito_Sans, Poppins } from "next/font/google";
+import {
+  BRAND_BG_DARK,
+  BRAND_BLUE,
+  SITE_DESCRIPTION,
+  SITE_NAME,
+  SITE_TITLE,
+  SITE_URL,
+} from "@/lib/site";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -16,9 +24,33 @@ const nunito = Nunito_Sans({
   display: "swap",
 });
 
-// Título provisional; metadata/SEO completos son de la fase 02.
 export const metadata: Metadata = {
-  title: "KREA",
+  metadataBase: SITE_URL,
+  title: { default: SITE_TITLE, template: `%s · ${SITE_NAME}` },
+  description: SITE_DESCRIPTION, // provisional (CONTENT_CHECKLIST fila 22)
+  applicationName: SITE_NAME,
+  openGraph: {
+    type: "website",
+    locale: "es_VE",
+    siteName: SITE_NAME,
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+  },
+};
+
+// themeColor: azul de marca en claro (HANDOFF §5); en oscuro, el --bg oscuro de globals.css.
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: BRAND_BLUE },
+    { media: "(prefers-color-scheme: dark)", color: BRAND_BG_DARK },
+  ],
+  colorScheme: "light dark",
+  viewportFit: "cover", // la barra inferior usa safe-area-inset-bottom
 };
 
 // Anti-parpadeo (D015): aplica tema y acento guardados antes del primer pintado.
