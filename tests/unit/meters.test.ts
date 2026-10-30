@@ -46,7 +46,9 @@ describe("sumMeterInfo (§2.11, D004)", () => {
   });
 
   test("texto para lector de pantalla", () => {
-    expect(sumMeterInfo(14).srText).toBe("Suma de valores: 14 de 20. Faltan 6.");
+    expect(sumMeterInfo(14).srText).toBe(
+      "Suma de valores: 14 de 20. Faltan 6.",
+    );
   });
 });
 
@@ -64,7 +66,9 @@ describe("liveTotalInfo (§2.11, D006, D013)", () => {
   });
 
   test("singular", () => {
-    expect(liveTotalInfo([4, null]).pending).toBe("Falta 1 pregunta por puntuar");
+    expect(liveTotalInfo([4, null]).pending).toBe(
+      "Falta 1 pregunta por puntuar",
+    );
   });
 
   test("ninguna puntuada = nota Pendiente, nunca 0 (D003)", () => {

@@ -12,9 +12,35 @@ export function percent(part: number, whole: number): number {
 
 const num = (n: number) => formatDecimal(n, 0.5);
 
+/* ---------- Clases por estado (krea.css:305-310: .meter-*, .state-*) ---------- */
+
+/** Tono de un medidor: faltan → warning · se pasó → error · completo → success. */
+export type MeterTone = "warning" | "error" | "success";
+
+/** Texto e ícono del estado. El estado nunca va solo en el color: siempre hay ícono o palabra. */
+export const METER_TEXT_CLASSES: Record<MeterTone, string> = {
+  warning: "text-warning",
+  error: "text-error",
+  success: "text-success",
+};
+
+/** Relleno de la barra (`MeterBar`). `accent` = barra de preguntas puntuadas de la tarjeta (`.bar`). */
+export const METER_FILL_CLASSES: Record<MeterTone | "accent", string> = {
+  warning: "bg-warning",
+  error: "bg-error",
+  success: "bg-success",
+  accent: "bg-accent",
+};
+
 /* ---------- SumMeter: suma de valores del constructor (D004: exactamente 20) ---------- */
 
 export type SumState = "under" | "over" | "exact";
+
+export const SUM_STATE_TONE: Record<SumState, MeterTone> = {
+  under: "warning",
+  over: "error",
+  exact: "success",
+};
 
 export type SumMeterInfo = {
   state: SumState;
@@ -28,7 +54,10 @@ export type SumMeterInfo = {
   srText: string;
 };
 
-export function sumMeterInfo(sum: number, target: number = NOTA_MAX): SumMeterInfo {
+export function sumMeterInfo(
+  sum: number,
+  target: number = NOTA_MAX,
+): SumMeterInfo {
   const diff = Math.round((target - sum) * 2) / 2;
   const state: SumState = diff > 0 ? "under" : diff < 0 ? "over" : "exact";
   const message =
@@ -99,7 +128,8 @@ export function liveTotalInfo(
     : faltan === 1
       ? "Falta 1 pregunta por puntuar"
       : `Faltan ${faltan} preguntas por puntuar`;
-  const notaTexto = nota === null ? "nota pendiente" : `nota ${formatNota(nota)}`;
+  const notaTexto =
+    nota === null ? "nota pendiente" : `nota ${formatNota(nota)}`;
   return {
     total,
     puntuadas,

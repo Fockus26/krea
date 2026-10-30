@@ -31,7 +31,8 @@ describe("scoreMode y scoreOptions (§2.12, D004)", () => {
   });
 
   test("todas las opciones caen en pasos de 0,5", () => {
-    for (const v of scoreOptions(4.5)) expect(Number.isInteger(v * 2)).toBe(true);
+    for (const v of scoreOptions(4.5))
+      expect(Number.isInteger(v * 2)).toBe(true);
     expect(scoreOptions(4.5)).toHaveLength(10);
   });
 });
@@ -70,11 +71,11 @@ describe("textos del puntaje", () => {
 function teclear(keys: string[], max: number, gap = 100) {
   let buffer: ScoreBuffer = null;
   const values: (number | null)[] = [];
-  keys.forEach((k, i) => {
+  for (const [i, k] of keys.entries()) {
     const r = pushScoreKey(buffer, k, max, i * gap);
     buffer = r.buffer;
     values.push(r.value);
-  });
+  }
   return { buffer, values };
 }
 
