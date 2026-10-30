@@ -6,6 +6,7 @@
 | Section | Path | Page(s) | Phase that closed it | Status | Notes |
 |---|---|---|---|---|---|
 | PageHeader · GradeRow · ActionBar (compartidas) | `components/sections/shared/` | todas | F04 ola 1 (W1) | Done | D066–D068 |
+| AuthLayout · LoginForm · RecoverForm · RecoverSent · NewPasswordForm | `components/sections/auth/` | Ingresar, Recuperar (`/secciones/ingresar/[estado]`) | F04 ola 1 (W2) | Done | D070–D072; errores de servidor y enlace vencido como estados |
 | GradeHero | — | Inicio | — | Pending | prototipo: `#/inicio` |
 | RankingList + Podium | — | Ranking | — | Pending | prototipo: `#/ranking` |
 | TaskBuilder | — | Tareas (profesor) | — | Pending | prototipo: `#/profe/tareas/nueva` |
