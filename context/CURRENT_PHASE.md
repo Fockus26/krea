@@ -5,16 +5,18 @@
 
 ## Now
 
-**Phase:** 00 — Kickoff y diseño · **Track:** Product
+**Phase:** 01 — Tokens · ola 1 de 1 · plan `context/plans/phase-01-tokens.md` · **Track:** Product
+**Sin QA hasta el final del proyecto** (César, 2026-10-29).
 
-| Unit | Branch | Status | Log |
+| Unit | Branch | Status | Slot |
 |---|---|---|---|
-| Kickoff + prototipo + brief | `design/kickoff` | merged (#1) | `PHASE_LOG/design-kickoff.md` |
-| Diseño + handoff | `design/handoff` | PR abierto | `PHASE_LOG/design-handoff.md` |
+| W1 tokens + fuentes + `/tokens` | `feat/tokens` | PR #6 abierto | wt1 |
+| W2 utilidades de nota/ranking | `feat/utilidades-nota` | PR #5 abierto | wt2 |
 
 ## Blocked (actions for César or external)
 
-- Revisar el diseño y `design/HANDOFF.md` §9 (12 preguntas abiertas: redondeo con base, base en grupales, empates de premio…).
+- Confirmar si la base aplica a notas grupales por integrante (provisional: no, D014).
+- HANDOFF §9 restantes (#3–#12: empates de premio, borrador compartido, entrega tardía…): se preguntan al llegar a su fase.
 - Crear el proyecto Firebase (Auth, Firestore, Storage) y cargar las claves en Vercel.
 - Emails reales de los estudiantes para "Olvidé mi contraseña" (checklist #3).
 - Instalar Java (emuladores de Firebase para `qa:local`).

@@ -33,3 +33,6 @@ When César asks for it (or when closing phase 09): the **`kit-feedback`** skill
 most repeated first, and opens a PR on the kit's repo with the `kit-feedback` label. Sent
 rows get marked with `→ PR <owner/repo#N>` in "Proposal" (they are not deleted).
 | 1 | 2026-10-25 | Gap | 1 | new-project.ps1 · .gitattributes | En Windows con core.autocrlf=true, al cambiar de rama los archivos quedan en CRLF y `bun run lint` (Biome) falla en local aunque el CI pase | La plantilla de .gitattributes debería traer `* text=auto eol=lf` |
+| 2 | 2026-10-29 | Correction | 1 | orchestrate §8 · CLAUDE.md (QA por ola, dev server de workers) | César pidió no correr ningún QA (wave-qa, design-qa, qa:local, servidor de workers) hasta terminar el proyecto | Opción de proyecto "QA solo al final" que salte §8 y el servidor de workers sin preguntarlo en cada ola |
+| 3 | 2026-10-29 | Friction | 2 | orchestrate · brief-template (atribución) | Los 2 workers recibieron en el brief una firma Co-Authored-By distinta a la de su modelo y tuvieron que elegir | Que el brief no fije la firma de commits: cada worker usa la de su sistema |
+| 4 | 2026-10-29 | Gap | 1 | design handoff · §1.4 tipografía | El handoff no da alto de línea de botón lg ni píldoras sm/lg; el worker lo tomó de krea.css | Añadir columna de alto de línea para todos los tamaños de §1.4 |
