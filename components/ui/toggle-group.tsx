@@ -1,87 +1,127 @@
 "use client";
 
-import type { VariantProps } from "class-variance-authority";
 import { ToggleGroup as ToggleGroupPrimitive } from "radix-ui";
 import * as React from "react";
-import { toggleVariants } from "@/components/ui/toggle";
 import { cn } from "@/lib/utils";
 
-const ToggleGroupContext = React.createContext<
-  VariantProps<typeof toggleVariants> & {
-    spacing?: number;
-    orientation?: "horizontal" | "vertical";
-  }
->({
-  size: "default",
-  variant: "default",
-  spacing: 2,
-  orientation: "horizontal",
-});
+/*
+ * Segmentado para elegir UN valor (5A/5C, tema, tipo de tarea) — HANDOFF §2.6.
+ * Radix `ToggleGroup type="single"` ya publica `role="radiogroup"` en el grupo y
+ * `role="radio"` + `aria-checked` en cada opción (lo verifica tests/unit/toggle-group.test.ts),
+ * así que no se reescriben los roles. Lo que Radix no hace y este wrapper añade (D038):
+ *  - no se puede deseleccionar: pulsar la opción activa no vacía el valor;
+ *  - las flechas mueven Y seleccionan (patrón radiogroup), como Inicio/Fin.
+ * Para pestañas (`tablist`) usa `Tabs variant="segmented"`.
+ */
+
+const NAV_KEYS = new Set([
+  "ArrowLeft",
+  "ArrowRight",
+  "ArrowUp",
+  "ArrowDown",
+  "Home",
+  "End",
+]);
+
+type NavContext = { navigating: React.RefObject<boolean> };
+const NavContext = React.createContext<NavContext | null>(null);
+
+type ToggleGroupProps = Omit<
+  React.ComponentProps<typeof ToggleGroupPrimitive.Root>,
+  "type" | "value" | "defaultValue" | "onValueChange"
+> & {
+  value?: string;
+  defaultValue?: string;
+  onValueChange?: (value: string) => void;
+  /** `seg-block`: reparte el ancho; bajo 400 px de ancho se ocultan los íconos. */
+  block?: boolean;
+};
 
 function ToggleGroup({
   className,
-  variant,
-  size,
-  spacing = 2,
-  orientation = "horizontal",
-  children,
+  value: valueProp,
+  defaultValue,
+  onValueChange,
+  block = false,
+  onKeyDownCapture,
   ...props
-}: React.ComponentProps<typeof ToggleGroupPrimitive.Root> &
-  VariantProps<typeof toggleVariants> & {
-    spacing?: number;
-    orientation?: "horizontal" | "vertical";
-  }) {
+}: ToggleGroupProps) {
+  const [inner, setInner] = React.useState(defaultValue ?? "");
+  const controlled = valueProp !== undefined;
+  const value = controlled ? valueProp : inner;
+  const navigating = React.useRef(false);
+
+  const change = (next: string) => {
+    if (next === "") return; // single sin vacío: la opción activa no se desmarca
+    if (!controlled) setInner(next);
+    onValueChange?.(next);
+  };
+
   return (
-    <ToggleGroupPrimitive.Root
-      data-slot="toggle-group"
-      data-variant={variant}
-      data-size={size}
-      data-spacing={spacing}
-      data-orientation={orientation}
-      style={{ "--gap": spacing } as React.CSSProperties}
-      className={cn(
-        "group/toggle-group flex w-fit flex-row items-center gap-[--spacing(var(--gap))] rounded-lg data-[size=sm]:rounded-[min(var(--radius-md),10px)] data-vertical:flex-col data-vertical:items-stretch",
-        className,
-      )}
-      {...props}
-    >
-      <ToggleGroupContext.Provider
-        value={{ variant, size, spacing, orientation }}
-      >
-        {children}
-      </ToggleGroupContext.Provider>
-    </ToggleGroupPrimitive.Root>
+    <NavContext.Provider value={{ navigating }}>
+      <ToggleGroupPrimitive.Root
+        {...props}
+        type="single"
+        value={value}
+        onValueChange={change}
+        data-slot="toggle-group"
+        data-block={block || undefined}
+        onKeyDownCapture={(event) => {
+          onKeyDownCapture?.(event);
+          if (NAV_KEYS.has(event.key)) {
+            // Radix mueve el foco en un timeout; la bandera sobrevive hasta que llegue
+            navigating.current = true;
+            setTimeout(() => {
+              navigating.current = false;
+            }, 150);
+          }
+        }}
+        className={cn(
+          "group/toggle-group gap-1 rounded-md bg-surface-2 p-1 @container",
+          block ? "flex w-full" : "inline-flex w-fit max-w-full",
+          className,
+        )}
+      />
+    </NavContext.Provider>
   );
 }
 
 function ToggleGroupItem({
   className,
-  children,
-  variant = "default",
-  size = "default",
+  onFocus,
   ...props
-}: React.ComponentProps<typeof ToggleGroupPrimitive.Item> &
-  VariantProps<typeof toggleVariants>) {
-  const context = React.useContext(ToggleGroupContext);
+}: React.ComponentProps<typeof ToggleGroupPrimitive.Item>) {
+  const nav = React.useContext(NavContext);
+  const ref = React.useRef<HTMLButtonElement>(null);
 
   return (
     <ToggleGroupPrimitive.Item
+      ref={ref}
       data-slot="toggle-group-item"
-      data-variant={context.variant || variant}
-      data-size={context.size || size}
-      data-spacing={context.spacing}
+      onFocus={(event) => {
+        onFocus?.(event);
+        // Foco por flechas/Inicio/Fin → selecciona (radiogroup). Con Tab o ratón no hace nada extra.
+        if (nav?.navigating.current) {
+          nav.navigating.current = false;
+          if (ref.current?.getAttribute("aria-checked") !== "true") {
+            ref.current?.click();
+          }
+        }
+      }}
       className={cn(
-        "shrink-0 group-data-[spacing=0]/toggle-group:rounded-none group-data-[spacing=0]/toggle-group:px-2 focus:z-10 focus-visible:z-10 group-data-[spacing=0]/toggle-group:has-data-[icon=inline-end]:pr-1.5 group-data-[spacing=0]/toggle-group:has-data-[icon=inline-start]:pl-1.5 group-data-horizontal/toggle-group:data-[spacing=0]:first:rounded-l-lg group-data-vertical/toggle-group:data-[spacing=0]:first:rounded-t-lg group-data-horizontal/toggle-group:data-[spacing=0]:last:rounded-r-lg group-data-vertical/toggle-group:data-[spacing=0]:last:rounded-b-lg group-data-horizontal/toggle-group:data-[spacing=0]:data-[variant=outline]:border-l-0 group-data-vertical/toggle-group:data-[spacing=0]:data-[variant=outline]:border-t-0 group-data-horizontal/toggle-group:data-[spacing=0]:data-[variant=outline]:first:border-l group-data-vertical/toggle-group:data-[spacing=0]:data-[variant=outline]:first:border-t",
-        toggleVariants({
-          variant: context.variant || variant,
-          size: context.size || size,
-        }),
+        "inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-nav px-4 text-button whitespace-nowrap text-text-2",
+        "transition-[color,background-color,box-shadow] duration-fast ease-krea",
+        "hover:text-text data-[state=on]:bg-surface data-[state=on]:text-text data-[state=on]:shadow-1",
+        "disabled:cursor-not-allowed disabled:text-text-dis disabled:hover:text-text-dis",
+        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
+        "[&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0",
+        // seg-block
+        "group-data-[block]/toggle-group:min-w-0 group-data-[block]/toggle-group:flex-1 group-data-[block]/toggle-group:px-2",
+        "group-data-[block]/toggle-group:@max-[25rem]:[&_svg]:hidden",
         className,
       )}
       {...props}
-    >
-      {children}
-    </ToggleGroupPrimitive.Item>
+    />
   );
 }
 

@@ -1,54 +1,59 @@
 "use client";
 
-import { cva, type VariantProps } from "class-variance-authority";
 import { Tabs as TabsPrimitive } from "radix-ui";
 import type * as React from "react";
 import { cn } from "@/lib/utils";
 
+/*
+ * Tabs — HANDOFF §2.6; medidas en design/canvas/krea.css:289-299. Dos presentaciones del
+ * mismo patrón WAI-ARIA de pestañas (Radix: `tablist`/`tab`/`tabpanel`, ←/→, Inicio/Fin,
+ * activación automática):
+ *  - `line`: pestañas de línea, 44 de alto, barra de 3 px bajo la activa, scroll horizontal propio.
+ *  - `segmented`: contenedor `--surface-2`; la opción activa sube a `--surface` con `shadow-1`.
+ * Para elegir un valor (5A/5C, tema) usa `ToggleGroup`, que es `radiogroup`, no `tablist`.
+ *
+ * Indicador: cambia con opacidad 150 ms (alternativa conservadora de D039): medir el DOM para
+ * deslizarlo con `transform` es frágil con scroll y cambios de ancho. Con reduced motion las
+ * duraciones valen 0 (D017) y el salto es inmediato.
+ */
+
 function Tabs({
   className,
-  orientation = "horizontal",
   ...props
 }: React.ComponentProps<typeof TabsPrimitive.Root>) {
   return (
     <TabsPrimitive.Root
       data-slot="tabs"
-      data-orientation={orientation}
-      className={cn(
-        "group/tabs flex gap-2 data-horizontal:flex-col",
-        className,
-      )}
+      className={cn("flex flex-col gap-4", className)}
       {...props}
     />
   );
 }
 
-const tabsListVariants = cva(
-  "group/tabs-list inline-flex w-fit items-center justify-center rounded-lg p-[3px] text-muted-foreground group-data-horizontal/tabs:h-8 group-data-vertical/tabs:h-fit group-data-vertical/tabs:flex-col data-[variant=line]:rounded-none",
-  {
-    variants: {
-      variant: {
-        default: "bg-muted",
-        line: "gap-1 bg-transparent",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-    },
-  },
-);
-
 function TabsList({
   className,
-  variant = "default",
+  variant = "line",
+  block = false,
   ...props
-}: React.ComponentProps<typeof TabsPrimitive.List> &
-  VariantProps<typeof tabsListVariants>) {
+}: React.ComponentProps<typeof TabsPrimitive.List> & {
+  variant?: "line" | "segmented";
+  /** Solo `segmented`: reparte el ancho (`seg-block`); bajo 400 px se ocultan los íconos. */
+  block?: boolean;
+}) {
   return (
     <TabsPrimitive.List
       data-slot="tabs-list"
       data-variant={variant}
-      className={cn(tabsListVariants({ variant }), className)}
+      data-block={block || undefined}
+      className={cn(
+        "group/tabs-list",
+        variant === "line" &&
+          "flex gap-6 overflow-x-auto border-b border-divider",
+        variant === "segmented" &&
+          "gap-1 rounded-md bg-surface-2 p-1 @container " +
+            (block ? "flex w-full" : "inline-flex w-fit max-w-full"),
+        className,
+      )}
       {...props}
     />
   );
@@ -62,10 +67,25 @@ function TabsTrigger({
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
       className={cn(
-        "relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-1.5 py-0.5 text-sm font-medium whitespace-nowrap text-foreground/60 transition-all group-data-vertical/tabs:w-full group-data-vertical/tabs:justify-start hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 has-data-[icon=inline-end]:pr-1 has-data-[icon=inline-start]:pl-1 dark:text-muted-foreground dark:hover:text-foreground group-data-[variant=default]/tabs-list:data-active:shadow-sm group-data-[variant=line]/tabs-list:data-active:shadow-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-        "group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:data-active:bg-transparent dark:group-data-[variant=line]/tabs-list:data-active:border-transparent dark:group-data-[variant=line]/tabs-list:data-active:bg-transparent",
-        "data-active:bg-background data-active:text-foreground dark:data-active:border-input dark:data-active:bg-input/30 dark:data-active:text-foreground",
-        "after:absolute after:bg-foreground after:opacity-0 after:transition-opacity group-data-horizontal/tabs:after:inset-x-0 group-data-horizontal/tabs:after:bottom-[-5px] group-data-horizontal/tabs:after:h-0.5 group-data-vertical/tabs:after:inset-y-0 group-data-vertical/tabs:after:-right-1 group-data-vertical/tabs:after:w-0.5 group-data-[variant=line]/tabs-list:data-active:after:opacity-100",
+        "relative inline-flex shrink-0 cursor-pointer items-center whitespace-nowrap text-button text-text-2",
+        "transition-[color,background-color,box-shadow] duration-fast ease-krea",
+        "hover:text-text disabled:cursor-not-allowed disabled:text-text-dis disabled:hover:text-text-dis",
+        "[&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0",
+        "focus-visible:outline-2 focus-visible:outline-focus",
+        // Línea: barra de 3 px sobre el borde de la lista (dentro de la caja: el scroll no la recorta)
+        "group-data-[variant=line]/tabs-list:h-11 group-data-[variant=line]/tabs-list:-outline-offset-2",
+        "group-data-[variant=line]/tabs-list:data-[state=active]:text-accent-ink",
+        "group-data-[variant=line]/tabs-list:after:absolute group-data-[variant=line]/tabs-list:after:inset-x-0 group-data-[variant=line]/tabs-list:after:bottom-0",
+        "group-data-[variant=line]/tabs-list:after:h-0.75 group-data-[variant=line]/tabs-list:after:rounded-t-xs group-data-[variant=line]/tabs-list:after:bg-accent",
+        "group-data-[variant=line]/tabs-list:after:opacity-0 group-data-[variant=line]/tabs-list:after:transition-opacity group-data-[variant=line]/tabs-list:after:duration-fast",
+        "group-data-[variant=line]/tabs-list:data-[state=active]:after:opacity-100",
+        // Segmentado
+        "group-data-[variant=segmented]/tabs-list:h-10 group-data-[variant=segmented]/tabs-list:gap-2 group-data-[variant=segmented]/tabs-list:rounded-nav group-data-[variant=segmented]/tabs-list:px-4",
+        "group-data-[variant=segmented]/tabs-list:outline-offset-2",
+        "group-data-[variant=segmented]/tabs-list:data-[state=active]:bg-surface group-data-[variant=segmented]/tabs-list:data-[state=active]:text-text group-data-[variant=segmented]/tabs-list:data-[state=active]:shadow-1",
+        // seg-block: reparte el ancho y, por debajo de 400 px (25 rem) del contenedor, solo texto
+        "group-data-[block]/tabs-list:min-w-0 group-data-[block]/tabs-list:flex-1 group-data-[block]/tabs-list:justify-center group-data-[block]/tabs-list:px-2",
+        "group-data-[block]/tabs-list:@max-[25rem]:[&_svg]:hidden",
         className,
       )}
       {...props}
@@ -80,10 +100,13 @@ function TabsContent({
   return (
     <TabsPrimitive.Content
       data-slot="tabs-content"
-      className={cn("flex-1 text-sm outline-none", className)}
+      className={cn(
+        "flex-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus data-[state=active]:animate-fade-in",
+        className,
+      )}
       {...props}
     />
   );
 }
 
-export { Tabs, TabsList, TabsTrigger, TabsContent, tabsListVariants };
+export { Tabs, TabsList, TabsTrigger, TabsContent };
