@@ -5,17 +5,16 @@
 
 ## Now
 
-**Phase:** 03 — Componentes · **Ola:** 3 de 3 (olas 1–2 cerradas, main @ 5a3a1b2) · **Plan:** `context/plans/phase-03-componentes.md` · **Track:** Product
-**Sin QA hasta el final del proyecto** (César, 2026-10-29). Brief/prompts ola 3: `context/plans/orchestration-2026-10-30-f03-ola3*.md`
+**Phase:** 04 — Secciones · **Ola:** 1 de 4 · **Plan:** `context/plans/phase-04-secciones.md` · **Track:** Product
+**Sin QA hasta el final del proyecto** (César, 2026-10-29). Fase 03 cerrada el 2026-10-30 (#9–#18 + PR de cierre).
+Sesión cloud: las unidades de la ola van en serie (PR → CI verde → squash).
 
-| Unit | Branch | Status | Slot |
-|---|---|---|---|
-| W1 shadcn init, deps de la fase, `cn`, `dark:`, movimiento, Button, `/componentes` | `feat/ui-base` | merged (#9) | — |
-| W2–W6 formularios, overlays, chips-tabs, contenedores, identidad | `feat/ui-*` | merged (#10–#14) | — |
-| W7 ranking (RankRow, Podium, FLIP/glow) | `feat/ui-ranking` | PR abierto (#17) | wt1 |
-| W8 evaluación (ScorePicker, SumMeter, LiveTotal) | `feat/ui-evaluacion` | PR abierto (#18) | wt2 |
-| W9 preguntas (QuestionCard ×3, QuestionBar, ImageUpload) | `feat/ui-preguntas` | PR abierto (#16) | wt3 |
-| W10 navegación (SideNav, TopBar, BottomNav, MenuSheet) | `feat/ui-navegacion` | PR abierto (#15) | wt4 |
+| Unit | Branch | Status |
+|---|---|---|
+| Cierre fase 03 (tokens, z-index, grep) | `claude/trusting-brahmagupta-1b8h8o` | en curso |
+| W1 base de secciones (`lib/demo`, PageHeader, GradeRow, ActionBar, `/secciones`) | ídem (cloud) | pendiente |
+| W2 Ingresar / Recuperar | ídem (cloud) | pendiente |
+| W3 Inicio del estudiante | ídem (cloud) | pendiente |
 
 ## Blocked (actions for César or external)
 
@@ -29,7 +28,7 @@
 
 ## Next
 
-- Fase 03 ola 3 (4 unidades: ranking, evaluación, preguntas, navegación), en otra sesión: `/orchestrate ola 3 de la fase 03. Plan: context/plans/phase-03-componentes.md`
+- Fase 04 ola 2 (notas, tareas, equipo, perfil), en otra sesión: `/orchestrate ola 2 de la fase 04. Plan: context/plans/phase-04-secciones.md`
 - Fase 07: esquema Firestore desde `data/seed/` + reglas de seguridad por rol.
 
 ## Phases
@@ -38,8 +37,8 @@
 |---|---|---|
 | 01 | Tokens | closed |
 | 02 | Base layout | closed |
-| 03 | Components | in progress (ola 3/3) |
-| 04 | Sections | pending |
+| 03 | Components | closed |
+| 04 | Sections | in progress (ola 1/4) |
 | 05 | Pages | pending |
 | 06 | States | pending |
 | 07 | Backend | pending |
