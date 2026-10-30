@@ -1,0 +1,351 @@
+import { describe, expect, test } from "bun:test";
+import { AJUSTES, AJUSTES_HISTORIAL } from "@/lib/demo/ajustes";
+import {
+  AJUSTE_INICIAL,
+  candidatosPuntos,
+  historialPuntos,
+} from "@/lib/demo/puntos";
+import {
+  ajusteAnuladoTexto,
+  ajusteAplicadoTexto,
+  anular,
+  type Candidato,
+  chipMotivo,
+  conDeltas,
+  DETALLE_VACIO,
+  deltasSesion,
+  FILTRO_VACIO,
+  type FilaHistorial,
+  filtrarCandidatos,
+  filtrarHistorial,
+  filtrarLabel,
+  filtroHistorialTexto,
+  historialMetaTexto,
+  isoLocal,
+  MOTIVO_VACIO,
+  MOTIVOS,
+  MOTIVOS_FILTRO,
+  motivoNoAnulable,
+  motivoTexto,
+  nuevoAjuste,
+  opcionesAjusteLabel,
+  puedeAnular,
+  puntosTexto,
+  separarMotivo,
+  sinErrores,
+  sinResultadosTexto,
+  VALOR_CERO,
+  VALOR_PASO,
+  VALOR_RANGO,
+  VALOR_VACIO,
+  validarAjuste,
+  valorPropuesto,
+  vistaPrevia,
+} from "@/lib/puntos";
+
+const cand = (
+  id: string,
+  puntos: number,
+  apellido = id,
+  tipo: "alumno" | "equipo" = "alumno",
+): Candidato => ({
+  id,
+  tipo,
+  seccion: "5A",
+  nombre: `${id} ${apellido}`,
+  puntos,
+  primerApellido: apellido,
+  avatar: { tipo: "alumno", estilo: "adventurer-neutral", seed: id },
+});
+
+describe("motivos", () => {
+  test("los 8 del handoff, en orden, con sus valores", () => {
+    expect(MOTIVOS.map((m) => [m.etiqueta, m.valor])).toEqual([
+      ["Participación destacada", 2],
+      ["Ayudó a un compañero", 1],
+      ["Trabajo extra", 2],
+      ["No estuvo en clase", -2],
+      ["No prestó atención", -1],
+      ["Uso del celular", -1],
+      ["Falta de respeto", -3],
+      ["Otro", null],
+    ]);
+  });
+  test("valor propuesto; «Otro» sin valor (D103)", () => {
+    expect(valorPropuesto("participacion")).toBe(2);
+    expect(valorPropuesto("respeto")).toBe(-3);
+    expect(valorPropuesto("otro")).toBeNull();
+  });
+  test("chip con signo tipográfico y texto accesible", () => {
+    expect(chipMotivo(2)).toEqual({
+      variante: "ok",
+      visible: "+2",
+      accesible: "más 2 puntos",
+    });
+    expect(chipMotivo(-3)).toEqual({
+      variante: "err",
+      visible: "−3",
+      accesible: "menos 3 puntos",
+    });
+    expect(chipMotivo(null).visible).toBe("± escribe");
+  });
+  test("el filtro suma «Anulación» a los 8", () => {
+    expect(MOTIVOS_FILTRO).toHaveLength(9);
+    expect(MOTIVOS_FILTRO.at(-1)).toBe("Anulación");
+  });
+});
+
+describe("filtrarCandidatos", () => {
+  const lista = [
+    { nombre: "María Méndez" },
+    { nombre: "Jorge Quintero" },
+    { nombre: "5A-G3 Ropa" },
+  ];
+  test("sin tildes ni mayúsculas", () => {
+    expect(filtrarCandidatos(lista, "MENDEZ")).toEqual([lista[0]]);
+    expect(filtrarCandidatos(lista, "  maría ")).toEqual([lista[0]]);
+    expect(filtrarCandidatos(lista, "ropa")).toEqual([lista[2]]);
+  });
+  test("consulta vacía devuelve todos; sin coincidencias, vacío", () => {
+    expect(filtrarCandidatos(lista, "")).toHaveLength(3);
+    expect(filtrarCandidatos(lista, "zzz")).toEqual([]);
+    expect(sinResultadosTexto(" zzz ")).toBe("Sin resultados para «zzz»");
+  });
+});
+
+describe("vistaPrevia", () => {
+  test("el ejemplo del lienzo: Jorge Quintero 17 → 19, puesto 16 → 11", () => {
+    const c = candidatosPuntos().alumno["5A"];
+    const jorge = c.find((x) => x.id === AJUSTE_INICIAL.destinoId);
+    if (!jorge) throw new Error("falta Jorge");
+    const v = vistaPrevia({ destino: jorge, valor: 2, ranking: c });
+    expect(v.frase).toBe(
+      "Jorge Quintero pasa de 17 a 19 pts y sube del puesto 16 al 11. Su nota no cambia.",
+    );
+    expect(v.variante).toBe("ok");
+    expect(v.movimiento).toBe("sube");
+  });
+  test("baja", () => {
+    const r = [cand("a", 20), cand("b", 15), cand("c", 10)];
+    const v = vistaPrevia({ destino: r[0], valor: -6, ranking: r });
+    expect(v.movimiento).toBe("baja");
+    expect(v.variante).toBe("err");
+    expect(v.frase).toBe(
+      "a a pasa de 20 a 14 pts y baja del puesto 1 al 2. Su nota no cambia.",
+    );
+  });
+  test("se mantiene; con medios puntos", () => {
+    const r = [cand("a", 20), cand("b", 15), cand("c", 10)];
+    const v = vistaPrevia({ destino: r[1], valor: 0.5, ranking: r });
+    expect(v.movimiento).toBe("igual");
+    expect(v.frase).toBe(
+      "b b pasa de 15 a 15,5 pts y se mantiene en el puesto 2. Su nota no cambia.",
+    );
+  });
+  test("empates con rankCompetition (1-2-2-4)", () => {
+    // b y c empatan en 2.º; d (4.º) sube a 15 y empata con ellos en el 2.º
+    const r = [cand("a", 20), cand("b", 15), cand("c", 15), cand("d", 10)];
+    const v = vistaPrevia({ destino: r[3], valor: 5, ranking: r });
+    expect([v.puestoAntes, v.puestoDespues]).toEqual([4, 2]);
+  });
+  test("equipo: «El equipo …»", () => {
+    const c = candidatosPuntos().equipo["5A"];
+    const ropa = c.find((x) => x.id === "5a-g3");
+    if (!ropa) throw new Error("falta 5A-G3");
+    const v = vistaPrevia({ destino: ropa, valor: 1, ranking: c });
+    expect(v.frase.startsWith("El equipo 5A-G3 Ropa pasa de ")).toBe(true);
+    expect(v.frase.endsWith(". Su nota no cambia.")).toBe(true);
+    expect(v.partes.prefijo + v.partes.nombre).toBe("El equipo 5A-G3 Ropa");
+  });
+  test("usa los puntos con los deltas de la sesión", () => {
+    const r = conDeltas([cand("a", 20), cand("b", 15)], { "alumno:b": 6 });
+    expect(r[1].puntos).toBe(21);
+    const v = vistaPrevia({ destino: r[1], valor: 1, ranking: r });
+    expect([v.antes, v.despues, v.puestoAntes]).toEqual([21, 22, 1]);
+  });
+  test("solo «Su nota no cambia» habla de nota (D007)", () => {
+    const r = [cand("a", 20), cand("b", 15)];
+    const v = vistaPrevia({ destino: r[1], valor: 2, ranking: r });
+    expect(v.frase.match(/nota/g)).toHaveLength(1);
+    expect(puntosTexto(17.5)).toBe("17,5 pts");
+  });
+});
+
+describe("validarAjuste", () => {
+  const ok = {
+    tipo: "alumno" as const,
+    destinoId: "1",
+    motivo: "participacion" as const,
+    valor: 2,
+    detalle: "",
+  };
+  test("válido", () => {
+    expect(sinErrores(validarAjuste(ok))).toBe(true);
+  });
+  test("faltan destino y motivo", () => {
+    const e = validarAjuste({ ...ok, destinoId: null, motivo: null });
+    expect(e.destino).toContain("alumno");
+    expect(e.motivo).toBe(MOTIVO_VACIO);
+    expect(
+      validarAjuste({ ...ok, tipo: "equipo", destinoId: null }).destino,
+    ).toContain("equipo");
+  });
+  test("valor: vacío, 0, paso y rango", () => {
+    expect(validarAjuste({ ...ok, valor: null }).valor).toBe(VALOR_VACIO);
+    expect(validarAjuste({ ...ok, valor: 0 }).valor).toBe(VALOR_CERO);
+    expect(validarAjuste({ ...ok, valor: 1.25 }).valor).toBe(VALOR_PASO);
+    expect(validarAjuste({ ...ok, valor: 21 }).valor).toBe(VALOR_RANGO);
+    expect(validarAjuste({ ...ok, valor: -0.5 }).valor).toBeUndefined();
+  });
+  test("«Otro» exige detalle; los demás no", () => {
+    expect(
+      validarAjuste({ ...ok, motivo: "otro", detalle: "  " }).detalle,
+    ).toBe(DETALLE_VACIO);
+    expect(
+      validarAjuste({ ...ok, motivo: "otro", detalle: "Trajo materiales" })
+        .detalle,
+    ).toBeUndefined();
+  });
+});
+
+const fila = (over: Partial<FilaHistorial> = {}): FilaHistorial => ({
+  id: "x",
+  tipo: "alumno",
+  destinoId: "1",
+  seccion: "5A",
+  nombre: "Jorge Quintero",
+  valor: 2,
+  motivo: "Participación destacada",
+  fecha: "2026-10-25T10:15",
+  profe: "[Nombre del profe]",
+  anulado: false,
+  nuevo: false,
+  ...over,
+});
+
+describe("anular", () => {
+  const opts = { nuevoId: "n1", fecha: "2026-10-30T08:00", profe: "P" };
+  test("crea el inverso arriba y marca el original sin borrarlo", () => {
+    const r = anular([fila(), fila({ id: "y" })], "x", opts);
+    expect(r).toHaveLength(3);
+    expect(r[0]).toMatchObject({
+      id: "n1",
+      valor: -2,
+      motivo: "Anulación",
+      anulaA: "x",
+      nuevo: true,
+      detalle: "«Participación destacada» del 25/10/2026, 10:15 a. m.",
+    });
+    expect(r[1]).toMatchObject({ id: "x", anulado: true });
+    expect(r[2].anulado).toBe(false);
+    expect(motivoTexto(r[0])).toBe(
+      "Anulación de «Participación destacada» del 25/10/2026, 10:15 a. m.",
+    );
+  });
+  test("no se anula dos veces ni se anula una anulación", () => {
+    const r = anular([fila()], "x", opts);
+    expect(() => anular(r, "x", { ...opts, nuevoId: "n2" })).toThrow();
+    expect(() => anular(r, "n1", { ...opts, nuevoId: "n2" })).toThrow();
+    expect(puedeAnular(r[1])).toBe(false);
+    expect(motivoNoAnulable(r[1])).toBe("Ya está anulado");
+    expect(motivoNoAnulable(r[0])).toBe("Una anulación no se anula");
+    expect(motivoNoAnulable(fila())).toBeNull();
+  });
+  test("los deltas de la sesión suman aplicados y anulaciones; los del seed no", () => {
+    const r = anular([fila()], "x", opts);
+    expect(deltasSesion(r)).toEqual({ "alumno:1": -2 });
+    expect(deltasSesion([fila()])).toEqual({});
+  });
+  test("textos de los toasts", () => {
+    expect(ajusteAplicadoTexto(fila())).toBe(
+      "Ajuste aplicado: +2 pts a Jorge Quintero",
+    );
+    expect(ajusteAnuladoTexto(fila())).toBe(
+      "Ajuste anulado: −2 pts a Jorge Quintero",
+    );
+  });
+});
+
+describe("nuevoAjuste", () => {
+  test("toma la etiqueta del motivo y el nombre del historial", () => {
+    const eq = cand("5a-g3", 18, "5A-G3 Ropa", "equipo");
+    const f = nuevoAjuste({
+      id: "n",
+      destino: { ...eq, nombre: "5A-G3 Ropa" },
+      motivo: "otro",
+      valor: -1.5,
+      detalle: "  Llegaron tarde ",
+      fecha: "2026-10-30T09:05",
+      profe: "P",
+    });
+    expect(f).toMatchObject({
+      nombre: "Equipo 5A-G3 Ropa",
+      motivo: "Otro",
+      detalle: "Llegaron tarde",
+      nuevo: true,
+      anulado: false,
+    });
+    expect(motivoTexto(f)).toBe('Otro: "Llegaron tarde"');
+  });
+  test("isoLocal", () => {
+    expect(isoLocal(new Date(2026, 9, 3, 7, 5))).toBe("2026-10-03T07:05");
+  });
+});
+
+describe("historial", () => {
+  test("separa el «Otro» del Panel en motivo + detalle", () => {
+    expect(separarMotivo('Otro: "Entregaron la maqueta sin nombres"')).toEqual({
+      motivo: "Otro",
+      detalle: "Entregaron la maqueta sin nombres",
+    });
+    expect(separarMotivo("Uso del celular")).toEqual({
+      motivo: "Uso del celular",
+    });
+  });
+  test("las 5 filas del lienzo, sin tocar las 4 del Panel", () => {
+    expect(AJUSTES).toHaveLength(4);
+    expect(AJUSTES_HISTORIAL).toHaveLength(5);
+    const h = historialPuntos();
+    expect(h.map((f) => f.nombre)).toEqual([
+      "Jorge Quintero",
+      "Klenyerber Corredor",
+      "Equipo 5A-G3 Ropa",
+      "Gabriel Gil",
+      "Equipo 5C-G1",
+    ]);
+    expect(motivoTexto(h[4])).toBe('Otro: "Entregaron la maqueta sin nombres"');
+    expect(historialMetaTexto(h[0])).toBe(
+      "25/10/2026, 10:15 a. m. · [Nombre del profe]",
+    );
+    expect(h.every((f) => !f.nuevo && !f.anulado)).toBe(true);
+  });
+  test("filtro por sección, tipo y motivo, con su frase", () => {
+    const h = historialPuntos();
+    expect(filtrarHistorial(h, FILTRO_VACIO)).toHaveLength(5);
+    expect(filtroHistorialTexto(FILTRO_VACIO, 5, 5)).toBe(
+      "Mostrando los 5 ajustes",
+    );
+    const f = {
+      ...FILTRO_VACIO,
+      seccion: "5A" as const,
+      tipo: "alumno" as const,
+    };
+    const r = filtrarHistorial(h, f);
+    expect(r.map((x) => x.nombre)).toEqual([
+      "Jorge Quintero",
+      "Klenyerber Corredor",
+      "Gabriel Gil",
+    ]);
+    expect(filtroHistorialTexto(f, r.length, h.length)).toBe(
+      "Mostrando 3 de 5 ajustes · 5A · Alumnos",
+    );
+    expect(filtrarLabel(f)).toBe("Filtrar el historial (2 filtros activos)");
+    const otro = { ...FILTRO_VACIO, motivo: "Otro" };
+    expect(filtrarHistorial(h, otro).map((x) => x.id)).toEqual(["aj-4"]);
+  });
+  test("nombre accesible del menú de fila", () => {
+    expect(opcionesAjusteLabel("Jorge Quintero")).toBe(
+      "Opciones del ajuste de Jorge Quintero",
+    );
+  });
+});

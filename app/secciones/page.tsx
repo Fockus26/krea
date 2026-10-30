@@ -52,6 +52,11 @@ const PANTALLAS: ReadonlyArray<{ href: string; titulo: string; ruta: string }> =
       ruta: "/profe",
     },
     {
+      href: "/secciones/puntos",
+      titulo: "Ajustes de puntos",
+      ruta: "/profe/puntos",
+    },
+    {
       href: "/secciones/evaluar/grupal",
       titulo: "Evaluar entrega",
       ruta: "/profe/evaluar/[entrega]",
