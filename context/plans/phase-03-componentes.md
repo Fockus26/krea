@@ -14,7 +14,7 @@ No hay entorno DOM de pruebas (`happy-dom`/`jsdom`): las pruebas son de lógica 
 
 | Ola | Unidades (rama · qué · archivos) | Depende de | Estado |
 |---|---|---|---|
-| 1 | `feat/ui-base` · shadcn init (Radix) + **todas** las dependencias de la fase + archivos crudos de shadcn que usarán las olas 2–3, `cn`, variante `dark:`, bloque de movimiento compartido (keyframes/utilidades §6), token texto-sobre-error, `Button` + `Spinner` completos (§2.1), página `/componentes` con un archivo por familia (stubs) · `components.json`, `package.json`, `bun.lock`, `lib/utils.ts`, `app/globals.css`, `components/ui/*` (crudos), `components/ui/button.tsx`, `components/ui/spinner.tsx`, `app/componentes/**` | — | PR #9 abierto |
+| 1 | `feat/ui-base` · shadcn init (Radix) + **todas** las dependencias de la fase + archivos crudos de shadcn que usarán las olas 2–3, `cn`, variante `dark:`, bloque de movimiento compartido (keyframes/utilidades §6), token texto-sobre-error, `Button` + `Spinner` completos (§2.1), página `/componentes` con un archivo por familia (stubs) · `components.json`, `package.json`, `bun.lock`, `lib/utils.ts`, `app/globals.css`, `components/ui/*` (crudos), `components/ui/button.tsx`, `components/ui/spinner.tsx`, `app/componentes/**` | — | cerrada (#9) |
 | 2 | `feat/ui-formularios` · Label, Input, Textarea, Select, campo con ayuda/error/éxito, contraseña con ojo, cédula, `NumberStepper` (§2.2) · `components/ui/{input,textarea,select,label,field,…}.tsx`, `app/componentes/_familias/formularios.tsx` | 1 | pendiente |
 | 2 | `feat/ui-overlays` · Dialog, Sheet (hoja inferior), DropdownMenu, Toaster/Sonner (§2.13, §2.14 toast, §6) · `components/ui/{dialog,sheet,dropdown-menu,sonner}.tsx`, `_familias/overlays.tsx` | 1 | pendiente |
 | 2 | `feat/ui-chips-tabs` · Badge/chips (todas las variantes + estados de tarea/entrega), `GradePill` (§2.3), Tabs de línea, segmentado (Tabs `tablist` y ToggleGroup `radiogroup`, `seg-block`) (§2.4, §2.6) · `components/ui/{badge,tabs,toggle-group}.tsx`, `components/krea/grade-pill.tsx`, `_familias/chips.tsx` | 1 | pendiente |
@@ -51,16 +51,17 @@ Reglas de reparto:
 
 Pool: hoy wt1/wt2. La ola 2 necesita 5 slots → `wt init -Count 5` al inicio de esa sesión (o 2 tandas de slots).
 
-## Ola actual: 1
+## Ola actual: 2 (la ola 1 cerró con #9, main @ fec1d1a)
 
 - Brief y prompts: `context/plans/orchestration-2026-10-29-f03.md` / `…-f03-prompts.md`
-- PRs: #9 W1 ui-base — abierto, espera revisión de César
+- Ola 1: PR #9 W1 ui-base — mergeado (main @ fec1d1a); wt1 liberado
 - QA: no aplica (decisión de César)
 
 ## Cierres
 
 | Ola | PRs | QA | Pasa a la siguiente | Datos sin borrar |
 |---|---|---|---|---|
+| 1 | #9 | no aplica (César: QA solo al final) | notas de "Para la ola 2" | ninguno |
 
 ## Cierre de la fase (después de la ola 3, lo hace el orquestador)
 
