@@ -1,0 +1,5 @@
+# D036 · Components · `Sheet` = solo hoja inferior: el prop `side` se conserva con el único valor `"bottom"` · Implemented
+
+**Decision:** `SheetContent` mantiene `side` (y `data-side`) pero su tipo es `"bottom"` y es el valor por defecto. Tematizado con HANDOFF §2.13: radio 24 24 0 0, padding 8 16 24 + `env(safe-area-inset-bottom)`, asa 40 × 4 `--surface-3` (`aria-hidden`), cerrar ghost icon sm `aria-label="Cerrar"` en la fila del título, máx. 90dvh con scroll, movimiento `animate-sheet-in/out` (D027). Los ítems de 48 los pone quien la usa (Menú del profesor, `feat/ui-navegacion`). Ocupa el ancho completo también en escritorio: el diseño solo la usa < lg.
+**Why:** el handoff solo dibuja la hoja inferior; tematizar `left`/`right`/`top` sería inventar diseño, y las utilidades de D027 solo animan en vertical. Conservar el prop deja añadir lados sin cambiar la API.
+**Discarded alternative:** dejar los cuatro lados con clases genéricas — quedarían sin revisar y con animación distinta de §6.
