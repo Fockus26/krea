@@ -21,7 +21,7 @@ export function BottomNav({ rol, pathname }: NavRoute & { rol: Rol }) {
             key={item.id}
             href={item.href}
             aria-current={active ? "page" : undefined}
-            className="group/nav mt-1 flex h-14 flex-col items-center justify-center gap-0.5 rounded-md font-body text-xs leading-4 font-semibold text-text-2 no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus aria-[current=page]:font-bold aria-[current=page]:text-accent-ink"
+            className="group/nav mt-1 flex h-14 flex-col items-center justify-center gap-0.5 rounded-md text-nav-sm text-text-2 no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus aria-[current=page]:font-bold aria-[current=page]:text-accent-ink"
           >
             <span className="relative isolate grid h-8 w-14 place-items-center rounded-pill">
               <span

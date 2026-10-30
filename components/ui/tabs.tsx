@@ -85,7 +85,7 @@ function TabsTrigger({
         "group-data-[variant=segmented]/tabs-list:data-[state=active]:bg-surface group-data-[variant=segmented]/tabs-list:data-[state=active]:text-text group-data-[variant=segmented]/tabs-list:data-[state=active]:shadow-1",
         // seg-block: reparte el ancho y, por debajo de 400 px (25 rem) del contenedor, solo texto
         "group-data-[block]/tabs-list:min-w-0 group-data-[block]/tabs-list:flex-1 group-data-[block]/tabs-list:justify-center group-data-[block]/tabs-list:px-2",
-        "group-data-[block]/tabs-list:@max-[25rem]:[&_svg]:hidden",
+        "group-data-[block]/tabs-list:@max-seg:[&_svg]:hidden",
         className,
       )}
       {...props}

@@ -160,10 +160,10 @@ function ScorePicker({
             data-max={v === top || undefined}
             className={cn(
               // 44 × 44 mín., padding 0 8, radio 12, borde 1 px --input, Poppins 700 15/20 tabular
-              "h-11 min-w-11 rounded-nav border border-input bg-surface px-2 text-button font-heading nums text-text",
+              "h-11 min-w-11 rounded-nav border border-input bg-surface px-2 text-score text-text",
               "hover:text-text hover:not-disabled:not-data-[state=on]:bg-surface-2",
               // El valor máximo, borde 1,5 px (.max); el token es el mismo del botón secondary
-              "data-max:border-(length:--w-btn-border)",
+              "data-max:border-(length:--w-score-max)",
               // Elegido: --accent + --on-accent + anillo `0 0 0 2px surface, 0 0 0 4px accent`
               "data-[state=on]:border-accent data-[state=on]:bg-accent data-[state=on]:text-on-accent data-[state=on]:shadow-none",
               "data-[state=on]:ring-2 data-[state=on]:ring-accent data-[state=on]:ring-offset-2 data-[state=on]:ring-offset-surface",

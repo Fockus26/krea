@@ -104,7 +104,7 @@ function SelectContent({
         position={position}
         sideOffset={sideOffset}
         className={cn(
-          // z-popover (40): por encima de la barra inferior (z-action-bar 25) y la topbar (30)
+          // z-popover (55): por encima de la barra inferior, la topbar y el overlay de un Dialog (50)
           "relative z-popover max-h-(--radix-select-content-available-height) min-w-(--radix-select-trigger-width) origin-trigger overflow-x-hidden overflow-y-auto rounded-md border border-divider bg-surface p-1.5 text-text shadow-3 dark:shadow-none",
           "data-[state=open]:animate-pop-in data-[state=closed]:animate-pop-out",
           className,

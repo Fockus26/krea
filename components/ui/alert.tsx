@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
  * 15/22 no existe como rol tipográfico (D017): medida suelta en rem, pendiente de token.
  */
 const alertVariants = cva(
-  "flex items-start gap-3 rounded-md px-4 py-3 text-[0.9375rem] leading-[1.375rem] text-text",
+  "flex items-start gap-3 rounded-md px-4 py-3 text-callout text-text",
   {
     variants: {
       variant: {

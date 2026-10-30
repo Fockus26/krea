@@ -51,7 +51,7 @@ export function QuestionCardDetail({
         <div className="flex flex-col gap-1.5">
           <p className="text-eyebrow text-text-2">Tu respuesta</p>
           {respuesta.tipo === "texto" ? (
-            <p className="rounded-nav bg-surface-2 px-3.5 py-3 text-[0.9375rem] leading-[1.375rem] text-text">
+            <p className="rounded-nav bg-surface-2 px-3.5 py-3 text-callout text-text">
               {respuesta.texto}
             </p>
           ) : (
@@ -64,7 +64,7 @@ export function QuestionCardDetail({
           )}
         </div>
         {comentario ? (
-          <div className="flex gap-2.5 rounded-nav bg-accent-soft px-3.5 py-3 text-[0.9375rem] leading-[1.375rem] text-text">
+          <div className="flex gap-2.5 rounded-nav bg-accent-soft px-3.5 py-3 text-callout text-text">
             <Sparkles
               aria-hidden="true"
               className="mt-px size-5 shrink-0 text-accent-ink"

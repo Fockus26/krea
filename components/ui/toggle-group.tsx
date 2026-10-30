@@ -117,7 +117,7 @@ function ToggleGroupItem({
         "[&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0",
         // seg-block
         "group-data-[block]/toggle-group:min-w-0 group-data-[block]/toggle-group:flex-1 group-data-[block]/toggle-group:px-2",
-        "group-data-[block]/toggle-group:@max-[25rem]:[&_svg]:hidden",
+        "group-data-[block]/toggle-group:@max-seg:[&_svg]:hidden",
         className,
       )}
       {...props}
