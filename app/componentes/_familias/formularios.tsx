@@ -118,17 +118,22 @@ function StepperDemo({
   unit,
 }: {
   label: string;
-  start: number;
+  /** `null` = sin valor (D103): campo vacío hasta el primer −/+. */
+  start: number | null;
   min: number;
   max: number;
   unit: string;
 }) {
-  const [valor, setValor] = React.useState(start);
+  const [valor, setValor] = React.useState<number | null>(start);
+  const labelId = React.useId();
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="text-label">{label}</span>
+      {/* El texto visible nombra el stepper (aria-labelledby, D103) */}
+      <span id={labelId} className="text-label">
+        {label}
+      </span>
       <NumberStepper
-        label={label}
+        aria-labelledby={labelId}
         value={valor}
         onChange={setValor}
         min={min}
@@ -327,10 +332,18 @@ export function Formularios() {
             max={10}
             unit="pts"
           />
+          <StepperDemo
+            label="Puntaje · sin puntuar"
+            start={null}
+            min={0}
+            max={8}
+            unit="/ 8"
+          />
         </div>
         <Nota>
           Escribe “17,5” o “17.5”; ↑/↓ suman o restan 0,5; al salir del campo se
-          corrige al paso y al rango.
+          corrige al paso y al rango. Sin valor, el campo queda vacío (se
+          anuncia “Sin puntuar”) y el primer −/+ parte del mínimo.
         </Nota>
       </Muestra>
 

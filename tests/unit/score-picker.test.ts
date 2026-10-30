@@ -73,10 +73,17 @@ describe("ScorePicker · stepper (> 6)", () => {
       expect(html).toContain(`aria-label="${l}"`);
   });
 
-  test("sin puntuar lo dice en texto, no muestra un 0 mudo", () => {
+  test("el campo se nombra con la pregunta, sin un «Puntaje» aparte (D103)", () => {
+    expect(html).toMatch(/role="spinbutton"[^>]*aria-labelledby="q1"/);
+    expect(html).not.toContain('aria-label="Puntaje"');
+  });
+
+  test("sin puntuar: campo vacío, sin valuenow y «Sin puntuar» (D003, D103)", () => {
     const vacio = render({ value: null, max: 8 });
-    expect(vacio).toContain("Sin puntuar");
-    expect(vacio).toMatch(/aria-describedby="[^"]+"/);
+    expect(vacio).toContain('value=""');
+    expect(vacio).not.toContain('value="0"');
+    expect(vacio).not.toContain("aria-valuenow");
+    expect(vacio).toContain('aria-valuetext="Sin puntuar"');
   });
 });
 

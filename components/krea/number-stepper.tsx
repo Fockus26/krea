@@ -10,13 +10,21 @@ import {
   formatDecimal,
   parseDecimal,
   STEP_DEFAULT,
+  STEPPER_EMPTY_TEXT,
   snapToStep,
-  stepValue,
+  stepFrom,
+  stepperAria,
+  stepperDisplay,
 } from "@/lib/stepper";
 import { cn } from "@/lib/utils";
 
 type NumberStepperProps = {
-  value: number;
+  /**
+   * Valor actual. `null` = sin valor (p. ej. pregunta sin puntuar, D003): campo vacío, sin
+   * `aria-valuenow` y `aria-valuetext` = `emptyText`; el primer −/+ parte de `min` (D103).
+   */
+  value: number | null;
+  /** Siempre con un número: el componente nunca vuelve a `null` por sí solo. */
   onChange: (value: number) => void;
   min: number;
   max: number;
@@ -26,6 +34,13 @@ type NumberStepperProps = {
   unit?: string;
   /** Nombre accesible del grupo y del campo ("Base de evaluación"). Sin `Field` que lo etiquete. */
   label?: string;
+  /**
+   * Alternativa a `label`: id(s) del texto visible que nombra el grupo y el campo (p. ej. el
+   * enunciado de la pregunta). Si viene, `label` no se usa.
+   */
+  "aria-labelledby"?: string;
+  /** Lo que anuncia el campo sin valor. "Sin puntuar" por defecto. */
+  emptyText?: string;
   id?: string;
   disabled?: boolean;
   readOnly?: boolean;
@@ -53,6 +68,8 @@ function NumberStepper({
   step = STEP_DEFAULT,
   unit,
   label,
+  "aria-labelledby": labelledBy,
+  emptyText = STEPPER_EMPTY_TEXT,
   id,
   disabled,
   readOnly,
@@ -63,9 +80,13 @@ function NumberStepper({
   const inputRef = React.useRef<HTMLInputElement>(null);
   // Mientras se escribe se muestra el texto crudo; fuera del foco, el valor formateado
   const [draft, setDraft] = React.useState<string | null>(null);
-  const shown = draft ?? formatDecimal(value, step);
+  const shown = draft ?? stepperDisplay(value, step);
   const stepText = formatDecimal(step, step);
   const inactive = disabled || readOnly;
+  // `aria-labelledby` gana a `label`: nunca los dos a la vez
+  const name = labelledBy
+    ? { "aria-labelledby": labelledBy }
+    : { "aria-label": label };
 
   const commit = (next: number) => {
     setDraft(null);
@@ -74,7 +95,7 @@ function NumberStepper({
 
   const bump = (dir: 1 | -1) => {
     const parsed = draft === null ? null : parseDecimal(draft);
-    const next = stepValue(parsed ?? value, dir, range);
+    const next = stepFrom(parsed ?? value, dir, range);
     commit(next);
     // Un botón que se deshabilita en el límite sacaría el foco de la pantalla
     if (atMin(next, range) || atMax(next, range)) inputRef.current?.focus();
@@ -83,19 +104,21 @@ function NumberStepper({
   const settle = () => {
     if (draft === null) return;
     const parsed = parseDecimal(draft);
-    commit(parsed === null ? value : snapToStep(parsed, range));
+    // Texto vacío o inválido: se vuelve al valor de antes (también a "sin valor")
+    if (parsed === null) setDraft(null);
+    else commit(snapToStep(parsed, range));
   };
 
   return (
     <fieldset
-      aria-label={label}
+      {...name}
       className={cn("inline-flex min-w-0 items-center gap-2", className)}
     >
       <Button
         variant="secondary"
         icon
         aria-label={`Restar ${stepText}`}
-        disabled={disabled || readOnly || atMin(value, range)}
+        disabled={inactive || atMin(value, range)}
         onClick={() => bump(-1)}
       >
         <Minus aria-hidden="true" />
@@ -107,11 +130,8 @@ function NumberStepper({
         inputMode="decimal"
         autoComplete="off"
         role="spinbutton"
-        aria-label={label}
-        aria-valuenow={value}
-        aria-valuemin={min}
-        aria-valuemax={max}
-        aria-valuetext={formatDecimal(value, step)}
+        {...name}
+        {...stepperAria(value, range, emptyText)}
         aria-describedby={aria["aria-describedby"]}
         aria-invalid={aria["aria-invalid"]}
         disabled={disabled}
@@ -143,7 +163,7 @@ function NumberStepper({
         variant="secondary"
         icon
         aria-label={`Sumar ${stepText}`}
-        disabled={disabled || readOnly || atMax(value, range)}
+        disabled={inactive || atMax(value, range)}
         onClick={() => bump(1)}
       >
         <Plus aria-hidden="true" />

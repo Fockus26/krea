@@ -26,6 +26,7 @@ const SIZES = [
   ["sm", "Pequeña · 26"],
   ["md", "Mediana · 32"],
   ["lg", "Grande · 44"],
+  ["total", "Total en vivo · 88 × 64"],
   ["xl", "Extra grande · 104"],
 ] as const satisfies readonly (readonly [GradePillSize, string])[];
 
@@ -79,6 +80,14 @@ export function Chips() {
           <GradePill nota={9.5} size="sm" table />
           <GradePill nota={14.5} size="sm" table />
           <GradePill nota={null} size="sm" table />
+        </div>
+      </Muestra>
+
+      <Muestra title="Sin aviso de Raspado (raspado «ninguno»: el contexto ya lo dice)">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <GradePill nota={9} size="total" raspado="ninguno" />
+          <GradePill nota={4.5} size="md" raspado="ninguno" />
+          <GradePill nota={null} size="total" raspado="ninguno" />
         </div>
       </Muestra>
 

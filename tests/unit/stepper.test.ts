@@ -1,10 +1,19 @@
 import { describe, expect, test } from "bun:test";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import {
+  NumberStepper,
+  type NumberStepperProps,
+} from "@/components/krea/number-stepper";
 import {
   atMax,
   atMin,
   formatDecimal,
   parseDecimal,
   snapToStep,
+  stepFrom,
+  stepperAria,
+  stepperDisplay,
   stepValue,
 } from "@/lib/stepper";
 
@@ -81,5 +90,79 @@ describe("stepValue y límites", () => {
     expect(atMin(10.5, BASE)).toBe(false);
     expect(atMax(20, BASE)).toBe(true);
     expect(atMax(19.5, BASE)).toBe(false);
+  });
+});
+
+describe("sin valor: `null` (D103)", () => {
+  const PUNTAJE = { min: 0, max: 8, step: 0.5 };
+
+  test("null nunca está en un límite: − y + quedan activos", () => {
+    expect(atMin(null, PUNTAJE)).toBe(false);
+    expect(atMax(null, PUNTAJE)).toBe(false);
+  });
+
+  test("el primer −/+ desde null parte de min, en las dos direcciones", () => {
+    expect(stepFrom(null, 1, PUNTAJE)).toBe(0);
+    expect(stepFrom(null, -1, PUNTAJE)).toBe(0);
+    expect(stepFrom(null, 1, BASE)).toBe(10);
+  });
+
+  test("con valor, un paso normal", () => {
+    expect(stepFrom(3, 1, PUNTAJE)).toBe(3.5);
+    expect(stepFrom(0, -1, PUNTAJE)).toBe(0);
+  });
+
+  test("el campo se ve vacío, nunca «0» (D003)", () => {
+    expect(stepperDisplay(null)).toBe("");
+    expect(stepperDisplay(0)).toBe("0");
+    expect(stepperDisplay(16.5)).toBe("16,5");
+  });
+
+  test("ARIA: sin valuenow y con «Sin puntuar»; con valor, la cifra con coma", () => {
+    expect(stepperAria(null, PUNTAJE)).toEqual({
+      "aria-valuenow": undefined,
+      "aria-valuemin": 0,
+      "aria-valuemax": 8,
+      "aria-valuetext": "Sin puntuar",
+    });
+    expect(stepperAria(7.5, PUNTAJE)["aria-valuetext"]).toBe("7,5");
+    expect(stepperAria(7.5, PUNTAJE)["aria-valuenow"]).toBe(7.5);
+    expect(stepperAria(null, BASE, "Sin base")["aria-valuetext"]).toBe(
+      "Sin base",
+    );
+  });
+});
+
+describe("NumberStepper: HTML publicado", () => {
+  const render = (props: Partial<NumberStepperProps>) =>
+    renderToStaticMarkup(
+      createElement(NumberStepper, {
+        value: 15,
+        onChange: () => {},
+        min: 10,
+        max: 20,
+        ...props,
+      }),
+    );
+
+  test("valor numérico: igual que antes (label en grupo y campo)", () => {
+    const html = render({ label: "Base de evaluación" });
+    expect(html).toContain('aria-valuenow="15"');
+    expect(html.match(/aria-label="Base de evaluación"/g)?.length).toBe(2);
+    expect(html).not.toContain("aria-labelledby");
+  });
+
+  test("aria-labelledby nombra grupo y campo y gana a label", () => {
+    const html = render({ "aria-labelledby": "t1", label: "Ignorado" });
+    expect(html.match(/aria-labelledby="t1"/g)?.length).toBe(2);
+    expect(html).not.toContain("Ignorado");
+  });
+
+  test("null: campo vacío y − / + activos", () => {
+    const html = render({ value: null, min: 0, max: 8 });
+    expect(html).toContain('value=""');
+    expect(html).not.toContain("aria-valuenow");
+    expect(html).toContain('aria-valuetext="Sin puntuar"');
+    expect(html).not.toMatch(/<button[^>]*disabled=""/);
   });
 });

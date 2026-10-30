@@ -30,7 +30,8 @@ type ScorePickerProps = {
 };
 
 /*
- * Botones de puntaje — HANDOFF §2.12; medidas en design/canvas/krea.css:311-317 (D054–D055).
+ * Botones de puntaje — HANDOFF §2.12; medidas en design/canvas/krea.css:311-317 (D054–D055;
+ * el stepper sin puntuar es D103: campo vacío, ya no 0 + "Sin puntuar").
  * ≤ 6: `ToggleGroup` single (ya es `radiogroup`, sin deseleccionar y con flechas que
  * seleccionan, D038) con un radio por paso de 0,5. > 6: `NumberStepper` + 5 atajos ghost sm.
  * En los dos modos, con el foco dentro del widget, las teclas 0–9 y `,` escriben el puntaje
@@ -45,16 +46,13 @@ function ScorePicker({
   disabled = false,
   className,
 }: ScorePickerProps) {
-  // Un ref por modo: el raíz es un `div` (botones) o un `fieldset` (stepper)
   const rootRef = React.useRef<HTMLDivElement>(null);
-  const fieldsetRef = React.useRef<HTMLFieldSetElement>(null);
   const buffer = React.useRef<ScoreBuffer>(null);
   const typed = React.useRef(false);
   const mode = scoreMode(max);
-  const pendingId = React.useId();
 
   const focusChecked = React.useCallback((v: number) => {
-    const root = rootRef.current ?? fieldsetRef.current;
+    const root = rootRef.current;
     if (!root?.contains(document.activeElement)) return;
     root
       .querySelector<HTMLButtonElement>(`[data-score="${String(v)}"]`)
@@ -88,32 +86,24 @@ function ScorePicker({
   if (mode === "stepper") {
     const shortcuts = scoreShortcuts(max);
     return (
-      // Recoge las teclas 0–9 y `,` que llegan de sus botones (−, +, atajos)
-      <fieldset
-        ref={fieldsetRef}
-        aria-labelledby={labelledBy}
+      // biome-ignore lint/a11y/noStaticElementInteractions: recoge las teclas 0–9 y `,` de sus botones (−, +, atajos)
+      <div
+        ref={rootRef}
         onKeyDown={onKeyDown}
         className={cn("flex min-w-0 flex-col gap-1", className)}
       >
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <NumberStepper
-            value={value ?? 0}
-            onChange={onChange}
-            min={0}
-            max={max}
-            step={SCORE_STEP}
-            // PROVISIONAL (CONTENT_CHECKLIST 44): nombre del campo y aviso de pendiente
-            label="Puntaje"
-            unit={`/ ${scoreText(max)}`}
-            disabled={disabled}
-            aria-describedby={value === null ? pendingId : undefined}
-          />
-          {value === null ? (
-            <span id={pendingId} className="text-small text-text-2">
-              Sin puntuar
-            </span>
-          ) : null}
-        </div>
+        {/* El stepper admite `null` y `aria-labelledby` (D103): campo vacío y "Sin puntuar"
+            en su `aria-valuetext`, nombrado por el enunciado como el radiogroup */}
+        <NumberStepper
+          value={value}
+          onChange={onChange}
+          min={0}
+          max={max}
+          step={SCORE_STEP}
+          aria-labelledby={labelledBy}
+          unit={`/ ${scoreText(max)}`}
+          disabled={disabled}
+        />
         {/* PROVISIONAL (CONTENT_CHECKLIST 44): nombre del grupo de atajos */}
         <fieldset
           aria-label="Atajos de puntaje"
@@ -135,7 +125,7 @@ function ScorePicker({
             </Button>
           ))}
         </fieldset>
-      </fieldset>
+      </div>
     );
   }
 
