@@ -12,22 +12,23 @@ La ambigüedad >1920 la resuelve HANDOFF §4: el contenedor sube a estudiante 12
 
 | Ola | Unidades (rama · qué · archivos) | Depende de | Estado |
 |---|---|---|---|
-| 1 | `feat/layout-base` · contenedores por rol (§4), padding lateral y ritmo vertical por breakpoint, smooth scroll solo con movimiento, `scroll-margin-top`, skip link, landmarks, `AppShell` estructural (lateral ≥1024 / topbar + barra inferior <1024, sin contenido de navegación) · `app/globals.css` (bloque Layout), `app/layout.tsx` (solo `<body>`), `components/layout/`, `app/page.tsx`, `app/tokens/page.tsx` | — | en curso |
-| 1 | `feat/marca-seo` · seo init: `metadata`/`viewport` base, `icon.svg`, `favicon.ico`, `apple-icon.png`, `manifest.ts`, `opengraph-image.tsx`, `robots.ts`, `sitemap.ts` · `app/layout.tsx` (solo exports `metadata`/`viewport`), `app/*` de assets, `lib/site.ts` | — | en curso |
+| 1 | `feat/layout-base` · contenedores por rol (§4), padding lateral y ritmo vertical por breakpoint, smooth scroll solo con movimiento, `scroll-margin-top`, skip link, landmarks, `AppShell` estructural (lateral ≥1024 / topbar + barra inferior <1024, sin contenido de navegación) · `app/globals.css` (bloque Layout), `app/layout.tsx` (solo `<body>`), `components/layout/`, `app/page.tsx`, `app/tokens/page.tsx` | — | cerrada |
+| 1 | `feat/marca-seo` · seo init: `metadata`/`viewport` base, `icon.svg`, `favicon.ico`, `apple-icon.png`, `manifest.ts`, `opengraph-image.tsx`, `robots.ts`, `sitemap.ts` · `app/layout.tsx` (solo exports `metadata`/`viewport`), `app/*` de assets, `lib/site.ts` | — | cerrada |
 
 Las dos tocan `app/layout.tsx` en bloques distintos (W1 el JSX de `<body>`, W2 los exports): se reparte explícitamente en los prompts.
 El contenido de la navegación (ítems, íconos lucide, tarjeta de usuario, hoja Menú) es HANDOFF §7 paso 5 y llega con las fases 03–04.
 
-## Ola actual: 1
+## Ola actual: 1 (cerrada — fase 02 cerrada)
 
 - Brief y prompts: `context/plans/orchestration-2026-10-29-f02.md` / `…-f02-prompts.md`
-- PRs: #7 W1 layout · #8 W2 marca/SEO — abiertos, sin conflicto entre sí
+- PRs: #7 W1 layout · #8 W2 marca/SEO — mergeados (main @ f37f6f6)
 - QA: no aplica (decisión de César)
 
 ## Cierres
 
 | Ola | PRs | QA | Pasa a la siguiente | Datos sin borrar |
 |---|---|---|---|---|
+| 1 | #7, #8 | no aplica (César: QA solo al final) | — | ninguno |
 
 ## Prompt de inicio de la siguiente fase
 
