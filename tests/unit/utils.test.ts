@@ -23,6 +23,9 @@ describe("cn con las utilidades propias (D025)", () => {
   test("sombras propias", () => {
     expect(cn("shadow-1", "shadow-3")).toBe("shadow-3");
     expect(cn("shadow-1", "shadow-none")).toBe("shadow-none");
+    expect(cn("shadow-btn-outline", "shadow-btn-outline-dis")).toBe(
+      "shadow-btn-outline-dis",
+    );
   });
 
   test("z-index con nombre", () => {

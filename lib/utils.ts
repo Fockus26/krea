@@ -42,7 +42,15 @@ export const Z_LAYERS = [
 const twMerge = extendTailwindMerge<"text-role">({
   extend: {
     theme: {
-      shadow: ["1", "2", "3", "bnav"],
+      shadow: [
+        "1",
+        "2",
+        "3",
+        "bnav",
+        "btn-primary",
+        "btn-outline",
+        "btn-outline-dis",
+      ],
       radius: ["nav", "pill"],
       ease: ["krea", "bounce"],
     },
