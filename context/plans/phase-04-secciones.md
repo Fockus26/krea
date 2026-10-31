@@ -38,10 +38,10 @@ ejemplo tipados ni una ruta para ver secciones. No hay entorno DOM de pruebas: l
 | 3 | `feat/sec-profe-panel` · Panel del profesor (saludo por hora, métricas `g3`, Por evaluar, Últimos ajustes) | ola 1 | cerrada (#29) |
 | 3 | `feat/sec-evaluar` · Evaluar entrega (cabecera, medidor fijo, preguntas con `ScorePicker` en `QuestionCardReview`, acción) + `GradePill` 88×64 de Total en vivo + `NumberStepper` con `value: null` | ola 1 (`ActionBar`) | cerrada (#30) |
 | 3 | `feat/sec-alumnos` · Alumnos (filtros, búsqueda sin tildes, tabla, diálogo Editar con base y motivo) | ola 1 | cerrada (#27) |
-| 4 | `feat/sec-equipos-profe` · Equipos del profesor (tarjetas, capitán, mover, Sin equipo, subir logo) | ola 3 | pendiente |
-| 4 | `feat/sec-tareas-profe` · Lista de tareas y constructor (Datos, Preguntas, suma = 20, publicar) | ola 3 | pendiente |
-| 4 | `feat/sec-puntos` · Ajustes de puntos (formulario con motivos fijos, vista previa, historial con anular) | ola 3 | pendiente |
-| 4 | `feat/sec-premios` · Premios (ganado / en juego / por definir, empate) | ola 3 | pendiente |
+| 4 | `feat/sec-equipos-profe` · Equipos del profesor (tarjetas, capitán, mover, Sin equipo, subir logo) | ola 3 | cerrada (#32) |
+| 4 | `feat/sec-tareas-profe` · Lista de tareas y constructor (Datos, Preguntas, suma = 20, publicar) | ola 3 | cerrada (#33) |
+| 4 | `feat/sec-puntos` · Ajustes de puntos (formulario con motivos fijos, vista previa, historial con anular) | ola 3 | cerrada (#34) |
+| 4 | `feat/sec-premios` · Premios (ganado / en juego / por definir, empate) | ola 3 | cerrada (#31) |
 
 Reglas de reparto:
 - **Cada unidad toca solo su carpeta** `components/sections/<pantalla>/`, su `lib/<pantalla>.ts` y su
@@ -78,7 +78,7 @@ Reglas de reparto:
 - Revisar con teclado real (fase 09): flechas del `ToggleGroup` (D038).
 - Archivo sin uso: `components/ui/toggle.tsx` (#11) — señalado, no se borra.
 
-## Ola actual: 4 (la ola 3 cerró con #27–#30; la 2 con #23–#26; la 1 con #20–#22)
+## Fase 04 cerrada (2026-10-30): la ola 4 cerró con #31–#34 (la ola 3 cerró con #27–#30; la 2 con #23–#26; la 1 con #20–#22)
 
 - En local con el pool (como la ola 3): brief + prompts en `context/plans/orchestration-<fecha>-f04-ola4*.md`, workers en paralelo, César mergea. En la nube: unidades en serie.
 - QA: no aplica (decisión de César)
@@ -109,6 +109,13 @@ Reglas de reparto:
 - **Choques en paralelo:** la línea de `PANTALLAS` en `app/secciones/page.tsx` chocó en 3 de 4 PRs (tres unidades tras la misma línea). En la ola 4, dar a cada unidad un ancla distinta o resolverlo al mergear (2 min por PR). Las anclas distintas de `globals.css` funcionaron.
 - Seed de 5C sin notas evaluadas: ranking 5C todo empatado en 0 (backlog). Topbar móvil sin chip «En vivo» ni X de Evaluar (backlog, fase 05).
 
+## Para la fase 05 (lo dejó la ola 4)
+
+- Todas las secciones del handoff §3 existen en `/secciones/*` (índice `app/secciones/page.tsx`); la fase 05 crea las rutas reales reutilizándolas.
+- Leer D110–D113 (Equipos: segmentado por enlaces, foco tras mover), D114–D117 (constructor: reducer puro, publicar por suma), D118–D121 (Puntos: combobox sobre `components/ui/popover.tsx`, anular = inverso), D122–D125 (Premios: empate y «Compartido» provisionales).
+- Pendiente de `Vista`/`TopBar`/`AppShell`: constructor sin barra inferior en móvil, «Guardar borrador» en la topbar, chip «En vivo» y X de Evaluar en la topbar móvil, un `<Toaster />` global (hoy hay Toasters locales en evaluar, equipos-profe, tareas-profe, puntos, premios: quitarlos al montar el global).
+- Datos de ejemplo por unificar en la fase 07: ids de `COLA` vs `TAREAS`, estado de la tarea del profe distinto del del alumno.
+
 ## Cierres
 
 | Ola | PRs | QA | Pasa a la siguiente | Datos sin borrar |
@@ -116,9 +123,10 @@ Reglas de reparto:
 | 1 | #20 base, #21 ingresar, #22 inicio (+ #19 cierre de la fase 03) | no aplica (César: QA solo al final) | notas de «Para la ola 2»; D075 pendiente de César | ninguno |
 | 2 | #23 notas, #24 tareas, #25 equipo, #26 perfil | no aplica (César: QA solo al final) | notas de «Para la ola 3»; filas 64, 67, 69, 73 esperan a César | ninguno |
 | 3 | #27 alumnos, #28 ranking, #29 panel, #30 evaluar (local, pool wt1–wt4) | no aplica (César: QA solo al final) | notas de «Para la ola 4»; backlog: 5C sin notas, topbar móvil (En vivo, X), toast sobre `ActionBar` | ninguno |
+| 4 | #31 premios, #32 equipos del profe, #33 tareas del profe + constructor, #34 puntos (local, pool wt1–wt4; main @ 7146ff6) | no aplica (César: QA solo al final) | notas de «Para la fase 05»; backlog: constructor móvil sin barra inferior + «Guardar borrador» en topbar, ids de `COLA` vs `TAREAS`, `NumberStepper` con signo, `Alert` con ícono/rol, axe del combobox | ninguno |
 
-## Prompt de inicio de la siguiente ola
+## Prompt de inicio de la siguiente fase
 
 ```
-/orchestrate ola 4 de la fase 04. Plan: context/plans/phase-04-secciones.md
+/orchestrate fase 05 (páginas). Fase: phases/05-PAGES.md · notas en «Para la fase 05» de context/plans/phase-04-secciones.md
 ```

@@ -11,3 +11,8 @@
 - (F04 ola 3, W3) X «Salir de la evaluación» en la `TopBar` móvil de Evaluar (hoy volver + «Entrega 1 de 7»). Fase 05. Media.
 - (F04 ola 3, W3) Toast en móvil (a 88 px) se superpone a la `ActionBar` (72 px + alto): coordinar el offset del Toaster global (D035) con `ActionBar`. Fase 05. Media.
 - (F04 ola 3, W3) `<kbd>` de los atajos de Evaluar sin estilo (no definido en lienzo ni handoff). Baja.
+- (F04 ola 4, W2) Ids de tareas de `lib/demo/evaluar.ts` `COLA` (`logo-y-paleta-emprendimiento`, `plan-de-ventas`) no casan con `TAREAS` (`logo-y-paleta` «Logo y paleta de la marca»): «Evaluar n» no sale en esas tareas de la lista del profe. Alinear al unificar datos (fase 05/07). Y `TAREAS.estado` es el del alumno: el profe necesita su propio estado por tarea.
+- (F04 ola 4, W2) Constructor en móvil: quitar la barra inferior y poner «Guardar borrador» en la topbar (`Vista`/`TopBar` no lo admiten hoy) — fase 05.
+- (F04 ola 4, W3) `NumberStepper` para rangos con signo: desde `null` el primer +/− parte de `min` (−20); `aria-valuetext` no personalizable («2», no «más 2 puntos») y negativo con «-» en vez de «−». Propuesta: props `formatValueText` / `signed`. Puntos lo rodea hoy por fuera.
+- (F04 ola 4, W3) `Alert`: ícono fijo por variante y `role="alert"` en err; Puntos usa `alertVariants` sobre un span para TrendingUp + `role="status"`. Valorar prop `icon` y `role`.
+- (F04 ola 4, W3) Combobox de Puntos: `aria-controls` apunta a un listbox no montado mientras está cerrado (portal): confirmar con axe en el QA final.

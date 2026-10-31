@@ -65,3 +65,4 @@
 
 <!-- One row per reusable component. Do not list single-section components that are not
      reused — those go in SECTION_INVENTORY.md as part of that section. -->
+| Popover | `components/ui/popover.tsx` | /secciones/puntos (combobox «¿A quién?») | F04 ola 4 (W3, PR #34) | shadcn sobre Radix Popover; `PopoverAnchor` para comboboxes; panel del menú §2.13; respeta PortalScope (D034); el llamador previene el autofoco (D118) |
