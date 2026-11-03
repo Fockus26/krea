@@ -69,3 +69,5 @@
 | StatusScreen + PantallaNotFound, Pantalla500, PantallaSinConexion | `components/estados/` | `app/not-found.tsx`, `app/error.tsx`, `app/global-error.tsx`, `/estados` | F06 W1 | HANDOFF §5b; D160–D162 |
 | useEnLinea / useRutaActual | `components/krea/use-en-linea.ts` | `app/error.tsx`, `app/global-error.tsx`, 404 | F06 W1 | `useSyncExternalStore`; `true`/`null` en el servidor |
 | OfflineBanner / OfflineBannerVista | `components/estados/offline-banner.tsx` | layouts de estudiante y profesor, `/estados` | F06 W2 | §5b; D164 |
+| Cargando, SkEncabezado, SkPuntos, SkLista, SkRanking, SkTabla, SkPreguntas, SkMetricas | `components/estados/skeletons.tsx` | `components/estados/cargas.tsx` | F06 W3 | §2.14; D167 |
+| CargaInicio, CargaLista, CargaDetalle, CargaRanking, CargaTabla, CargaPanel, CargaPerfil + CargaLenta | `components/estados/cargas.tsx`, `carga-lenta.tsx` | 19 `loading.tsx`, `/estados` | F06 W3 | D167 |

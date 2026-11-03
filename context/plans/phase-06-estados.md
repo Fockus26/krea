@@ -12,7 +12,7 @@
 |---|---|---|
 | 1 | W1 `feat/estados-pantallas` · `StatusScreen`; 404 raíz (3 variantes, D160), `error.tsx` (500 con/sin código + sin conexión por la red), `global-error.tsx`, galería `/estados` (D162). Sin mantenimiento (D163) | cerrada (#44) |
 | 1 | W2 `feat/estados-sin-conexion` · banner «Sin conexión. Ves tus notas de las …» (§5b: 12 px bajo la topbar, #221D2B/#F4F1F8, WifiOff #FFC23D, «Reintentar», `z-offline`) en los dos shells + toast «Volviste a estar en línea» 3 s; variante en la galería. La hora de los datos en caché llega en la fase 07 (Firestore offline): hasta entonces la del último render en línea | cerrada (#45) |
-| 2 | W3 `feat/estados-carga` · `loading.tsx` por ruta con skeletons de cada sección (§2.14: `aria-busy` + `aria-label` «Cargando …», pulso 1400 ms, estático con reduced motion) | pendiente |
+| 2 | W3 `feat/estados-carga` · `loading.tsx` por ruta con skeletons de cada sección (§2.14: `aria-busy` + `aria-label` «Cargando …», pulso 1400 ms, estático con reduced motion) | en curso |
 | 2 | W4 `feat/estados-vacios-errores` · barrido: cada lista con su vacío (§Vacíos, lienzo Vacios.dc.html), errores al guardar en pantalla (Alert `role="alert"` + qué hacer), estados de formulario y anuncios `aria-live`; cierre de la fase (criterios de `phases/06-STATES.md`) | pendiente |
 
 ## Números reservados (contra `origin/main`: última decisión D159, última fila 112)

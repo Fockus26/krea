@@ -5,7 +5,7 @@
 
 ## Now
 
-**Phase:** 06 — Estados · **Ola:** 1 de 2 cerrada (2026-11-03) · siguiente: ola 2 · fase 05 cerrada (46 páginas, D126–D159) · **Track:** Product
+**Phase:** 06 — Estados · **Ola:** 2 de 2 (2026-11-03) · fase 05 cerrada (46 páginas, D126–D159) · **Track:** Product
 Plan: `context/plans/phase-06-estados.md` · main @ 5f443ba
 **Sin QA hasta el final** (César, 2026-10-29) · **sin servidor, solo build** (César, 2026-11-03).
 
@@ -14,7 +14,8 @@ Plan: `context/plans/phase-06-estados.md` · main @ 5f443ba
 | Fase 05 completa (olas 1–3) | #35–#43 | merged (d4ea99f) |
 | W1 pantallas de estado (404/500/sin conexión, galería) | #44 | merged (d2e2213) |
 | W2 banner sin conexión | #45 | merged (5f443ba) |
-| Ola 2 skeletons · vacíos y errores | — | pendiente |
+| W3 skeletons (`loading.tsx` por ruta) | claude/busy-pascal-q9x6zf | PR |
+| W4 vacíos, errores en pantalla y cierre | — | pendiente |
 
 ## Blocked (actions for César or external)
 

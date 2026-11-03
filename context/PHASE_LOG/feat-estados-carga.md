@@ -1,0 +1,2 @@
+# feat/estados-carga (fase 06, ola 2, W3)
+19 `loading.tsx` con skeletons por sección (D167): piezas en `components/estados/skeletons.tsx`, composiciones por pantalla en `cargas.tsx`, aviso de carga lenta a los 8 s (`carga-lenta.tsx`). Galería `/estados?screen=carga-estudiante|carga-profesor`. Ojo: con `loading.tsx` el HTML estático lleva el skeleton primero y el contenido en el mismo documento (intercambio por script de React). Verificado: typecheck, lint, 539 tests, build, check:paginas. Sin servidor ni capturas.
