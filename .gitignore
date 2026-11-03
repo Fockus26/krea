@@ -61,3 +61,9 @@ context/plans/
 .vercel
 .env*
 !.env.example
+
+# firebase emulators
+firestore-debug.log
+firebase-debug.log
+ui-debug.log
+storage-debug.log

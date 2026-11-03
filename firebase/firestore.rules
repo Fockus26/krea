@@ -1,0 +1,88 @@
+rules_version = '2';
+
+// Reglas de Firestore de KREA (D174, D175).
+//
+// - Escrituras: NINGUNA desde el cliente. Todo se escribe en el servidor (Server Actions con el
+//   Admin SDK, que no pasa por estas reglas), donde se valida con zod y se recalcula el ranking.
+// - Lecturas: por rol, con los custom claims que pone el servidor (`rol`, `seccion`,
+//   `equipoId`; uid = cédula). Sin `get()`: más barato y sin lecturas extra.
+// - Todo lo que no está aquí: denegado.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function autenticado() {
+      return request.auth != null;
+    }
+    function esProfe() {
+      return autenticado() && request.auth.token.rol == 'profesor';
+    }
+    function esEstudiante() {
+      return autenticado() && request.auth.token.rol == 'estudiante';
+    }
+    function miSeccion() {
+      return request.auth.token.seccion;
+    }
+    function esYo(cedula) {
+      return autenticado() && request.auth.uid == cedula;
+    }
+
+    // Perfil: el propio y el profesor. Los compañeros se ven por `ranking/{seccion}`.
+    match /usuarios/{cedula} {
+      allow read: if esYo(cedula) || esProfe();
+      allow write: if false;
+    }
+
+    // Email real de recuperación.
+    match /privados/{cedula} {
+      allow read: if esYo(cedula) || esProfe();
+      allow write: if false;
+    }
+
+    match /historialBase/{id} {
+      allow read: if esProfe() || (esEstudiante() && resource.data.alumnoId == request.auth.uid);
+      allow write: if false;
+    }
+
+    match /equipos/{equipoId} {
+      allow read: if esProfe() || (esEstudiante() && resource.data.seccion == miSeccion());
+      allow write: if false;
+    }
+
+    // El estudiante no ve borradores del profe ni tareas de la otra sección.
+    match /tareas/{tareaId} {
+      allow read: if esProfe()
+        || (esEstudiante()
+            && resource.data.estado != 'borrador'
+            && miSeccion() in resource.data.secciones);
+      allow write: if false;
+    }
+
+    // Su entrega individual, o la grupal en la que figura como integrante.
+    match /entregas/{entregaId} {
+      allow read: if esProfe()
+        || (esEstudiante() && request.auth.uid in resource.data.integrantes);
+      allow write: if false;
+    }
+
+    // Sus ajustes y los de su equipo actual.
+    match /ajustes/{id} {
+      allow read: if esProfe()
+        || (esEstudiante()
+            && ((resource.data.destino == 'alumno' && resource.data.destinoId == request.auth.uid)
+                || (resource.data.destino == 'equipo'
+                    && request.auth.token.equipoId != null
+                    && resource.data.destinoId == request.auth.token.equipoId)));
+      allow write: if false;
+    }
+
+    // Ranking en vivo de su sección (onSnapshot).
+    match /ranking/{seccion} {
+      allow read: if esProfe() || (esEstudiante() && miSeccion() == seccion);
+      allow write: if false;
+    }
+
+    match /{todo=**} {
+      allow read, write: if false;
+    }
+  }
+}
