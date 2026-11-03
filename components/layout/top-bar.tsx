@@ -30,6 +30,7 @@ export function TopBar({
   accion,
   soloAccion = false,
   onSignOut,
+  salirHref,
 }: NavRoute & {
   rol: Rol;
   usuario: NavUsuario;
@@ -47,6 +48,8 @@ export function TopBar({
   /** Sin avatar ni Menú: a la derecha solo `accion`. */
   soloAccion?: boolean;
   onSignOut?: () => void;
+  /** Destino de "Cerrar sesión" (Menú del profe) mientras no hay sesión real (D135). */
+  salirHref?: string;
 }) {
   const inicio = rol === "profesor" ? "/profe" : "/";
   const Icono = volverIcono === "cerrar" ? X : ArrowLeft;
@@ -83,6 +86,7 @@ export function TopBar({
         <MenuSheet
           pathname={pathname}
           onSignOut={onSignOut}
+          salirHref={salirHref}
           compacto={enVivo}
         />
       ) : (
