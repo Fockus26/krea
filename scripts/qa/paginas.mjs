@@ -15,15 +15,11 @@ import { join, relative, sep } from "node:path";
  * suya: desde ahí cada enlace debe ir a una página generada (p. ej. un id que no existe).
  */
 const RUTAS_PLANIFICADAS = [
-  "/",
-  "/notas",
-  "/notas/[tarea]",
   "/tareas",
   "/tareas/[tarea]",
   "/equipo",
   "/ranking",
   "/perfil",
-  "/profe",
   "/profe/evaluar",
   "/profe/evaluar/[entrega]",
   "/profe/tareas",
@@ -35,10 +31,6 @@ const RUTAS_PLANIFICADAS = [
   "/profe/premios",
   "/profe/ranking",
   "/profe/perfil",
-  "/ingresar",
-  "/recuperar",
-  "/recuperar/enviado",
-  "/recuperar/nueva",
 ];
 
 /** Única página que se indexa (D023). */
@@ -64,9 +56,11 @@ function rutaDe(archivo) {
   return rel === "index" ? "/" : `/${rel}`;
 }
 
+// `[tarea].html` es el esqueleto de reserva del prerender parcial (cacheComponents), no una página
+// real: las páginas reales son las de `generateStaticParams`.
 const esInterna = (ruta) =>
   INTERNAS.some((p) => ruta === p || ruta.startsWith(`${p}/`)) ||
-  ruta.split("/").some((s) => s.startsWith("_"));
+  ruta.split("/").some((s) => s.startsWith("_") || /^\[.+\]$/.test(s));
 
 const patron = (ruta) =>
   new RegExp(
