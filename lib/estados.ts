@@ -121,6 +121,11 @@ export function mensajeSinConexion(rol: Rol, hora: Date): string {
   return `Sin conexión. Ves ${que} de las ${formatHora(hora)}`;
 }
 
+/* ---------- Carga (D167) ---------- */
+
+/** Pasado este tiempo, bajo el skeleton: «Está tardando más de lo normal» + Reintentar (Vacios.dc.html). */
+export const CARGA_LENTA_MS = 8000;
+
 /* ---------- Galería /estados (D162) ---------- */
 
 export const PANTALLAS_ESTADO = [
@@ -132,6 +137,8 @@ export const PANTALLAS_ESTADO = [
   { id: "sin-conexion", label: "Sin conexión" },
   { id: "sin-conexion-hora", label: "Sin conexión · con hora" },
   { id: "banner-sin-conexion", label: "Banner sin conexión" },
+  { id: "carga-estudiante", label: "Carga · estudiante" },
+  { id: "carga-profesor", label: "Carga · profesor" },
 ] as const;
 
 export type PantallaEstado = (typeof PANTALLAS_ESTADO)[number]["id"];

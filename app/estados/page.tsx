@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
+import { type ReactNode, Suspense } from "react";
+import { CargaInicio, CargaPanel } from "@/components/estados/cargas";
 import {
   Pantalla500,
   PantallaNotFound,
@@ -13,6 +14,7 @@ import {
   type PantallaEstado,
   pantallaDe,
 } from "@/lib/estados";
+import { mainClass } from "@/lib/layout";
 import { cn } from "@/lib/utils";
 import { GaleriaBanner } from "./galeria-banner";
 
@@ -47,7 +49,35 @@ function Pantalla({ id }: { id: PantallaEstado }) {
     }
     case "banner-sin-conexion":
       return <GaleriaBanner />;
+    case "carga-estudiante":
+      return (
+        <GaleriaCarga titulo="Carga · estudiante (Inicio)">
+          <CargaInicio />
+        </GaleriaCarga>
+      );
+    case "carga-profesor":
+      return (
+        <GaleriaCarga titulo="Carga · profesor (Panel)">
+          <CargaPanel />
+        </GaleriaCarga>
+      );
   }
+}
+
+/** Carga fuera del shell: título visible (la página real lo da el `h1` de la página al terminar). */
+function GaleriaCarga({
+  titulo,
+  children,
+}: {
+  titulo: string;
+  children: ReactNode;
+}) {
+  return (
+    <main id="contenido" tabIndex={-1} className={mainClass("estudiante")}>
+      <h1 className="text-h4 text-text-2">{titulo}</h1>
+      {children}
+    </main>
+  );
 }
 
 async function Galeria({ searchParams }: PageProps<"/estados">) {
