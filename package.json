@@ -11,28 +11,36 @@
     "shots": "node scripts/pr-screenshots.ts .pr-shots.json",
     "qa:segmentado": "node scripts/qa/segmentado.mjs",
     "check:paginas": "node scripts/qa/paginas.mjs",
-    "test:related": "bun scripts/test-related.ts",
+    "test:related": "bun scripts/test-related.ts --dir=tests/unit",
     "context:backup": "bash scripts/context-backup.sh",
     "typecheck": "next typegen && tsc --noEmit",
     "context:restore": "bash scripts/context-backup.sh --restore",
     "shots:publish": "bash scripts/publish-pr-shots.sh .pr-shots",
     "test": "bun test ./tests/unit --dots --pass-with-no-tests",
-    "qa:local": "node scripts/qa-local.ts"
+    "qa:local": "node scripts/qa-local.ts",
+    "emulators": "firebase emulators:start --project demo-krea",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-krea \"bun test ./tests/rules\"",
+    "seed:emulator": "bun scripts/seed-emulator.ts"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "firebase": "^13.2.0",
+    "firebase-admin": "^14.5.0",
     "lucide-react": "^1.64.0",
     "next": "16.4.3",
     "radix-ui": "^1.8.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "server-only": "^0.0.1",
     "sonner": "^2.0.8",
-    "tailwind-merge": "^3.7.0"
+    "tailwind-merge": "^3.7.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
     "@biomejs/biome": "2.4.2",
+    "@firebase/rules-unit-testing": "^6.0.0",
     "@playwright/test": "^1.64.1",
     "@tailwindcss/turbopack": "^4",
     "@types/bun": "^1.4.4",
@@ -40,6 +48,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
+    "firebase-tools": "^15.34.2",
     "tailwindcss": "^4",
     "typescript": "^5"
   },

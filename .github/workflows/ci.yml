@@ -45,6 +45,21 @@ jobs:
       - name: Build
         run: bun run build
 
+  # Reglas de Firestore contra el emulador (D174): necesita Java y firebase-tools (devDependency).
+  rules:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Install
+        run: bun install --frozen-lockfile
+      - name: Firestore rules tests
+        run: bun run test:rules
+
   # One job per nested subproject with its own package.json (`bot/`, `functions/`): CI only
   # runs the root, and a subproject's red typecheck went unseen on main (inversiones-js).
   # bot:
