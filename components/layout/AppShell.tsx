@@ -1,13 +1,19 @@
 import type { ReactNode } from "react";
-import { type Ancho, containerClass, type Rol } from "@/lib/layout";
+import { RouteMain } from "@/components/layout/route-nav";
+import { type Ancho, mainClass, type Rol } from "@/lib/layout";
 
 // Esqueleto de la app (HANDOFF §2.7 y §4): barra lateral ≥ lg; topbar y barra inferior < lg.
-// Sin contenido de navegación todavía (ítems, íconos y tarjeta de usuario llegan con las fases
-// 03–04): cada slot vacío no pinta su landmark. El `<main id="contenido">` es el destino del
-// skip link del layout raíz. No hay <footer>: el diseño no tiene pie.
+// Cada slot vacío no pinta su landmark. El `<main id="contenido">` es el destino del skip link
+// del layout raíz. No hay <footer>: el diseño no tiene pie.
+// En un layout de grupo (fase 05) el shell no sabe qué página monta: `anchoPorRuta` elige el
+// ancho por `pathname` en el cliente (`RouteMain`, D129) en lugar de `width`; y si la ruta no
+// lleva barra inferior, `RouteBottomNav` deja `[data-sin-barra-inferior]` y el `<nav>` se esconde
+// (D131).
 type AppShellProps = {
   role: Rol;
   width?: Ancho;
+  /** Ancho según la ruta (layouts de grupo); ignora `width`. */
+  anchoPorRuta?: boolean;
   sidebar?: ReactNode;
   topbar?: ReactNode;
   bottomNav?: ReactNode;
@@ -17,6 +23,7 @@ type AppShellProps = {
 export function AppShell({
   role,
   width = "default",
+  anchoPorRuta = false,
   sidebar,
   topbar,
   bottomNav,
@@ -40,18 +47,18 @@ export function AppShell({
             {topbar}
           </header>
         ) : null}
-        <main
-          id="contenido"
-          tabIndex={-1}
-          className={`${containerClass(role, width)} page-pad page-stack flex-1`}
-        >
-          {children}
-        </main>
+        {anchoPorRuta ? (
+          <RouteMain rol={role}>{children}</RouteMain>
+        ) : (
+          <main id="contenido" tabIndex={-1} className={mainClass(role, width)}>
+            {children}
+          </main>
+        )}
         {/* En flujo y sticky: reserva sola los 72 px + zona segura al final del contenido */}
         {bottomNav ? (
           <nav
             aria-label="Principal"
-            className="h-bnav shadow-bnav sticky bottom-0 z-topbar grid grid-cols-5 border-t border-divider bg-surface px-1 lg:hidden"
+            className="h-bnav shadow-bnav sticky bottom-0 z-topbar grid grid-cols-5 border-t border-divider bg-surface px-1 has-data-sin-barra-inferior:hidden lg:hidden"
           >
             {bottomNav}
           </nav>

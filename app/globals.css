@@ -1305,6 +1305,23 @@ body {
   bottom: calc(var(--h-bnav) + env(safe-area-inset-bottom, 0px));
 }
 
+/*
+ * Toast sobre las barras pegadas abajo (< lg; D035, D131). Lo suma `--toast-bottom` de
+ * components/ui/sonner.tsx. Sin barra inferior (constructor: `RouteBottomNav` deja
+ * `[data-sin-barra-inferior]`) no cuenta sus 72; con barra de acción, su alto medido
+ * (`--h-action-bar`, lo publica la `ActionBar` al montarse) o, hasta medir, el de Evaluar (72).
+ */
+:root {
+  --toast-bnav: var(--h-bnav);
+  --toast-action: 0px;
+}
+html:has([data-sin-barra-inferior]) {
+  --toast-bnav: 0px;
+}
+html:has([data-slot="action-bar"]) {
+  --toast-action: var(--h-action-bar, var(--h-review-action));
+}
+
 /* ---------- Sección Tareas del profesor (HANDOFF §3; lienzo Constructor.dc.html; D116) ---------- */
 /*
  * < lg el medidor del constructor va sticky a 64 y la barra de acción sobre la barra inferior,

@@ -18,21 +18,24 @@ import { navItems } from "@/lib/nav";
 
 /**
  * Menú del profesor en < lg (HANDOFF §2.7 y §2.13): botón "Menú" + hoja inferior con las
- * secciones que no caben en la barra (Tareas, Equipos, Premios), divisor y "Cerrar sesión" en
- * --error. Patrón dialog de Radix: foco dentro, Esc cierra y el foco vuelve al botón Menú.
- * Cada enlace envuelve un `SheetClose` para que la hoja se cierre al navegar.
+ * secciones que no caben en la barra (Tareas, Equipos, Premios) y Perfil (D132), divisor y
+ * "Cerrar sesión" en --error. Patrón dialog de Radix: foco dentro, Esc cierra y el foco vuelve
+ * al botón Menú. Cada enlace envuelve un `SheetClose` para que la hoja se cierre al navegar.
+ * `compacto`: solo el ícono (44 × 44, "Menú" queda como nombre accesible), como el botón de los
+ * lienzos; lo usa la topbar con el chip «En vivo», que a 320 no cabe con el texto (D128).
  * `onSignOut` lo cablea la fase 07 (sesión real).
  */
 export function MenuSheet({
   pathname,
   onSignOut,
-}: NavRoute & { onSignOut?: () => void }) {
+  compacto = false,
+}: NavRoute & { onSignOut?: () => void; compacto?: boolean }) {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="ghost">
+        <Button variant="ghost" icon={compacto}>
           <Menu aria-hidden="true" />
-          <span className="ml-2">Menú</span>
+          <span className={compacto ? "sr-only" : "ml-2"}>Menú</span>
         </Button>
       </SheetTrigger>
       <SheetContent>

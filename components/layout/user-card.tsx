@@ -2,18 +2,19 @@ import Link from "next/link";
 import { UserAvatar } from "@/components/krea/user-avatar";
 import type { NavUsuario } from "@/components/layout/nav-types";
 import type { Rol } from "@/lib/layout";
-import { PERFIL_HREF, rolLabel } from "@/lib/nav";
+import { perfilHref, rolLabel } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 
 /**
  * Tarjeta de usuario del pie de la barra lateral (HANDOFF §2.7, §8: idéntica en ambos roles).
  * Avatar 40, nombre 13/700 y rol 13 `--text-2`; padding 12, radio 16, fondo `--surface-2`.
- * Es un enlace a Perfil; nombre y rol son su nombre accesible.
+ * Es un enlace al Perfil del rol (`/perfil` o `/profe/perfil`, D132); nombre y rol son su
+ * nombre accesible.
  */
 export function UserCard({
   usuario,
   rol,
-  href = PERFIL_HREF,
+  href,
   className,
 }: {
   usuario: NavUsuario;
@@ -23,7 +24,7 @@ export function UserCard({
 }) {
   return (
     <Link
-      href={href}
+      href={href ?? perfilHref(rol)}
       data-slot="user-card"
       className={cn(
         "flex items-center gap-3 rounded-md bg-surface-2 p-3 no-underline",

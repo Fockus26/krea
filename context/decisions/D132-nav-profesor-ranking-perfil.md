@@ -1,0 +1,5 @@
+# D132 · Navigation · Profesor: Ranking en `/profe/ranking`; Perfil `/profe/perfil` en la tarjeta de usuario y como último ítem de la hoja Menú · Implemented
+
+**Decision:** en `lib/nav.ts` el ítem Ranking del profesor pasa a `href: "/profe/ranking"` y se añade `perfil` (`/profe/perfil`, ícono perfil, `on: ["menu"]`) tras Premios: la hoja Menú queda Tareas · Equipos · Premios · Perfil · divisor · Cerrar sesión. `PERFIL_PROFE_HREF` y `perfilHref(rol)` acompañan a `PERFIL_HREF`; `UserCard` enlaza por defecto a `perfilHref(rol)` (también en `/componentes`). El avatar de la topbar sigue solo en el estudiante (`/perfil`).
+**Why:** decisión de César para la fase 05 (ranking con 5A/5C dentro del grupo del profe; perfil con Apariencia y Seguridad). En < lg la tarjeta de usuario no existe (está en la lateral): sin el ítem del Menú el profe no llegaría a su perfil en el móvil.
+**Discarded alternative:** Perfil en la barra inferior del profe — ya tiene 5 columnas (§2.7). Un avatar en la topbar del profe — el lienzo pone ahí el Menú y no caben los dos a 320 en Evaluar.
