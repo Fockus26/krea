@@ -10,6 +10,7 @@
     "format": "biome format --write",
     "shots": "node scripts/pr-screenshots.ts .pr-shots.json",
     "qa:segmentado": "node scripts/qa/segmentado.mjs",
+    "check:paginas": "node scripts/qa/paginas.mjs",
     "test:related": "bun scripts/test-related.ts",
     "context:backup": "bash scripts/context-backup.sh",
     "typecheck": "next typegen && tsc --noEmit",
