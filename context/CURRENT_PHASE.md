@@ -5,8 +5,8 @@
 
 ## Now
 
-**Phase:** 06 — Estados · cerrada al mergear W4 (2026-11-03) · siguiente: fase 07 (backend) · fase 05 cerrada (46 páginas, D126–D159) · **Track:** Product
-Plan: `context/plans/phase-06-estados.md` · main @ fdf966a
+**Phase:** 06 — Estados · cerrada (2026-11-03, D173) · siguiente: fase 07 (backend) · fase 05 cerrada (46 páginas, D126–D159) · **Track:** Product
+Plan: `context/plans/phase-06-estados.md` · main @ 03c6178
 **Sin QA hasta el final** (César, 2026-10-29) · **sin servidor, solo build** (César, 2026-11-03).
 
 | Unit | Branch | Status |
@@ -15,7 +15,7 @@ Plan: `context/plans/phase-06-estados.md` · main @ fdf966a
 | W1 pantallas de estado (404/500/sin conexión, galería) | #44 | merged (d2e2213) |
 | W2 banner sin conexión | #45 | merged (5f443ba) |
 | W3 skeletons (`loading.tsx` por ruta) | #46 | merged (fdf966a) |
-| W4 vacíos, errores en pantalla y cierre (D170–D173) | claude/busy-pascal-q9x6zf | PR |
+| W4 vacíos, errores en pantalla y cierre (D170–D173) | #47 | merged (03c6178) |
 
 ## Blocked (actions for César or external)
 
