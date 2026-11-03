@@ -15,7 +15,7 @@ export default function PerfilProfePage() {
     <>
       <PageHeader title="Perfil" />
       <AppearanceSettings />
-      <SecuritySettings salirHref="/ingresar" />
+      <SecuritySettings salirHref="/salir" />
     </>
   );
 }

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { AuthLayout } from "@/components/sections/auth/auth-layout";
-import { LoginForm } from "@/components/sections/auth/login-form";
+import { Ingresar } from "@/components/sections/auth/ingresar";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 
 // PROVISIONAL (CONTENT_CHECKLIST fila 98): título y descripción de la única página indexable.
@@ -29,7 +29,7 @@ const jsonLd = JSON.stringify({
 }).replace(/</g, "\\u003c");
 
 /**
- * Ingresar (HANDOFF §3). Sin autenticación hasta la fase 07: "Entrar" valida y no navega. Los
+ * Ingresar (HANDOFF §3). Entra con Firebase Auth y la cookie de sesión (D180). Los
  * errores de servidor (credenciales, bloqueado) no son rutas: se ven en /secciones/ingresar/*.
  */
 export default function IngresarPage() {
@@ -41,7 +41,7 @@ export default function IngresarPage() {
         dangerouslySetInnerHTML={{ __html: jsonLd }}
       />
       <AuthLayout>
-        <LoginForm recuperarHref="/recuperar" />
+        <Ingresar recuperarHref="/recuperar" />
       </AuthLayout>
     </>
   );

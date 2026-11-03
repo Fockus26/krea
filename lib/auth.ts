@@ -7,13 +7,40 @@ export const PASSWORD_MIN = 8;
 export const REENVIO_SEGUNDOS = 60;
 
 /** Errores del servidor al entrar (no dicen cuál de los dos campos falló, §3). */
-export type ErrorIngreso = "credenciales" | "bloqueado";
+export type ErrorIngreso =
+  | "credenciales"
+  | "bloqueado"
+  | "red"
+  | "no-disponible";
 
 export const ERROR_INGRESO: Record<ErrorIngreso, string> = {
   credenciales:
     "La cédula o la contraseña no coinciden. Revisa y vuelve a intentar.",
   bloqueado: "Demasiados intentos. Espera 5 minutos.",
+  // PLACEHOLDER de copy (CONTENT_CHECKLIST fila 123): no están en el lienzo.
+  red: "No pudimos conectarnos. Revisa tu internet y vuelve a intentar.",
+  "no-disponible":
+    "El acceso todavía no está disponible. Avísale a tu profe y vuelve a intentar más tarde.",
 };
+
+/**
+ * Código de error de Firebase Auth → error que ve el usuario (fase 07, D180). Nunca dice cuál de
+ * los dos campos falló. Lo que no se reconoce cuenta como credenciales: no revela nada más.
+ */
+export function errorIngresoDeCodigo(codigo: string | undefined): ErrorIngreso {
+  switch (codigo) {
+    case "auth/too-many-requests":
+      return "bloqueado";
+    case "auth/network-request-failed":
+      return "red";
+    case "auth/configuration-not-found":
+    case "auth/invalid-api-key":
+    case "auth/operation-not-allowed":
+      return "no-disponible";
+    default:
+      return "credenciales";
+  }
+}
 
 /** Contraseña vacía al entrar. PLACEHOLDER de copy (CONTENT_CHECKLIST fila 56). */
 export const PASSWORD_VACIA = "Escribe tu contraseña.";
