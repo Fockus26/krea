@@ -4,6 +4,7 @@ import { Calendar, Gift, Plus, Send, User, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { SumMeter } from "@/components/krea/sum-meter";
+import { TopBarAccion } from "@/components/layout/top-bar-accion";
 import { ActionBar } from "@/components/sections/shared/action-bar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -60,12 +61,18 @@ export function TaskBuilder({
   inicial,
   hoy,
   listaHref,
+  guardarEnTopbar = false,
 }: {
   inicial: DatosBorrador;
   /** Día civil ISO: una fecha de entrega anterior no se puede publicar. */
   hoy: string;
   /** A dónde vuelve al publicar. */
   listaHref: string;
+  /**
+   * Página real (D152): "Guardar borrador" < 1024 va en la topbar del shell (`TopBarAccion`, D130)
+   * en vez de en el flujo. En `/secciones` (sin topbar) se queda en el flujo.
+   */
+  guardarEnTopbar?: boolean;
 }) {
   const router = useRouter();
   const raiz = React.useRef<HTMLDivElement>(null);
@@ -327,11 +334,24 @@ export function TaskBuilder({
             </div>
           </section>
 
-          {/* < 1024: "Guardar borrador" (la topbar aún no admite acciones, fase 05) */}
+          {/* < 1024: "Guardar borrador" en la topbar (página real) o en el flujo (vista previa) */}
           <div className="flex flex-col gap-2 lg:hidden">
-            <Button type="button" variant="secondary" block onClick={guardar}>
-              Guardar borrador
-            </Button>
+            {guardarEnTopbar ? (
+              <TopBarAccion>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={guardar}
+                >
+                  Guardar borrador
+                </Button>
+              </TopBarAccion>
+            ) : (
+              <Button type="button" variant="secondary" block onClick={guardar}>
+                Guardar borrador
+              </Button>
+            )}
             {notaPublicar}
           </div>
         </div>

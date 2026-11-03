@@ -17,12 +17,14 @@ const TIPO_TAREA = {
 
 export function titulosTopbar(rol: Rol): TitulosTopbar {
   if (rol === "profesor") {
-    return Object.fromEntries(
-      COLA.map((e, i) => [
+    return Object.fromEntries([
+      ...COLA.map((e, i) => [
         `/profe/evaluar/${e.id}`,
         tituloEntrega(i, COLA.length),
       ]),
-    );
+      // Constructor de una tarea existente: su título. El borrador queda con «Nueva tarea» (lienzo, D152)
+      ...TAREAS.map((t) => [`/profe/tareas/${t.id}`, t.titulo]),
+    ]);
   }
   return Object.fromEntries(
     TAREAS.flatMap((t) => [

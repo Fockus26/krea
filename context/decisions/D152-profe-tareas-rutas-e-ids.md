@@ -1,0 +1,5 @@
+# D152 · Pages · `/profe/tareas/[id]` genera una página por tarea de `TAREAS` + el borrador; sin preguntas en el seed, aviso vacío · Implemented
+
+**Decision:** `generateStaticParams` = ids de `TAREAS` + `BORRADOR_ID` (`plan-redes`); `tareasProfeVista()` ya parte de `TAREAS`, así que cada enlace de la lista tiene página. El borrador abre el constructor con `BORRADOR_DEMO`; una tarea de `TAREAS` abre el constructor con lo que trae (título, tipo, fecha, premio, preguntas); si no trae preguntas (p. ej. «Logo y paleta de la marca»), `EmptyState` «Todavía no hay preguntas de esta tarea» en vez de inventarlas (D136). `notFound()` si el id no existe. La topbar móvil muestra el título de la tarea (`titulosTopbar`, `lib/demo/topbar.ts`); el borrador conserva «Nueva tarea» del lienzo.
+**Why:** la lista no puede tener enlaces rotos (`check:paginas`) y el seed solo trae preguntas de algunas tareas. Fase 07 lo reemplaza por Firestore.
+**Discarded alternative:** `generateStaticParams` solo con el borrador — enlaces rotos. Rellenar preguntas de ejemplo para las tareas sin ellas — contenido inventado.
