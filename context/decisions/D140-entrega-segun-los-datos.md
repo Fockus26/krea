@@ -1,0 +1,5 @@
+# D140 · Pages · `/tareas/[tarea]` elige el modo de entrega por los datos de la tarea, y tras entregar vuelve a `/tareas` · Implemented
+
+**Decision:** `modoDe(tarea)` en `lib/demo/entrega.ts`: evaluada → entregada; abierta grupal → capitana (la persona de ejemplo, D069); abierta individual → individual. `entregaDe(modo, tareaId?)` acepta la tarea real (retrocompatible: sin id sigue siendo la del modo para `/secciones/tareas`). En las evaluadas no hay respuestas ni fecha de entrega en el seed: se usa la fecha de evaluación y se omite «Respuestas enviadas» (fila 103). `TaskAnswerForm` lleva a `/tareas` al entregar (la fase 07 enviará la entrega y volverá a esta misma ruta ya entregada); «Volver al inicio» → `/`. Una página por tarea de `TAREAS` y `notFound()` si el id no existe.
+**Why:** el estado de una tarea es un dato, no una ruta; el «no capitán» exige sesión (fase 07) y sigue visible en el catálogo `/secciones/tareas`.
+**Discarded alternative:** `?modo=` en la URL — deja elegir el estado a quien mira, contra D012. Redirigir a `/tareas/[tarea]` tras entregar — navega a la misma página sin cambios hasta que exista el backend.
