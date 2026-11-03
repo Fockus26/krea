@@ -1,6 +1,7 @@
 "use client";
 
 import { LogOut, Menu } from "lucide-react";
+import Link from "next/link";
 import { NavItemLink } from "@/components/layout/nav-item-link";
 import type { NavRoute } from "@/components/layout/nav-types";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,9 @@ import {
 } from "@/components/ui/sheet";
 import { navItems } from "@/lib/nav";
 
+const SALIR_CLASE =
+  "flex h-12 w-full cursor-pointer items-center gap-3 rounded-nav px-3 font-body text-base leading-6 font-semibold text-error transition-colors duration-fast ease-krea hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
+
 /**
  * Menú del profesor en < lg (HANDOFF §2.7 y §2.13): botón "Menú" + hoja inferior con las
  * secciones que no caben en la barra (Tareas, Equipos, Premios) y Perfil (D132), divisor y
@@ -23,13 +27,19 @@ import { navItems } from "@/lib/nav";
  * al botón Menú. Cada enlace envuelve un `SheetClose` para que la hoja se cierre al navegar.
  * `compacto`: solo el ícono (44 × 44, "Menú" queda como nombre accesible), como el botón de los
  * lienzos; lo usa la topbar con el chip «En vivo», que a 320 no cabe con el texto (D128).
- * `onSignOut` lo cablea la fase 07 (sesión real).
+ * `onSignOut` lo cablea la fase 07 (sesión real); mientras, `salirHref` lleva a /ingresar (D135).
  */
 export function MenuSheet({
   pathname,
   onSignOut,
+  salirHref,
   compacto = false,
-}: NavRoute & { onSignOut?: () => void; compacto?: boolean }) {
+}: NavRoute & {
+  onSignOut?: () => void;
+  /** Destino de "Cerrar sesión" mientras no hay sesión real. */
+  salirHref?: string;
+  compacto?: boolean;
+}) {
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -56,14 +66,17 @@ export function MenuSheet({
         </ul>
         <Separator className="my-2" />
         <SheetClose asChild>
-          <button
-            type="button"
-            onClick={onSignOut}
-            className="flex h-12 w-full cursor-pointer items-center gap-3 rounded-nav px-3 font-body text-base leading-6 font-semibold text-error transition-colors duration-fast ease-krea hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-          >
-            <LogOut aria-hidden="true" className="size-5 shrink-0" />
-            Cerrar sesión
-          </button>
+          {salirHref ? (
+            <Link href={salirHref} onClick={onSignOut} className={SALIR_CLASE}>
+              <LogOut aria-hidden="true" className="size-5 shrink-0" />
+              Cerrar sesión
+            </Link>
+          ) : (
+            <button type="button" onClick={onSignOut} className={SALIR_CLASE}>
+              <LogOut aria-hidden="true" className="size-5 shrink-0" />
+              Cerrar sesión
+            </button>
+          )}
         </SheetClose>
       </SheetContent>
     </Sheet>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { CedulaInput } from "@/components/krea/cedula-input";
 import { Button } from "@/components/ui/button";
@@ -16,15 +17,19 @@ import { VolverLink } from "./volver-link";
  */
 export function RecoverForm({
   volverHref,
+  enviadoHref,
   pending = false,
   onSubmit,
 }: {
   volverHref: string;
+  /** Pantalla a la que pasa tras validar (D134); sin ella solo llama a `onSubmit`. */
+  enviadoHref?: string;
   pending?: boolean;
   onSubmit?: (cedula: string) => void;
 }) {
   const [cedula, setCedula] = useState("");
   const [enviado, setEnviado] = useState(false);
+  const router = useRouter();
   const error = enviado ? validateCedula(cedula) : null;
 
   function enviar(e: FormEvent<HTMLFormElement>) {
@@ -35,6 +40,7 @@ export function RecoverForm({
       return;
     }
     onSubmit?.(cedula);
+    if (enviadoHref) router.push(enviadoHref);
   }
 
   return (

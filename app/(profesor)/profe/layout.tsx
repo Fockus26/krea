@@ -42,6 +42,7 @@ export default function ProfesorLayout({ children }: { children: ReactNode }) {
             rol={ROL}
             usuario={USUARIO_PROFESOR}
             titulos={titulosTopbar(ROL)}
+            salirHref="/ingresar"
           />
         }
         bottomNav={<RouteBottomNav rol={ROL} />}
