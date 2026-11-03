@@ -15,9 +15,6 @@ import { join, relative, sep } from "node:path";
  * suya: desde ahí cada enlace debe ir a una página generada (p. ej. un id que no existe).
  */
 const RUTAS_PLANIFICADAS = [
-  "/equipo",
-  "/ranking",
-  "/perfil",
   "/profe/evaluar",
   "/profe/evaluar/[entrega]",
   "/profe/tareas",
