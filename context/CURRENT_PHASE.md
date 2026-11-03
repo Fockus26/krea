@@ -5,17 +5,16 @@
 
 ## Now
 
-**Phase:** 05 — Páginas · **Ola:** 3 de 3 cerrada (2026-11-03) · fase 05 completa (46 páginas, D126–D159) · siguiente: fase 06 · **Track:** Product
-Plan: `context/plans/phase-05-paginas.md` (notas «Para la ola 2 y la 3») · main @ 3b61ea3
+**Phase:** 06 — Estados · **Ola:** 1 de 2 (2026-11-03) · fase 05 cerrada (46 páginas, D126–D159) · **Track:** Product
+Plan: `context/plans/phase-06-estados.md` · main @ d4ea99f
 **Sin QA hasta el final** (César, 2026-10-29) · **sin servidor, solo build** (César, 2026-11-03).
 
 | Unit | Branch | Status |
 |---|---|---|
-| W1 fix segmentados (tema/acento colapsados) | #35 | merged (b793c77) |
-| W2 shell por rol + `/` y `/profe` | #36 | merged (8a57c4b) |
-| W3 ingresar y recuperar | #37 | merged (11ba253) |
-| Ola 2 notas · tareas · equipo/ranking/perfil | #38 #39 #40 | merged (3b61ea3) |
-| Ola 3 evaluar · tareas profe · gestión profe | #41 #42 #43 | merged |
+| Fase 05 completa (olas 1–3) | #35–#43 | merged (d4ea99f) |
+| W1 pantallas de estado (404/500/sin conexión, galería) | claude/busy-pascal-q9x6zf | PR |
+| W2 banner sin conexión | — | pendiente |
+| Ola 2 skeletons · vacíos y errores | — | pendiente |
 
 ## Blocked (actions for César or external)
 
@@ -36,7 +35,7 @@ Plan: `context/plans/phase-05-paginas.md` (notas «Para la ola 2 y la 3») · ma
 
 ## Next
 
-- Fase 06 (estados). Fase 09: bloquear o borrar `/secciones`, `/componentes`, `/tokens`.
+- Fase 06: W2, luego ola 2. Fase 09: bloquear o borrar `/secciones`, `/componentes`, `/tokens` (y comprobar que `/estados` da 404 en producción).
 - Fase 07: esquema Firestore desde `data/seed/` + reglas de seguridad por rol.
 
 ## Phases
@@ -48,7 +47,7 @@ Plan: `context/plans/phase-05-paginas.md` (notas «Para la ola 2 y la 3») · ma
 | 03 | Components | closed |
 | 04 | Sections | closed |
 | 05 | Pages | closed |
-| 06 | States | next |
+| 06 | States | in progress |
 | 07 | Backend | pending |
 | 08 | Responsive and polish | pending |
 | 09 | Final QA | pending |

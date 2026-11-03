@@ -21,3 +21,6 @@
 | Ranking profesor | /profe/ranking, /profe/ranking/equipos, /profe/ranking/5c, /profe/ranking/5c/equipos | Ranking | Done (F05 ola 3) | D157; en vivo en la topbar móvil |
 | Perfil profesor | /profe/perfil | PageHeader, AppearanceSettings, SecuritySettings | Done (F05 ola 3) | D158; salir → /ingresar |
 | 404 / 500 / offline | — | StatusScreen | Pending | |
+| 404 (con sesión estudiante/profesor, sin sesión) | cualquier ruta inexistente · `notFound()` | StatusScreen | Done (F06 W1) | `app/not-found.tsx`; sesión por la ruta (D160) |
+| 500 / sin conexión | error de cualquier página · del layout raíz | StatusScreen | Done (F06 W1) | `app/error.tsx`, `app/global-error.tsx` (D161) |
+| Galería de estados | /estados?screen=… | las de arriba | Done (F06 W1) | dev + preview de Vercel; 404 en producción (D162) |
