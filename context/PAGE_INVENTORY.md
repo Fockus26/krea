@@ -14,7 +14,7 @@
 | Panel profesor | /profe | PanelConHora → PanelView (PanelHeader, PanelMetrics, PendingReviews, RecentAdjustments) | Done (F05 W2) | `app/(profesor)/profe/page.tsx`; saludo en cliente (D133); shell en `app/(profesor)/profe/layout.tsx` |
 | Alumnos | /profe/alumnos | StudentsTable, StudentDrawer | Pending | |
 | Equipos | /profe/equipos | TeamBoard | Pending | |
-| Tareas (profesor) | /profe/tareas, /profe/tareas/[id] | TaskTable, TaskBuilder | Pending | suma = 20 |
+| Tareas (profesor) | /profe/tareas, /profe/tareas/nueva, /profe/tareas/[id] | TasksHeader, TeacherTaskList, TaskBuilder | Done (F05 ola 3) | D152–D154; una página por tarea de `TAREAS` + borrador; constructor sin barra inferior, «Guardar borrador» en la topbar; suma = 20 |
 | Evaluar entrega | /profe/evaluar, /profe/evaluar/[entrega] | ReviewHeader, ReviewForm | Done (F05 ola 3) | `/profe/evaluar` redirige a la 1.ª de `COLA` (vacío si no hay); una página por entrega (D148); Panel enlaza a los ids de `COLA` |
 | Ajustes de puntos | /profe/puntos | AdjustmentForm, AdjustmentLog | Pending | |
 | Premios | /profe/premios | PrizeList | Pending | |
