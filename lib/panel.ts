@@ -42,6 +42,12 @@ export function saludoTexto(
   return `${saludoPorHora(hora)}, ${nombre}`;
 }
 
+/**
+ * Hora del saludo en el HTML del servidor (D133): el prerender no lee el reloj (D098), así que
+ * sale el de la mañana del lienzo («Buenos días, profe») y el cliente pone el de su hora al hidratar.
+ */
+export const HORA_SALUDO_SERVIDOR = 9;
+
 /** Filtra por sección; "ambas" devuelve todo (HANDOFF §9 #7: el panel agrega las dos). */
 export function filtrarPorSeccion<T extends { seccion: SeccionPanel }>(
   items: readonly T[],

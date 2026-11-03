@@ -32,6 +32,11 @@ export type NavItem = {
   on: readonly NavSurface[];
 };
 
+/** Perfil del estudiante (avatar de la topbar y tarjeta de usuario). */
+export const PERFIL_HREF = "/perfil";
+/** Perfil del profesor: Apariencia y Seguridad (decisión de César, fase 05). */
+export const PERFIL_PROFE_HREF = "/profe/perfil";
+
 const ESTUDIANTE: readonly NavItem[] = [
   {
     id: "inicio",
@@ -133,9 +138,10 @@ const PROFESOR: readonly NavItem[] = [
     on: ["lateral", "inferior"],
   },
   {
+    // Ranking del profe con 5A/5C dentro de su grupo (decisión de César, fase 05)
     id: "ranking",
     label: "Ranking",
-    href: "/ranking",
+    href: "/profe/ranking",
     icon: "ranking",
     match: "prefix",
     on: ["lateral", "inferior"],
@@ -148,6 +154,15 @@ const PROFESOR: readonly NavItem[] = [
     match: "prefix",
     on: ["lateral", "menu"],
   },
+  {
+    // En la lateral, Perfil es la tarjeta de usuario; en < lg, la hoja Menú (D132)
+    id: "perfil",
+    label: "Perfil",
+    href: PERFIL_PROFE_HREF,
+    icon: "perfil",
+    match: "prefix",
+    on: ["menu"],
+  },
 ];
 
 /** Ítems de un rol para una superficie, en el orden del handoff. */
@@ -156,8 +171,10 @@ export function navItems(rol: Rol, surface: NavSurface): readonly NavItem[] {
   return items.filter((item) => item.on.includes(surface));
 }
 
-/** Ruta de Perfil (tarjeta de usuario y avatar de la topbar). Solo el estudiante la tiene. */
-export const PERFIL_HREF = "/perfil";
+/** Perfil por rol (tarjeta de usuario, avatar de la topbar y hoja Menú del profe; D132). */
+export function perfilHref(rol: Rol): string {
+  return rol === "profesor" ? PERFIL_PROFE_HREF : PERFIL_HREF;
+}
 
 /** Etiqueta de rol de la tarjeta de usuario. */
 export function rolLabel(rol: Rol): string {

@@ -1,5 +1,13 @@
 import { describe, expect, test } from "bun:test";
-import { counterLabel, isActive, navItems, rolLabel } from "@/lib/nav";
+import {
+  counterLabel,
+  isActive,
+  navItems,
+  PERFIL_HREF,
+  PERFIL_PROFE_HREF,
+  perfilHref,
+  rolLabel,
+} from "@/lib/nav";
 
 const labels = (
   rol: "estudiante" | "profesor",
@@ -48,22 +56,40 @@ describe("navItems (HANDOFF §2.7)", () => {
     ]);
   });
 
-  test("Menú del profesor: Tareas, Equipos y Premios; el estudiante no tiene Menú", () => {
+  test("Menú del profesor: Tareas, Equipos, Premios y Perfil; el estudiante no tiene Menú", () => {
     expect(labels("profesor", "menu")).toEqual([
       "Tareas",
       "Equipos",
       "Premios",
+      "Perfil",
     ]);
     expect(navItems("estudiante", "menu")).toHaveLength(0);
   });
 
-  test("el profesor alcanza cada ítem del lateral en inferior o Menú", () => {
+  test("el profesor alcanza cada ítem del lateral en inferior o Menú (y Perfil, que en la lateral es la tarjeta)", () => {
     const lateral = navItems("profesor", "lateral").map((i) => i.id);
     const alcanzables = [
       ...navItems("profesor", "inferior"),
       ...navItems("profesor", "menu"),
     ].map((i) => i.id);
-    expect(alcanzables.sort()).toEqual([...lateral].sort());
+    expect(alcanzables.sort()).toEqual([...lateral, "perfil"].sort());
+  });
+
+  test("Ranking del profesor en /profe/ranking; el del estudiante en /ranking", () => {
+    const ranking = (rol: "estudiante" | "profesor") =>
+      navItems(rol, "lateral").find((i) => i.id === "ranking")?.href;
+    expect(ranking("profesor")).toBe("/profe/ranking");
+    expect(ranking("estudiante")).toBe("/ranking");
+  });
+
+  test("todo ítem del profesor cuelga de /profe", () => {
+    for (const s of ["lateral", "inferior", "menu"] as const) {
+      for (const item of navItems("profesor", s)) {
+        expect(isActive({ href: "/profe", match: "prefix" }, item.href)).toBe(
+          true,
+        );
+      }
+    }
   });
 
   test("href únicos dentro de cada rol", () => {
@@ -117,6 +143,15 @@ describe("counterLabel", () => {
     expect(counterLabel(0)).toBeNull();
     expect(counterLabel(null)).toBeNull();
     expect(counterLabel(-2)).toBeNull();
+  });
+});
+
+describe("perfilHref", () => {
+  test("Perfil por rol (tarjeta de usuario, avatar y Menú)", () => {
+    expect(perfilHref("estudiante")).toBe(PERFIL_HREF);
+    expect(perfilHref("estudiante")).toBe("/perfil");
+    expect(perfilHref("profesor")).toBe(PERFIL_PROFE_HREF);
+    expect(perfilHref("profesor")).toBe("/profe/perfil");
   });
 });
 
