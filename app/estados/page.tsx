@@ -14,6 +14,7 @@ import {
   pantallaDe,
 } from "@/lib/estados";
 import { cn } from "@/lib/utils";
+import { GaleriaBanner } from "./galeria-banner";
 
 export const metadata: Metadata = {
   title: "Pantallas de estado",
@@ -44,6 +45,8 @@ function Pantalla({ id }: { id: PantallaEstado }) {
         <PantallaSinConexion sesion="estudiante" ultimaActualizacion={hora} />
       );
     }
+    case "banner-sin-conexion":
+      return <GaleriaBanner />;
   }
 }
 

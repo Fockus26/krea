@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { OfflineBanner } from "@/components/estados/offline-banner";
 import { AppShell } from "@/components/layout/AppShell";
 import {
   RouteBottomNav,
@@ -49,6 +50,7 @@ export default function ProfesorLayout({ children }: { children: ReactNode }) {
       >
         {children}
       </AppShell>
+      <OfflineBanner rol={ROL} />
       <Toaster />
     </TopBarAccionProvider>
   );
