@@ -37,3 +37,7 @@ export function resolveSiteUrl(env: SiteEnv = process.env): URL {
 }
 
 export const SITE_URL = resolveSiteUrl();
+
+// Anti-parpadeo (D015; app/layout.tsx y app/global-error.tsx): aplica tema y acento guardados antes del primer pintado.
+// "system" (o sin valor) = sin data-theme; el CSS sigue prefers-color-scheme.
+export const THEME_SCRIPT = `(function(){try{var d=document.documentElement,s=localStorage,t=s.getItem("krea-theme"),a=s.getItem("krea-accent");if(t==="light"||t==="dark")d.setAttribute("data-theme",t);if(a==="rojo"||a==="verde"||a==="morado"||a==="azul")d.setAttribute("data-accent",a)}catch(e){}})()`;

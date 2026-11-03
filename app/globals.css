@@ -1451,3 +1451,31 @@ html:has([data-slot="action-bar"]) {
     0 0 0 var(--w-swatch-ring) var(--surface),
     0 0 0 calc(var(--w-swatch-ring) * 2) var(--accent);
 }
+
+/* ---------- Pantallas de estado (HANDOFF §5b; lienzo Estados.dc.html, krea.css:455-461; D161) ---------- */
+:root {
+  --font-mono: ui-monospace, "Cascadia Code", Consolas, monospace;
+  --w-status: 40rem; /* 640: columna del cuerpo */
+}
+@utility max-w-status {
+  max-width: var(--w-status);
+}
+/* Código grande 404/500: Poppins 700 96/1 (80 en móvil), −0,04em, decorativo (aria-hidden) */
+@utility text-status-code {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 5rem; /* 80 */
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  @media (width >= 48rem) {
+    font-size: 6rem; /* 96 */
+  }
+}
+/* Caja del código de soporte: monoespaciada 700 15/20 */
+@utility text-code {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.9375rem;
+  line-height: 1.25rem;
+}

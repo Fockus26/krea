@@ -7,6 +7,7 @@ import {
   SITE_NAME,
   SITE_TITLE,
   SITE_URL,
+  THEME_SCRIPT,
 } from "@/lib/site";
 import "./globals.css";
 
@@ -53,10 +54,6 @@ export const viewport: Viewport = {
   viewportFit: "cover", // la barra inferior usa safe-area-inset-bottom
 };
 
-// Anti-parpadeo (D015): aplica tema y acento guardados antes del primer pintado.
-// "system" (o sin valor) = sin data-theme; el CSS sigue prefers-color-scheme.
-const themeScript = `(function(){try{var d=document.documentElement,s=localStorage,t=s.getItem("krea-theme"),a=s.getItem("krea-accent");if(t==="light"||t==="dark")d.setAttribute("data-theme",t);if(a==="rojo"||a==="verde"||a==="morado"||a==="azul")d.setAttribute("data-accent",a)}catch(e){}})()`;
-
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
@@ -67,7 +64,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <head>
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: constante estática, sin datos del usuario */}
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
       <body className="min-h-full flex flex-col">
         {/* Primer foco del documento (provisional, fila 19 del checklist) */}
