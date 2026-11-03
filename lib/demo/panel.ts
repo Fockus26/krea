@@ -7,6 +7,7 @@ import type { DatosPanel } from "@/components/sections/profe-panel/panel-view";
 import type { FilaEvaluar } from "@/components/sections/profe-panel/pending-reviews";
 import type { FilaAjuste } from "@/components/sections/profe-panel/recent-adjustments";
 import { AJUSTES } from "@/lib/demo/ajustes";
+import { COLA } from "@/lib/demo/evaluar";
 import {
   alumnoPorCedula,
   alumnosDeSeccion,
@@ -41,67 +42,32 @@ type EntregaDemo =
       entregadoEn: string;
     };
 
-const LOGO = "Logo y paleta del emprendimiento";
-const IDENTIDAD = TAREA_IDENTIDAD.titulo;
-
 /**
- * Las 7 entregas del lienzo (4 individuales · 3 grupales). Las dos primeras son las del brief; el lienzo pinta 5.
- * Las 6.ª y 7.ª son de 5C (elegidas del seed) para que el filtro de sección tenga algo que filtrar.
+ * Las entregas del Panel son las de la cola de Evaluar (`COLA`, mismos ids y mismo orden): cada
+ * enlace "Evaluar" del Panel lleva a `/profe/evaluar/[id]`, que existe para todas (D148).
  */
-export const ENTREGAS_PANEL: readonly EntregaDemo[] = [
-  {
-    id: "5a-g2-logo",
-    tipo: "grupal",
-    equipoId: "5a-g2",
-    entregoCedula: "33272397", // Yeilin Duarte (capitana)
-    tarea: LOGO,
-    entregadoEn: "2026-10-25T16:12",
+export const ENTREGAS_PANEL: readonly EntregaDemo[] = COLA.map(
+  (e): EntregaDemo => {
+    const entregadoEn = `${e.fecha}T${e.hora}`;
+    if (e.destino.tipo === "equipo") {
+      return {
+        id: e.id,
+        tipo: "grupal",
+        equipoId: e.destino.id,
+        entregoCedula: e.entregadaPor ?? "",
+        tarea: e.tarea.titulo,
+        entregadoEn,
+      };
+    }
+    return {
+      id: e.id,
+      tipo: "individual",
+      cedula: e.destino.cedula,
+      tarea: e.tarea.titulo,
+      entregadoEn,
+    };
   },
-  {
-    id: "32828381-identidad",
-    tipo: "individual",
-    cedula: "32828381", // Jorge Quintero
-    tarea: IDENTIDAD,
-    entregadoEn: "2026-10-24T09:00",
-  },
-  {
-    id: "5a-g6-logo",
-    tipo: "grupal",
-    equipoId: "5a-g6",
-    entregoCedula: "33282883", // Heymi Sierra
-    tarea: LOGO,
-    entregadoEn: "2026-10-25T11:30",
-  },
-  {
-    id: "33368217-identidad",
-    tipo: "individual",
-    cedula: "33368217", // Camila Flórez
-    tarea: IDENTIDAD,
-    entregadoEn: "2026-10-24T14:20",
-  },
-  {
-    id: "5a-g3-logo",
-    tipo: "grupal",
-    equipoId: "5a-g3",
-    entregoCedula: "34126088", // Zaida Carrero
-    tarea: LOGO,
-    entregadoEn: "2026-10-26T08:45",
-  },
-  {
-    id: "33214862-identidad",
-    tipo: "individual",
-    cedula: "33214862", // Branger Saray (5C)
-    tarea: IDENTIDAD,
-    entregadoEn: "2026-10-26T10:10",
-  },
-  {
-    id: "32408800-identidad",
-    tipo: "individual",
-    cedula: "32408800", // Jeanpier Villegas (5C)
-    tarea: IDENTIDAD,
-    entregadoEn: "2026-10-26T12:05",
-  },
-];
+);
 
 function aFilaEvaluar(e: EntregaDemo): FilaEvaluar {
   const fecha = formatFecha(e.entregadoEn.slice(0, 10));
