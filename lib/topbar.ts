@@ -51,7 +51,9 @@ type Regla = {
 };
 
 // Copy de los lienzos: «Volver a Mis notas» (DetalleNota), «Volver a Tareas» (Constructor),
-// «Salir de la evaluación» (Evaluar). Orden: lo estático antes que lo dinámico.
+// «Salir de la evaluación» (Evaluar). PROVISIONAL: «Volver a Tareas» en /tareas/[tarea] (el
+// lienzo Tarea dice «Volver» y va a Inicio; CONTENT_CHECKLIST fila 95) y los títulos de reserva
+// sin dato (Mis notas, Tareas, Evaluar entrega; fila 96). Orden: lo estático antes que lo dinámico.
 const ESTUDIANTE: readonly Regla[] = [
   { ruta: "/" },
   { ruta: "/notas" },

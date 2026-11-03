@@ -155,7 +155,8 @@ const PROFESOR: readonly NavItem[] = [
     on: ["lateral", "menu"],
   },
   {
-    // En la lateral, Perfil es la tarjeta de usuario; en < lg, la hoja Menú (D132)
+    // En la lateral, Perfil es la tarjeta de usuario; en < lg, la hoja Menú (D132). PROVISIONAL:
+    // el handoff no pone Perfil en el Menú (CONTENT_CHECKLIST fila 97)
     id: "perfil",
     label: "Perfil",
     href: PERFIL_PROFE_HREF,
