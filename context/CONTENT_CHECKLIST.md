@@ -101,3 +101,4 @@
 | 97 | Ítem «Perfil» en la hoja Menú del profe (el handoff solo pone Tareas, Equipos y Premios) | `lib/nav.ts` | orchestrate F05 W2 | 05 | Provisional — confirmar con César |
 | 98 | Título «Ingresar» y descripción «Entra al portal de notas de la Escuela Creativa con tu cédula y tu contraseña.» de `/ingresar` | `app/(auth)/ingresar/page.tsx` | orchestrate F05 W3 | 05 | Provisional |
 | 100 | «Todavía no hay detalle de esta nota» / «Cuando tu profe evalúe la tarea, aquí verás cómo salió cada pregunta.» y título de `/notas/[tarea]` («Nota · {tarea}») | `app/(estudiante)/notas/[tarea]/page.tsx` | orchestrate F05 ola 2 (notas) | 05 | Provisional |
+| 103 | Fecha y hora de entrega y respuestas de las tareas evaluadas de `/tareas/[tarea]`: no hay dato (se usa la fecha de evaluación y no se listan respuestas); título «Tarea · {tarea}» | `lib/demo/entrega.ts`, `app/(estudiante)/tareas/[tarea]/page.tsx` | orchestrate F05 ola 2 (tareas) | 05 | Provisional |

@@ -7,7 +7,7 @@
 | Inicio estudiante | / | HomeGrid: PageHeader, PointsCard, RecentGrades, PendingTasks, TeamSummary | Done (F05 W2) | `app/(estudiante)/page.tsx`; shell en `app/(estudiante)/layout.tsx` (D128–D131) |
 | Mis notas | /notas | GradesList, GradeLegend | Done (F05 ola 2) | `app/(estudiante)/notas/page.tsx` |
 | Detalle de nota | /notas/[tarea] | GradeSummary, QuestionList | Done (F05 ola 2) | una página por tarea; solo Identidad trae detalle (D136) |
-| Tareas / entregar | /tareas, /tareas/[tareaId] | TaskList, SubmissionForm | Pending | grupal: solo capitán envía |
+| Tareas / entregar | /tareas, /tareas/[tarea] | PendingTasks, DeliveredTasks, TaskHeader, TaskAnswerForm, TaskDelivered | Done (F05 ola 2) | modo por los datos (D140); grupal: solo capitán envía |
 | Mi equipo | /equipo | TeamHeader, Members, TeamGrades, Prize | Pending | |
 | Ranking | /ranking | RankingTabs, Podium, RankingList | Pending | en vivo |
 | Perfil | /perfil | ProfileInfo, AvatarPicker, Appearance, Security | Pending | |
