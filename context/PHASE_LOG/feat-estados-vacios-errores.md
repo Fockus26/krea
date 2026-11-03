@@ -1,0 +1,2 @@
+# feat/estados-vacios-errores (fase 06, ola 2, W4) · cierre de la fase
+Alumnos: búsqueda sin resultados con el vacío del lienzo y «Buscar en {otra sección}» (D170). Piezas de error en pantalla (`components/estados/errores.tsx`, D171) en la galería; se enchufan en la fase 07. Vacíos de Premios y Equipos del profe (D172). Cierre de la fase (D173). Verificado: typecheck, lint, 541 tests, build, check:paginas. Sin servidor: a11y con navegador pendiente para el QA final.

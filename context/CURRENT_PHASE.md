@@ -5,8 +5,8 @@
 
 ## Now
 
-**Phase:** 06 — Estados · **Ola:** 2 de 2 (2026-11-03) · fase 05 cerrada (46 páginas, D126–D159) · **Track:** Product
-Plan: `context/plans/phase-06-estados.md` · main @ 5f443ba
+**Phase:** 06 — Estados · cerrada al mergear W4 (2026-11-03) · siguiente: fase 07 (backend) · fase 05 cerrada (46 páginas, D126–D159) · **Track:** Product
+Plan: `context/plans/phase-06-estados.md` · main @ fdf966a
 **Sin QA hasta el final** (César, 2026-10-29) · **sin servidor, solo build** (César, 2026-11-03).
 
 | Unit | Branch | Status |
@@ -14,11 +14,12 @@ Plan: `context/plans/phase-06-estados.md` · main @ 5f443ba
 | Fase 05 completa (olas 1–3) | #35–#43 | merged (d4ea99f) |
 | W1 pantallas de estado (404/500/sin conexión, galería) | #44 | merged (d2e2213) |
 | W2 banner sin conexión | #45 | merged (5f443ba) |
-| W3 skeletons (`loading.tsx` por ruta) | claude/busy-pascal-q9x6zf | PR |
-| W4 vacíos, errores en pantalla y cierre | — | pendiente |
+| W3 skeletons (`loading.tsx` por ruta) | #46 | merged (fdf966a) |
+| W4 vacíos, errores en pantalla y cierre (D170–D173) | claude/busy-pascal-q9x6zf | PR |
 
 ## Blocked (actions for César or external)
 
+- QA pendiente: fase 06 — axe, teclado, 320 px y 4 acentos × claro/oscuro de `/estados` y los `loading.tsx` (sin servidor; QA final).
 - Contraste de la tarjeta de puntos de Inicio (axe: 4,1:1 y 4,26:1 en desglose y chip, fase 04): decisión de diseño de César (backlog, alta).
 - Perfil en la hoja Menú del profe (fila 97) y avatar/Menú junto al chip «En vivo» en Ranking móvil: confirmar.
 
@@ -36,7 +37,7 @@ Plan: `context/plans/phase-06-estados.md` · main @ 5f443ba
 
 ## Next
 
-- Fase 06: ola 2 (skeletons; vacíos y errores). Fase 09: bloquear o borrar `/secciones`, `/componentes`, `/tokens` (y comprobar que `/estados` da 404 en producción).
+- Fase 07: esquema Firestore + reglas; enchufar `components/estados/errores.tsx` al guardar/enviar (D171) y la sesión real en el 404/500 (D160). Fase 09: bloquear o borrar `/secciones`, `/componentes`, `/tokens` (y comprobar que `/estados` da 404 en producción).
 - Fase 07: esquema Firestore desde `data/seed/` + reglas de seguridad por rol.
 
 ## Phases
@@ -48,7 +49,7 @@ Plan: `context/plans/phase-06-estados.md` · main @ 5f443ba
 | 03 | Components | closed |
 | 04 | Sections | closed |
 | 05 | Pages | closed |
-| 06 | States | in progress |
-| 07 | Backend | pending |
+| 06 | States | closed |
+| 07 | Backend | next |
 | 08 | Responsive and polish | pending |
 | 09 | Final QA | pending |
