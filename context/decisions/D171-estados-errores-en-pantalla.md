@@ -1,0 +1,5 @@
+# D171 · States · Errores dentro de una pantalla como piezas listas; se enchufan en la fase 07 · Implemented
+
+**Decision:** `components/estados/errores.tsx`: `ErrorEnPantalla` (Alert err/warn, `role="alert"`, título + qué pasó y qué no se perdió + enlace opcional), `ErrorEntregaRechazada` («Ir a la pregunta n»), `ErrorGuardarNota` («Reintentar guardar» · «Copiar comentarios») y `SesionVencida` («Entrar de nuevo»), con los textos del lienzo. Se ven en `/estados?screen=errores-en-pantalla`. Los formularios ya validan por campo (Constructor, Puntos, Entrega: fase 04); los errores al enviar/guardar aparecen cuando haya red real.
+**Why:** hoy enviar y guardar son locales: no pueden fallar; simular el fallo en las páginas sería código muerto en producción.
+**Discarded alternative:** forzar el error con un parámetro en las páginas — mete rutas de prueba en código real. **Fase 07:** `review-form` y `task-answer-form` muestran estas piezas en el `catch` del guardado; la sesión vencida, al recibir el 401 de Firebase.

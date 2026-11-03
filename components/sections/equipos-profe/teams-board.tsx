@@ -1,9 +1,12 @@
 "use client";
 
+import { Users } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { EmptyState } from "@/components/krea/empty-state";
 import { TeamCard } from "@/components/sections/equipos-profe/team-card";
 import { TeamsHeader } from "@/components/sections/equipos-profe/teams-header";
 import { UnassignedCard } from "@/components/sections/equipos-profe/unassigned-card";
+import { Card } from "@/components/ui/card";
 import { toast } from "@/components/ui/sonner";
 import {
   cambiarCapitan,
@@ -135,6 +138,16 @@ export function TeamsBoard({
         base={base}
       />
       <h2 className="sr-only">Equipos de {seccion}</h2>
+      {equipos.length === 0 ? (
+        <Card>
+          <EmptyState
+            icon={Users}
+            headingLevel={3}
+            title={`Todavía no hay equipos en ${seccion}`}
+            description="Cuando armes los equipos, aquí verás a sus integrantes y a su capitán."
+          />
+        </Card>
+      ) : null}
       <ul className="g3 m-0 list-none items-start p-0">
         {equipos.map((eq) => {
           const e = estado.equipos[eq.id];

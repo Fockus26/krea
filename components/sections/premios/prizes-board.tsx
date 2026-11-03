@@ -1,6 +1,9 @@
 "use client";
 
+import { Trophy } from "lucide-react";
 import { useState } from "react";
+import { EmptyState } from "@/components/krea/empty-state";
+import { Card } from "@/components/ui/card";
 import { toast } from "@/components/ui/sonner";
 import type { TarjetaPremio } from "@/lib/demo/premios";
 import {
@@ -40,6 +43,18 @@ export function PrizesBoard({
     );
     toast.success(aviso);
   }
+
+  if (lista.length === 0)
+    return (
+      <Card>
+        <EmptyState
+          icon={Trophy}
+          headingLevel={2}
+          title="Todavía no hay premios"
+          description="Cuando una tarea tenga premio, aquí verás quién lo gana y podrás decidir los empates."
+        />
+      </Card>
+    );
 
   return (
     <ul className="g3 m-0 list-none p-0">
