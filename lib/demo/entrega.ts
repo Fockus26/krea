@@ -85,10 +85,23 @@ function tarea(id: string): DemoTarea {
 
 export type ModoEntrega = "capitan" | "no-capitan" | "individual" | "entregada";
 
-/** Entrega de una tarea abierta según el modo de la vista previa. */
-export function entregaDe(modo: ModoEntrega) {
+/**
+ * Modo de la entrega de `/tareas/[tarea]` según los datos: evaluada = entregada; abierta grupal =
+ * la ve su capitana (la persona de ejemplo, D069); abierta individual = individual.
+ */
+export function modoDe(t: DemoTarea): ModoEntrega {
+  if (t.estado === "evaluada") return "entregada";
+  return t.tipo === "grupal" ? "capitan" : "individual";
+}
+
+/**
+ * Entrega de una tarea según el modo. Sin `tareaId` usa la tarea de ejemplo del modo (vistas
+ * previas de /secciones/tareas); con él, la tarea real de `/tareas/[tarea]`.
+ */
+export function entregaDe(modo: ModoEntrega, tareaId?: string) {
   const t = tarea(
-    modo === "individual" ? "competencia" : "presentacion-producto",
+    tareaId ??
+      (modo === "individual" ? "competencia" : "presentacion-producto"),
   );
   const alumno = alumnoPorCedula(
     modo === "no-capitan" ? CEDULA_NO_CAPITAN : CEDULA_DEMO,
@@ -123,10 +136,15 @@ export function entregaDe(modo: ModoEntrega) {
     entregada:
       modo === "entregada"
         ? {
-            quien: capitan ? nombreCompleto(capitan) : nombreCompleto(alumno),
-            fecha: formatFecha("2026-10-25"),
+            quien:
+              capitan && t.tipo === "grupal"
+                ? nombreCompleto(capitan)
+                : nombreCompleto(alumno),
+            // PLACEHOLDER: las tareas evaluadas no guardan la fecha de entrega ni las respuestas
+            // (CONTENT_CHECKLIST fila 103): se usa la fecha de evaluación y no se listan respuestas
+            fecha: formatFecha(tareaId ? t.fecha : "2026-10-25"),
             hora: horaTexto(ENTREGADA_EL),
-            respuestas: t.preguntas.map((p, i) =>
+            respuestas: (tareaId ? [] : t.preguntas).map((p, i) =>
               p.formato === "texto"
                 ? {
                     tipo: "texto" as const,
