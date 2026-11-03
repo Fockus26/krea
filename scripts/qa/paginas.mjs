@@ -1,7 +1,7 @@
 // Comprobación de las páginas del build (fase 05, sin servidor de la app).
 // Uso: bun run build && bun run check:paginas
-// Recorre .next/server/app/**/*.html (salvo _not-found y demás `_…`, /secciones, /componentes y
-// /tokens, que son internas) y, por página: exactamente un <h1> y un <main>, <title> único entre
+// Recorre .next/server/app/**/*.html (salvo _not-found y demás `_…`, /secciones, /componentes,
+// /tokens y /estados, que son internas) y, por página: exactamente un <h1> y un <main>, <title> único entre
 // páginas, `noindex` salvo /ingresar (D023), como mucho un contenedor de avisos (Sonner, D035), y
 // que cada <a href> interno apunte a una página generada (fase 05 cerrada: ya no hay rutas planificadas).
 // Sale con código 1 y lista los fallos. Node, sin dependencias.
@@ -12,7 +12,7 @@ import { join, relative, sep } from "node:path";
 const INDEXABLES = new Set(["/ingresar"]);
 
 const RAIZ = join(".next", "server", "app");
-const INTERNAS = ["/secciones", "/componentes", "/tokens"];
+const INTERNAS = ["/secciones", "/componentes", "/tokens", "/estados"];
 
 function htmls(dir) {
   return readdirSync(dir).flatMap((nombre) => {
