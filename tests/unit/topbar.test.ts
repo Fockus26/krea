@@ -190,7 +190,7 @@ describe("titulosTopbar (lib/demo)", () => {
 
   test("profesor: «Entrega n de m» por entrega de la cola", () => {
     const t = titulosTopbar("profesor");
-    expect(Object.keys(t)).toHaveLength(COLA.length);
+    expect(Object.keys(t)).toHaveLength(COLA.length + TAREAS.length);
     const [primera] = COLA;
     expect(primera).toBeDefined();
     expect(t[`/profe/evaluar/${primera?.id}`]).toBe(
@@ -199,5 +199,18 @@ describe("titulosTopbar (lib/demo)", () => {
     expect(
       topbarDe("profesor", `/profe/evaluar/${primera?.id}`, t).titulo,
     ).toBe(`Entrega 1 de ${COLA.length}`);
+  });
+
+  test("profesor: el constructor de cada tarea de TAREAS lleva su título", () => {
+    const t = titulosTopbar("profesor");
+    for (const tarea of TAREAS) {
+      expect(topbarDe("profesor", `/profe/tareas/${tarea.id}`, t).titulo).toBe(
+        tarea.titulo,
+      );
+    }
+    // El borrador y la tarea nueva conservan «Nueva tarea» del lienzo
+    expect(topbarDe("profesor", "/profe/tareas/plan-redes", t).titulo).toBe(
+      "Nueva tarea",
+    );
   });
 });
