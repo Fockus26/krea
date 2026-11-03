@@ -148,3 +148,35 @@ describe("banner sin conexión (D164)", () => {
     expect(TOAST_EN_LINEA_MS).toBe(3000);
   });
 });
+
+describe("carga (D167)", () => {
+  test("aviso de carga lenta a los 8 s", async () => {
+    const { CARGA_LENTA_MS } = await import("@/lib/estados");
+    expect(CARGA_LENTA_MS).toBe(8000);
+  });
+  test("cada ruta de los dos grupos tiene su loading.tsx", async () => {
+    const { existsSync } = await import("node:fs");
+    const rutas = [
+      "app/(estudiante)",
+      "app/(estudiante)/notas",
+      "app/(estudiante)/notas/[tarea]",
+      "app/(estudiante)/tareas",
+      "app/(estudiante)/tareas/[tarea]",
+      "app/(estudiante)/equipo",
+      "app/(estudiante)/ranking",
+      "app/(estudiante)/perfil",
+      "app/(profesor)/profe",
+      "app/(profesor)/profe/evaluar",
+      "app/(profesor)/profe/tareas",
+      "app/(profesor)/profe/tareas/[id]",
+      "app/(profesor)/profe/tareas/nueva",
+      "app/(profesor)/profe/alumnos",
+      "app/(profesor)/profe/equipos",
+      "app/(profesor)/profe/puntos",
+      "app/(profesor)/profe/premios",
+      "app/(profesor)/profe/ranking",
+      "app/(profesor)/profe/perfil",
+    ];
+    for (const r of rutas) expect(existsSync(`${r}/loading.tsx`)).toBe(true);
+  });
+});
