@@ -42,9 +42,9 @@
 | 2 | `feat/pag-notas` · `/notas`, `/notas/[tarea]` | ola 1 | cerrada (#38) |
 | 2 | `feat/pag-tareas` · `/tareas`, `/tareas/[tarea]` (capitán / no capitán / individual / entregada según los datos) | ola 1 | cerrada (#39) |
 | 2 | `feat/pag-equipo-ranking-perfil` · `/equipo`, `/ranking` (chip «En vivo» en la topbar móvil), `/perfil` | ola 1 | cerrada (#40) |
-| 3 | `feat/pag-profe-evaluar` · `/profe/evaluar` (redirige a la primera entrega de la cola, vacío si no hay), `/profe/evaluar/[entrega]` (X + «Entrega n de m» en la topbar móvil, Toaster global en vez del local) | ola 1 | pendiente |
-| 3 | `feat/pag-profe-tareas` · `/profe/tareas`, `/profe/tareas/nueva`, `/profe/tareas/[id]` (sin barra inferior, «Guardar borrador» en la topbar) + alinear ids de `COLA` y `TAREAS` | ola 1 | pendiente |
-| 3 | `feat/pag-profe-gestion` · `/profe/alumnos`, `/profe/equipos`, `/profe/puntos`, `/profe/premios`, `/profe/ranking`, `/profe/perfil` + cierre de la fase (`PAGE_INVENTORY`, `seo` modo página, `check:paginas` en verde sobre todas) | ola 1 (y las otras dos de la ola 3, va última) | pendiente |
+| 3 | `feat/pag-profe-evaluar` · `/profe/evaluar` (redirige a la primera entrega de la cola, vacío si no hay), `/profe/evaluar/[entrega]` (X + «Entrega n de m» en la topbar móvil, Toaster global en vez del local) | ola 1 | cerrada (#41) |
+| 3 | `feat/pag-profe-tareas` · `/profe/tareas`, `/profe/tareas/nueva`, `/profe/tareas/[id]` (sin barra inferior, «Guardar borrador» en la topbar) + alinear ids de `COLA` y `TAREAS` | ola 1 | cerrada (#42) |
+| 3 | `feat/pag-profe-gestion` · `/profe/alumnos`, `/profe/equipos`, `/profe/puntos`, `/profe/premios`, `/profe/ranking`, `/profe/perfil` + cierre de la fase (`PAGE_INVENTORY`, `seo` modo página, `check:paginas` en verde sobre todas) | ola 1 (y las otras dos de la ola 3, va última) | cerrada (#43) |
 
 Reglas de reparto:
 - Cada unidad crea **solo** sus `page.tsx` (y `layout.tsx`/`not-found.tsx` propios si los necesita) bajo su grupo; usa
@@ -81,7 +81,7 @@ Reglas de reparto:
 - Verificación sin servidor: Playwright sirviendo `.next/server/app/*.html` + `/_next/static` con `page.route` (receta
   en `.qa/a11y-paginas.mjs` de W2 no está versionada: rehacerla o versionarla en `scripts/qa/`).
 
-## Ola actual: 3 (siguiente sesión)
+## Ola actual: 3 cerrada — fase 05 completa
 
 - Ola 2 (cloud, en serie, sin brief aparte): #38 notas · #39 tareas · #40 equipo/ranking/perfil — merged. D136, D140, D144; filas 100 y 103.
 - Ola 1: brief y prompts en `context/plans/orchestration-2026-11-03-f05-ola1.md` / `…-prompts.md`
@@ -103,6 +103,8 @@ Reglas de reparto:
 - `titulosTopbar` usa los ids de `TAREAS`/`COLA`: las rutas dinámicas del profe deben usar esos mismos (alinear `COLA`/`ENTREGAS_PANEL`).
 - Secciones con modo por datos: `modoDe()` en `lib/demo/entrega.ts` (D140). Ranking del estudiante: `/ranking` + `/ranking/equipos` (D144); para el profe `/profe/ranking` tiene 6 estados (`estadoSlug`, 5A/5C): usar subrutas o `?`-less rutas como D144.
 - Reservado ola 3: D148–D159, filas 109–117 (la ola 2 usó solo D136, D140, D144 y filas 100, 103; D137–139, D141–143, D145–147 y filas 101–102, 104–108 quedan libres).
+
+| 3 | #41 evaluar (D148), #42 tareas del profe (D152–D154), #43 gestión del profe + cierre (D156–D159) (cloud, en serie) | no aplica (César: QA solo al final) | fase 06; fase 09 bloquea `/secciones`, `/componentes`, `/tokens` | ninguno |
 
 ## Prompt de inicio de la siguiente ola
 
