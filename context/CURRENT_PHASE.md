@@ -13,9 +13,13 @@ Plan: `context/plans/phase-07-backend.md` · main @ 27bd040
 |---|---|---|
 | Fases 05–06 completas | #35–#47 | merged (03c6178) |
 | W1 modelo de datos, reglas y emuladores (D174–D177) | #48 | merged (27bd040) |
-| W2–W8 (auth, recuperar, lecturas, entregas, tareas, evaluar, gestión) | — | pendiente (ver plan) |
+| W2 login, sesión, protección y salir (D180–D183) | claude/sharp-cerf-ti1n25 | PR |
+| W3–W8 (recuperar, lecturas, entregas, tareas, evaluar, gestión) | — | pendiente (ver plan) |
 
 ## Blocked (actions for César or external)
+
+- QA pendiente: login/sesión/salir (functional-qa + axe de /ingresar y /salir) — sin servidor por decisión de César; probado contra los emuladores (cookie, revocación, reglas). Fase 09.
+- Galerías `/secciones`, `/componentes`, `/estados` públicas con nombres y notas reales del seed (D181): ¿bloquearlas ya o en la fase 09?
 
 - QA pendiente: fase 06 — axe, teclado, 320 px y 4 acentos × claro/oscuro de `/estados` y los `loading.tsx` (sin servidor; QA final).
 - Contraste de la tarjeta de puntos de Inicio (axe: 4,1:1 y 4,26:1 en desglose y chip, fase 04): decisión de diseño de César (backlog, alta).
@@ -34,7 +38,7 @@ Plan: `context/plans/phase-07-backend.md` · main @ 27bd040
 
 ## Next
 
-- W2 Auth (login por cédula, cookie de sesión, protección en el servidor, `qa-local` con claims) → functional-qa.
+- W3 Recuperar contraseña (privados/{cedula}.email, enlace de Firebase Auth).
 - Fase 09: bloquear o borrar `/secciones`, `/componentes`, `/tokens` (y comprobar que `/estados` da 404 en producción).
 
 ## Phases

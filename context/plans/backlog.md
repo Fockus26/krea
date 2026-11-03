@@ -23,3 +23,4 @@
 
 - (F05 ola 2, media) `/tareas/[tarea]` evaluadas: sin respuestas ni fecha de entrega reales (fila 103); el «no capitán» solo se ve en `/secciones/tareas` hasta la fase 07.
 - (F05 ola 2, baja) Detalle de nota: solo «Identidad de marca» tiene detalle (D136, fila 100).
+- (F07 W2, **alta**) Galerías `/secciones`, `/componentes`, `/estados` públicas con nombres y notas reales del seed (D181). Bloquearlas (proxy) o pasarlas a datos ficticios antes de dar la URL a nadie.
