@@ -131,3 +131,20 @@ describe("galería /estados (D162)", () => {
     expect(galeriaEstadosVisible({ NODE_ENV: "production" })).toBe(false);
   });
 });
+
+describe("banner sin conexión (D164)", () => {
+  test("mensaje por rol con la hora de los datos", async () => {
+    const { mensajeSinConexion, formatHora, TOAST_EN_LINEA_MS } = await import(
+      "@/lib/estados"
+    );
+    const h = new Date(2026, 9, 25, 16, 20);
+    expect(formatHora(h)).toBe("4:20 p. m.");
+    expect(mensajeSinConexion("estudiante", h)).toBe(
+      "Sin conexión. Ves tus notas de las 4:20 p. m.",
+    );
+    expect(mensajeSinConexion("profesor", h)).toBe(
+      "Sin conexión. Ves los datos de las 4:20 p. m.",
+    );
+    expect(TOAST_EN_LINEA_MS).toBe(3000);
+  });
+});

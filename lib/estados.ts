@@ -93,6 +93,10 @@ export function formatFechaHora(fecha: Date): string {
   return `${dos(fecha.getDate())}/${dos(fecha.getMonth() + 1)}/${fecha.getFullYear()}, ${h12}:${dos(fecha.getMinutes())} ${sufijo}`;
 }
 
+/** «4:20 p. m.» */
+export const formatHora = (fecha: Date): string =>
+  formatFechaHora(fecha).split(", ")[1] ?? "";
+
 /** «hoy, 4:20 p. m.» si es el mismo día; si no, la fecha completa (línea «Última actualización»). */
 export function formatUltimaActualizacion(fecha: Date, ahora: Date): string {
   const mismoDia =
@@ -100,7 +104,21 @@ export function formatUltimaActualizacion(fecha: Date, ahora: Date): string {
     fecha.getMonth() === ahora.getMonth() &&
     fecha.getDate() === ahora.getDate();
   const completa = formatFechaHora(fecha);
-  return mismoDia ? `hoy, ${completa.split(", ")[1]}` : completa;
+  return mismoDia ? `hoy, ${formatHora(fecha)}` : completa;
+}
+
+/* ---------- Banner sin conexión (D164) ---------- */
+
+/** Toast al volver la red (§5b): 3 s. */
+export const TOAST_EN_LINEA_MS = 3000;
+
+/**
+ * «Sin conexión. Ves tus notas de las 4:20 p. m.» (§5b). El profesor no tiene notas propias: «los
+ * datos» (fila 115). `hora` = la de los datos que se ven (fase 07: la de la caché de Firestore).
+ */
+export function mensajeSinConexion(rol: Rol, hora: Date): string {
+  const que = rol === "profesor" ? "los datos" : "tus notas";
+  return `Sin conexión. Ves ${que} de las ${formatHora(hora)}`;
 }
 
 /* ---------- Galería /estados (D162) ---------- */
@@ -113,6 +131,7 @@ export const PANTALLAS_ESTADO = [
   { id: "500-sin-codigo", label: "500 · sin código" },
   { id: "sin-conexion", label: "Sin conexión" },
   { id: "sin-conexion-hora", label: "Sin conexión · con hora" },
+  { id: "banner-sin-conexion", label: "Banner sin conexión" },
 ] as const;
 
 export type PantallaEstado = (typeof PANTALLAS_ESTADO)[number]["id"];

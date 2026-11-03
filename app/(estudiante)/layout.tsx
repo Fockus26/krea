@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { OfflineBanner } from "@/components/estados/offline-banner";
 import { AppShell } from "@/components/layout/AppShell";
 import {
   RouteBottomNav,
@@ -46,6 +47,7 @@ export default function EstudianteLayout({
       >
         {children}
       </AppShell>
+      <OfflineBanner rol={ROL} />
       <Toaster />
     </TopBarAccionProvider>
   );

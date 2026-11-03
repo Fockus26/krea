@@ -1479,3 +1479,38 @@ html:has([data-slot="action-bar"]) {
   font-size: 0.9375rem;
   line-height: 1.25rem;
 }
+
+/* ---------- Banner sin conexión (HANDOFF §5b «con datos en caché»; D164) ---------- */
+/* Colores fijos en los dos temas (§5b da los hex): contraste 14,7:1 texto, 10,2:1 ícono */
+:root {
+  --offline-bg: #221d2b;
+  --offline-text: #f4f1f8;
+  --offline-icon: #ffc23d;
+  --offline-gap: 0.75rem; /* 12 de los bordes */
+}
+@utility bg-offline {
+  background-color: var(--offline-bg);
+}
+@utility text-offline {
+  color: var(--offline-text);
+}
+@utility text-offline-icon {
+  color: var(--offline-icon);
+}
+/* 14/20 600 */
+@utility text-banner {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+/* Bajo la topbar (< lg) o arriba de la columna de contenido, junto a la lateral (≥ lg) */
+@utility inset-offline {
+  top: calc(var(--h-topbar) + var(--offline-gap));
+  left: var(--offline-gap);
+  right: var(--offline-gap);
+  @media (width >= 64rem) {
+    top: var(--offline-gap);
+    left: calc(var(--w-side) + var(--offline-gap));
+  }
+}
