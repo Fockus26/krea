@@ -8,9 +8,9 @@
 | Mis notas | /notas | GradesList, GradeLegend | Done (F05 ola 2) | `app/(estudiante)/notas/page.tsx` |
 | Detalle de nota | /notas/[tarea] | GradeSummary, QuestionList | Done (F05 ola 2) | una página por tarea; solo Identidad trae detalle (D136) |
 | Tareas / entregar | /tareas, /tareas/[tarea] | PendingTasks, DeliveredTasks, TaskHeader, TaskAnswerForm, TaskDelivered | Done (F05 ola 2) | modo por los datos (D140); grupal: solo capitán envía |
-| Mi equipo | /equipo | TeamHeader, Members, TeamGrades, Prize | Pending | |
-| Ranking | /ranking | RankingTabs, Podium, RankingList | Pending | en vivo |
-| Perfil | /perfil | ProfileInfo, AvatarPicker, Appearance, Security | Pending | |
+| Mi equipo | /equipo | TeamHero, TeamMembers, TeamGrades, TeamPrizes | Done (F05 ola 2) | sin equipo por los datos |
+| Ranking | /ranking, /ranking/equipos | Ranking | Done (F05 ola 2) | D144; en vivo en la topbar móvil |
+| Perfil | /perfil | ProfileIdentity, ProfileData, AvatarPicker, AppearanceSettings, SecuritySettings | Done (F05 ola 2) | salir → /ingresar |
 | Panel profesor | /profe | PanelConHora → PanelView (PanelHeader, PanelMetrics, PendingReviews, RecentAdjustments) | Done (F05 W2) | `app/(profesor)/profe/page.tsx`; saludo en cliente (D133); shell en `app/(profesor)/profe/layout.tsx` |
 | Alumnos | /profe/alumnos | StudentsTable, StudentDrawer | Pending | |
 | Equipos | /profe/equipos | TeamBoard | Pending | |
