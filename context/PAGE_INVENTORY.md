@@ -15,7 +15,7 @@
 | Alumnos | /profe/alumnos | StudentsTable, StudentDrawer | Pending | |
 | Equipos | /profe/equipos | TeamBoard | Pending | |
 | Tareas (profesor) | /profe/tareas, /profe/tareas/[id] | TaskTable, TaskBuilder | Pending | suma = 20 |
-| Evaluar entregas | /profe/tareas/[id]/entregas | SubmissionQueue, GradingPanel | Pending | |
+| Evaluar entrega | /profe/evaluar, /profe/evaluar/[entrega] | ReviewHeader, ReviewForm | Done (F05 ola 3) | `/profe/evaluar` redirige a la 1.ª de `COLA` (vacío si no hay); una página por entrega (D148); Panel enlaza a los ids de `COLA` |
 | Ajustes de puntos | /profe/puntos | AdjustmentForm, AdjustmentLog | Pending | |
 | Premios | /profe/premios | PrizeList | Pending | |
 | 404 / 500 / offline | — | StatusScreen | Pending | |
