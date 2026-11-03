@@ -15,8 +15,6 @@ import { join, relative, sep } from "node:path";
  * suya: desde ahí cada enlace debe ir a una página generada (p. ej. un id que no existe).
  */
 const RUTAS_PLANIFICADAS = [
-  "/profe/evaluar",
-  "/profe/evaluar/[entrega]",
   "/profe/tareas",
   "/profe/tareas/nueva",
   "/profe/tareas/[id]",
@@ -107,11 +105,22 @@ const planificadas = RUTAS_PLANIFICADAS.map((r) => {
 
 const fallos = [];
 const titulos = new Map();
+const redirigen = [];
 
 for (const { archivo, ruta } of paginas) {
   const html = readFileSync(archivo, "utf8");
   const dom = sinScripts(html);
   const falla = (msg) => fallos.push(`${ruta}: ${msg}`);
+
+  // Ruta que solo redirige (p. ej. /profe/evaluar): el HTML es el cascarón del redirect de
+  // Next, sin <main> ni <title>; se comprueba que el destino sea una página generada.
+  const redirige = html.match(/NEXT_REDIRECT;\w+;(\/[^;\\"]*);/)?.[1];
+  if (redirige) {
+    redirigen.push(ruta);
+    if (!generadas.has(normalizar(redirige)))
+      falla(`redirige a ${redirige}, que no es una página generada`);
+    continue;
+  }
 
   const h1 = dom.match(/<h1[\s>]/gi)?.length ?? 0;
   if (h1 !== 1) falla(`${h1} <h1> (debe haber 1)`);
@@ -165,6 +174,8 @@ const pendientes = RUTAS_PLANIFICADAS.filter(
 console.log(
   `${paginas.length} páginas: ${paginas.map((p) => p.ruta).join(", ") || "ninguna"}`,
 );
+if (redirigen.length)
+  console.log(`Con redirect (sin comprobar DOM): ${redirigen.join(", ")}`);
 if (pendientes.length)
   console.log(
     `Planificadas sin página todavía (${pendientes.length}): ${pendientes.join(", ")}`,
