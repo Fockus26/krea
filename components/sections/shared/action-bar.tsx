@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { ActionBarAltura } from "./action-bar-altura";
 
 /**
  * Barra de acción (HANDOFF §4): entregar, guardar nota, publicar. < 1024 pegada abajo
@@ -18,6 +19,8 @@ export function ActionBar({
 }) {
   return (
     <div
+      // El toast la detecta (`html:has([data-slot="action-bar"])`) y sube por encima (D131)
+      data-slot="action-bar"
       className={cn(
         "sticky z-action-bar -mx-(--page-px) flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-divider bg-bg/94 px-4 py-3",
         "lg:static lg:mx-0 lg:border-t-0 lg:bg-transparent lg:px-0 lg:py-0",
@@ -26,6 +29,7 @@ export function ActionBar({
       )}
     >
       {children}
+      <ActionBarAltura />
     </div>
   );
 }

@@ -10,18 +10,20 @@ import { Toaster as Sonner, type ToasterProps, toast } from "sonner";
  * acento por CSS del contenedor donde se monta, no por el prop `theme`.
  * Sonner inyecta su CSS sin capa: gana a las utilidades de Tailwind (en @layer), por eso
  * las pocas que pisan reglas suyas (posición, transición, foco, z-index) llevan `!`.
- * Dónde se monta: D035 (aún no en app/layout.tsx).
+ * Dónde se monta: D035 (no en app/layout.tsx): uno por layout de grupo, junto al AppShell (D131).
  */
 
 /** 4 s (§2.14). */
 const TOAST_DURATION = 4000;
 
 /*
- * Sobre la barra inferior (< lg, D021): 72 + 16 = 88 del borde, más la zona segura.
- * Desde lg no hay barra: 24 del borde (el valor por defecto de Sonner).
+ * < lg: sobre la barra inferior (D021) y, si la página tiene barra de acción, sobre ella (D131):
+ * `--toast-bnav` (72, o 0 en rutas sin barra inferior) + `--toast-action` (alto medido de la
+ * `ActionBar`, o 0) + 16 del borde, más la zona segura; los dos los fija app/globals.css.
+ * Desde lg no hay barras: 24 del borde (el valor por defecto de Sonner).
  */
 const offsetClasses =
-  "[--toast-bottom:calc(var(--h-bnav)_+_1rem_+_env(safe-area-inset-bottom))] lg:[--toast-bottom:1.5rem]";
+  "[--toast-bottom:calc(var(--toast-bnav)_+_var(--toast-action)_+_1rem_+_env(safe-area-inset-bottom))] lg:[--toast-bottom:1.5rem]";
 
 /** Clases de cada parte del toast (exportadas para las pruebas). */
 const toastClassNames = {
