@@ -50,8 +50,9 @@ function TabsList({
         variant === "line" &&
           "flex gap-6 overflow-x-auto border-b border-divider",
         variant === "segmented" &&
-          "gap-1 rounded-md bg-surface-2 p-1 @container " +
-            (block ? "flex w-full" : "inline-flex w-fit max-w-full"),
+          "gap-1 rounded-md bg-surface-2 p-1 " +
+            // `@container` solo en block: con ancho propio (w-fit) el grupo colapsaría al padding
+            (block ? "@container flex w-full" : "inline-flex w-fit max-w-full"),
         className,
       )}
       {...props}
