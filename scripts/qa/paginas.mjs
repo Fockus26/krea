@@ -3,25 +3,10 @@
 // Recorre .next/server/app/**/*.html (salvo _not-found y demás `_…`, /secciones, /componentes y
 // /tokens, que son internas) y, por página: exactamente un <h1> y un <main>, <title> único entre
 // páginas, `noindex` salvo /ingresar (D023), como mucho un contenedor de avisos (Sonner, D035), y
-// que cada <a href> interno apunte a una página generada o a una ruta planificada.
+// que cada <a href> interno apunte a una página generada (fase 05 cerrada: ya no hay rutas planificadas).
 // Sale con código 1 y lista los fallos. Node, sin dependencias.
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, sep } from "node:path";
-
-/*
- * Rutas finales que aún no tienen página (brief de la fase 05, «Formas compartidas»): un enlace
- * hacia ellas no cuenta como roto. Las olas 2–3 las van creando; la ola 3 vacía la lista al cerrar
- * la fase. Un patrón dinámico deja de excusar enlaces en cuanto el build genera alguna página
- * suya: desde ahí cada enlace debe ir a una página generada (p. ej. un id que no existe).
- */
-const RUTAS_PLANIFICADAS = [
-  "/profe/alumnos",
-  "/profe/equipos",
-  "/profe/puntos",
-  "/profe/premios",
-  "/profe/ranking",
-  "/profe/perfil",
-];
 
 /** Única página que se indexa (D023). */
 const INDEXABLES = new Set(["/ingresar"]);
@@ -52,16 +37,6 @@ const esInterna = (ruta) =>
   INTERNAS.some((p) => ruta === p || ruta.startsWith(`${p}/`)) ||
   ruta.split("/").some((s) => s.startsWith("_") || /^\[.+\]$/.test(s));
 
-const patron = (ruta) =>
-  new RegExp(
-    `^${ruta
-      .split("/")
-      .map((s) =>
-        /^\[[^/]+\]$/.test(s) ? "[^/]+" : s.replace(/[.*+?^${}()|\\]/g, "\\$&"),
-      )
-      .join("/")}$`,
-  );
-
 const normalizar = (href) => {
   const limpio = href.split(/[?#]/)[0] ?? "";
   return limpio.length > 1 ? limpio.replace(/\/+$/, "") : limpio || "/";
@@ -87,18 +62,6 @@ const paginas = archivos
   .sort((a, b) => a.ruta.localeCompare(b.ruta));
 
 const generadas = new Set(paginas.map((p) => p.ruta));
-const estaticasPlanificadas = new Set(
-  RUTAS_PLANIFICADAS.filter((r) => !r.includes("[")),
-);
-const planificadas = RUTAS_PLANIFICADAS.map((r) => {
-  const re = patron(r);
-  const dinamica = r.includes("[");
-  // ¿El build ya genera páginas de este patrón (sin contar rutas estáticas que también encaja)?
-  const conPaginas =
-    dinamica &&
-    [...generadas].some((g) => re.test(g) && !estaticasPlanificadas.has(g));
-  return { ruta: r, re, excusa: !conPaginas };
-});
 
 const fallos = [];
 const titulos = new Map();
@@ -159,25 +122,16 @@ for (const { archivo, ruta } of paginas) {
       continue;
     const destino = normalizar(href);
     if (generadas.has(destino) || esInterna(destino)) continue;
-    if (planificadas.some((p) => p.excusa && p.re.test(destino))) continue;
     rotos.add(destino);
   }
   for (const destino of rotos) falla(`enlace roto a ${destino}`);
 }
 
-const pendientes = RUTAS_PLANIFICADAS.filter(
-  (r) => ![...generadas].some((g) => patron(r).test(g)),
-);
 console.log(
   `${paginas.length} páginas: ${paginas.map((p) => p.ruta).join(", ") || "ninguna"}`,
 );
 if (redirigen.length)
   console.log(`Con redirect (sin comprobar DOM): ${redirigen.join(", ")}`);
-if (pendientes.length)
-  console.log(
-    `Planificadas sin página todavía (${pendientes.length}): ${pendientes.join(", ")}`,
-  );
-
 if (fallos.length) {
   console.error(`\n${fallos.length} fallo(s):`);
   for (const f of fallos) console.error(`  ✗ ${f}`);
