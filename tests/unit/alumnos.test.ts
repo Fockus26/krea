@@ -158,3 +158,20 @@ describe("validarEdicion", () => {
     expect(validarEdicion({ ...ok, baseNueva: 25 }).motivo).toBeUndefined();
   });
 });
+
+describe("busquedaVacia (D170)", () => {
+  test("sugiere la otra sección si allí hay coincidencias", async () => {
+    const { busquedaVacia } = await import("@/lib/alumnos");
+    expect(busquedaVacia("  Valentin   Gamez ", "5A", 1)).toEqual({
+      titulo: "Nadie con «Valentin Gamez» en 5A",
+      descripcion: "Revisa las tildes o busca por cédula. ¿Quizás está en 5C?",
+      otra: "5C",
+    });
+  });
+  test("sin coincidencias en la otra, no la sugiere", async () => {
+    const { busquedaVacia } = await import("@/lib/alumnos");
+    const v = busquedaVacia("zz", "5C", 0);
+    expect(v.otra).toBeNull();
+    expect(v.descripcion).toBe("Revisa las tildes o busca por cédula.");
+  });
+});

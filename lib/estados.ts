@@ -139,6 +139,7 @@ export const PANTALLAS_ESTADO = [
   { id: "banner-sin-conexion", label: "Banner sin conexión" },
   { id: "carga-estudiante", label: "Carga · estudiante" },
   { id: "carga-profesor", label: "Carga · profesor" },
+  { id: "errores-en-pantalla", label: "Errores en pantalla" },
 ] as const;
 
 export type PantallaEstado = (typeof PANTALLAS_ESTADO)[number]["id"];

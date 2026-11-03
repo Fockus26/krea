@@ -17,6 +17,7 @@ import {
 import { mainClass } from "@/lib/layout";
 import { cn } from "@/lib/utils";
 import { GaleriaBanner } from "./galeria-banner";
+import { GaleriaErrores } from "./galeria-errores";
 
 export const metadata: Metadata = {
   title: "Pantallas de estado",
@@ -55,6 +56,8 @@ function Pantalla({ id }: { id: PantallaEstado }) {
           <CargaInicio />
         </GaleriaCarga>
       );
+    case "errores-en-pantalla":
+      return <GaleriaErrores />;
     case "carga-profesor":
       return (
         <GaleriaCarga titulo="Carga · profesor (Panel)">

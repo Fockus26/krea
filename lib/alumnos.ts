@@ -164,3 +164,27 @@ export function validarEdicion(e: EdicionAlumno): ErroresEdicion {
 export function unirNombre(primero: string, segundo: string): string {
   return `${primero} ${segundo}`.replace(/\s+/g, " ").trim();
 }
+
+/** La otra sección (5A ↔ 5C). */
+export const otraSeccion = (s: SeccionAlumnos): SeccionAlumnos =>
+  s === "5A" ? "5C" : "5A";
+
+/**
+ * Vacío de la búsqueda sin resultados (lienzo Vacios.dc.html «Alumnos · búsqueda sin resultados»,
+ * D170). Sugiere la otra sección solo si allí sí hay coincidencias (`enOtra` > 0).
+ */
+export function busquedaVacia(
+  consulta: string,
+  seccion: SeccionAlumnos,
+  enOtra: number,
+): { titulo: string; descripcion: string; otra: SeccionAlumnos | null } {
+  const q = consulta.replace(/\s+/g, " ").trim();
+  const otra = enOtra > 0 ? otraSeccion(seccion) : null;
+  return {
+    titulo: `Nadie con «${q}» en ${seccion}`,
+    descripcion: otra
+      ? `Revisa las tildes o busca por cédula. ¿Quizás está en ${otra}?`
+      : "Revisa las tildes o busca por cédula.",
+    otra,
+  };
+}

@@ -1,10 +1,16 @@
 "use client";
 
+import { Search } from "lucide-react";
 import { useState } from "react";
+import { EmptyState } from "@/components/krea/empty-state";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
+  busquedaVacia,
   contadorTexto,
   type FilaAlumno,
   filtrarAlumnos,
+  otraSeccion,
   type SeccionAlumnos,
 } from "@/lib/alumnos";
 import { StudentFilters } from "./student-filters";
@@ -13,6 +19,7 @@ import { StudentsTable } from "./students-table";
 /**
  * Filtros + tabla (HANDOFF §3 Alumnos). Recibe la lista completa por props; la sección y la
  * búsqueda filtran en cliente. "Guardar" actualiza el estado local (sin Firestore: fase 07).
+ * Búsqueda sin resultados: vacío con «Buscar en {otra sección}» si allí hay coincidencias (D170).
  */
 export function StudentsDirectory({
   alumnos,
@@ -33,6 +40,17 @@ export function StudentsDirectory({
     filas.filter((a) => a.seccion === seccion),
     consulta,
   );
+  const vacia =
+    visibles.length === 0 && consulta.trim() !== ""
+      ? busquedaVacia(
+          consulta,
+          seccion,
+          filtrarAlumnos(
+            filas.filter((a) => a.seccion === otraSeccion(seccion)),
+            consulta,
+          ).length,
+        )
+      : null;
 
   return (
     <>
@@ -44,18 +62,41 @@ export function StudentsDirectory({
         onConsulta={setConsulta}
         contador={contadorTexto(visibles.length, consulta, seccion)}
       />
-      <StudentsTable
-        seccion={seccion}
-        filas={visibles}
-        consulta={consulta}
-        onGuardar={(cedula, cambios) =>
-          setFilas((actuales) =>
-            actuales.map((a) =>
-              a.cedula === cedula ? { ...a, ...cambios } : a,
-            ),
-          )
-        }
-      />
+      {vacia ? (
+        <Card>
+          <EmptyState
+            icon={Search}
+            headingLevel={2}
+            title={vacia.titulo}
+            description={vacia.descripcion}
+            action={
+              vacia.otra ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => vacia.otra && setSeccion(vacia.otra)}
+                >
+                  Buscar en {vacia.otra}
+                </Button>
+              ) : null
+            }
+          />
+        </Card>
+      ) : (
+        <StudentsTable
+          seccion={seccion}
+          filas={visibles}
+          consulta={consulta}
+          onGuardar={(cedula, cambios) =>
+            setFilas((actuales) =>
+              actuales.map((a) =>
+                a.cedula === cedula ? { ...a, ...cambios } : a,
+              ),
+            )
+          }
+        />
+      )}
     </>
   );
 }
