@@ -1,0 +1,2 @@
+# feat/estados-sin-conexion (fase 06, ola 1, W2)
+`OfflineBanner` en los dos shells (D164): sin red, banner fijo bajo la topbar con la hora en que se fue la red y «Reintentar» (`router.refresh()`); al volver, «Volviste a estar en línea» 3 s. Tokens `--offline-*`, `text-banner`, `inset-offline`. Variante en `/estados`. Verificado: typecheck, lint, 537 tests, build, check:paginas. Sin servidor ni capturas (decisión de César): el paso real offline/online no se probó en navegador.

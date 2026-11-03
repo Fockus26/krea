@@ -68,3 +68,4 @@
 | Popover | `components/ui/popover.tsx` | /secciones/puntos (combobox «¿A quién?») | F04 ola 4 (W3, PR #34) | shadcn sobre Radix Popover; `PopoverAnchor` para comboboxes; panel del menú §2.13; respeta PortalScope (D034); el llamador previene el autofoco (D118) |
 | StatusScreen + PantallaNotFound, Pantalla500, PantallaSinConexion | `components/estados/` | `app/not-found.tsx`, `app/error.tsx`, `app/global-error.tsx`, `/estados` | F06 W1 | HANDOFF §5b; D160–D162 |
 | useEnLinea / useRutaActual | `components/krea/use-en-linea.ts` | `app/error.tsx`, `app/global-error.tsx`, 404 | F06 W1 | `useSyncExternalStore`; `true`/`null` en el servidor |
+| OfflineBanner / OfflineBannerVista | `components/estados/offline-banner.tsx` | layouts de estudiante y profesor, `/estados` | F06 W2 | §5b; D164 |

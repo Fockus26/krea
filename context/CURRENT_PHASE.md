@@ -13,7 +13,7 @@ Plan: `context/plans/phase-06-estados.md` · main @ d2e2213
 |---|---|---|
 | Fase 05 completa (olas 1–3) | #35–#43 | merged (d4ea99f) |
 | W1 pantallas de estado (404/500/sin conexión, galería) | #44 | merged (d2e2213) |
-| W2 banner sin conexión | — | pendiente |
+| W2 banner sin conexión | claude/busy-pascal-q9x6zf | PR |
 | Ola 2 skeletons · vacíos y errores | — | pendiente |
 
 ## Blocked (actions for César or external)
@@ -35,7 +35,7 @@ Plan: `context/plans/phase-06-estados.md` · main @ d2e2213
 
 ## Next
 
-- Fase 06: W2, luego ola 2. Fase 09: bloquear o borrar `/secciones`, `/componentes`, `/tokens` (y comprobar que `/estados` da 404 en producción).
+- Fase 06: ola 2 (skeletons; vacíos y errores). Fase 09: bloquear o borrar `/secciones`, `/componentes`, `/tokens` (y comprobar que `/estados` da 404 en producción).
 - Fase 07: esquema Firestore desde `data/seed/` + reglas de seguridad por rol.
 
 ## Phases
