@@ -19,7 +19,7 @@
     "test": "bun test ./tests/unit --dots --pass-with-no-tests",
     "qa:local": "node scripts/qa-local.ts",
     "emulators": "firebase emulators:start --project demo-krea",
-    "test:rules": "firebase emulators:exec --only firestore --project demo-krea \"bun test ./tests/rules\"",
+    "test:rules": "firebase emulators:exec --only auth,firestore --project demo-krea \"bun test ./tests/rules\"",
     "seed:emulator": "bun scripts/seed-emulator.ts"
   },
   "dependencies": {

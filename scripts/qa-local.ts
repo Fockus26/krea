@@ -479,6 +479,21 @@ if (firebaseJson?.emulators && !existsSync("supabase/config.toml")) {
       );
       continue;
     }
+    // KREA (D183): la cuenta de prueba es una CÉDULA del seed (scripts/seed-emulator.ts ya la
+    // creó con uid = cédula y sus claims). Solo se le pone la contraseña de .env.test.local.
+    if (/^\d{7,9}$/.test(a.email)) {
+      const u = await fetch(`${authApi}/accounts:update`, {
+        method: "POST",
+        headers: owner,
+        body: JSON.stringify({ localId: a.email, password: a.password }),
+      });
+      if (!u.ok)
+        abort(
+          `Test account ${a.role}: cédula not in the seed (${u.status}); run without --no-reset`,
+        );
+      console.log(`  = test account: role ${a.role} (seed)`);
+      continue;
+    }
     const r = await fetch(`${authApi}/accounts`, {
       method: "POST",
       headers: owner,

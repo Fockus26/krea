@@ -27,7 +27,7 @@ const SALIR_CLASE =
  * al botón Menú. Cada enlace envuelve un `SheetClose` para que la hoja se cierre al navegar.
  * `compacto`: solo el ícono (44 × 44, "Menú" queda como nombre accesible), como el botón de los
  * lienzos; lo usa la topbar con el chip «En vivo», que a 320 no cabe con el texto (D128).
- * `onSignOut` lo cablea la fase 07 (sesión real); mientras, `salirHref` lleva a /ingresar (D135).
+ * `salirHref` lleva a /salir, que cierra la sesión real (D182); `onSignOut` queda para acciones extra.
  */
 export function MenuSheet({
   pathname,

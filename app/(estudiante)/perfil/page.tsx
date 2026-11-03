@@ -31,7 +31,7 @@ export default function PerfilPage() {
         base={p.seed}
       />
       <AppearanceSettings />
-      <SecuritySettings salirHref="/ingresar" />
+      <SecuritySettings salirHref="/salir" />
     </>
   );
 }
