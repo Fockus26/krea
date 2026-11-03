@@ -5,8 +5,8 @@
 | Iniciar sesión | /ingresar | LoginCard | Done (F05 W3) | `app/(auth)/ingresar/page.tsx` (D134) |
 | Olvidé mi contraseña | /recuperar | RecoverForm, RecoverSent | Done (F05 W3) | `app/(auth)/recuperar/{,enviado,nueva}/page.tsx` (D134) |
 | Inicio estudiante | / | HomeGrid: PageHeader, PointsCard, RecentGrades, PendingTasks, TeamSummary | Done (F05 W2) | `app/(estudiante)/page.tsx`; shell en `app/(estudiante)/layout.tsx` (D128–D131) |
-| Mis notas | /notas | GradeList | Pending | |
-| Detalle de nota | /notas/[tareaId] | GradeBreakdownHeader, QuestionResult ×n | Pending | |
+| Mis notas | /notas | GradesList, GradeLegend | Done (F05 ola 2) | `app/(estudiante)/notas/page.tsx` |
+| Detalle de nota | /notas/[tarea] | GradeSummary, QuestionList | Done (F05 ola 2) | una página por tarea; solo Identidad trae detalle (D136) |
 | Tareas / entregar | /tareas, /tareas/[tareaId] | TaskList, SubmissionForm | Pending | grupal: solo capitán envía |
 | Mi equipo | /equipo | TeamHeader, Members, TeamGrades, Prize | Pending | |
 | Ranking | /ranking | RankingTabs, Podium, RankingList | Pending | en vivo |

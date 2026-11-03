@@ -100,3 +100,4 @@
 | 96 | Títulos de reserva de la topbar cuando falta el dato: «Mis notas», «Tareas», «Evaluar entrega» | `lib/topbar.ts` | orchestrate F05 W2 | 05 | Provisional |
 | 97 | Ítem «Perfil» en la hoja Menú del profe (el handoff solo pone Tareas, Equipos y Premios) | `lib/nav.ts` | orchestrate F05 W2 | 05 | Provisional — confirmar con César |
 | 98 | Título «Ingresar» y descripción «Entra al portal de notas de la Escuela Creativa con tu cédula y tu contraseña.» de `/ingresar` | `app/(auth)/ingresar/page.tsx` | orchestrate F05 W3 | 05 | Provisional |
+| 100 | «Todavía no hay detalle de esta nota» / «Cuando tu profe evalúe la tarea, aquí verás cómo salió cada pregunta.» y título de `/notas/[tarea]` («Nota · {tarea}») | `app/(estudiante)/notas/[tarea]/page.tsx` | orchestrate F05 ola 2 (notas) | 05 | Provisional |
