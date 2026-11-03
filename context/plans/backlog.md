@@ -16,3 +16,7 @@
 - (F04 ola 4, W3) `NumberStepper` para rangos con signo: desde `null` el primer +/− parte de `min` (−20); `aria-valuetext` no personalizable («2», no «más 2 puntos») y negativo con «-» en vez de «−». Propuesta: props `formatValueText` / `signed`. Puntos lo rodea hoy por fuera.
 - (F04 ola 4, W3) `Alert`: ícono fijo por variante y `role="alert"` en err; Puntos usa `alertVariants` sobre un span para TrendingUp + `role="status"`. Valorar prop `icon` y `role`.
 - (F04 ola 4, W3) Combobox de Puntos: `aria-controls` apunta a un listbox no montado mientras está cerrado (portal): confirmar con axe en el QA final.
+- (F05 ola 1, W2) Contraste de la tarjeta de puntos de Inicio: axe marca el desglose (13 px) y el chip translúcido sobre `--accent` + círculos `--splash` a 4,1:1 y 4,26:1 (pasa en azul claro). Decisión de diseño de la fase 04: escalar a César. **Alta.**
+- (F05 ola 1, W2) Avatar de la topbar sin imagen (DiceBear no carga) muestra «YD» y axe marca `label-content-name-mismatch` contra «Tu perfil». Baja.
+- (F05 ola 1, W2) Constructor a 320 px: con volver + «Guardar borrador» el título «Nueva tarea» se trunca a ~78 px. Baja (fase 08).
+- (F05 ola 1, W2) Ranking móvil: el lienzo quita el avatar/Menú junto al chip «En vivo»; hoy se quedan (Menú solo ícono). Confirmar con César. Baja.

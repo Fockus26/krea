@@ -1,0 +1,2 @@
+# feat/pag-auth (fase 05, ola 1, W3)
+`app/(auth)/` con `/ingresar` (indexable, canonical, JSON-LD WebPage), `/recuperar`, `/recuperar/enviado`, `/recuperar/nueva` (noindex), enlazadas con rutas reales. `RecoverForm` gana `enviadoHref`; «Cerrar sesión» del Menú del profe enlaza a `/ingresar` (`salirHref`). D134–D135. Verificado: build, check:paginas (6 páginas), typecheck, lint, 520 tests. Sin servidor ni capturas.

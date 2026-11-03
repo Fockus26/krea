@@ -5,15 +5,20 @@
 
 ## Now
 
-**Phase:** 05 — Páginas · **Ola:** sin empezar (se divide en olas con `orchestrate` §0) · **Track:** Product
-**Fase 04 cerrada el 2026-10-30** (#20–#34, main @ 7146ff6; plan `context/plans/phase-04-secciones.md`, notas en «Para la fase 05»).
-**Sin QA hasta el final del proyecto** (César, 2026-10-29). Pool wt1–wt5 libre.
+**Phase:** 05 — Páginas · **Ola:** 1 de 3 cerrada (2026-11-03) · siguiente: ola 2 (páginas del estudiante) · **Track:** Product
+Plan: `context/plans/phase-05-paginas.md` (notas «Para la ola 2 y la 3») · main @ 11ba253
+**Sin QA hasta el final** (César, 2026-10-29) · **sin servidor, solo build** (César, 2026-11-03).
 
 | Unit | Branch | Status |
 |---|---|---|
-| Fase 04 · olas 1–4 (todas las secciones en `/secciones/*`) | varias | merged (#20–#34) |
+| W1 fix segmentados (tema/acento colapsados) | #35 | merged (b793c77) |
+| W2 shell por rol + `/` y `/profe` | #36 | merged (8a57c4b) |
+| W3 ingresar y recuperar | #37 | merged (11ba253) |
 
 ## Blocked (actions for César or external)
+
+- Contraste de la tarjeta de puntos de Inicio (axe: 4,1:1 y 4,26:1 en desglose y chip, fase 04): decisión de diseño de César (backlog, alta).
+- Perfil en la hoja Menú del profe (fila 97) y avatar/Menú junto al chip «En vivo» en Ranking móvil: confirmar.
 
 - Género del capitán: el seed no lo trae; hoy «Capitán» por defecto (D075). ¿Campo editable por el profe o texto neutro?
 - Enunciados de «Identidad de marca» sin tildes en el Excel (fila 64): ¿corregir en el Excel o en el import?
@@ -29,8 +34,7 @@
 
 ## Next
 
-- Fase 05 (páginas), en otra sesión: `/orchestrate fase 05 (páginas). Fase: phases/05-PAGES.md · notas en «Para la fase 05» de context/plans/phase-04-secciones.md`
-- Fase 05: topbar móvil (chip «En vivo», X de Evaluar), Toaster global sin tapar la `ActionBar` (backlog).
+- Ola 2 de la fase 05, en otra sesión: `/orchestrate ola 2 de la fase 05. Plan: context/plans/phase-05-paginas.md`
 - Fase 07: esquema Firestore desde `data/seed/` + reglas de seguridad por rol.
 
 ## Phases
