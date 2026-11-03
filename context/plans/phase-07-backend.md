@@ -11,7 +11,7 @@
 
 | # | Unidad · qué | Estado |
 |---|---|---|
-| W1 | Modelo de datos y conexión: `lib/modelo.ts` (zod), `lib/ranking-datos.ts`, seed del emulador, reglas de Firestore + pruebas (job `rules` en CI), clientes `lib/firebase/*`, `.env.example` (D174–D177) | en curso |
+| W1 | Modelo de datos y conexión: `lib/modelo.ts` (zod), `lib/ranking-datos.ts`, seed del emulador, reglas de Firestore + pruebas (job `rules` en CI), clientes `lib/firebase/*`, `.env.example` (D174–D177) | cerrada (#48) |
 | W2 | Auth: login con cédula (email interno, D008), cookie de sesión `httpOnly` (session cookie del Admin SDK), `proxy`/layout que protege `/(estudiante)` y `/profe` en el servidor, logout, límite de intentos (`bloqueado`). `qa-local`: claims `rol/seccion/equipoId` y doc `usuarios` para las cuentas de prueba (`assignRoleFirebase`) · **functional-qa** | pendiente |
 | W3 | Recuperar contraseña: busca `privados/{cedula}.email`, enlace de Firebase Auth (D009; plantilla en la consola si se deja, si no Admin SDK + Brevo); misma respuesta exista o no la cédula · **functional-qa** | pendiente |
 | W4 | Lecturas del estudiante: Inicio, Notas, detalle, Equipo, Ranking en vivo (`onSnapshot` de `ranking/{seccion}`, D011), Perfil (avatar/tema/acento al perfil, D015) — reemplaza `lib/demo/*` por Firestore | pendiente |

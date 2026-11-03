@@ -6,13 +6,13 @@
 ## Now
 
 **Phase:** 07 — Backend · en curso (2026-11-03) · fase 06 cerrada (D173) · **Track:** Product
-Plan: `context/plans/phase-07-backend.md` · main @ 03c6178
+Plan: `context/plans/phase-07-backend.md` · main @ 27bd040
 **Sin QA hasta el final** (César, 2026-10-29) · **sin servidor, solo build** (César, 2026-11-03).
 
 | Unit | Branch | Status |
 |---|---|---|
 | Fases 05–06 completas | #35–#47 | merged (03c6178) |
-| W1 modelo de datos, reglas y emuladores (D174–D177) | claude/sharp-cerf-ti1n25 | PR |
+| W1 modelo de datos, reglas y emuladores (D174–D177) | #48 | merged (27bd040) |
 | W2–W8 (auth, recuperar, lecturas, entregas, tareas, evaluar, gestión) | — | pendiente (ver plan) |
 
 ## Blocked (actions for César or external)
