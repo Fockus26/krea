@@ -20,3 +20,6 @@
 - (F05 ola 1, W2) Avatar de la topbar sin imagen (DiceBear no carga) muestra «YD» y axe marca `label-content-name-mismatch` contra «Tu perfil». Baja.
 - (F05 ola 1, W2) Constructor a 320 px: con volver + «Guardar borrador» el título «Nueva tarea» se trunca a ~78 px. Baja (fase 08).
 - (F05 ola 1, W2) Ranking móvil: el lienzo quita el avatar/Menú junto al chip «En vivo»; hoy se quedan (Menú solo ícono). Confirmar con César. Baja.
+
+- (F05 ola 2, media) `/tareas/[tarea]` evaluadas: sin respuestas ni fecha de entrega reales (fila 103); el «no capitán» solo se ve en `/secciones/tareas` hasta la fase 07.
+- (F05 ola 2, baja) Detalle de nota: solo «Identidad de marca» tiene detalle (D136, fila 100).

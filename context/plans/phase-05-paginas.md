@@ -39,9 +39,9 @@
 | 1 | `fix/segmentado-container` · bug de César: `@container` solo en modo `block` de `ToggleGroup` y `Tabs` segmentado; barrido de la clase; script de medida versionado · `components/ui/toggle-group.tsx`, `components/ui/tabs.tsx`, `scripts/qa/` | — | cerrada (#35) |
 | 1 | `feat/pag-shell` · grupos de rutas + layouts por rol, topbar por ruta (`lib/topbar.ts`), slot de acción en la topbar, Toaster global con offset sobre la `ActionBar`, nav del profe (`/profe/ranking`, `/profe/perfil`), páginas `/` (Inicio) y `/profe` (Panel), `check:paginas` · `app/(estudiante)/`, `app/(profesor)/profe/`, `components/layout/*`, `lib/topbar.ts`, `lib/nav.ts`, `scripts/qa/paginas.mjs` | W1 | cerrada (#36) |
 | 1 | `feat/pag-auth` · `/ingresar`, `/recuperar`, `/recuperar/enviado`, `/recuperar/nueva` (indexable solo `/ingresar`) · `app/(auth)/` | W2 | cerrada (#37) |
-| 2 | `feat/pag-notas` · `/notas`, `/notas/[tarea]` | ola 1 | pendiente |
-| 2 | `feat/pag-tareas` · `/tareas`, `/tareas/[tarea]` (capitán / no capitán / individual / entregada según los datos) | ola 1 | pendiente |
-| 2 | `feat/pag-equipo-ranking-perfil` · `/equipo`, `/ranking` (chip «En vivo» en la topbar móvil), `/perfil` | ola 1 | pendiente |
+| 2 | `feat/pag-notas` · `/notas`, `/notas/[tarea]` | ola 1 | cerrada (#38) |
+| 2 | `feat/pag-tareas` · `/tareas`, `/tareas/[tarea]` (capitán / no capitán / individual / entregada según los datos) | ola 1 | cerrada (#39) |
+| 2 | `feat/pag-equipo-ranking-perfil` · `/equipo`, `/ranking` (chip «En vivo» en la topbar móvil), `/perfil` | ola 1 | cerrada (#40) |
 | 3 | `feat/pag-profe-evaluar` · `/profe/evaluar` (redirige a la primera entrega de la cola, vacío si no hay), `/profe/evaluar/[entrega]` (X + «Entrega n de m» en la topbar móvil, Toaster global en vez del local) | ola 1 | pendiente |
 | 3 | `feat/pag-profe-tareas` · `/profe/tareas`, `/profe/tareas/nueva`, `/profe/tareas/[id]` (sin barra inferior, «Guardar borrador» en la topbar) + alinear ids de `COLA` y `TAREAS` | ola 1 | pendiente |
 | 3 | `feat/pag-profe-gestion` · `/profe/alumnos`, `/profe/equipos`, `/profe/puntos`, `/profe/premios`, `/profe/ranking`, `/profe/perfil` + cierre de la fase (`PAGE_INVENTORY`, `seo` modo página, `check:paginas` en verde sobre todas) | ola 1 (y las otras dos de la ola 3, va última) | pendiente |
@@ -81,8 +81,9 @@ Reglas de reparto:
 - Verificación sin servidor: Playwright sirviendo `.next/server/app/*.html` + `/_next/static` con `page.route` (receta
   en `.qa/a11y-paginas.mjs` de W2 no está versionada: rehacerla o versionarla en `scripts/qa/`).
 
-## Ola actual: 2 (siguiente sesión)
+## Ola actual: 3 (siguiente sesión)
 
+- Ola 2 (cloud, en serie, sin brief aparte): #38 notas · #39 tareas · #40 equipo/ranking/perfil — merged. D136, D140, D144; filas 100 y 103.
 - Ola 1: brief y prompts en `context/plans/orchestration-2026-11-03-f05-ola1.md` / `…-prompts.md`
 - PRs ola 1: #35 W1 segmentados · #36 W2 shell · #37 W3 auth — merged
 - QA: no aplica (César: QA solo al final)
@@ -93,8 +94,18 @@ Reglas de reparto:
 |---|---|---|---|---|
 | 1 | #35 segmentados (bug de César), #36 shell por rol + `/` y `/profe`, #37 ingresar y recuperar (cloud, en serie) | no aplica (César: QA solo al final) | notas de «Para la ola 2 y la 3»; backlog: contraste de la tarjeta de puntos (alta, a César), ids Panel ≠ `COLA` (ola 3) | ninguno |
 
+| 2 | #38 notas (D136), #39 tareas (D140), #40 equipo, ranking y perfil (D144) (cloud, en serie) | no aplica (César: QA solo al final) | notas abajo; backlog: ver `backlog.md` | ninguno |
+
+### Para la ola 3 (lo dejó la ola 2)
+
+- `check:paginas` ya ignora el esqueleto `[param].html` del prerender parcial (cacheComponents); las rutas dinámicas se comprueban por sus páginas de `generateStaticParams`. Quedan en `RUTAS_PLANIFICADAS` solo las 11 del profe.
+- Patrón de rutas dinámicas: `generateStaticParams` desde `lib/demo/*`, `generateMetadata` async, `notFound()`; los enlaces de las listas apuntan a todos los ids, así que cada id debe tener página (aviso vacío si falta dato, D136).
+- `titulosTopbar` usa los ids de `TAREAS`/`COLA`: las rutas dinámicas del profe deben usar esos mismos (alinear `COLA`/`ENTREGAS_PANEL`).
+- Secciones con modo por datos: `modoDe()` en `lib/demo/entrega.ts` (D140). Ranking del estudiante: `/ranking` + `/ranking/equipos` (D144); para el profe `/profe/ranking` tiene 6 estados (`estadoSlug`, 5A/5C): usar subrutas o `?`-less rutas como D144.
+- Reservado ola 3: D148–D159, filas 109–117 (la ola 2 usó solo D136, D140, D144 y filas 100, 103; D137–139, D141–143, D145–147 y filas 101–102, 104–108 quedan libres).
+
 ## Prompt de inicio de la siguiente ola
 
 ```
-/orchestrate ola 2 de la fase 05. Plan: context/plans/phase-05-paginas.md
+/orchestrate ola 3 de la fase 05. Plan: context/plans/phase-05-paginas.md
 ```

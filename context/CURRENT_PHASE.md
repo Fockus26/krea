@@ -5,8 +5,8 @@
 
 ## Now
 
-**Phase:** 05 — Páginas · **Ola:** 1 de 3 cerrada (2026-11-03) · siguiente: ola 2 (páginas del estudiante) · **Track:** Product
-Plan: `context/plans/phase-05-paginas.md` (notas «Para la ola 2 y la 3») · main @ 11ba253
+**Phase:** 05 — Páginas · **Ola:** 2 de 3 cerrada (2026-11-03) · siguiente: ola 3 (páginas del profesor) · **Track:** Product
+Plan: `context/plans/phase-05-paginas.md` (notas «Para la ola 2 y la 3») · main @ 3b61ea3
 **Sin QA hasta el final** (César, 2026-10-29) · **sin servidor, solo build** (César, 2026-11-03).
 
 | Unit | Branch | Status |
@@ -14,6 +14,7 @@ Plan: `context/plans/phase-05-paginas.md` (notas «Para la ola 2 y la 3») · ma
 | W1 fix segmentados (tema/acento colapsados) | #35 | merged (b793c77) |
 | W2 shell por rol + `/` y `/profe` | #36 | merged (8a57c4b) |
 | W3 ingresar y recuperar | #37 | merged (11ba253) |
+| Ola 2 notas · tareas · equipo/ranking/perfil | #38 #39 #40 | merged (3b61ea3) |
 
 ## Blocked (actions for César or external)
 
@@ -34,7 +35,7 @@ Plan: `context/plans/phase-05-paginas.md` (notas «Para la ola 2 y la 3») · ma
 
 ## Next
 
-- Ola 2 de la fase 05, en otra sesión: `/orchestrate ola 2 de la fase 05. Plan: context/plans/phase-05-paginas.md`
+- Ola 3 de la fase 05, en otra sesión: `/orchestrate ola 3 de la fase 05. Plan: context/plans/phase-05-paginas.md`
 - Fase 07: esquema Firestore desde `data/seed/` + reglas de seguridad por rol.
 
 ## Phases
