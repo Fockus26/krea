@@ -30,7 +30,7 @@ Plan: `context/plans/phase-07-backend.md` · main @ f3a8d6d
 - Empate en la mejor nota de una tarea con premio (HANDOFF §9 #3): al estudiante no se le muestra ganador (D086, fila 69); el profe da el premio o lo comparte (D123–D124, «Compartido» provisional, fila 96).
 - Seed de 5C sin notas evaluadas: ranking 5C todo empatado en 0. ¿Datos de ejemplo para 5C o esperar a datos reales?
 - HANDOFF §9 restantes (#3–#12: empates de premio, borrador compartido, entrega tardía…): se preguntan al llegar a su fase.
-- Firebase `krea-d22f7` creado (Auth + Firestore, plan Spark, sin Storage); reglas de Firestore publicadas 2026-11-04. **Rotar la clave de la cuenta de servicio** (se pegó en el chat). Archivos → Backblaze B2 (registrar decisión en W5; variables `B2_*` pendientes en Vercel y en la nube).
+- Firebase `krea-d22f7` creado (Auth + Firestore, plan Spark, sin Storage); reglas de Firestore publicadas y seed cargado (69 usuarios, 12 equipos, 2 tareas, 18 entregas, 3 ajustes, ranking 5A/5C; sin cuentas de Auth) 2026-11-04. Falta: contraseña inicial de los alumnos y datos del profesor real. **Rotar la clave de la cuenta de servicio** (se pegó en el chat). Archivos → Backblaze B2 (registrar decisión en W5; variables `B2_*` pendientes en Vercel y en la nube).
 - Emails reales de los estudiantes para "Olvidé mi contraseña" (checklist #3).
 - Confirmar: indexación solo `/ingresar` (D023, provisional) y descripción de metadata (fila 22).
 - Fijar `NEXT_PUBLIC_SITE_URL` en Vercel cuando haya dominio (fila 21).
