@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, type ReactNode, useState } from "react";
 import { CedulaInput } from "@/components/krea/cedula-input";
 import { PasswordInput } from "@/components/krea/password-input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -15,16 +15,19 @@ import { focusPrimerInvalido } from "./focus-invalid";
 /**
  * Ingresar (HANDOFF §3). Valida al enviar (cédula 7–9 dígitos, contraseña no vacía) y entrega
  * los datos a `onSubmit`; la fase 07 conecta Firebase Auth (D008). `error` es la respuesta del
- * servidor: alerta sobre el botón que no dice cuál de los dos campos falló.
+ * servidor: alerta sobre el botón que no dice cuál de los dos campos falló. `aviso`: hueco sobre
+ * el formulario (p. ej. «tu contraseña cambió», D188).
  */
 export function LoginForm({
   recuperarHref,
   error,
   pending = false,
+  aviso,
   onSubmit,
 }: {
   recuperarHref: string;
   error?: ErrorIngreso;
+  aviso?: ReactNode;
   pending?: boolean;
   onSubmit?: (datos: { cedula: string; password: string }) => void;
 }) {
@@ -50,6 +53,7 @@ export function LoginForm({
       <AuthHeading eyebrow="Escuela Creativa · 5.º año" title="¡Hola de nuevo!">
         Entra con tu cédula y la contraseña que te dio tu profe.
       </AuthHeading>
+      {aviso}
       <form noValidate onSubmit={enviar} className="flex flex-col gap-5">
         <Field
           label="Cédula"

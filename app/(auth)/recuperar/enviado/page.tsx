@@ -1,17 +1,10 @@
-import type { Metadata } from "next";
-import { AuthLayout } from "@/components/sections/auth/auth-layout";
-import { RecoverSent } from "@/components/sections/auth/recover-sent";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Revisa tu correo",
-  robots: { index: false, follow: false },
-};
-
+/**
+ * «Revisa tu correo» ya no es una ruta (D186): se muestra en /recuperar tras pedir el enlace,
+ * que es quien conoce la cédula para «Reenviar enlace». La pantalla sigue en
+ * /secciones/ingresar/enviado.
+ */
 export default function RecuperarEnviadoPage() {
-  return (
-    <AuthLayout>
-      {/* PLACEHOLDER: correo de ejemplo (CONTENT_CHECKLIST fila 3: faltan los reales). La fase 07 pone el del alumno. */}
-      <RecoverSent email="yeilin@gmail.com" volverHref="/ingresar" />
-    </AuthLayout>
-  );
+  redirect("/recuperar");
 }

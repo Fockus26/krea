@@ -6,12 +6,14 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { REENVIO_SEGUNDOS, reenviarTexto } from "@/lib/auth";
 import { maskEmail } from "@/lib/mask";
+import { ENVIADO_GENERICO } from "@/lib/recuperar";
 import { AuthHeading } from "./auth-heading";
 
 /**
  * "Revisa tu correo" (HANDOFF §3): correo enmascarado (primera letra + 4 puntos + dominio), dos
  * consejos y "Reenviar enlace" deshabilitado con cuenta regresiva de 60 s. La cuenta no se
- * anuncia segundo a segundo: el texto del botón cambia y se lee al enfocarlo.
+ * anuncia segundo a segundo: el texto del botón cambia y se lee al enfocarlo. Sin `email` (la app
+ * real, D186) no dice a qué correo fue ni si la cédula tiene cuenta.
  */
 export function RecoverSent({
   email,
@@ -19,8 +21,8 @@ export function RecoverSent({
   segundos = REENVIO_SEGUNDOS,
   onReenviar,
 }: {
-  /** Correo completo: aquí se enmascara. */
-  email: string;
+  /** Correo completo: aquí se enmascara. Sin él, el texto genérico (D186). */
+  email?: string;
   volverHref: string;
   /** Segundos de espera al montar (60). */
   segundos?: number;
@@ -45,9 +47,16 @@ export function RecoverSent({
         <Mail aria-hidden="true" className="size-8" />
       </span>
       <AuthHeading title="Revisa tu correo">
-        Enviamos un enlace a{" "}
-        <strong className="text-text">{maskEmail(email)}</strong>. Vence en{" "}
-        <strong className="text-text">1 hora</strong> y sirve una sola vez.
+        {email ? (
+          <>
+            Enviamos un enlace a{" "}
+            <strong className="text-text">{maskEmail(email)}</strong>.
+          </>
+        ) : (
+          ENVIADO_GENERICO
+        )}{" "}
+        Vence en <strong className="text-text">1 hora</strong> y sirve una sola
+        vez.
       </AuthHeading>
       <ul className="text-body flex flex-col gap-2 text-text">
         <li className="flex items-start gap-2">

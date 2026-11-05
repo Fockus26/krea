@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { CedulaInput } from "@/components/krea/cedula-input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { validateCedula } from "@/lib/cedula";
@@ -13,24 +14,27 @@ import { VolverLink } from "./volver-link";
 /**
  * Recuperar contraseña (HANDOFF §3): cédula y "Enviar enlace". Valida al enviar; `onSubmit`
  * recibe la cédula (la fase 07 genera el enlace con el Admin SDK, §9 #9). La respuesta no dice
- * si la cédula existe: la pantalla siguiente es siempre "Revisa tu correo".
+ * si la cédula existe: la pantalla siguiente es siempre "Revisa tu correo". `error`: el pedido no
+ * llegó al servidor (red), alerta sobre el botón.
  */
 export function RecoverForm({
   volverHref,
   enviadoHref,
   pending = false,
+  error,
   onSubmit,
 }: {
   volverHref: string;
   /** Pantalla a la que pasa tras validar (D134); sin ella solo llama a `onSubmit`. */
   enviadoHref?: string;
   pending?: boolean;
+  error?: string | null;
   onSubmit?: (cedula: string) => void;
 }) {
   const [cedula, setCedula] = useState("");
   const [enviado, setEnviado] = useState(false);
   const router = useRouter();
-  const error = enviado ? validateCedula(cedula) : null;
+  const errorCedula = enviado ? validateCedula(cedula) : null;
 
   function enviar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -51,7 +55,7 @@ export function RecoverForm({
         registrado.
       </AuthHeading>
       <form noValidate onSubmit={enviar} className="flex flex-col gap-5">
-        <Field label="Cédula" error={error} announce={false}>
+        <Field label="Cédula" error={errorCedula} announce={false}>
           <CedulaInput
             name="cedula"
             placeholder="Ej. 33272397"
@@ -59,6 +63,11 @@ export function RecoverForm({
             onChange={(e) => setCedula(e.currentTarget.value)}
           />
         </Field>
+        {error ? (
+          <Alert variant="err">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        ) : null}
         <Button
           type="submit"
           size="lg"

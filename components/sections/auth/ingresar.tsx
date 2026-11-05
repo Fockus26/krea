@@ -3,11 +3,12 @@
 // interno, y el idToken se cambia en el servidor por la cookie de sesión httpOnly.
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { Suspense, useState, useTransition } from "react";
 import { iniciarSesion } from "@/lib/acciones/sesion";
 import { type ErrorIngreso, errorIngresoDeCodigo } from "@/lib/auth";
 import { firebaseCliente } from "@/lib/firebase/cliente";
 import { emailInterno } from "@/lib/modelo";
+import { AvisoIngreso } from "./aviso-ingreso";
 import { LoginForm } from "./login-form";
 
 export function Ingresar({ recuperarHref }: { recuperarHref: string }) {
@@ -47,6 +48,11 @@ export function Ingresar({ recuperarHref }: { recuperarHref: string }) {
       recuperarHref={recuperarHref}
       error={error}
       pending={pending}
+      aviso={
+        <Suspense fallback={null}>
+          <AvisoIngreso />
+        </Suspense>
+      }
       onSubmit={entrar}
     />
   );
