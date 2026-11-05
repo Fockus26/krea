@@ -14,10 +14,12 @@ Plan: `context/plans/phase-07-backend.md` · main @ f3a8d6d
 | Fases 05–06 completas | #35–#47 | merged (03c6178) |
 | W1 modelo de datos, reglas y emuladores (D174–D177) | #48 | merged (27bd040) |
 | W2 login, sesión, protección y salir (D180–D183) | #49 | merged (f3a8d6d) |
-| W3–W8 (recuperar, lecturas, entregas, tareas, evaluar, gestión) | — | pendiente (ver plan) |
+| W4 lecturas del estudiante, ranking en vivo, Perfil (D189–D193) | claude/dreamy-babbage-vloz3y | PR abierto |
+| W3, W5–W8 (recuperar, entregas, tareas, evaluar, gestión) | — | pendiente (ver plan) |
 
 ## Blocked (actions for César or external)
 
+- QA pendiente: W4 — pantallas del estudiante con datos (emuladores, axe), ranking en vivo en dos navegadores, cambio de contraseña (revoca y reabre). Fase 09.
 - QA pendiente: login/sesión/salir (functional-qa + axe de /ingresar y /salir) — sin servidor por decisión de César; probado contra los emuladores (cookie, revocación, reglas). Fase 09.
 - Galerías `/secciones`, `/componentes`, `/estados` públicas con nombres y notas reales del seed (D181): ¿bloquearlas ya o en la fase 09?
 

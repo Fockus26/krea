@@ -14,7 +14,7 @@
 | W1 | Modelo de datos y conexión: `lib/modelo.ts` (zod), `lib/ranking-datos.ts`, seed del emulador, reglas de Firestore + pruebas (job `rules` en CI), clientes `lib/firebase/*`, `.env.example` (D174–D177) | cerrada (#48) |
 | W2 | Auth: login con cédula (email interno, D008), cookie de sesión `httpOnly` (session cookie del Admin SDK), `proxy`/layout que protege `/(estudiante)` y `/profe` en el servidor, logout, límite de intentos (`bloqueado`). `qa-local`: claims `rol/seccion/equipoId` y doc `usuarios` para las cuentas de prueba (`assignRoleFirebase`) · **functional-qa** | cerrada (#49) |
 | W3 | Recuperar contraseña: busca `privados/{cedula}.email`, enlace de Firebase Auth (D009; plantilla en la consola si se deja, si no Admin SDK + Brevo); misma respuesta exista o no la cédula · **functional-qa** | pendiente |
-| W4 | Lecturas del estudiante: Inicio, Notas, detalle, Equipo, Ranking en vivo (`onSnapshot` de `ranking/{seccion}`, D011), Perfil (avatar/tema/acento al perfil, D015) — reemplaza `lib/demo/*` por Firestore | pendiente |
+| W4 | Lecturas del estudiante: Inicio, Notas, detalle, Equipo, Ranking en vivo (`onSnapshot` de `ranking/{seccion}`, D011), Perfil (avatar/tema/acento al perfil, D015) — reemplaza `lib/demo/*` por Firestore | PR abierto (D189–D193) |
 | W5 | Entregas: borrador local + enviar (individual; grupal solo el capitán, D012), respuestas en imagen a Storage (abrir `storage.rules`) · **functional-qa** | pendiente |
 | W6 | Profesor — tareas: constructor (borrador, publicar con suma 20), cerrar; premios (D123–D124) | pendiente |
 | W7 | Profesor — evaluar (puntos por pregunta en pasos de 0,5, comentario, recalcular ranking en transacción) y ajustes de puntos con motivo + anulación (D007, D121) · **functional-qa** | pendiente |
@@ -27,6 +27,11 @@
 | W1 | D174–D179 | 121–122 |
 | W2 | D180–D184 | 123–124 |
 | W3 | D185–D188 | 125–126 |
+| W4 | D189–D193 | 127–128 |
+| W5 | D194–D198 | 129–130 |
+| W6 | D199–D203 | 131–132 |
+| W7 | D204–D208 | 133–134 |
+| W8 | D209–D213 | 135–136 |
 
 ## Para las siguientes (lo deja W1)
 
@@ -47,3 +52,14 @@
 - Los shells aún muestran `USUARIO_ESTUDIANTE`/`USUARIO_PROFESOR` de ejemplo: W4 los cambia por el
   usuario de la sesión (con `<Suspense>`: `cacheComponents` está activo).
 - Pruebas que necesitan Auth: `tests/rules/` (corren con `--only auth,firestore`).
+
+## Para las siguientes (lo deja W4)
+
+- Lecturas del estudiante: `lib/datos/estudiante.ts` (Admin SDK, `cache()`); mapeo puro en
+  `lib/vistas-estudiante.ts`. `/tareas` (W5) sigue en demo: los «Por entregar» de Inicio ya enlazan
+  a `/tareas/<id real>`, que hoy da 404 hasta W5.
+- `ranking/{seccion}.alumnos.*.semilla` existe (D191): `calcularRanking` la escribe; quien recalcule
+  (W6–W8) no tiene que hacer nada más. Logos de equipo en el ranking: `src: null` hasta W8.
+- `apariencia` opcional en `usuarios` (D191). `SecuritySettings.onCambiar` es async y devuelve el
+  error (D192): el Perfil del profe puede reutilizar `SeguridadConectada` y las acciones de Perfil
+  (no exigen rol).
