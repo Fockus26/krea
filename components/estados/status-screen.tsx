@@ -3,8 +3,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Logo } from "@/components/krea/logo";
 import { UserAvatar } from "@/components/krea/user-avatar";
+import type { NavUsuario } from "@/components/layout/nav-types";
 import { Button } from "@/components/ui/button";
-import { USUARIO_ESTUDIANTE, USUARIO_PROFESOR } from "@/lib/demo/usuarios";
 import { inicioDe, type SesionEstado } from "@/lib/estados";
 import { perfilHref } from "@/lib/nav";
 
@@ -15,10 +15,19 @@ import { perfilHref } from "@/lib/nav";
  * alineada a la izquierda, máx. 640, centrada en vertical, padding 40 24 (32 20 móvil), gap 16:
  * código grande (`aria-hidden`) o burbuja de ícono 72 · eyebrow · h1 · línea · extra · acciones.
  * Sin barras de navegación. Pone su propio `<main id="contenido">` (no vive dentro del shell).
- * El usuario de la cabecera es el de ejemplo hasta la fase 07 (D160).
+ * El usuario de la cabecera es el de la sesión real (D213); sin él (perfil ilegible o aún sin
+ * leer), el avatar genérico del rol.
  */
+/** Avatar genérico mientras no hay usuario (mismo estilo para todos: no identifica a nadie). */
+const SIN_USUARIO: NavUsuario = {
+  nombre: "Tu perfil",
+  estilo: "bottts-neutral",
+  seed: "krea",
+};
+
 export function StatusScreen({
   sesion,
+  usuario: usuarioSesion,
   codigo,
   icono: Icono,
   eyebrow,
@@ -28,6 +37,8 @@ export function StatusScreen({
   acciones,
 }: {
   sesion: SesionEstado;
+  /** Usuario de la cabecera (con sesión). */
+  usuario?: NavUsuario | null;
   /** «404» / «500»: número grande decorativo. Sin él, `icono` en burbuja. */
   codigo?: string;
   icono?: LucideIcon;
@@ -38,7 +49,7 @@ export function StatusScreen({
   /** Botones ya armados con `accionesEstadoClases` (fila; en móvil apilados `lg block`). */
   acciones: ReactNode;
 }) {
-  const usuario = sesion === "profesor" ? USUARIO_PROFESOR : USUARIO_ESTUDIANTE;
+  const usuario = usuarioSesion ?? SIN_USUARIO;
   return (
     <div
       data-slot="status-screen"

@@ -8,7 +8,11 @@ import { RecentGrades } from "@/components/sections/inicio/recent-grades";
 import { TeamSummary } from "@/components/sections/inicio/team-summary";
 import { PageHeader } from "@/components/sections/shared/page-header";
 import { Card } from "@/components/ui/card";
-import { datosAlumno, integrantesDe } from "@/lib/datos/estudiante";
+import {
+  datosAlumno,
+  integrantesDe,
+  logoDeEquipo,
+} from "@/lib/datos/estudiante";
 import { inicioVista } from "@/lib/vistas-estudiante";
 
 export const metadata: Metadata = { title: "Inicio" };
@@ -17,7 +21,10 @@ export const metadata: Metadata = { title: "Inicio" };
 // sesión (Firestore, D189). La carga la cubre `loading.tsx` (Suspense).
 export default async function InicioPage() {
   const datos = await datosAlumno();
-  const companeros = datos.equipo ? await integrantesDe(datos.equipo.id) : [];
+  const [companeros, logo] = await Promise.all([
+    datos.equipo ? integrantesDe(datos.equipo.id) : [],
+    logoDeEquipo(datos.equipo),
+  ]);
   const d = inicioVista(datos, companeros);
   return (
     <HomeGrid
@@ -51,7 +58,12 @@ export default async function InicioPage() {
         />
       }
       pendientes={<PendingTasks filas={d.pendientes} />}
-      equipo={<TeamSummary equipo={d.equipo} equipoHref="/equipo" />}
+      equipo={
+        <TeamSummary
+          equipo={d.equipo && { ...d.equipo, logo }}
+          equipoHref="/equipo"
+        />
+      }
     />
   );
 }

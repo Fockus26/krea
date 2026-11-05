@@ -3,13 +3,13 @@
 import { Send } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, useTransition } from "react";
+import { ErrorEnPantalla } from "@/components/estados/errores";
 import type {
   ImageUploadFile,
   ImageUploadStatus,
 } from "@/components/krea/image-upload";
 import { QuestionCardAnswer } from "@/components/krea/question-card-answer";
 import { ActionBar } from "@/components/sections/shared/action-bar";
-import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -342,7 +342,12 @@ export function TaskAnswerForm({
       </section>
       {bloqueadaPor ? null : (
         <>
-          {error ? <Alert variant="err">{error}</Alert> : null}
+          {error ? (
+            // D171: qué pasó y qué no se perdió (el borrador sigue en este dispositivo)
+            <ErrorEnPantalla titulo="No pudimos recibir tu entrega">
+              {error} Tus respuestas siguen guardadas en este teléfono.
+            </ErrorEnPantalla>
+          ) : null}
           <ActionBar>
             <div className="flex min-w-0 flex-col">
               <p className="text-small-b text-text">

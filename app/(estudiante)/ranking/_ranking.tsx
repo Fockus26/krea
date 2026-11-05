@@ -22,7 +22,7 @@ export async function RankingEstudiante({ vista }: { vista: Vista }) {
   const { usuario, seccion } = await alumnoActual();
   const [ranking, info] = await Promise.all([
     rankingDeSeccion(seccion),
-    infoEquipos(seccion),
+    infoEquipos(seccion, { conLogos: vista === "equipos" }),
   ]);
   if (!ranking) {
     return (

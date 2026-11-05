@@ -3,7 +3,7 @@
 import { onAuthStateChanged, signInWithCustomToken } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ErrorEnPantalla } from "@/components/estados/errores";
+import { ErrorEnPantalla, SesionVencida } from "@/components/estados/errores";
 import { RankAnnouncer } from "@/components/krea/rank-announcer";
 import { tokenEnVivo } from "@/lib/acciones/en-vivo";
 import { firebaseCliente } from "@/lib/firebase/cliente";
@@ -33,6 +33,7 @@ const RELOJ_MS = 30_000;
  */
 export function RankingEnVivo({
   uid,
+  rol = "estudiante",
   seccion,
   vista,
   inicial,
@@ -41,17 +42,23 @@ export function RankingEnVivo({
   enlaces,
 }: {
   uid: string;
+  /** El profesor: sin fila «tú» (`tu` vacío) y con el segmentado 5A | 5C (`enlaces.seccion`). */
+  rol?: "estudiante" | "profesor";
   seccion: SeccionRanking;
   vista: Vista;
   inicial: RankingSeccion;
   tu: Tu;
   info: InfoEquipos;
-  enlaces: { vista: Record<Vista, string> };
+  enlaces: {
+    vista: Record<Vista, string>;
+    seccion?: Record<SeccionRanking, string>;
+  };
 }) {
   const [ranking, setRanking] = useState(inicial);
   const [movimientos, setMovimientos] = useState<Movimiento[]>([]);
   const [eventos, setEventos] = useState<RankEvento[]>([]);
   const [cortado, setCortado] = useState(false);
+  const [sesionCerrada, setSesionCerrada] = useState(false);
   // Sin reloj en el render del servidor: «ahora» arranca en la hora del documento
   const [ahora, setAhora] = useState(inicial.actualizadoEn);
 
@@ -106,9 +113,15 @@ export function RankingEnVivo({
         }
         pedido = true;
         try {
-          const token = await tokenEnVivo();
-          if (!token || fin) throw new Error("sin token");
-          await signInWithCustomToken(fb.auth, token);
+          const r = await tokenEnVivo();
+          if (fin) return;
+          if (!r.ok) {
+            // Sin sesión en el servidor: no es la red, hay que entrar de nuevo (D171)
+            if (r.error === "sin-sesion") setSesionCerrada(true);
+            else setCortado(true);
+            return;
+          }
+          await signInWithCustomToken(fb.auth, r.token);
         } catch {
           if (!fin) setCortado(true);
         }
@@ -134,7 +147,13 @@ export function RankingEnVivo({
 
   return (
     <div className="flex flex-col gap-6">
-      {cortado ? (
+      {sesionCerrada ? (
+        // PLACEHOLDER de copy (CONTENT_CHECKLIST fila 136)
+        <SesionVencida>
+          Ves los puntos de la última vez que cargó. Entra de nuevo para seguir
+          el ranking en vivo.
+        </SesionVencida>
+      ) : cortado ? (
         // PLACEHOLDER de copy (CONTENT_CHECKLIST fila 127)
         <ErrorEnPantalla
           variant="warn"
@@ -145,7 +164,7 @@ export function RankingEnVivo({
         </ErrorEnPantalla>
       ) : null}
       <Ranking
-        rol="estudiante"
+        rol={rol}
         seccion={seccion}
         vista={vista}
         items={items}
