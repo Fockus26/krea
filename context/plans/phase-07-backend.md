@@ -13,8 +13,8 @@
 |---|---|---|
 | W1 | Modelo de datos y conexión: `lib/modelo.ts` (zod), `lib/ranking-datos.ts`, seed del emulador, reglas de Firestore + pruebas (job `rules` en CI), clientes `lib/firebase/*`, `.env.example` (D174–D177) | cerrada (#48) |
 | W2 | Auth: login con cédula (email interno, D008), cookie de sesión `httpOnly` (session cookie del Admin SDK), `proxy`/layout que protege `/(estudiante)` y `/profe` en el servidor, logout, límite de intentos (`bloqueado`). `qa-local`: claims `rol/seccion/equipoId` y doc `usuarios` para las cuentas de prueba (`assignRoleFirebase`) · **functional-qa** | cerrada (#49) |
-| W3 | Recuperar contraseña: busca `privados/{cedula}.email`, enlace de Firebase Auth (D009; plantilla en la consola si se deja, si no Admin SDK + Brevo); misma respuesta exista o no la cédula · **functional-qa** | pendiente |
-| W4 | Lecturas del estudiante: Inicio, Notas, detalle, Equipo, Ranking en vivo (`onSnapshot` de `ranking/{seccion}`, D011), Perfil (avatar/tema/acento al perfil, D015) — reemplaza `lib/demo/*` por Firestore | PR abierto (D189–D193) |
+| W3 | Recuperar contraseña: busca `privados/{cedula}.email`, enlace de Firebase Auth (D009; plantilla en la consola si se deja, si no Admin SDK + Brevo); misma respuesta exista o no la cédula · **functional-qa** | PR abierto (D185–D188; Brevo) |
+| W4 | Lecturas del estudiante: Inicio, Notas, detalle, Equipo, Ranking en vivo (`onSnapshot` de `ranking/{seccion}`, D011), Perfil (avatar/tema/acento al perfil, D015) — reemplaza `lib/demo/*` por Firestore | cerrada (#50) |
 | W5 | Entregas: borrador local + enviar (individual; grupal solo el capitán, D012), respuestas en imagen a Storage (abrir `storage.rules`) · **functional-qa** | pendiente |
 | W6 | Profesor — tareas: constructor (borrador, publicar con suma 20), cerrar; premios (D123–D124) | pendiente |
 | W7 | Profesor — evaluar (puntos por pregunta en pasos de 0,5, comentario, recalcular ranking en transacción) y ajustes de puntos con motivo + anulación (D007, D121) · **functional-qa** | pendiente |
@@ -63,3 +63,10 @@
 - `apariencia` opcional en `usuarios` (D191). `SecuritySettings.onCambiar` es async y devuelve el
   error (D192): el Perfil del profe puede reutilizar `SeguridadConectada` y las acciones de Perfil
   (no exigen rol).
+
+## Para las siguientes (lo deja W3)
+
+- Correos: `lib/correo/brevo.ts` (`enviarCorreo(config, correo, fetch)`, `configBrevo(env)`); el
+  HTML de §5c en `lib/correo/restablecer.ts`. Nunca registrar destinatario ni enlace.
+- `recuperaciones/{cedula}` (límite, solo servidor) existe en `COL`. Si W8 cambia el email de
+  `privados`, el flujo lo toma solo. `/recuperar/nueva` es pública también con sesión (D188).

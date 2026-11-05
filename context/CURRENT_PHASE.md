@@ -14,10 +14,13 @@ Plan: `context/plans/phase-07-backend.md` · main @ f3a8d6d
 | Fases 05–06 completas | #35–#47 | merged (03c6178) |
 | W1 modelo de datos, reglas y emuladores (D174–D177) | #48 | merged (27bd040) |
 | W2 login, sesión, protección y salir (D180–D183) | #49 | merged (f3a8d6d) |
-| W4 lecturas del estudiante, ranking en vivo, Perfil (D189–D193) | claude/dreamy-babbage-vloz3y | PR abierto |
-| W3, W5–W8 (recuperar, entregas, tareas, evaluar, gestión) | — | pendiente (ver plan) |
+| W4 lecturas del estudiante, ranking en vivo, Perfil (D189–D193) | #50 | merged (f775ec3) |
+| W3 recuperar contraseña con Brevo (D185–D188) | claude/dreamy-babbage-vloz3y | PR abierto |
+| W5–W8 (entregas, tareas, evaluar, gestión) | — | pendiente (ver plan) |
 
 ## Blocked (actions for César or external)
+
+- QA pendiente: W3 — envío real por Brevo con el alumno de prueba 38291460 (la red del contenedor bloquea api.brevo.com), enlace → /recuperar/nueva → guardar → aviso en Ingresar y sesiones revocadas; axe de /recuperar y /recuperar/nueva. Fase 09.
 
 - QA pendiente: W4 — pantallas del estudiante con datos (emuladores, axe), ranking en vivo en dos navegadores, cambio de contraseña (revoca y reabre). Fase 09.
 - QA pendiente: login/sesión/salir (functional-qa + axe de /ingresar y /salir) — sin servidor por decisión de César; probado contra los emuladores (cookie, revocación, reglas). Fase 09.
@@ -40,7 +43,6 @@ Plan: `context/plans/phase-07-backend.md` · main @ f3a8d6d
 
 ## Next
 
-- W3 Recuperar contraseña (privados/{cedula}.email, enlace de Firebase Auth).
 - Fase 09: bloquear o borrar `/secciones`, `/componentes`, `/tokens` (y comprobar que `/estados` da 404 en producción).
 
 ## Phases
