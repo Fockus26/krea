@@ -9,9 +9,16 @@ import type { FilaPendiente } from "@/components/sections/inicio/pending-tasks";
 import type { FilaNota } from "@/components/sections/inicio/recent-grades";
 import type { ResumenEquipo } from "@/components/sections/inicio/team-summary";
 import type { PreguntaDetalle } from "@/components/sections/notas/question-list";
+import type { FilaEntregada } from "@/components/sections/tareas/delivered-tasks";
+import type { PreguntaEntrega } from "@/components/sections/tareas/task-answer-form";
 import { type DicebearEstilo, esEstiloDicebear } from "@/lib/dicebear";
 import { enJuegoTexto, ganadorPremio, premioGanadoTexto } from "@/lib/equipo";
-import { comparaFecha, diaDeInstante, formatFecha } from "@/lib/fecha";
+import {
+  comparaFecha,
+  diaDeInstante,
+  formatFecha,
+  horaDeInstante,
+} from "@/lib/fecha";
 import { formatNota, puntosRanking } from "@/lib/grades";
 import {
   capitanTexto,
@@ -37,6 +44,12 @@ import {
 } from "@/lib/perfil";
 import { primerApellido, rankCompetition } from "@/lib/ranking";
 import { notaDeIntegrante } from "@/lib/ranking-datos";
+import {
+  entregadaTexto,
+  eyebrowTarea,
+  puntosPreguntasTexto,
+  venceTexto,
+} from "@/lib/tareas";
 import type { TitulosTopbar } from "@/lib/topbar";
 
 export type ConId<T> = { id: string } & T;
@@ -205,8 +218,10 @@ export type DetalleVista =
       puntaje: number;
       base: number;
       final: number;
+      /** Quién respondió, para el `alt` de las imágenes: su primer nombre o «tu equipo». */
+      autor: string;
       /** Vacío si la nota vino del Excel sin desglose. */
-      preguntas: PreguntaDetalle[];
+      preguntas: Array<PreguntaDetalle & { imagenPath?: string }>;
     };
 
 /**
@@ -235,6 +250,10 @@ export function detalleNota(
     puntaje: ev.puntaje,
     base: d.usuario.base,
     final,
+    autor:
+      tarea.tipo === "individual" || entrega.enviadaPor === d.usuario.cedula
+        ? primerNombre(d.usuario.nombres)
+        : "tu equipo",
     preguntas: puntos
       ? tarea.preguntas.map((p) => {
           const r = entrega.respuestas[p.id];
@@ -249,6 +268,8 @@ export function detalleNota(
               : "texto" in r
                 ? r.texto.trim() || RESPUESTA_SIN_REGISTRO
                 : RESPUESTA_IMAGEN,
+            // La página la cambia por la imagen con una URL firmada (D195); si no, queda el texto
+            imagenPath: r && "imagenPath" in r ? r.imagenPath : undefined,
             comentario: comentario || undefined,
           };
         })
@@ -350,6 +371,44 @@ export type InicioVista = {
   equipo: ResumenEquipo | null;
 };
 
+/** Tareas abiertas sin enviar (sin entrega o en borrador), por fecha de entrega. */
+export function tareasAbiertas(
+  d: Pick<DatosAlumno, "tareas" | "entregas">,
+): Array<ConId<Tarea>> {
+  return d.tareas
+    .filter((t) => t.estado === "abierta")
+    .filter((t) => {
+      const e = entregaDe(t.id, d.entregas);
+      return !e || e.estado === "borrador";
+    })
+    .sort((a, b) =>
+      comparaFecha(
+        a.fechaEntrega ?? "9999-12-31",
+        b.fechaEntrega ?? "9999-12-31",
+      ),
+    );
+}
+
+/** Filas «Por entregar» de Inicio y de /tareas. */
+export function filasPorEntregar(
+  d: Pick<DatosAlumno, "usuario" | "equipo" | "tareas" | "entregas">,
+): FilaPendiente[] {
+  const capitan = d.equipo?.capitanId === d.usuario.cedula;
+  return tareasAbiertas(d).map((t) => ({
+    id: t.id,
+    href: `/tareas/${t.id}`,
+    titulo: t.titulo,
+    tipo: t.tipo,
+    vence: t.fechaEntrega ? formatFecha(t.fechaEntrega) : "sin fecha",
+    premio: t.premio ?? undefined,
+    entregasTu: t.tipo === "grupal" && capitan,
+    avance:
+      entregaDe(t.id, d.entregas)?.estado === "borrador"
+        ? "borrador"
+        : "sin-empezar",
+  }));
+}
+
 /** Integrantes actuales de un equipo con sus puntos del ranking. */
 export type Companero = Pick<
   Usuario,
@@ -380,18 +439,7 @@ export function inicioVista(
 ): InicioVista {
   const u = d.usuario;
   const notas = notasDelAlumno(d);
-  const abiertas = d.tareas
-    .filter((t) => t.estado === "abierta")
-    .filter((t) => {
-      const e = entregaDe(t.id, d.entregas);
-      return !e || e.estado === "borrador";
-    })
-    .sort((a, b) =>
-      comparaFecha(
-        a.fechaEntrega ?? "9999-12-31",
-        b.fechaEntrega ?? "9999-12-31",
-      ),
-    );
+  const abiertas = tareasAbiertas(d);
   const fila = puestoAlumno(d.ranking, u.cedula);
   const capitan = d.equipo?.capitanId === u.cedula;
 
@@ -449,19 +497,7 @@ export function inicioVista(
       .filter((n) => n.nota !== null)
       .slice(0, NOTAS_EN_INICIO)
       .map((n) => filaNota(n, u.base, d.equipo?.nombre)),
-    pendientes: abiertas.map((t) => ({
-      id: t.id,
-      href: `/tareas/${t.id}`,
-      titulo: t.titulo,
-      tipo: t.tipo,
-      vence: t.fechaEntrega ? formatFecha(t.fechaEntrega) : "sin fecha",
-      premio: t.premio ?? undefined,
-      entregasTu: t.tipo === "grupal" && capitan,
-      avance:
-        entregaDe(t.id, d.entregas)?.estado === "borrador"
-          ? "borrador"
-          : "sin-empezar",
-    })),
+    pendientes: filasPorEntregar(d),
     equipo,
   };
 }
@@ -591,5 +627,174 @@ export function perfilVista(u: Usuario, equipo: ConId<Equipo> | null) {
       { id: "primer-apellido", label: "Primer apellido", valor: primerA },
       { id: "segundo-apellido", label: "Segundo apellido", valor: segundoA },
     ],
+  };
+}
+
+/* ---------- Tareas y entrega (W5) ---------- */
+
+/** Entregada o evaluada: ya no se puede cambiar. */
+const enviada = (e: Pick<Entrega, "estado"> | null) =>
+  e !== null && e.estado !== "borrador";
+
+/**
+ * /tareas: «Por entregar» (las filas de Inicio) y «Entregadas» (sus entregas enviadas, la más
+ * reciente primero). Una nota del Excel sin fecha de envío muestra la de evaluación (D197).
+ */
+export function tareasVista(
+  d: Pick<DatosAlumno, "usuario" | "equipo" | "tareas" | "entregas">,
+): { pendientes: FilaPendiente[]; entregadas: FilaEntregada[] } {
+  const filas = d.tareas.flatMap((t) => {
+    const e = entregaDe(t.id, d.entregas);
+    if (!e || !enviada(e)) return [];
+    const evaluada = e.evaluacion?.evaluadaEn ?? null;
+    const instante = e.enviadaEn ?? evaluada;
+    return [
+      {
+        orden: instante ?? 0,
+        fila: {
+          id: t.id,
+          href: `/tareas/${t.id}`,
+          titulo: t.titulo,
+          tipo: t.tipo,
+          fecha:
+            e.enviadaEn !== null
+              ? entregadaTexto(diaDeInstante(e.enviadaEn))
+              : evaluada !== null
+                ? `evaluada el ${formatFecha(diaDeInstante(evaluada))}`
+                : "entregada",
+        },
+      },
+    ];
+  });
+  return {
+    pendientes: filasPorEntregar(d),
+    entregadas: filas.sort((a, b) => b.orden - a.orden).map((f) => f.fila),
+  };
+}
+
+/** Respuesta ya enviada por pregunta (la imagen se firma en la página, solo si se muestra). */
+export type RespuestaEnviada =
+  | { tipo: "texto"; texto: string }
+  | { tipo: "imagen"; imagenPath: string };
+
+export type CabeceraEntrega = {
+  tipo: Tarea["tipo"];
+  eyebrow: string;
+  titulo: string;
+  vence: string;
+  puntos: string;
+  premio: string | null;
+  preguntas: PreguntaEntrega[];
+};
+
+export type EntregaVista =
+  | { estado: "no-existe" }
+  | (CabeceraEntrega &
+      (
+        | { estado: "responder"; autor: string }
+        | {
+            estado: "lector";
+            capitan: {
+              nombre: string;
+              corto: string;
+              estilo: DicebearEstilo;
+              seed: string;
+            } | null;
+          }
+        | { estado: "sin-equipo" }
+        | { estado: "cerrada" }
+        | {
+            estado: "entregada";
+            /** Nombre de quien la envió; `null` si vino del Excel sin registro. */
+            quien: string | null;
+            /** Primer nombre de quien respondió (alt de las imágenes). */
+            autor: string;
+            fecha: string | null;
+            hora: string | null;
+            evaluada: boolean;
+            /** Por pregunta, en orden; `null` si no hay respuesta guardada. */
+            respuestas: Array<RespuestaEnviada | null>;
+          }
+      ));
+
+/** PLACEHOLDER de copy (CONTENT_CHECKLIST fila 129): tarea sin fecha de entrega. */
+export const SIN_FECHA_ENTREGA = "Sin fecha de entrega";
+
+/**
+ * /tareas/[tarea] según la sesión y los datos: `no-existe` (no es de su sección o borrador →
+ * 404); `entregada` si ya hay una entrega enviada donde figura; si no, con la tarea abierta,
+ * `responder` (individual, o grupal y es el capitán, D012) o `lector` (grupal, no capitán);
+ * `sin-equipo` (grupal sin equipo); `cerrada` (ya no está abierta y no la entregó).
+ */
+export function entregaVista(
+  d: Pick<DatosAlumno, "usuario" | "equipo" | "tareas" | "entregas">,
+  tareaId: string,
+  companeros: readonly Companero[],
+): EntregaVista {
+  const t = d.tareas.find((x) => x.id === tareaId);
+  if (!t) return { estado: "no-existe" };
+  const u = d.usuario;
+  const cabecera: CabeceraEntrega = {
+    tipo: t.tipo,
+    eyebrow: eyebrowTarea(t.tipo, d.equipo?.nombre),
+    titulo: t.titulo,
+    vence: t.fechaEntrega ? venceTexto(t.fechaEntrega) : SIN_FECHA_ENTREGA,
+    puntos: puntosPreguntasTexto(t.preguntas.map((p) => p.valor)),
+    premio: t.tipo === "grupal" ? t.premio : null,
+    preguntas: t.preguntas.map((p) => ({
+      id: p.id,
+      enunciado: p.enunciado,
+      formato: p.formato,
+      valor: p.valor,
+    })),
+  };
+
+  const e = entregaDe(t.id, d.entregas);
+  if (e && enviada(e)) {
+    const envio =
+      e.enviadaPor === u.cedula
+        ? u
+        : (companeros.find((c) => c.cedula === e.enviadaPor) ?? null);
+    return {
+      ...cabecera,
+      estado: "entregada",
+      quien: envio ? nombreCompleto(envio) : null,
+      autor: primerNombre((envio ?? u).nombres),
+      fecha:
+        e.enviadaEn !== null ? formatFecha(diaDeInstante(e.enviadaEn)) : null,
+      hora: e.enviadaEn !== null ? horaDeInstante(e.enviadaEn) : null,
+      evaluada: e.estado === "evaluada",
+      respuestas: t.preguntas.map((p): RespuestaEnviada | null => {
+        const r = e.respuestas[p.id];
+        if (!r) return null;
+        if ("texto" in r) {
+          return r.texto.trim() ? { tipo: "texto", texto: r.texto } : null;
+        }
+        return { tipo: "imagen", imagenPath: r.imagenPath };
+      }),
+    };
+  }
+
+  if (t.estado !== "abierta") return { ...cabecera, estado: "cerrada" };
+  if (t.tipo === "individual") {
+    return { ...cabecera, estado: "responder", autor: primerNombre(u.nombres) };
+  }
+  const eq = d.equipo;
+  if (!eq) return { ...cabecera, estado: "sin-equipo" };
+  if (eq.capitanId === u.cedula) {
+    return { ...cabecera, estado: "responder", autor: primerNombre(u.nombres) };
+  }
+  const cap = companeros.find((c) => c.cedula === eq.capitanId);
+  return {
+    ...cabecera,
+    estado: "lector",
+    capitan: cap
+      ? {
+          nombre: nombreCorto(cap),
+          corto: primerNombre(cap.nombres),
+          estilo: estiloDe(cap.avatar.estilo),
+          seed: cap.avatar.semilla,
+        }
+      : null,
   };
 }
