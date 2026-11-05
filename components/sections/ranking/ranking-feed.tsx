@@ -38,6 +38,13 @@ export function RankingFeed({
           aria-live="polite"
           className="text-small m-0 flex list-none flex-col gap-2 p-0"
         >
+          {movimientos.length === 0 ? (
+            // PLACEHOLDER de copy (CONTENT_CHECKLIST fila 127): el feed arranca vacío (D190)
+            <li className="text-text-2">
+              Aquí verás quién sube y quién baja mientras tengas la página
+              abierta.
+            </li>
+          ) : null}
           {ultimosMovimientos(movimientos).map((m) => (
             <li key={m.id} className="flex items-start gap-2">
               {m.tipo === "puntos" ? (

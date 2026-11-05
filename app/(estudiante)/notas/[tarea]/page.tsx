@@ -7,38 +7,42 @@ import { QuestionList } from "@/components/sections/notas/question-list";
 import { BackLink } from "@/components/sections/shared/back-link";
 import { PageHeader } from "@/components/sections/shared/page-header";
 import { Card } from "@/components/ui/card";
-import { CEDULA_DETALLE, detalleDe } from "@/lib/demo/notas";
-import { TAREA_IDENTIDAD } from "@/lib/demo/seed";
-import { TAREAS } from "@/lib/demo/tareas";
+import tareaSeed from "@/data/seed/tarea-identidad-marca.json";
+import { verificarSesion } from "@/lib/dal";
+import { datosAlumno } from "@/lib/datos/estudiante";
+import { TAREA_GRUPAL_SEED } from "@/lib/seed-firestore";
+import { detalleNota } from "@/lib/vistas-estudiante";
 
 type Props = PageProps<"/notas/[tarea]">;
 
-// Una página por tarea del ejemplo (los enlaces de Mis notas apuntan a todas)
+// `cacheComponents` pide al menos un parámetro para validar el shell: las tareas del seed. Las
+// demás se renderizan al pedirlas (D189).
 export function generateStaticParams() {
-  return TAREAS.map((t) => ({ tarea: t.id }));
+  return [{ tarea: tareaSeed.id }, { tarea: TAREA_GRUPAL_SEED.id }];
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { tarea } = await params;
-  const t = TAREAS.find((x) => x.id === tarea);
+  const s = await verificarSesion();
+  if (s?.rol !== "estudiante") return { title: "Detalle de nota" };
+  const t = (await datosAlumno()).tareas.find((x) => x.id === tarea);
   return { title: t ? `Nota · ${t.titulo}` : "Detalle de nota" };
 }
 
-// Detalle de nota (HANDOFF §3). Hoy solo «Identidad de marca» tiene respuestas y evaluación pregunta
-// a pregunta en el seed (la nota es la de Heymi Sierra, como el lienzo; PLACEHOLDER hasta la fase 07).
-// Las demás tareas muestran un aviso en vez de inventar el detalle (CONTENT_CHECKLIST fila 100).
+// Detalle de nota (HANDOFF §3) con su entrega evaluada (D189). Una tarea que no es de su sección
+// (o borrador) es 404; sin evaluar todavía, el aviso en vez de inventar el detalle.
 export default async function DetalleNotaPage({ params }: Props) {
   const id = (await params).tarea;
-  const tarea = TAREAS.find((t) => t.id === id);
-  if (!tarea) notFound();
+  const d = detalleNota(await datosAlumno(), id);
+  if (d.estado === "no-existe") notFound();
 
-  if (tarea.id !== TAREA_IDENTIDAD.id) {
+  if (d.estado === "sin-detalle") {
     return (
       <>
         <BackLink href="/notas">Mis notas</BackLink>
         <PageHeader
-          eyebrow={tarea.tipo === "grupal" ? "Grupal" : "Individual"}
-          title={tarea.titulo}
+          eyebrow={d.tipo === "grupal" ? "Grupal" : "Individual"}
+          title={d.titulo}
         />
         <Card>
           <EmptyState
@@ -52,7 +56,6 @@ export default async function DetalleNotaPage({ params }: Props) {
     );
   }
 
-  const d = detalleDe(CEDULA_DETALLE);
   return (
     <>
       <BackLink href="/notas">Mis notas</BackLink>
@@ -64,7 +67,19 @@ export default async function DetalleNotaPage({ params }: Props) {
         base={d.base}
         final={d.final}
       />
-      <QuestionList preguntas={d.preguntas} />
+      {d.preguntas.length > 0 ? (
+        <QuestionList preguntas={d.preguntas} />
+      ) : (
+        <Card>
+          {/* PLACEHOLDER de copy (CONTENT_CHECKLIST fila 127): notas del Excel sin desglose */}
+          <EmptyState
+            icon={ClipboardList}
+            headingLevel={2}
+            title="Esta nota no tiene detalle por pregunta"
+            description="Se cargó con el total, sin los puntos de cada pregunta."
+          />
+        </Card>
+      )}
     </>
   );
 }

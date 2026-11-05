@@ -37,24 +37,28 @@ const TEMAS: ReadonlyArray<{ valor: Tema; texto: string; icon: typeof Sun }> = [
  * de color fijo (el de cada acento en claro, igual en los dos temas) como radiogroup, con check
  * blanco y anillo `--text` en el elegido y el nombre debajo; "Tema" segmentado a todo el ancho
  * (Claro · Oscuro · Sistema; bajo 400 px sin íconos). Cambia en vivo y se guarda en
- * `localStorage` (anti-parpadeo); `onChange` lo lleva al perfil (fase 07).
+ * `localStorage` (anti-parpadeo); `onChange` lo lleva al perfil (D191). `inicial`: lo guardado en
+ * el perfil, que manda sobre `localStorage`.
  */
 export function AppearanceSettings({
+  inicial,
   onChange,
 }: {
+  inicial?: { tema: Tema; acento: Acento } | null;
   onChange?: (pref: { tema: Tema; acento: Acento }) => void;
 }) {
-  const [tema, setTema] = useState<Tema>("system");
-  const [acento, setAcento] = useState<Acento>("azul");
+  const [tema, setTema] = useState<Tema>(inicial?.tema ?? "system");
+  const [acento, setAcento] = useState<Acento>(inicial?.acento ?? "azul");
   const acentoId = useId();
   const temaId = useId();
 
   useEffect(() => {
+    if (inicial) return;
     const t = leerPreferencia(CLAVE_TEMA, "system");
     const a = leerPreferencia(CLAVE_ACENTO, "azul");
     if (esTema(t)) setTema(t);
     if (esAcento(a)) setAcento(a);
-  }, []);
+  }, [inicial]);
 
   return (
     <Card className="flex flex-col gap-5">

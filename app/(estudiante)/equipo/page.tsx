@@ -7,17 +7,28 @@ import { TeamMembers } from "@/components/sections/equipo/team-members";
 import { TeamPrizes } from "@/components/sections/equipo/team-prizes";
 import { PageHeader } from "@/components/sections/shared/page-header";
 import { Card } from "@/components/ui/card";
-import { equipoVistaDe } from "@/lib/demo/equipo";
-import { alumnoPorCedula, CEDULA_DEMO } from "@/lib/demo/seed";
+import {
+  datosAlumno,
+  entregasGrupales,
+  integrantesDe,
+} from "@/lib/datos/estudiante";
+import { equipoVista } from "@/lib/vistas-estudiante";
 
 export const metadata: Metadata = { title: "Mi equipo" };
 
-// Mi equipo (HANDOFF §3): como /secciones/equipo. Datos: Yeilin Duarte y 5A-G2 del seed (D069).
-// «Sin equipo» sale de los datos: la persona de ejemplo tiene equipo, así que solo se ve con otra
-// sesión (fase 07) o en /secciones/equipo/sin-equipo.
-export default function EquipoPage() {
-  const alumno = alumnoPorCedula(CEDULA_DEMO);
-  const d = equipoVistaDe(alumno);
+// Mi equipo (HANDOFF §3): como /secciones/equipo, con su equipo actual (D189). «Sin equipo» sale
+// de los datos (`equipoId` null en su perfil).
+export default async function EquipoPage() {
+  const datos = await datosAlumno();
+  const seccion = datos.usuario.seccion;
+  let d: ReturnType<typeof equipoVista> = null;
+  if (datos.equipo && seccion) {
+    const [companeros, grupales] = await Promise.all([
+      integrantesDe(datos.equipo.id),
+      entregasGrupales(seccion),
+    ]);
+    d = equipoVista(datos, companeros, grupales);
+  }
   return d ? (
     <>
       <TeamHero equipo={d.equipo} />
@@ -32,7 +43,7 @@ export default function EquipoPage() {
     </>
   ) : (
     <>
-      <PageHeader eyebrow={`Sección ${alumno.seccion}`} title="Mi equipo" />
+      <PageHeader eyebrow={`Sección ${seccion ?? ""}`} title="Mi equipo" />
       <Card>
         <EmptyState
           icon={Users}

@@ -7,6 +7,7 @@ import { MenuSheet } from "@/components/layout/menu-sheet";
 import type { NavRoute, NavUsuario } from "@/components/layout/nav-types";
 import { LiveChip } from "@/components/sections/ranking/ranking-header";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Rol } from "@/lib/layout";
 import { PERFIL_HREF } from "@/lib/nav";
 
@@ -33,7 +34,8 @@ export function TopBar({
   salirHref,
 }: NavRoute & {
   rol: Rol;
-  usuario: NavUsuario;
+  /** `null` mientras llega la sesión (D189): el avatar se pinta como skeleton. */
+  usuario: NavUsuario | null;
   /** Título de la pantalla de detalle; solo se pinta junto a `volverHref`. */
   title?: string;
   volverHref?: string;
@@ -95,12 +97,16 @@ export function TopBar({
           aria-label="Tu perfil"
           className="grid size-11 shrink-0 place-items-center rounded-pill focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
         >
-          <UserAvatar
-            estilo={usuario.estilo}
-            seed={usuario.seed}
-            nombre={usuario.nombre}
-            size={36}
-          />
+          {usuario ? (
+            <UserAvatar
+              estilo={usuario.estilo}
+              seed={usuario.seed}
+              nombre={usuario.nombre}
+              size={36}
+            />
+          ) : (
+            <Skeleton className="size-9 rounded-pill" />
+          )}
         </Link>
       )}
     </>

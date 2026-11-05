@@ -19,7 +19,8 @@ export function SideNav({
   evaluarCount,
 }: NavRoute & {
   rol: Rol;
-  usuario: NavUsuario;
+  /** `null` mientras llega la sesión (D189): la tarjeta se pinta como skeleton. */
+  usuario: NavUsuario | null;
   evaluarCount?: number | null;
 }) {
   const inicio = rol === "profesor" ? "/profe" : "/";

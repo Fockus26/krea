@@ -1,34 +1,53 @@
-import { Ranking } from "@/components/sections/ranking/ranking";
+import { Trophy } from "lucide-react";
+import { EmptyState } from "@/components/krea/empty-state";
+import { RankingEnVivo } from "@/components/sections/ranking/ranking-en-vivo";
+import { PageHeader } from "@/components/sections/shared/page-header";
+import { Card } from "@/components/ui/card";
 import {
-  AHORA_DEMO,
-  equipoIdDemo,
-  itemsEquipos,
-  itemsEstudiantes,
-  movimientosDe,
-} from "@/lib/demo/ranking";
-import { CEDULA_DEMO } from "@/lib/demo/seed";
+  alumnoActual,
+  infoEquipos,
+  rankingDeSeccion,
+} from "@/lib/datos/estudiante";
 import type { Vista } from "@/lib/ranking-vista";
 
 // Las pestañas Estudiantes | Equipos son enlaces entre rutas (D095): `/ranking` y `/ranking/equipos`.
 const ENLACES = { estudiantes: "/ranking", equipos: "/ranking/equipos" };
 
 /**
- * Ranking del estudiante (HANDOFF §3; la sección 5A, «tú» = Yeilin Duarte, D069). El chip
- * «En vivo» móvil lo pone la topbar de la ruta (D128). Compartido por las dos rutas.
+ * Ranking del estudiante (HANDOFF §3): su sección, «tú» = la sesión. El servidor pinta la primera
+ * instantánea y el cliente la mantiene en vivo (D190). El chip «En vivo» móvil lo pone la topbar
+ * de la ruta (D128). Compartido por las dos rutas.
  */
-export function RankingEstudiante({ vista }: { vista: Vista }) {
-  const items =
-    vista === "estudiantes"
-      ? itemsEstudiantes("5A", CEDULA_DEMO)
-      : itemsEquipos("5A", equipoIdDemo());
+export async function RankingEstudiante({ vista }: { vista: Vista }) {
+  const { usuario, seccion } = await alumnoActual();
+  const [ranking, info] = await Promise.all([
+    rankingDeSeccion(seccion),
+    infoEquipos(seccion),
+  ]);
+  if (!ranking) {
+    return (
+      <>
+        <PageHeader eyebrow={`Sección ${seccion}`} title="Ranking" />
+        <Card>
+          {/* PLACEHOLDER de copy (CONTENT_CHECKLIST fila 127) */}
+          <EmptyState
+            icon={Trophy}
+            headingLevel={2}
+            title="El ranking de tu sección aún no está listo"
+            description="Aparece cuando tu profe evalúe la primera tarea."
+          />
+        </Card>
+      </>
+    );
+  }
   return (
-    <Ranking
-      rol="estudiante"
-      seccion="5A"
+    <RankingEnVivo
+      uid={usuario.cedula}
+      seccion={seccion}
       vista={vista}
-      items={items}
-      movimientos={movimientosDe(items)}
-      ahora={AHORA_DEMO}
+      inicial={ranking}
+      tu={{ cedula: usuario.cedula, equipoId: usuario.equipoId }}
+      info={info}
       enlaces={{ vista: ENLACES }}
     />
   );
