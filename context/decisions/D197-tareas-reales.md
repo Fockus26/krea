@@ -1,0 +1,5 @@
+# D197 · Grading · /tareas y /tareas/[tarea] con datos reales; hora en Caracas · Implemented
+
+**Decision:** `/tareas` lee `datosAlumno` (D189): «Por entregar» = las filas de Inicio (`filasPorEntregar`), «Entregadas» = sus entregas enviadas o evaluadas, la más reciente primero, con «entregada el …» (día de Caracas de `enviadaEn`) o, en notas del Excel sin envío, «evaluada el …». `/tareas/[tarea]` sale de `entregaVista`: `no-existe` (otra sección o borrador → 404), `entregada` (quién la envió entre su equipo actual, fecha y hora de Caracas con `horaDeInstante`, respuestas en solo lectura), `responder`, `lector` (aviso con avatar del capitán), `sin-equipo` y `cerrada` (vacíos con copy marcado). Las galerías siguen con `lib/demo/*`. `/notas/[tarea]` muestra ya la imagen de la respuesta (D193 lo dejaba para W5). `generateStaticParams` devuelve las dos tareas del seed (como `/notas/[tarea]`).
+**Why:** los «Por entregar» de Inicio enlazaban a ids reales que daban 404; las horas del servidor (UTC en Vercel) no pueden salir de `getHours()`.
+**Discarded alternative:** mantener `horaTexto(new Date(ms))` — en Vercel diría 8:12 p. m. por 4:12 p. m.

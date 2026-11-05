@@ -68,7 +68,7 @@ una red social ruidosa.
 - Authentication: Firebase Auth (cédula → email interno + email real para recuperación; D008)
 - Payments: N/A
 - Email: Firebase Auth (restablecer contraseña). Sin otros correos en v1 (D009).
-- Storage: Firebase Storage (logos de equipo, respuestas en imagen)
+- Storage: **Backblaze B2** por su API S3 (D194; Firebase Storage exige el plan Blaze): bucket privado, subida por Server Action, lectura con URLs firmadas de vida corta (`lib/almacen/`). `firebase/storage.rules` queda cerrado
 - Avatares: DiceBear HTTP API 9.x (`https://api.dicebear.com/9.x/<estilo>/svg?seed=<semilla>`)
 - Deployment: Vercel
 - Domain: PENDING
