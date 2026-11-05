@@ -47,7 +47,7 @@ Producción estuvo en 500 desde #49 hasta #56 (D214). Auditoría: `.qa/f08-audit
 
 ## Next
 
-- Fase 08, medido en galerías sin hallazgos abiertos: contraste por tema y acento, movimiento reducido. Pendiente: pantallas con sesión real (César inicia sesión en el navegador, o `qa:local` con Java), hover/foco y ritmo vertical entre pantallas, 2560–3840 no aplica. Después, **fase 09 — QA final** (`phases/09-QA-FINAL.md`).
+- Fase 08, medido en galerías sin hallazgos abiertos: contraste por tema y acento, movimiento reducido. Pendiente: pantallas con sesión real (César inicia sesión en el navegador, o `qa:local` con Java), hover/foco y ritmo vertical entre pantallas; 2560 y 3840 sin medir. Después, **fase 09 — QA final** (`phases/09-QA-FINAL.md`).
 - Fase 09: bloquear o borrar `/secciones`, `/componentes`, `/tokens` (y `/estados` 404 en producción).
 
 ## Phases
