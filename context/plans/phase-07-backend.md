@@ -15,8 +15,8 @@
 | W2 | Auth: login con cédula (email interno, D008), cookie de sesión `httpOnly` (session cookie del Admin SDK), `proxy`/layout que protege `/(estudiante)` y `/profe` en el servidor, logout, límite de intentos (`bloqueado`). `qa-local`: claims `rol/seccion/equipoId` y doc `usuarios` para las cuentas de prueba (`assignRoleFirebase`) · **functional-qa** | cerrada (#49) |
 | W3 | Recuperar contraseña: busca `privados/{cedula}.email`, enlace de Firebase Auth (D009; plantilla en la consola si se deja, si no Admin SDK + Brevo); misma respuesta exista o no la cédula · **functional-qa** | cerrada (#51) |
 | W4 | Lecturas del estudiante: Inicio, Notas, detalle, Equipo, Ranking en vivo (`onSnapshot` de `ranking/{seccion}`, D011), Perfil (avatar/tema/acento al perfil, D015) — reemplaza `lib/demo/*` por Firestore | cerrada (#50) |
-| W5 | Entregas: borrador local + enviar (individual; grupal solo el capitán, D012), respuestas en imagen a Storage (abrir `storage.rules`) · **functional-qa** | PR abierto (D194–D197; archivos en Backblaze B2, `storage.rules` sigue cerrado) |
-| W6 | Profesor — tareas: constructor (borrador, publicar con suma 20), cerrar; premios (D123–D124) | pendiente |
+| W5 | Entregas: borrador local + enviar (individual; grupal solo el capitán, D012), respuestas en imagen a Storage (abrir `storage.rules`) · **functional-qa** | cerrada (#52) |
+| W6 | Profesor — tareas: constructor (borrador, publicar con suma 20), cerrar; premios (D123–D124) | PR abierto (D199–D202) |
 | W7 | Profesor — evaluar (puntos por pregunta en pasos de 0,5, comentario, recalcular ranking en transacción) y ajustes de puntos con motivo + anulación (D007, D121) · **functional-qa** | pendiente |
 | W8 | Profesor — alumnos y equipos: editar nombres, base con historial (D176), mover de equipo (claims), capitán, logo (Storage). Enchufar `components/estados/errores.tsx` (D171) y la sesión real en 404/500 (D160) · cierre de la fase | pendiente |
 
@@ -84,3 +84,15 @@
   Permiso puro en `permisoEntrega` (`lib/entregas.ts`). Se acepta mientras la tarea esté `abierta`
   (D196): «cerrar» en W6 = sacar de `abierta`.
 - `serverActions.bodySizeLimit` es `3mb` (global). `horaDeInstante(ms)` da la hora de Caracas.
+
+## Para las siguientes (lo deja W6)
+
+- Lecturas del profe: `lib/datos/profesor.ts` (`profesorActual`, `tareasProfe`, `entregasTodas`,
+  `equiposTodos`, `conteos`; `cache`, Admin SDK). Ayudas comunes en `lib/datos/comun.ts`. El shell
+  del profe ya sale de la sesión (`app/(profesor)/profe/_shell.tsx`); **el contador y los títulos de
+  Evaluar siguen con `COLA` de ejemplo**: W7 los cambia (`entregas` con `estado == "entregada"`).
+- Documentos de `tareas`: leer con `zTareaDoc` (un borrador a medias no valida con `zTarea`, D199).
+  Una tarea cerrada es `estado: "evaluada"` (D202) y se puede seguir evaluando. W7: evaluar una
+  entrega NO depende del estado de la tarea; el premio se resuelve solo (`estadoPremioSeccion`).
+- Con entregas, las preguntas de una tarea no cambian (D200): W7 puede confiar en los ids.
+- Panel (`lib/demo/panel.ts`) sigue en demo: es la cola y la actividad de evaluar (W7/W8).
