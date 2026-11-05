@@ -34,11 +34,16 @@ const RUTAS_ESTUDIANTE = [
   "/tareas",
 ];
 
+/** Nueva contraseña del enlace del correo: se abre con o sin sesión (D188). */
+export const RUTA_NUEVA_PASSWORD = "/recuperar/nueva";
+
 /**
  * Qué rol exige una ruta: `estudiante`, `profesor`, `invitado` (Ingresar y Recuperar: con sesión
- * se va a su inicio) o `null` (pública: galerías, estados, /salir, archivos).
+ * se va a su inicio) o `null` (pública: galerías, estados, /salir, archivos, y la nueva contraseña
+ * del enlace, que vale aunque haya una sesión abierta en ese navegador, D188).
  */
 export function accesoDeRuta(ruta: string): RolUsuario | "invitado" | null {
+  if (EMPIEZA(ruta, RUTA_NUEVA_PASSWORD)) return null;
   if (EMPIEZA(ruta, "/profe")) return "profesor";
   if (ruta === "/" || RUTAS_ESTUDIANTE.some((p) => EMPIEZA(ruta, p)))
     return "estudiante";
