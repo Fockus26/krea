@@ -13,8 +13,8 @@ Producción estuvo en 500 desde #49 hasta #56 (D214). Auditoría: `.qa/f08-audit
 |---|---|---|
 | Fases 05–07 | #35–#55 | merged |
 | 500 en todas las rutas por `jwks-rsa`/`jose` (D214) | fix/firebase-admin-jose | merged (#56, 9893869) |
-| Objetivos táctiles 44 px (D215) | fix/objetivos-tactiles | draft (#57) |
-| Equipos del profe: columna de texto de 46 px a 1024 y scroll horizontal | — | espera decisión de César |
+| Objetivos táctiles 44 px (D215) | fix/objetivos-tactiles | PR #57, en revisión |
+| Equipos del profe a dos columnas hasta 1440 (D216) | fix/equipos-dos-columnas | PR #58, en revisión |
 
 ## Blocked (actions for César or external)
 
@@ -46,7 +46,7 @@ Producción estuvo en 500 desde #49 hasta #56 (D214). Auditoría: `.qa/f08-audit
 
 ## Next
 
-- Fase 08, pendiente: Equipos a 1024–1280, altura corta y horizontal, modo oscuro, movimiento reducido y pantallas con sesión real (César inicia sesión en el navegador, o `qa:local` con Java). Después, **fase 09 — QA final** (`phases/09-QA-FINAL.md`).
+- Fase 08, pendiente: altura corta y horizontal, modo oscuro, movimiento reducido y pantallas con sesión real (César inicia sesión en el navegador, o `qa:local` con Java). Después, **fase 09 — QA final** (`phases/09-QA-FINAL.md`).
 - Fase 09: bloquear o borrar `/secciones`, `/componentes`, `/tokens` (y `/estados` 404 en producción).
 
 ## Phases
