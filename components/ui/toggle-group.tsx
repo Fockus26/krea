@@ -110,7 +110,9 @@ function ToggleGroupItem({
         }
       }}
       className={cn(
-        "inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-nav px-4 text-button whitespace-nowrap text-text-2",
+        "relative inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-nav px-4 text-button whitespace-nowrap text-text-2",
+        // 40 px visibles (HANDOFF §2) y 44 de área táctil, dentro del padding del contenedor (D215)
+        "after:absolute after:inset-x-0 after:-inset-y-0.5",
         "transition-[color,background-color,box-shadow] duration-fast ease-krea",
         "hover:text-text data-[state=on]:bg-surface data-[state=on]:text-text data-[state=on]:shadow-1",
         "disabled:cursor-not-allowed disabled:text-text-dis disabled:hover:text-text-dis",

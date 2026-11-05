@@ -74,7 +74,7 @@ function TabsTrigger({
         "[&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0",
         "focus-visible:outline-2 focus-visible:outline-focus",
         // Línea: barra de 3 px sobre el borde de la lista (dentro de la caja: el scroll no la recorta)
-        "group-data-[variant=line]/tabs-list:h-11 group-data-[variant=line]/tabs-list:-outline-offset-2",
+        "group-data-[variant=line]/tabs-list:h-11 group-data-[variant=line]/tabs-list:min-w-11 group-data-[variant=line]/tabs-list:justify-center group-data-[variant=line]/tabs-list:-outline-offset-2",
         "group-data-[variant=line]/tabs-list:data-[state=active]:text-accent-ink",
         "group-data-[variant=line]/tabs-list:after:absolute group-data-[variant=line]/tabs-list:after:inset-x-0 group-data-[variant=line]/tabs-list:after:bottom-0",
         "group-data-[variant=line]/tabs-list:after:h-0.75 group-data-[variant=line]/tabs-list:after:rounded-t-xs group-data-[variant=line]/tabs-list:after:bg-accent",
@@ -83,6 +83,8 @@ function TabsTrigger({
         // Segmentado
         "group-data-[variant=segmented]/tabs-list:h-10 group-data-[variant=segmented]/tabs-list:gap-2 group-data-[variant=segmented]/tabs-list:rounded-nav group-data-[variant=segmented]/tabs-list:px-4",
         "group-data-[variant=segmented]/tabs-list:outline-offset-2",
+        // 40 px visibles (HANDOFF §2) y 44 de área táctil, dentro del padding del contenedor (D215)
+        "group-data-[variant=segmented]/tabs-list:after:absolute group-data-[variant=segmented]/tabs-list:after:inset-x-0 group-data-[variant=segmented]/tabs-list:after:-inset-y-0.5",
         "group-data-[variant=segmented]/tabs-list:data-[state=active]:bg-surface group-data-[variant=segmented]/tabs-list:data-[state=active]:text-text group-data-[variant=segmented]/tabs-list:data-[state=active]:shadow-1",
         // seg-block: reparte el ancho y, por debajo de 400 px (25 rem) del contenedor, solo texto
         "group-data-[block]/tabs-list:min-w-0 group-data-[block]/tabs-list:flex-1 group-data-[block]/tabs-list:justify-center group-data-[block]/tabs-list:px-2",
