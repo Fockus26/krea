@@ -34,7 +34,7 @@ import {
 } from "@/lib/equipos-profe";
 import { estiloDe } from "@/lib/vistas-estudiante";
 
-/** Las Server Actions del tablero (D210–D212). Sin ellas (vista previa) nada se guarda. */
+/** Las Server Actions del tablero (D210, D212). Sin ellas (vista previa) nada se guarda. */
 export type AccionesEquipos = {
   mover: (entrada: MoverAlumno) => Promise<ResultadoEquipos>;
   capitan: (entrada: CambiarCapitan) => Promise<ResultadoEquipos>;

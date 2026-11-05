@@ -226,7 +226,7 @@ describe("mover de equipo (D210)", () => {
   });
 });
 
-describe("cambiar capitán (D012, D211)", () => {
+describe("cambiar capitán (D012, D210)", () => {
   test("a un integrante: cambia el equipo y el ranking se recalcula", async () => {
     // G2 tiene ahora a A3 y A1
     const r = await cambiarCapitanEnTransaccion(

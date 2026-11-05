@@ -1,5 +1,5 @@
 "use server";
-// Server Actions de Equipos del profesor (fase 07 W8, D175, D210–D212). Todo detrás de
+// Server Actions de Equipos del profesor (fase 07 W8, D175, D210, D212). Todo detrás de
 // `exigirSesion("profesor")`; la sección sale de los documentos, nunca del body. Mover y capitán:
 // una transacción con el ranking (`lib/firebase/equipos.ts`) y, tras el commit, los claims de
 // Auth del alumno movido + revocar sus tokens. Logo: firma de bytes + peso en el servidor, B2

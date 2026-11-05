@@ -1,4 +1,4 @@
-// Adaptadores del Admin SDK para Equipos del profesor (fase 07 W8, D210–D212). Sin `server-only`
+// Adaptadores del Admin SDK para Equipos del profesor (fase 07 W8, D210, D212). Sin `server-only`
 // para que las pruebas de tests/rules los corran contra los emuladores; la app los usa solo desde
 // lib/acciones/equipos.ts, después de `exigirSesion("profesor")`.
 //

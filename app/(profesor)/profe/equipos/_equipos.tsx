@@ -26,7 +26,7 @@ const ACCIONES: AccionesEquipos = {
 };
 
 /**
- * Equipos del profesor (HANDOFF §3; W8, D210–D212) de una sección, con Firestore. Compartido por
+ * Equipos del profesor (HANDOFF §3; W8, D210, D212) de una sección, con Firestore. Compartido por
  * `/profe/equipos` (5A, la sección por defecto) y `/profe/equipos/[seccion]`. Mover, capitán y
  * logo se guardan con Server Actions; solo se firman los logos de esta sección (los que se ven).
  * El aviso «pasó a …» usa el Toaster global (D131).

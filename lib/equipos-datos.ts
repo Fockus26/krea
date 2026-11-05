@@ -1,4 +1,4 @@
-// Equipos del profesor con datos de Firestore (fase 07 W8, D210–D212). Puro (sin Firebase ni
+// Equipos del profesor con datos de Firestore (fase 07 W8, D210, D212). Puro (sin Firebase ni
 // reloj): qué mandan las acciones, el `EstadoEquipos` que sale de los documentos, qué documentos
 // cambian tras `moverAlumno`/`cambiarCapitan` (las funciones puras de `lib/equipos-profe.ts`) y
 // las props del tablero.
