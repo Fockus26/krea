@@ -15,6 +15,7 @@ Producción estuvo en 500 desde #49 hasta #56 (D214). Auditoría: `.qa/f08-audit
 | 500 en todas las rutas por `jwks-rsa`/`jose` (D214) | fix/firebase-admin-jose | merged (#56, 9893869) |
 | Objetivos táctiles 44 px (D215) · Equipos a dos columnas hasta 1440 (D216) | #57, #58 | merged (40cbfb5) |
 | Contraste AA de la tarjeta de puntos (D217) · Con poca altura solo la acción sigue fija (D218) | #59, #60 | merged (9587d95) |
+| Errores en rutas con sesión y 404 desde el cliente (D219) | fix/not-found-sesion | PR #61, en revisión: al mergearlo se cierra la fase 08 |
 
 ## Blocked (actions for César or external)
 
@@ -44,7 +45,7 @@ Producción estuvo en 500 desde #49 hasta #56 (D214). Auditoría: `.qa/f08-audit
 
 ## Next
 
-- Fase 08, medido en galerías sin hallazgos abiertos: contraste por tema y acento, movimiento reducido. Pendiente: pantallas con sesión real (`qa:local`: Java 21 ya instalado), hover/foco y ritmo vertical entre pantallas; 2560 y 3840 sin medir. Después, **fase 09 — QA final** (`phases/09-QA-FINAL.md`).
+- Tras el merge de #61: fase 08 cerrada (`PHASE_LOG/08-responsive-pulido.md`). Sigue la **fase 09 — QA final** (`phases/09-QA-FINAL.md`). QA con sesión: `qa:local` y `.env.test.local`, sin pedir a César que inicie sesión; build local suprimido (CI y Vercel).
 - Fase 09: bloquear o borrar `/secciones`, `/componentes`, `/tokens` (y `/estados` 404 en producción).
 
 ## Phases
