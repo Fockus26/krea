@@ -48,7 +48,8 @@ const buttonCva = cva(
         ],
       },
       size: {
-        sm: "h-9 rounded-nav px-3.5 text-button-sm",
+        // HANDOFF §2: 36 px solo en filas densas de escritorio; por debajo de 1024, 44 (D215)
+        sm: "h-9 rounded-nav px-3.5 text-button-sm max-lg:h-11",
         md: "h-11 rounded-md px-5 text-button",
         lg: "h-13 rounded-md px-6 text-button-lg",
       },
@@ -58,7 +59,7 @@ const buttonCva = cva(
     compoundVariants: [
       // ghost: padding 0 12 solo en md (sm y lg conservan el suyo, como el lienzo)
       { variant: "ghost", size: "md", icon: false, className: "px-3" },
-      { icon: true, size: "sm", className: "w-9" },
+      { icon: true, size: "sm", className: "w-9 max-lg:w-11" },
       { icon: true, size: "md", className: "w-11" },
       { icon: true, size: "lg", className: "w-13" },
     ],

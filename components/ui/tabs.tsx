@@ -83,6 +83,8 @@ function TabsTrigger({
         // Segmentado
         "group-data-[variant=segmented]/tabs-list:h-10 group-data-[variant=segmented]/tabs-list:gap-2 group-data-[variant=segmented]/tabs-list:rounded-nav group-data-[variant=segmented]/tabs-list:px-4",
         "group-data-[variant=segmented]/tabs-list:outline-offset-2",
+        // 40 px visibles (HANDOFF §2) y 44 de área táctil, dentro del padding del contenedor (D215)
+        "group-data-[variant=segmented]/tabs-list:after:absolute group-data-[variant=segmented]/tabs-list:after:inset-x-0 group-data-[variant=segmented]/tabs-list:after:-inset-y-0.5",
         "group-data-[variant=segmented]/tabs-list:data-[state=active]:bg-surface group-data-[variant=segmented]/tabs-list:data-[state=active]:text-text group-data-[variant=segmented]/tabs-list:data-[state=active]:shadow-1",
         // seg-block: reparte el ancho y, por debajo de 400 px (25 rem) del contenedor, solo texto
         "group-data-[block]/tabs-list:min-w-0 group-data-[block]/tabs-list:flex-1 group-data-[block]/tabs-list:justify-center group-data-[block]/tabs-list:px-2",

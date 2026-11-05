@@ -80,7 +80,7 @@ export function LoginForm({
           </Field>
           <Link
             href={recuperarHref}
-            className="text-small-b self-end rounded-sm text-accent-ink underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            className="text-small-b -mt-1 -mb-3 inline-flex min-h-11 items-center self-end rounded-sm text-accent-ink underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
           >
             Olvidé mi contraseña
           </Link>

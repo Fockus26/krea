@@ -46,7 +46,7 @@ const toastClassNames = {
   icon: "flex shrink-0 [&_svg]:size-5",
   // Botón fantasma sm con el color del toast (el lienzo pone `color: inherit`)
   actionButton: [
-    "inline-flex h-9 shrink-0 cursor-pointer items-center rounded-nav px-3.5 text-button-sm text-current",
+    "inline-flex h-9 shrink-0 cursor-pointer items-center rounded-nav px-3.5 text-button-sm text-current max-lg:h-11",
     "transition-colors duration-fast ease-krea hover:bg-current/10",
     "focus-visible:outline-2! focus-visible:outline-offset-2 focus-visible:outline-current!",
   ].join(" "),

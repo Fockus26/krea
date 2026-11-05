@@ -89,6 +89,13 @@ describe("buttonVariants (HANDOFF §2.1)", () => {
     expect(sm).toEqual(expect.arrayContaining(["w-9", "h-9", "px-0"]));
   });
 
+  test("sm llega a 44 × 44 por debajo de 1024 (D215)", () => {
+    expect(classes({ size: "sm" })).toContain("max-lg:h-11");
+    expect(classes({ icon: true, size: "sm" })).toEqual(
+      expect.arrayContaining(["max-lg:h-11", "max-lg:w-11"]),
+    );
+  });
+
   test("block = ancho 100 %", () => {
     expect(classes({ block: true })).toContain("w-full");
   });

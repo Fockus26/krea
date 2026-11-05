@@ -28,14 +28,15 @@ export function ReviewIndex({
       className={cn("flex flex-col gap-2", className)}
     >
       <p className="text-small-b text-text">{indiceTitulo(scores)}</p>
-      <ul className="flex flex-wrap gap-2">
+      <ul className="flex flex-wrap gap-2 max-lg:gap-4">
         {chips.map((c) => (
           <li key={c.numero}>
             <Badge
               asChild
               variant={c.puntuada ? "ok" : "neutral"}
               className={cn(
-                "nums no-underline",
+                // Chip de 28 px con 44 de área táctil; la separación evita que se pisen (D215)
+                "nums relative no-underline max-lg:after:absolute max-lg:after:-inset-2",
                 c.actual && "ring-2 ring-accent ring-inset",
               )}
             >

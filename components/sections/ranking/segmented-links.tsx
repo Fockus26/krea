@@ -35,7 +35,9 @@ export function SegmentedLinks({
               href={o.href}
               aria-current={o.clave === actual ? "page" : undefined}
               className={cn(
-                "inline-flex h-10 items-center justify-center gap-2 rounded-nav px-4 text-button whitespace-nowrap text-text-2",
+                "relative inline-flex h-10 items-center justify-center gap-2 rounded-nav px-4 text-button whitespace-nowrap text-text-2",
+                // 40 px visibles (HANDOFF §2) y 44 de área táctil, dentro del padding del contenedor (D215)
+                "after:absolute after:inset-x-0 after:-inset-y-0.5",
                 "transition-[color,background-color,box-shadow] duration-fast ease-krea",
                 "hover:text-text aria-[current=page]:bg-surface aria-[current=page]:text-text aria-[current=page]:shadow-1",
                 "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
