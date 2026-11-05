@@ -1,0 +1,461 @@
+// Evaluar y Ajustes de puntos contra el emulador de Firestore (W7, D204–D207): las transacciones
+// reales del Admin SDK que usan las Server Actions. Comprueba que el ranking se recalcula en la
+// misma transacción, que un ajuste y su anulación mueven puntos y nunca la nota (D007), y que dos
+// profes escribiendo a la vez en la misma sección no pierden escrituras.
+import { beforeAll, describe, expect, test } from "bun:test";
+import {
+  getApps as getAdminApps,
+  initializeApp as initAdmin,
+} from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
+import { idAnulacion } from "@/lib/ajustes-datos";
+import {
+  anularAjusteEnTransaccion,
+  aplicarAjusteEnTransaccion,
+} from "@/lib/firebase/ajustes";
+import {
+  deshacerEvaluacionEnTransaccion,
+  evaluarEnTransaccion,
+} from "@/lib/firebase/evaluar";
+import { notaFinal } from "@/lib/grades";
+import {
+  COL,
+  type Entrega,
+  type Equipo,
+  idEntrega,
+  type Tarea,
+  type Usuario,
+  zAjuste,
+  zEntrega,
+  zRankingSeccion,
+} from "@/lib/modelo";
+
+const PROYECTO = process.env.GCLOUD_PROJECT ?? "demo-krea";
+const app = () => getAdminApps()[0] ?? initAdmin({ projectId: PROYECTO });
+const db = () => getFirestore(app());
+
+const AHORA = Date.UTC(2026, 10, 5, 15);
+const PROFE = "30262232";
+const PROFE_2 = "30262233";
+const A1 = "39700001"; // base 15
+const A2 = "39700002"; // base 20
+const A3 = "39700003"; // base 20, para la concurrencia
+const EQ = "w7-g1";
+const T_IND = "w7-ind";
+const T_GRU = "w7-gru";
+
+const alumno = (cedula: string, base: number): Usuario => ({
+  cedula,
+  rol: "estudiante",
+  nombres: `Alumno ${cedula}`,
+  apellidos: "Prueba W7",
+  seccion: "5C",
+  equipoId: EQ,
+  base,
+  avatar: { estilo: "adventurer-neutral", semilla: cedula },
+  actualizadoEn: 1,
+});
+
+const equipo: Equipo = {
+  nombre: "5C-G9 Prueba W7",
+  seccion: "5C",
+  tema: null,
+  capitanId: A1,
+  logoPath: null,
+};
+
+const tarea = (tipo: Tarea["tipo"], preguntas: Tarea["preguntas"]): Tarea => ({
+  titulo: `Prueba W7 ${tipo}`,
+  tipo,
+  secciones: ["5C"],
+  estado: "abierta",
+  fechaEntrega: "2026-11-14",
+  premio: null,
+  preguntas,
+  importada: false,
+  autorId: PROFE,
+  actualizadoEn: 1,
+});
+
+const entregada = (
+  tareaId: string,
+  tipo: Entrega["tipo"],
+  titularId: string,
+  integrantes: string[],
+): Entrega => ({
+  tareaId,
+  tipo,
+  titularId,
+  seccion: "5C",
+  integrantes,
+  estado: "entregada",
+  respuestas: { p1: { texto: "Respuesta" } },
+  enviadaPor: integrantes[0] ?? null,
+  enviadaEn: AHORA - 1000,
+  evaluacion: null,
+});
+
+const E1 = idEntrega(T_IND, A1);
+const E2 = idEntrega(T_IND, A2);
+const E3 = idEntrega(T_IND, A3);
+const EG = idEntrega(T_GRU, EQ);
+
+async function ranking() {
+  const snap = await db().collection(COL.ranking).doc("5C").get();
+  return zRankingSeccion.parse(snap.data());
+}
+
+async function entrega(id: string) {
+  const snap = await db().collection(COL.entregas).doc(id).get();
+  return zEntrega.parse(snap.data());
+}
+
+const puntosDe = async (c: string) => (await ranking()).alumnos[c]?.puntos;
+
+beforeAll(async () => {
+  const b = db().batch();
+  b.set(db().collection(COL.usuarios).doc(A1), alumno(A1, 15));
+  b.set(db().collection(COL.usuarios).doc(A2), alumno(A2, 20));
+  b.set(db().collection(COL.usuarios).doc(A3), alumno(A3, 20));
+  b.set(db().collection(COL.equipos).doc(EQ), equipo);
+  b.set(
+    db().collection(COL.tareas).doc(T_IND),
+    tarea("individual", [
+      { id: "p1", enunciado: "Uno", formato: "texto", valor: 12 },
+      { id: "p2", enunciado: "Dos", formato: "texto", valor: 8 },
+    ]),
+  );
+  b.set(
+    db().collection(COL.tareas).doc(T_GRU),
+    tarea("grupal", [
+      { id: "p1", enunciado: "Uno", formato: "texto", valor: 20 },
+    ]),
+  );
+  b.set(
+    db().collection(COL.entregas).doc(E1),
+    entregada(T_IND, "individual", A1, [A1]),
+  );
+  b.set(
+    db().collection(COL.entregas).doc(E2),
+    entregada(T_IND, "individual", A2, [A2]),
+  );
+  b.set(
+    db().collection(COL.entregas).doc(E3),
+    entregada(T_IND, "individual", A3, [A3]),
+  );
+  b.set(
+    db().collection(COL.entregas).doc(EG),
+    entregada(T_GRU, "grupal", EQ, [A1, A2]),
+  );
+  await b.commit();
+});
+
+describe("evaluar (emulador)", () => {
+  test("rechaza puntajes fuera del máximo, incompletos o de otra pregunta", async () => {
+    const intentar = (puntos: Record<string, number>) =>
+      evaluarEnTransaccion(
+        db(),
+        PROFE,
+        { entregaId: E1, puntos, comentarios: {} },
+        AHORA,
+      );
+    expect(await intentar({ p1: 12.5, p2: 8 })).toEqual({
+      ok: false,
+      error: "incompleta",
+    });
+    expect(await intentar({ p1: 12 })).toEqual({
+      ok: false,
+      error: "incompleta",
+    });
+    expect(await intentar({ p1: 12, p2: 8, p9: 1 })).toEqual({
+      ok: false,
+      error: "invalida",
+    });
+    expect((await entrega(E1)).estado).toBe("entregada");
+  });
+
+  test("evaluar → la entrega queda evaluada y el ranking cambia en la misma transacción", async () => {
+    const r = await evaluarEnTransaccion(
+      db(),
+      PROFE,
+      {
+        entregaId: E1,
+        puntos: { p1: 12, p2: 6.5 },
+        comentarios: { p1: "  Muy clara  ", p2: "   " },
+      },
+      AHORA,
+    );
+    expect(r).toEqual({ ok: true, id: E1, evaluadaEn: AHORA });
+    const e = await entrega(E1);
+    expect(e.estado).toBe("evaluada");
+    expect(e.evaluacion).toEqual({
+      puntos: { p1: 12, p2: 6.5 },
+      comentarios: { p1: "Muy clara" },
+      puntaje: 18.5,
+      evaluadaPor: PROFE,
+      evaluadaEn: AHORA,
+    });
+    expect(e.evaluacionAnterior).toBeNull();
+    // Base 15 (D006): 18,5 × 15 / 20 = 13,9
+    expect(await puntosDe(A1)).toBe(notaFinal(18.5, 15) ?? -1);
+  });
+
+  test("corregir una evaluada recalcula y guarda quién y cuándo; Deshacer la devuelve", async () => {
+    const r = await evaluarEnTransaccion(
+      db(),
+      PROFE_2,
+      { entregaId: E1, puntos: { p1: 6, p2: 2 }, comentarios: {} },
+      AHORA + 10,
+    );
+    expect(r.ok).toBe(true);
+    const e = await entrega(E1);
+    expect(e.evaluacion?.evaluadaPor).toBe(PROFE_2);
+    expect(e.evaluacion?.evaluadaEn).toBe(AHORA + 10);
+    expect(e.evaluacionAnterior?.puntaje).toBe(18.5);
+    // 8 × 15 / 20 = 6 < 10 → no aporta (D007)
+    expect(await puntosDe(A1)).toBe(0);
+
+    // Otro profe no deshace lo que no guardó; el autor, sí, una sola vez
+    expect(
+      await deshacerEvaluacionEnTransaccion(
+        db(),
+        PROFE,
+        E1,
+        AHORA + 10,
+        AHORA + 11,
+      ),
+    ).toEqual({ ok: false, error: "cambio" });
+    expect(
+      await deshacerEvaluacionEnTransaccion(
+        db(),
+        PROFE_2,
+        E1,
+        AHORA + 10,
+        AHORA + 12,
+      ),
+    ).toEqual({ ok: true, id: E1, evaluadaEn: AHORA + 10 });
+    const d = await entrega(E1);
+    expect(d.evaluacion?.puntaje).toBe(18.5);
+    expect(d.evaluacionAnterior).toBeUndefined();
+    expect(await puntosDe(A1)).toBe(13.9);
+    expect(
+      await deshacerEvaluacionEnTransaccion(db(), PROFE, E1, AHORA, AHORA + 13),
+    ).toEqual({ ok: false, error: "cambio" });
+  });
+
+  test("deshacer la primera evaluación la deja Pendiente (D003)", async () => {
+    await evaluarEnTransaccion(
+      db(),
+      PROFE,
+      { entregaId: E2, puntos: { p1: 10, p2: 8 }, comentarios: {} },
+      AHORA + 20,
+    );
+    expect(await puntosDe(A2)).toBe(18);
+    await deshacerEvaluacionEnTransaccion(
+      db(),
+      PROFE,
+      E2,
+      AHORA + 20,
+      AHORA + 21,
+    );
+    const e = await entrega(E2);
+    expect(e.estado).toBe("entregada");
+    expect(e.evaluacion).toBeNull();
+    expect(await puntosDe(A2)).toBe(0);
+  });
+
+  test("grupal: el equipo suma el puntaje y cada integrante su base (D177)", async () => {
+    const r = await evaluarEnTransaccion(
+      db(),
+      PROFE,
+      { entregaId: EG, puntos: { p1: 16 }, comentarios: {} },
+      AHORA + 30,
+    );
+    expect(r.ok).toBe(true);
+    const rk = await ranking();
+    expect(rk.equipos[EQ]?.puntos).toBe(16);
+    // A1: 13,9 (individual) + 16 × 15 / 20 = 12 → 25,9; A2: 16 (base 20)
+    expect(rk.alumnos[A1]?.puntos).toBe(25.9);
+    expect(rk.alumnos[A2]?.puntos).toBe(16);
+  });
+});
+
+describe("ajustes de puntos (emulador)", () => {
+  test("ajuste + anulación: el ranking vuelve y la nota no cambia (D007, D121)", async () => {
+    const antes = await puntosDe(A1);
+    const notaAntes = (await entrega(E1)).evaluacion;
+
+    const r = await aplicarAjusteEnTransaccion(
+      db(),
+      PROFE,
+      {
+        destino: "alumno",
+        destinoId: A1,
+        motivoId: "participacion",
+        valor: 2,
+        nota: "",
+      },
+      AHORA + 40,
+    );
+    if (!r.ok) throw new Error(r.error);
+    const aj = zAjuste.parse(
+      (await db().collection(COL.ajustes).doc(r.id).get()).data(),
+    );
+    expect(aj).toMatchObject({
+      seccion: "5C",
+      motivo: "Participación destacada",
+      nota: null,
+      autorId: PROFE,
+      anulaA: null,
+    });
+    expect(await puntosDe(A1)).toBe((antes ?? 0) + 2);
+    expect((await entrega(E1)).evaluacion).toEqual(notaAntes);
+
+    const an = await anularAjusteEnTransaccion(db(), PROFE_2, r.id, AHORA + 41);
+    expect(an).toEqual({ ok: true, id: idAnulacion(r.id) });
+    const inversa = zAjuste.parse(
+      (await db().collection(COL.ajustes).doc(idAnulacion(r.id)).get()).data(),
+    );
+    expect(inversa).toMatchObject({
+      valor: -2,
+      motivo: "Anulación",
+      motivoId: "anulacion",
+      anulaA: r.id,
+      autorId: PROFE_2,
+    });
+    expect(inversa.nota).toStartWith("«Participación destacada» del ");
+    // El original no se borra
+    expect((await db().collection(COL.ajustes).doc(r.id).get()).exists).toBe(
+      true,
+    );
+    expect(await puntosDe(A1)).toBe(antes ?? -1);
+    expect((await entrega(E1)).evaluacion).toEqual(notaAntes);
+
+    // Ni se anula dos veces ni se anula una anulación
+    expect(
+      await anularAjusteEnTransaccion(db(), PROFE, r.id, AHORA + 42),
+    ).toEqual({ ok: false, error: "anulado" });
+    expect(
+      await anularAjusteEnTransaccion(
+        db(),
+        PROFE,
+        idAnulacion(r.id),
+        AHORA + 43,
+      ),
+    ).toEqual({ ok: false, error: "invalida" });
+  });
+
+  test("equipo: mueve los puntos del equipo, no los de sus integrantes", async () => {
+    const antes = await ranking();
+    const r = await aplicarAjusteEnTransaccion(
+      db(),
+      PROFE,
+      {
+        destino: "equipo",
+        destinoId: EQ,
+        motivoId: "otro",
+        valor: -1.5,
+        nota: "Entregaron sin nombres",
+      },
+      AHORA + 50,
+    );
+    expect(r.ok).toBe(true);
+    const despues = await ranking();
+    expect(despues.equipos[EQ]?.puntos).toBe(
+      (antes.equipos[EQ]?.puntos ?? 0) - 1.5,
+    );
+    expect(despues.alumnos[A1]?.puntos).toBe(antes.alumnos[A1]?.puntos ?? -1);
+  });
+
+  test("«Otro» sin detalle y destinos que no existen no se guardan", async () => {
+    expect(
+      await aplicarAjusteEnTransaccion(
+        db(),
+        PROFE,
+        {
+          destino: "alumno",
+          destinoId: A1,
+          motivoId: "otro",
+          valor: 1,
+          nota: " ",
+        },
+        AHORA,
+      ),
+    ).toEqual({ ok: false, error: "detalle" });
+    expect(
+      await aplicarAjusteEnTransaccion(
+        db(),
+        PROFE,
+        {
+          destino: "equipo",
+          destinoId: "w7-no-existe",
+          motivoId: "ayudo",
+          valor: 1,
+          nota: "",
+        },
+        AHORA,
+      ),
+    ).toEqual({ ok: false, error: "no-existe" });
+  });
+});
+
+describe("concurrencia: dos profes a la vez (emulador)", () => {
+  test("en la misma sección no se pierde ninguna escritura del ranking", async () => {
+    const a2 = await puntosDe(A2);
+    const [r1, r2, r3] = await Promise.all([
+      evaluarEnTransaccion(
+        db(),
+        PROFE,
+        { entregaId: E2, puntos: { p1: 12, p2: 8 }, comentarios: {} },
+        AHORA + 60,
+      ),
+      evaluarEnTransaccion(
+        db(),
+        PROFE_2,
+        { entregaId: E3, puntos: { p1: 11, p2: 8 }, comentarios: {} },
+        AHORA + 61,
+      ),
+      aplicarAjusteEnTransaccion(
+        db(),
+        PROFE,
+        {
+          destino: "alumno",
+          destinoId: A3,
+          motivoId: "extra",
+          valor: 2,
+          nota: "",
+        },
+        AHORA + 62,
+      ),
+    ]);
+    expect([r1.ok, r2.ok, r3.ok]).toEqual([true, true, true]);
+    expect(await puntosDe(A2)).toBe((a2 ?? 0) + 20);
+    // 19 + 2 del ajuste
+    expect(await puntosDe(A3)).toBe(21);
+  });
+
+  test("la misma entrega: gana una evaluación entera y el ranking coincide con ella", async () => {
+    const [r1, r2] = await Promise.all([
+      evaluarEnTransaccion(
+        db(),
+        PROFE,
+        { entregaId: E3, puntos: { p1: 4, p2: 4 }, comentarios: {} },
+        AHORA + 70,
+      ),
+      evaluarEnTransaccion(
+        db(),
+        PROFE_2,
+        { entregaId: E3, puntos: { p1: 12, p2: 4 }, comentarios: {} },
+        AHORA + 71,
+      ),
+    ]);
+    expect(r1.ok && r2.ok).toBe(true);
+    const e = await entrega(E3);
+    const puntaje = e.evaluacion?.puntaje;
+    expect([8, 16]).toContain(puntaje ?? -1);
+    // Una de las dos reemplazó a la otra: la anterior es la que perdió, no la de antes de ambas
+    expect([8, 16]).toContain(e.evaluacionAnterior?.puntaje ?? -1);
+    // 8 no aporta (< 10); 16 sí. Más los 2 del ajuste.
+    expect(await puntosDe(A3)).toBe((puntaje === 16 ? 16 : 0) + 2);
+  });
+});

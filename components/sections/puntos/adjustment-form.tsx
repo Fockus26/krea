@@ -66,7 +66,15 @@ export function AdjustmentForm({
   deltas: Readonly<Record<string, number>>;
   inicial?: InicialAjuste;
   profe: string;
-  onAplicar: (fila: FilaHistorial) => void;
+  /**
+   * Aplica el ajuste ya validado: `true` si quedó (el formulario avisa y se vacía), `false` si
+   * no (quien llama ya avisó del error y el formulario se queda como estaba). Con Firestore (W7)
+   * es asíncrono.
+   */
+  onAplicar: (
+    fila: FilaHistorial,
+    motivo: MotivoId,
+  ) => boolean | Promise<boolean>;
 }) {
   const ids = React.useId();
   const lAjustar = `${ids}-ajustar`;
@@ -99,6 +107,8 @@ export function AdjustmentForm({
   // Dirección del último −/+ (o ↑/↓): desde «sin valor» el stepper parte de `min` en las dos
   // direcciones (D103), que aquí sería −20; con la dirección se parte de ±0,5 (D119).
   const direccion = React.useRef<1 | -1 | null>(null);
+  // Un envío a la vez (doble clic mientras se guarda)
+  const enviando = React.useRef(false);
 
   const opciones = conDeltas(candidatos[tipo][seccion], deltas);
   const destino = opciones.find((o) => o.id === destinoId) ?? null;
@@ -116,8 +126,9 @@ export function AdjustmentForm({
     setDestinoId(null);
   };
 
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (enviando.current) return;
     const err = validarAjuste(borrador);
     if (!sinErrores(err) || !destino || !motivo || valor === null) {
       setIntentado(true);
@@ -133,7 +144,10 @@ export function AdjustmentForm({
       fecha: isoLocal(new Date()),
       profe,
     });
-    onAplicar(fila);
+    enviando.current = true;
+    const ok = await onAplicar(fila, motivo);
+    enviando.current = false;
+    if (!ok) return;
     toast.success(ajusteAplicadoTexto(fila));
     // Se queda el destino (puede llevar otro ajuste); motivo, puntos y detalle vuelven a vacío
     setMotivo(null);

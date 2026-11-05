@@ -1,39 +1,81 @@
+import { ClipboardList } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { EmptyState } from "@/components/krea/empty-state";
+import type { QuestionAnswer } from "@/components/krea/question-card-detail";
 import { ReviewForm } from "@/components/sections/evaluar/review-form";
 import { ReviewHeader } from "@/components/sections/evaluar/review-header";
-import { COLA, evaluarVista } from "@/lib/demo/evaluar";
-import { vecinos } from "@/lib/evaluar";
+import { Card } from "@/components/ui/card";
+import tareaSeed from "@/data/seed/tarea-identidad-marca.json";
+import { deshacerEvaluacion, guardarEvaluacion } from "@/lib/acciones/evaluar";
+import { verificarSesion } from "@/lib/dal";
+import { urlsFirmadas } from "@/lib/datos/imagenes";
+import { colaEvaluar, entregaProfe, mapasProfe } from "@/lib/datos/profesor";
+import {
+  IMAGEN_NO_DISPONIBLE,
+  nombreTitular,
+  rutaEntrega,
+  vistaEvaluar,
+} from "@/lib/evaluar-datos";
+import { idEntrega } from "@/lib/modelo";
 
 type Props = PageProps<"/profe/evaluar/[entrega]">;
 
-const BASE = "/profe/evaluar";
 const TITULO_ID = "entrega-titulo";
 
-const hrefDe = (i: number) => `${BASE}/${COLA[i]?.id ?? ""}`;
+const ACCIONES = { guardar: guardarEvaluacion, deshacer: deshacerEvaluacion };
 
-// Una página por entrega de la cola (el Panel y Anterior/Saltar enlazan a todas)
+// `cacheComponents` pide al menos un parámetro para validar el shell: una entrega del seed. Las
+// demás se renderizan al pedirlas (como /profe/tareas/[id]).
 export function generateStaticParams() {
-  return COLA.map((e) => ({ entrega: e.id }));
+  const cedula = tareaSeed.evaluaciones[0]?.cedula ?? "0000000";
+  return [{ entrega: idEntrega(tareaSeed.id, cedula) }];
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { entrega } = await params;
-  const i = COLA.findIndex((e) => e.id === entrega);
+  const s = await verificarSesion();
+  if (s?.rol !== "profesor")
+    return { title: "Evaluar", robots: { index: false } };
+  const [e, mapas] = await Promise.all([entregaProfe(entrega), mapasProfe()]);
   return {
-    title: i < 0 ? "Evaluar" : `Evaluar · ${evaluarVista(i).titulo}`,
+    title: e ? `Evaluar · ${nombreTitular(e, mapas)}` : "Evaluar",
     robots: { index: false },
   };
 }
 
-// Evaluar entrega (HANDOFF §3): las mismas secciones que /secciones/evaluar, con la cola real.
-// La topbar móvil (X y «Entrega n de m») sale de lib/topbar.ts; el Toaster es el global (D131).
+// Evaluar entrega (HANDOFF §3; W7): una entrega de Firestore, en la cola o ya evaluada (se
+// corrige, D204). Guardar escribe la evaluación y el ranking en una transacción (D175); la nota
+// la calcula `lib/` (D013). Solo se firman las imágenes de esta entrega (D195). La topbar móvil
+// sale de lib/topbar.ts; el Toaster es el global (D131).
 export default async function EvaluarEntregaPage({ params }: Props) {
-  const { entrega } = await params;
-  const indice = COLA.findIndex((e) => e.id === entrega);
-  if (indice < 0) notFound();
-  const v = evaluarVista(indice);
-  const { anterior, siguiente } = vecinos(indice, v.total);
+  const { entrega: id } = await params;
+  const [entrega, cola, mapas] = await Promise.all([
+    entregaProfe(id),
+    colaEvaluar(),
+    mapasProfe(),
+  ]);
+  const tarea = entrega ? mapas.tareas.get(entrega.tareaId) : undefined;
+  // Un borrador del alumno todavía no es una entrega (D196)
+  if (!entrega || !tarea || entrega.estado === "borrador") notFound();
+  const v = vistaEvaluar({ entrega, tarea, cola, mapas });
+
+  const urls = await urlsFirmadas(
+    v.preguntas.flatMap((p) =>
+      p.respuesta.tipo === "imagen" ? [p.respuesta.ruta] : [],
+    ),
+  );
+  const preguntas = v.preguntas.map(({ respuesta, ...p }) => {
+    let r: QuestionAnswer;
+    if (respuesta.tipo === "texto") r = respuesta;
+    else {
+      const src = urls.get(respuesta.ruta);
+      r = src
+        ? { tipo: "imagen", src, alt: respuesta.alt }
+        : { tipo: "texto", texto: IMAGEN_NO_DISPONIBLE };
+    }
+    return { ...p, respuesta: r };
+  });
 
   return (
     <>
@@ -44,24 +86,35 @@ export default async function EvaluarEntregaPage({ params }: Props) {
         identidad={v.identidad}
         linea={v.linea}
         chips={v.chips}
-        anteriorHref={anterior === null ? null : hrefDe(anterior)}
-        saltarHref={siguiente === null ? null : hrefDe(siguiente)}
+        anteriorHref={v.anteriorHref}
+        saltarHref={v.saltarHref}
       />
-      <ReviewForm
-        key={v.entrega.id}
-        entregaId={v.entrega.id}
-        tituloId={TITULO_ID}
-        tipo={v.entrega.tipo}
-        preguntas={v.entrega.preguntas}
-        inicial={{
-          puntajes: v.entrega.preguntas.map((p) => p.puntaje ?? null),
-          comentarios: v.entrega.preguntas.map((p) => p.comentario ?? ""),
-        }}
-        base={v.base}
-        siguiente={v.siguiente}
-        guardarHref={siguiente === null ? BASE : hrefDe(siguiente)}
-        actualHref={hrefDe(indice)}
-      />
+      {preguntas.length === 0 ? (
+        // Nota importada del Excel sin preguntas (D136): no hay nada que puntuar aquí
+        <Card>
+          <EmptyState
+            icon={ClipboardList}
+            headingLevel={2}
+            // PROVISIONAL (CONTENT_CHECKLIST fila 133)
+            title="Esta nota se cargó sin preguntas"
+            description="Vino del registro de notas sin el puntaje de cada pregunta, así que no se puede corregir desde aquí."
+          />
+        </Card>
+      ) : (
+        <ReviewForm
+          key={v.entregaId}
+          entregaId={v.entregaId}
+          tituloId={TITULO_ID}
+          tipo={v.tipo}
+          preguntas={preguntas}
+          inicial={v.inicial}
+          base={v.base}
+          siguiente={v.siguiente}
+          guardarHref={v.guardarHref}
+          actualHref={rutaEntrega(v.entregaId)}
+          acciones={ACCIONES}
+        />
+      )}
     </>
   );
 }

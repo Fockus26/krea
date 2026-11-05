@@ -66,3 +66,23 @@ export function horaDeInstante(ms: number): string {
   const de = (t: string) => p.find((x) => x.type === t)?.value ?? "";
   return `${de("hour")}:${de("minute")} ${de("dayPeriod") === "AM" ? "a. m." : "p. m."}`;
 }
+
+const HORA_24_CARACAS = new Intl.DateTimeFormat("en-GB", {
+  timeZone: ZONA_HORARIA,
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
+/** Instante (ms epoch) → hora civil de Caracas en 24 h: "16:12" (para `horaCivilTexto`). */
+export function hora24DeInstante(ms: number): string {
+  return HORA_24_CARACAS.format(new Date(ms));
+}
+
+/**
+ * Instante (ms epoch) → ISO local de Caracas sin zona "2026-10-25T16:12": la forma de las fechas
+ * del historial de ajustes y del Panel (`fechaAjusteTexto`, W7).
+ */
+export function isoLocalDeInstante(ms: number): string {
+  return `${diaDeInstante(ms)}T${hora24DeInstante(ms)}`;
+}
