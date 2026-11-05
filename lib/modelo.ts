@@ -291,6 +291,11 @@ export const zEntrega = z
     enviadaPor: zCedula.nullable(),
     enviadaEn: zInstante.nullable(),
     evaluacion: zEvaluacion.nullable(),
+    /**
+     * La evaluación que la última guardada reemplazó (`null`: estaba sin evaluar), para que
+     * «Deshacer» la devuelva (D205). Ausente si nunca se evaluó desde la app o ya se deshizo.
+     */
+    evaluacionAnterior: zEvaluacion.nullable().optional(),
   })
   .superRefine((e, ctx) => {
     if ((e.estado === "evaluada") !== (e.evaluacion !== null)) {

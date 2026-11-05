@@ -80,7 +80,10 @@ export function tipoChipTexto(tipo: TipoEntrega, integrantes?: number): string {
   return `Grupal · ${integrantes} ${integrantes === 1 ? "integrante" : "integrantes"}`;
 }
 
-/** La base no aplica a las grupales (D014): la nota grupal es la misma para todos, base 20. */
+/**
+ * Base de la nota que se ve al evaluar: la del alumno; en una grupal, 20 (la nota del equipo,
+ * que es la que suma al equipo). A cada integrante se le aplica después su base (D177).
+ */
 export function baseEfectiva(tipo: TipoEntrega, base: number): number {
   return tipo === "grupal" ? NOTA_MAX : base;
 }
