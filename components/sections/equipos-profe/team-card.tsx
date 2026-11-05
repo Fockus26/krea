@@ -131,7 +131,11 @@ export function TeamCard({
           <p className="text-small text-text-2">
             {metaEquipoTexto(equipo.tema, miembros.length)}
           </p>
-          <Badge variant="acc" className="nums">
+          {/* Con «empate» o en 320 px no cabe en una línea: envuelve dentro de su columna (D216) */}
+          <Badge
+            variant="acc"
+            className="nums h-auto min-h-7 max-w-full py-1 whitespace-normal"
+          >
             {chipPuestoTexto(equipo.puesto, equipo.puntos, equipo.empate)}
           </Badge>
         </div>
