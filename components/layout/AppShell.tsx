@@ -43,7 +43,7 @@ export function AppShell({
       ) : null}
       <div className="flex min-w-0 flex-1 flex-col">
         {topbar ? (
-          <header className="h-topbar sticky top-0 z-topbar flex items-center gap-3 border-b border-divider bg-topbar px-(--page-px) lg:hidden">
+          <header className="h-topbar sticky top-0 z-topbar flex items-center gap-3 border-b border-divider bg-topbar px-(--page-px) bajo:static lg:hidden">
             {topbar}
           </header>
         ) : null}
@@ -58,7 +58,7 @@ export function AppShell({
         {bottomNav ? (
           <nav
             aria-label="Principal"
-            className="h-bnav shadow-bnav sticky bottom-0 z-topbar grid grid-cols-5 border-t border-divider bg-surface px-1 has-data-sin-barra-inferior:hidden lg:hidden"
+            className="h-bnav shadow-bnav sticky bottom-0 z-topbar grid grid-cols-5 border-t border-divider bg-surface px-1 has-data-sin-barra-inferior:hidden bajo:static lg:hidden"
           >
             {bottomNav}
           </nav>

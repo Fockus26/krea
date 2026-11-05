@@ -395,7 +395,7 @@ export function TaskBuilder({
       <SumMeter
         sum={suma}
         variant="bar"
-        className="sticky top-16 z-sticky lg:hidden"
+        className="sticky top-16 z-sticky bajo:static lg:hidden"
       />
 
       {aviso ? <Alert variant="info">{aviso}</Alert> : null}

@@ -7,6 +7,9 @@
  *   - sistema oscuro sin ningún [data-theme="light"] propio ni de un ancestro.
  * Cubre dos niveles de anidación (raíz + contenedor), que es lo que usa la app.
  */
+/* Pantalla de poca altura (teléfono en horizontal): solo la ActionBar sigue fija (D218). */
+@custom-variant bajo (@media (height < 30rem));
+
 @custom-variant dark {
   &:where([data-theme="dark"], [data-theme="dark"] *):not(
       :where(
