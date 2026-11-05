@@ -99,23 +99,54 @@ export function avisoCapitanTexto(
   };
 }
 
-/** Clave del borrador local de una tarea (solo textos: las imágenes no se guardan en el dispositivo). */
-export function claveBorrador(tareaId: string): string {
-  return `krea-borrador-${tareaId}`;
+/**
+ * Clave del borrador local de una tarea. Con `titular` (la cédula de la sesión) cada alumno
+ * tiene el suyo aunque compartan teléfono.
+ */
+export function claveBorrador(tareaId: string, titular?: string): string {
+  return titular
+    ? `krea-borrador-${tareaId}-${titular}`
+    : `krea-borrador-${tareaId}`;
 }
 
 /** Intervalo del borrador automático (§3: "cada 2 s"). */
 export const BORRADOR_MS = 2000;
 
-/** Lee un borrador guardado; cualquier cosa que no sea un mapa id → texto se descarta. */
-export function leerBorrador(raw: string | null): Record<string, string> {
+/**
+ * Imagen ya subida (D195): el borrador guarda solo su ruta en el almacén, nombre y peso; nunca
+ * la imagen. Al volver se muestra como lista, sin vista previa (no se gasta una descarga).
+ */
+export type ImagenBorrador = {
+  imagenPath: string;
+  nombre: string;
+  peso: number;
+};
+export type Borrador = Record<string, string | ImagenBorrador>;
+
+function esImagenBorrador(v: unknown): v is ImagenBorrador {
+  if (!v || typeof v !== "object") return false;
+  const o = v as Record<string, unknown>;
+  return (
+    typeof o.imagenPath === "string" &&
+    o.imagenPath.length > 0 &&
+    typeof o.nombre === "string" &&
+    typeof o.peso === "number" &&
+    Number.isFinite(o.peso)
+  );
+}
+
+/** Lee un borrador guardado; lo que no sea id → texto o id → imagen subida se descarta. */
+export function leerBorrador(raw: string | null): Borrador {
   if (!raw) return {};
   try {
     const data: unknown = JSON.parse(raw);
     if (!data || typeof data !== "object" || Array.isArray(data)) return {};
-    const out: Record<string, string> = {};
+    const out: Borrador = {};
     for (const [k, v] of Object.entries(data)) {
       if (typeof v === "string") out[k] = v;
+      else if (esImagenBorrador(v)) {
+        out[k] = { imagenPath: v.imagenPath, nombre: v.nombre, peso: v.peso };
+      }
     }
     return out;
   } catch {

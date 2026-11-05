@@ -8,6 +8,8 @@ export type PreguntaDetalle = {
   valor: number;
   obtenido: number;
   respuesta: string;
+  /** Respuesta en imagen ya firmada (D195); sin ella se muestra `respuesta` en texto. */
+  imagen?: { src: string; alt: string };
   comentario?: string;
 };
 
@@ -41,7 +43,11 @@ export function QuestionList({
             enunciado={p.enunciado}
             valor={p.valor}
             obtenido={p.obtenido}
-            respuesta={{ tipo: "texto", texto: p.respuesta }}
+            respuesta={
+              p.imagen
+                ? { tipo: "imagen", ...p.imagen }
+                : { tipo: "texto", texto: p.respuesta }
+            }
             comentario={p.comentario}
             level={3}
           />

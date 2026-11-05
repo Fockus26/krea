@@ -10,6 +10,8 @@ import { Card } from "@/components/ui/card";
 import tareaSeed from "@/data/seed/tarea-identidad-marca.json";
 import { verificarSesion } from "@/lib/dal";
 import { datosAlumno } from "@/lib/datos/estudiante";
+import { urlsFirmadas } from "@/lib/datos/imagenes";
+import { answerImageAlt } from "@/lib/question";
 import { TAREA_GRUPAL_SEED } from "@/lib/seed-firestore";
 import { detalleNota } from "@/lib/vistas-estudiante";
 
@@ -56,6 +58,17 @@ export default async function DetalleNotaPage({ params }: Props) {
     );
   }
 
+  // Solo se firman las imágenes de esta entrega, que es suya (D195)
+  const urls = await urlsFirmadas(
+    d.preguntas.flatMap((p) => (p.imagenPath ? [p.imagenPath] : [])),
+  );
+  const preguntas = d.preguntas.map(({ imagenPath, ...p }, i) => {
+    const src = imagenPath ? urls.get(imagenPath) : undefined;
+    return src
+      ? { ...p, imagen: { src, alt: answerImageAlt(d.autor, i + 1) } }
+      : p;
+  });
+
   return (
     <>
       <BackLink href="/notas">Mis notas</BackLink>
@@ -67,8 +80,8 @@ export default async function DetalleNotaPage({ params }: Props) {
         base={d.base}
         final={d.final}
       />
-      {d.preguntas.length > 0 ? (
-        <QuestionList preguntas={d.preguntas} />
+      {preguntas.length > 0 ? (
+        <QuestionList preguntas={preguntas} />
       ) : (
         <Card>
           {/* PLACEHOLDER de copy (CONTENT_CHECKLIST fila 127): notas del Excel sin desglose */}

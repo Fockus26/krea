@@ -1,0 +1,503 @@
+import { describe, expect, test } from "bun:test";
+import {
+  armarEntrega,
+  carpetaEntrega,
+  claveImagen,
+  esImagenDe,
+  mensajeErrorEntrega,
+  permisoEntrega,
+  respuestasValidas,
+  yaEnviada,
+  zEnvioEntrega,
+} from "@/lib/entregas";
+import { horaDeInstante } from "@/lib/fecha";
+import {
+  type Entrega,
+  type Equipo,
+  idEntrega,
+  type Tarea,
+  type Usuario,
+  zEntrega,
+} from "@/lib/modelo";
+import { ANSWER_MAX_LENGTH } from "@/lib/question";
+import { claveBorrador, leerBorrador } from "@/lib/tareas";
+import {
+  type ConId,
+  entregaVista,
+  SIN_FECHA_ENTREGA,
+  tareasVista,
+} from "@/lib/vistas-estudiante";
+
+const AHORA = Date.UTC(2026, 10, 5, 20, 12); // 4:12 p. m. en Caracas
+const UUID = "0b5c3a52-7d0e-4f53-9d0b-0f1e2d3c4b5a";
+
+const usuario = (cedula: string, extra: Partial<Usuario> = {}): Usuario => ({
+  cedula,
+  rol: "estudiante",
+  nombres: "Ana María",
+  apellidos: "Pérez Gil",
+  seccion: "5A",
+  equipoId: "5a-g2",
+  base: 20,
+  avatar: { estilo: "adventurer-neutral", semilla: cedula },
+  actualizadoEn: 1,
+  ...extra,
+});
+
+const CAPITAN = usuario("33272397", { nombres: "Yeilin", apellidos: "Duarte" });
+const INTEGRANTE = usuario("33498239", {
+  nombres: "Wendoly",
+  apellidos: "Ponce",
+});
+const SIN_EQUIPO = usuario("33456636", { equipoId: null });
+const EQUIPO: ConId<Equipo> = {
+  id: "5a-g2",
+  nombre: "5A-G2 Repostería",
+  seccion: "5A",
+  tema: "Repostería",
+  capitanId: CAPITAN.cedula,
+  logoPath: null,
+};
+
+const tarea = (id: string, extra: Partial<Tarea> = {}): ConId<Tarea> => ({
+  id,
+  titulo: "Presentación del producto",
+  tipo: "grupal",
+  secciones: ["5A"],
+  estado: "abierta",
+  fechaEntrega: "2026-11-07",
+  premio: "Salida al cine",
+  preguntas: [
+    { id: "p1", enunciado: "Sube una foto", formato: "imagen", valor: 12 },
+    { id: "p2", enunciado: "¿A qué precio?", formato: "texto", valor: 8 },
+  ],
+  importada: false,
+  autorId: null,
+  actualizadoEn: 1,
+  ...extra,
+});
+
+const GRUPAL = tarea("presentacion");
+const INDIVIDUAL = tarea("competencia", { tipo: "individual", premio: null });
+
+describe("permisoEntrega (D012, D196)", () => {
+  test("individual: cualquiera de la sección; titular = su cédula", () => {
+    const r = permisoEntrega(SIN_EQUIPO, INDIVIDUAL, INDIVIDUAL.id, null);
+    expect(r).toEqual({
+      ok: true,
+      permiso: {
+        tipo: "individual",
+        titularId: SIN_EQUIPO.cedula,
+        entregaId: idEntrega("competencia", SIN_EQUIPO.cedula),
+      },
+    });
+  });
+
+  test("grupal: solo el capitán; titular = el equipo", () => {
+    const r = permisoEntrega(CAPITAN, GRUPAL, GRUPAL.id, EQUIPO);
+    expect(r.ok && r.permiso.titularId).toBe("5a-g2");
+    expect(permisoEntrega(INTEGRANTE, GRUPAL, GRUPAL.id, EQUIPO)).toEqual({
+      ok: false,
+      error: "no-capitan",
+    });
+    expect(permisoEntrega(SIN_EQUIPO, GRUPAL, GRUPAL.id, null)).toEqual({
+      ok: false,
+      error: "sin-equipo",
+    });
+  });
+
+  test("el equipo tiene que ser el suyo y de su sección", () => {
+    const otro = { ...EQUIPO, id: "5a-g3" };
+    expect(permisoEntrega(CAPITAN, GRUPAL, GRUPAL.id, otro).ok).toBe(false);
+    const otraSeccion = { ...EQUIPO, seccion: "5C" as const };
+    expect(permisoEntrega(CAPITAN, GRUPAL, GRUPAL.id, otraSeccion).ok).toBe(
+      false,
+    );
+  });
+
+  test("otra sección, borrador o inexistente → no-existe; evaluada → cerrada", () => {
+    const deC = usuario("30000001", { seccion: "5C" });
+    expect(permisoEntrega(deC, INDIVIDUAL, "x", null)).toEqual({
+      ok: false,
+      error: "no-existe",
+    });
+    expect(
+      permisoEntrega(CAPITAN, { ...INDIVIDUAL, estado: "borrador" }, "x", null),
+    ).toEqual({ ok: false, error: "no-existe" });
+    expect(permisoEntrega(CAPITAN, null, "x", null).ok).toBe(false);
+    expect(
+      permisoEntrega(CAPITAN, { ...INDIVIDUAL, estado: "evaluada" }, "x", null),
+    ).toEqual({ ok: false, error: "cerrada" });
+  });
+
+  test("un profesor nunca entrega", () => {
+    const profe = usuario("10000000", { rol: "profesor", seccion: null });
+    expect(permisoEntrega(profe, INDIVIDUAL, "x", null).ok).toBe(false);
+  });
+
+  test("yaEnviada: solo un borrador deja volver a enviar", () => {
+    expect(yaEnviada(null)).toBe(false);
+    expect(yaEnviada({ estado: "borrador" })).toBe(false);
+    expect(yaEnviada({ estado: "entregada" })).toBe(true);
+    expect(yaEnviada({ estado: "evaluada" })).toBe(true);
+  });
+});
+
+describe("claves de imagen (D195)", () => {
+  test("carpeta sin la cédula a la vista, estable y de 32 hex", async () => {
+    const id = idEntrega("competencia", CAPITAN.cedula);
+    const c = await carpetaEntrega(id);
+    expect(c).toMatch(/^[0-9a-f]{32}$/);
+    expect(c).not.toContain(CAPITAN.cedula);
+    expect(await carpetaEntrega(id)).toBe(c);
+    expect(await carpetaEntrega(idEntrega("competencia", "1"))).not.toBe(c);
+  });
+
+  test("claveImagen / esImagenDe", async () => {
+    const c = await carpetaEntrega("competencia__33272397");
+    const k = claveImagen("competencia", c, UUID);
+    expect(k).toBe(`entregas/competencia/${c}/${UUID}.jpg`);
+    expect(esImagenDe(k, "competencia", c)).toBe(true);
+    expect(esImagenDe(k, "otra", c)).toBe(false);
+    expect(esImagenDe(k, "competencia", "f".repeat(32))).toBe(false);
+    expect(
+      esImagenDe(`entregas/competencia/${c}/x.jpg`, "competencia", c),
+    ).toBe(false);
+    expect(
+      esImagenDe(`entregas/competencia/${c}/../${UUID}.jpg`, "competencia", c),
+    ).toBe(false);
+    expect(() => claveImagen("../x", c, UUID)).toThrow();
+    expect(() => claveImagen("competencia", c, "no-uuid")).toThrow();
+  });
+});
+
+describe("respuestas y entrega armada", () => {
+  test("una por pregunta, del formato de la pregunta, textos recortados", async () => {
+    const c = await carpetaEntrega(idEntrega(GRUPAL.id, "5a-g2"));
+    const img = claveImagen(GRUPAL.id, c, UUID);
+    expect(
+      respuestasValidas(
+        GRUPAL.preguntas,
+        { p1: { imagenPath: img }, p2: { texto: "  A 2 dólares  " } },
+        GRUPAL.id,
+        c,
+      ),
+    ).toEqual({ p1: { imagenPath: img }, p2: { texto: "A 2 dólares" } });
+    const mal = (
+      r: Record<string, { texto: string } | { imagenPath: string }>,
+    ) => respuestasValidas(GRUPAL.preguntas, r, GRUPAL.id, c);
+    expect(mal({ p1: { imagenPath: img } })).toBeNull(); // falta p2
+    expect(mal({ p1: { imagenPath: img }, p2: { texto: "  " } })).toBeNull();
+    expect(mal({ p1: { texto: "no" }, p2: { texto: "a" } })).toBeNull();
+    expect(
+      mal({ p1: { imagenPath: img }, p2: { texto: "a" }, p9: { texto: "b" } }),
+    ).toBeNull();
+    expect(
+      mal({
+        p1: { imagenPath: img },
+        p2: { texto: "a".repeat(ANSWER_MAX_LENGTH + 1) },
+      }),
+    ).toBeNull();
+    // Imagen de otra entrega (otra carpeta)
+    const ajena = claveImagen(GRUPAL.id, "a".repeat(32), UUID);
+    expect(mal({ p1: { imagenPath: ajena }, p2: { texto: "a" } })).toBeNull();
+  });
+
+  test("grupal: integrantes del equipo (con el capitán), valida con zEntrega", async () => {
+    const p = permisoEntrega(CAPITAN, GRUPAL, GRUPAL.id, EQUIPO);
+    if (!p.ok) throw new Error(p.error);
+    const carpeta = await carpetaEntrega(p.permiso.entregaId);
+    const r = armarEntrega({
+      tareaId: GRUPAL.id,
+      tarea: GRUPAL,
+      permiso: p.permiso,
+      usuario: CAPITAN,
+      integrantes: [INTEGRANTE.cedula],
+      respuestas: {
+        p1: { imagenPath: claveImagen(GRUPAL.id, carpeta, UUID) },
+        p2: { texto: "A 2 dólares" },
+      },
+      carpeta,
+      ahora: AHORA,
+    });
+    if (!r.ok) throw new Error(r.error);
+    expect(r.entrega).toMatchObject({
+      tipo: "grupal",
+      titularId: "5a-g2",
+      seccion: "5A",
+      integrantes: [CAPITAN.cedula, INTEGRANTE.cedula].sort(),
+      estado: "entregada",
+      enviadaPor: CAPITAN.cedula,
+      enviadaEn: AHORA,
+      evaluacion: null,
+    });
+    expect(zEntrega.safeParse(r.entrega).success).toBe(true);
+  });
+
+  test("individual: solo el titular; tarea sin preguntas → incompleta", async () => {
+    const t = {
+      ...INDIVIDUAL,
+      preguntas: INDIVIDUAL.preguntas.filter((q) => q.formato === "texto"),
+    };
+    const p = permisoEntrega(SIN_EQUIPO, t, t.id, null);
+    if (!p.ok) throw new Error(p.error);
+    const base = {
+      tareaId: t.id,
+      permiso: p.permiso,
+      usuario: SIN_EQUIPO,
+      integrantes: ["99999999"],
+      respuestas: { p2: { texto: "Hola" } },
+      carpeta: await carpetaEntrega(p.permiso.entregaId),
+      ahora: AHORA,
+    };
+    const r = armarEntrega({ ...base, tarea: t });
+    expect(r.ok && r.entrega.integrantes).toEqual([SIN_EQUIPO.cedula]);
+    expect(
+      armarEntrega({ ...base, tarea: { preguntas: [] }, respuestas: {} }),
+    ).toEqual({
+      ok: false,
+      error: "incompleta",
+    });
+  });
+
+  test("zEnvioEntrega rechaza ids que no sirven en una clave", () => {
+    expect(
+      zEnvioEntrega.safeParse({ tareaId: "a/b", respuestas: {} }).success,
+    ).toBe(false);
+    expect(
+      zEnvioEntrega.safeParse({
+        tareaId: "competencia",
+        respuestas: { p1: { texto: "x" } },
+      }).success,
+    ).toBe(true);
+  });
+
+  test("cada error tiene su mensaje", () => {
+    for (const e of [
+      "no-existe",
+      "cerrada",
+      "sin-equipo",
+      "no-capitan",
+      "ya-entregada",
+      "incompleta",
+      "imagen-tipo",
+      "imagen-peso",
+      "red",
+    ] as const) {
+      expect(mensajeErrorEntrega(e).length).toBeGreaterThan(10);
+    }
+  });
+});
+
+describe("borrador del dispositivo (D196)", () => {
+  test("guarda textos e imágenes subidas; descarta lo demás", () => {
+    expect(
+      leerBorrador(
+        JSON.stringify({
+          p1: "hola",
+          p2: {
+            imagenPath: "entregas/a/b/c.jpg",
+            nombre: "foto.jpg",
+            peso: 1200,
+          },
+          p3: { imagenPath: "", nombre: "x", peso: 1 },
+          p4: { nombre: "x" },
+          p5: 3,
+        }),
+      ),
+    ).toEqual({
+      p1: "hola",
+      p2: { imagenPath: "entregas/a/b/c.jpg", nombre: "foto.jpg", peso: 1200 },
+    });
+  });
+
+  test("clave por alumno", () => {
+    expect(claveBorrador("competencia", "33272397")).toBe(
+      "krea-borrador-competencia-33272397",
+    );
+  });
+});
+
+describe("horaDeInstante", () => {
+  test("hora de Caracas, 12 horas", () => {
+    expect(horaDeInstante(AHORA)).toBe("4:12 p. m.");
+    expect(horaDeInstante(Date.UTC(2026, 10, 5, 4, 5))).toBe("12:05 a. m.");
+    expect(horaDeInstante(Date.UTC(2026, 10, 5, 14, 30))).toBe("10:30 a. m.");
+  });
+});
+
+/* ---------- Vistas ---------- */
+
+const entrega = (
+  t: ConId<Tarea>,
+  extra: Partial<ConId<Entrega>> = {},
+): ConId<Entrega> => ({
+  id: idEntrega(t.id, "5a-g2"),
+  tareaId: t.id,
+  tipo: t.tipo,
+  titularId: "5a-g2",
+  seccion: "5A",
+  integrantes: [CAPITAN.cedula, INTEGRANTE.cedula],
+  estado: "entregada",
+  respuestas: {
+    p1: { imagenPath: "entregas/presentacion/abc/x.jpg" },
+    p2: { texto: "A 2 dólares" },
+  },
+  enviadaPor: CAPITAN.cedula,
+  enviadaEn: AHORA,
+  evaluacion: null,
+  ...extra,
+});
+
+const datos = (
+  u: Usuario,
+  tareas: ConId<Tarea>[],
+  entregas: ConId<Entrega>[] = [],
+) => ({
+  usuario: u,
+  equipo: u.equipoId ? EQUIPO : null,
+  tareas,
+  entregas,
+});
+
+describe("entregaVista", () => {
+  const companeros = [CAPITAN, INTEGRANTE];
+
+  test("capitán responde; integrante lee con el aviso del capitán", () => {
+    const c = entregaVista(datos(CAPITAN, [GRUPAL]), GRUPAL.id, companeros);
+    expect(c).toMatchObject({
+      estado: "responder",
+      autor: "Yeilin",
+      eyebrow: "Grupal · 5A-G2 Repostería",
+      vence: "Vence 07/11/2026",
+      puntos: "20 pts · 2 preguntas",
+      premio: "Salida al cine",
+    });
+    const l = entregaVista(datos(INTEGRANTE, [GRUPAL]), GRUPAL.id, companeros);
+    expect(l).toMatchObject({
+      estado: "lector",
+      capitan: { nombre: "Yeilin Duarte", corto: "Yeilin" },
+    });
+  });
+
+  test("sin equipo, cerrada, no-existe", () => {
+    expect(
+      entregaVista(datos(SIN_EQUIPO, [GRUPAL]), GRUPAL.id, []).estado,
+    ).toBe("sin-equipo");
+    const cerrada = { ...INDIVIDUAL, estado: "evaluada" as const };
+    expect(entregaVista(datos(CAPITAN, [cerrada]), cerrada.id, []).estado).toBe(
+      "cerrada",
+    );
+    expect(entregaVista(datos(CAPITAN, [GRUPAL]), "otra", []).estado).toBe(
+      "no-existe",
+    );
+    expect(
+      entregaVista(
+        datos(CAPITAN, [{ ...INDIVIDUAL, fechaEntrega: null }]),
+        INDIVIDUAL.id,
+        [],
+      ),
+    ).toMatchObject({ estado: "responder", vence: SIN_FECHA_ENTREGA });
+  });
+
+  test("entregada: quién, cuándo (Caracas) y respuestas por pregunta", () => {
+    const v = entregaVista(
+      datos(INTEGRANTE, [GRUPAL], [entrega(GRUPAL)]),
+      GRUPAL.id,
+      companeros,
+    );
+    expect(v).toMatchObject({
+      estado: "entregada",
+      quien: "Yeilin Duarte",
+      autor: "Yeilin",
+      fecha: "05/11/2026",
+      hora: "4:12 p. m.",
+      evaluada: false,
+      respuestas: [
+        { tipo: "imagen", imagenPath: "entregas/presentacion/abc/x.jpg" },
+        { tipo: "texto", texto: "A 2 dólares" },
+      ],
+    });
+  });
+
+  test("entregada del Excel: sin quién ni hora", () => {
+    const v = entregaVista(
+      datos(
+        CAPITAN,
+        [GRUPAL],
+        [
+          entrega(GRUPAL, {
+            enviadaPor: null,
+            enviadaEn: null,
+            respuestas: {},
+          }),
+        ],
+      ),
+      GRUPAL.id,
+      companeros,
+    );
+    expect(v).toMatchObject({
+      estado: "entregada",
+      quien: null,
+      fecha: null,
+      hora: null,
+      respuestas: [null, null],
+    });
+  });
+
+  test("un borrador del servidor no cuenta como enviada", () => {
+    const v = entregaVista(
+      datos(CAPITAN, [GRUPAL], [entrega(GRUPAL, { estado: "borrador" })]),
+      GRUPAL.id,
+      companeros,
+    );
+    expect(v.estado).toBe("responder");
+  });
+});
+
+describe("tareasVista", () => {
+  test("Por entregar sin las enviadas; Entregadas con su fecha, la más reciente primero", () => {
+    const otra = tarea("logo", { titulo: "Logo" });
+    const vieja = entrega(otra, {
+      id: "logo__5a-g2",
+      enviadaEn: AHORA - 3 * 86_400_000,
+    });
+    const v = tareasVista(
+      datos(CAPITAN, [GRUPAL, otra, INDIVIDUAL], [vieja, entrega(GRUPAL)]),
+    );
+    expect(v.pendientes.map((f) => f.id)).toEqual(["competencia"]);
+    expect(v.entregadas).toEqual([
+      {
+        id: "presentacion",
+        href: "/tareas/presentacion",
+        titulo: "Presentación del producto",
+        tipo: "grupal",
+        fecha: "entregada el 05/11/2026",
+      },
+      {
+        id: "logo",
+        href: "/tareas/logo",
+        titulo: "Logo",
+        tipo: "grupal",
+        fecha: "entregada el 02/11/2026",
+      },
+    ]);
+  });
+
+  test("nota del Excel sin envío: fecha de evaluación", () => {
+    const evaluada = entrega(GRUPAL, {
+      estado: "evaluada",
+      enviadaEn: null,
+      enviadaPor: null,
+      evaluacion: {
+        puntos: null,
+        comentarios: {},
+        puntaje: 18,
+        evaluadaPor: null,
+        evaluadaEn: AHORA,
+      },
+    });
+    const v = tareasVista(datos(CAPITAN, [GRUPAL], [evaluada]));
+    expect(v.entregadas[0]?.fecha).toBe("evaluada el 05/11/2026");
+  });
+});

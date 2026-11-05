@@ -27,7 +27,10 @@ export type ImageUploadProps = {
   status: ImageUploadStatus;
   /** Archivo actual en `subiendo` y `lista`. */
   file?: ImageUploadFile;
-  /** 0–100, solo en `subiendo`. */
+  /**
+   * 0–100, solo en `subiendo`. Sin valor = progreso desconocido (la subida por Server Action no
+   * lo da): sin porcentaje ni barra, solo el nombre y «Subiendo…».
+   */
   progress?: number;
   /** Motivo del fallo en `error` (se muestra en la alerta). */
   error?: string;
@@ -65,7 +68,7 @@ const ZONE =
 /*
  * Subida de imagen — HANDOFF §2.17; medidas en design/canvas/krea.css:466 y Tarea.dc.html.
  * CONTROLADO: recibe `status`/`progress`/`error` y emite `onSelect`/`onRemove`; no sube nada
- * (Storage es la fase 07). Valida tipo y peso y comprime en el cliente antes de `onSelect`.
+ * (lo hace el llamador: la entrega, D195). Valida tipo y peso y comprime en el cliente antes de `onSelect`.
  * El `<input type="file">` va oculto con `hidden`, abierto por un botón real y enfocable.
  * Anuncio: una región `role="status"` siempre montada cambia de texto solo al empezar y al
  * terminar la subida; el porcentaje es visual y nunca se anuncia 1 % a 1 %.
@@ -73,7 +76,7 @@ const ZONE =
 export function ImageUpload({
   status,
   file,
-  progress = 0,
+  progress,
   error,
   alt,
   onSelect,
@@ -84,7 +87,7 @@ export function ImageUpload({
   const inputRef = useRef<HTMLInputElement>(null);
   const [preparing, setPreparing] = useState(false);
   const previewUrl = usePreviewUrl(file?.src);
-  const percent = progressPercent(progress);
+  const percent = progress === undefined ? null : progressPercent(progress);
 
   const openPicker = () => inputRef.current?.click();
 
@@ -138,23 +141,27 @@ export function ImageUpload({
             <span className="text-small-b min-w-0 flex-1 truncate text-text">
               {file?.name}
             </span>
-            <span aria-hidden="true" className="text-small nums shrink-0">
-              {percent} %
-            </span>
+            {percent === null ? null : (
+              <span aria-hidden="true" className="text-small nums shrink-0">
+                {percent} %
+              </span>
+            )}
           </div>
-          <div
-            role="progressbar"
-            aria-label="Progreso de la subida"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={percent}
-            className="h-2 overflow-hidden rounded-pill bg-surface-3"
-          >
-            <i
-              className="block h-full w-full origin-left rounded-pill bg-accent transition-transform duration-fast ease-krea"
-              style={{ transform: `scaleX(${percent / 100})` }}
-            />
-          </div>
+          {percent === null ? null : (
+            <div
+              role="progressbar"
+              aria-label="Progreso de la subida"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={percent}
+              className="h-2 overflow-hidden rounded-pill bg-surface-3"
+            >
+              <i
+                className="block h-full w-full origin-left rounded-pill bg-accent transition-transform duration-fast ease-krea"
+                style={{ transform: `scaleX(${percent / 100})` }}
+              />
+            </div>
+          )}
           <span className="text-small">Subiendo… no cierres la app.</span>
         </div>
       ) : null}

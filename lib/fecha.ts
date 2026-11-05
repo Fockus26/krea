@@ -52,3 +52,17 @@ const DIA_CARACAS = new Intl.DateTimeFormat("en-CA", {
 export function diaDeInstante(ms: number): string {
   return DIA_CARACAS.format(new Date(ms));
 }
+
+const HORA_CARACAS = new Intl.DateTimeFormat("en-US", {
+  timeZone: ZONA_HORARIA,
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+});
+
+/** Instante (ms epoch) → hora de Caracas como el lienzo: "4:12 p. m." (D197). */
+export function horaDeInstante(ms: number): string {
+  const p = HORA_CARACAS.formatToParts(new Date(ms));
+  const de = (t: string) => p.find((x) => x.type === t)?.value ?? "";
+  return `${de("hour")}:${de("minute")} ${de("dayPeriod") === "AM" ? "a. m." : "p. m."}`;
+}

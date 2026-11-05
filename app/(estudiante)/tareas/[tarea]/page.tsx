@@ -1,5 +1,7 @@
+import { ClipboardX, Users } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { EmptyState } from "@/components/krea/empty-state";
 import { QuestionCardDetail } from "@/components/krea/question-card-detail";
 import { BackLink } from "@/components/sections/shared/back-link";
 import { CaptainNotice } from "@/components/sections/tareas/captain-notice";
@@ -7,31 +9,54 @@ import { PrizeCard } from "@/components/sections/tareas/prize-card";
 import { TaskAnswerForm } from "@/components/sections/tareas/task-answer-form";
 import { TaskDelivered } from "@/components/sections/tareas/task-delivered";
 import { TaskHeader } from "@/components/sections/tareas/task-header";
-import { entregaDe, modoDe } from "@/lib/demo/entrega";
-import { TAREAS } from "@/lib/demo/tareas";
+import { Card } from "@/components/ui/card";
+import tareaSeed from "@/data/seed/tarea-identidad-marca.json";
+import { enviarEntrega, subirImagenRespuesta } from "@/lib/acciones/entregas";
+import { verificarSesion } from "@/lib/dal";
+import { datosAlumno, integrantesDe } from "@/lib/datos/estudiante";
+import { urlsFirmadas } from "@/lib/datos/imagenes";
+import { answerImageAlt } from "@/lib/question";
+import { TAREA_GRUPAL_SEED } from "@/lib/seed-firestore";
+import { entregaVista, RESPUESTA_IMAGEN } from "@/lib/vistas-estudiante";
 
 type Props = PageProps<"/tareas/[tarea]">;
 
-// Una página por tarea del ejemplo (los enlaces de Inicio y Tareas apuntan a todas)
+// `cacheComponents` pide al menos un parámetro para validar el shell: las tareas del seed. Las
+// demás se renderizan al pedirlas (como /notas/[tarea], D189).
 export function generateStaticParams() {
-  return TAREAS.map((t) => ({ tarea: t.id }));
+  return [{ tarea: tareaSeed.id }, { tarea: TAREA_GRUPAL_SEED.id }];
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { tarea } = await params;
-  const t = TAREAS.find((x) => x.id === tarea);
+  const s = await verificarSesion();
+  if (s?.rol !== "estudiante") return { title: "Tarea" };
+  const t = (await datosAlumno()).tareas.find((x) => x.id === tarea);
   return { title: t ? `Tarea · ${t.titulo}` : "Tarea" };
 }
 
-// Entrega (HANDOFF §3): el modo sale de los datos (D140): evaluada = entregada, abierta grupal =
-// capitana, abierta individual = individual. «No capitán» solo se ve en /secciones/tareas (la
-// persona de ejemplo es capitana); la fase 07 lo decide con la sesión. El capitán es el único que
-// envía la tarea grupal (D012).
+const ACCIONES = { subir: subirImagenRespuesta, enviar: enviarEntrega };
+
+// Entrega (HANDOFF §3, W5): el modo sale de la sesión y de los datos (`entregaVista`). Responde
+// quien puede enviar (individual, o el capitán en grupal, D012); el resto del equipo ve las
+// preguntas bloqueadas. Ya enviada: «¡Tarea entregada!» con las respuestas; las imágenes se
+// firman aquí, solo las que se pintan (D195).
 export default async function TareaPage({ params }: Props) {
-  const { tarea } = await params;
-  const t = TAREAS.find((x) => x.id === tarea);
-  if (!t) notFound();
-  const d = entregaDe(modoDe(t), t.id);
+  const id = (await params).tarea;
+  const datos = await datosAlumno();
+  const companeros = datos.equipo ? await integrantesDe(datos.equipo.id) : [];
+  const d = entregaVista(datos, id, companeros);
+  if (d.estado === "no-existe") notFound();
+
+  const urls =
+    d.estado === "entregada"
+      ? await urlsFirmadas(
+          d.respuestas.flatMap((r) =>
+            r?.tipo === "imagen" ? [r.imagenPath] : [],
+          ),
+        )
+      : new Map<string, string>();
+
   return (
     <>
       <BackLink href="/tareas">Tareas</BackLink>
@@ -41,19 +66,23 @@ export default async function TareaPage({ params }: Props) {
         titulo={d.titulo}
         vence={d.vence}
         puntos={d.puntos}
-        entregada={d.entregada !== undefined}
+        entregada={d.estado === "entregada"}
       />
       {d.premio ? <PrizeCard premio={d.premio} /> : null}
-      {d.capitan && !d.entregada ? <CaptainNotice capitan={d.capitan} /> : null}
-      {d.entregada ? (
+      {d.estado === "lector" && d.capitan ? (
+        <CaptainNotice capitan={d.capitan} />
+      ) : null}
+
+      {d.estado === "entregada" ? (
         <>
           <TaskDelivered
-            quien={d.entregada.quien}
-            fecha={d.entregada.fecha}
-            hora={d.entregada.hora}
+            quien={d.quien}
+            fecha={d.fecha}
+            hora={d.hora}
+            evaluada={d.evaluada}
             inicioHref="/"
           />
-          {d.entregada.respuestas.length > 0 ? (
+          {d.respuestas.some((r) => r !== null) ? (
             <section
               aria-labelledby="respuestas"
               className="flex flex-col gap-3"
@@ -63,30 +92,68 @@ export default async function TareaPage({ params }: Props) {
               </h2>
               <ol className="m-0 flex list-none flex-col gap-4 p-0">
                 {d.preguntas.map((p, i) => {
-                  const respuesta = d.entregada?.respuestas[i];
-                  return respuesta ? (
+                  const r = d.respuestas[i];
+                  if (!r) return null;
+                  const src =
+                    r.tipo === "imagen" ? urls.get(r.imagenPath) : null;
+                  return (
                     <QuestionCardDetail
                       key={p.id}
                       numero={i + 1}
                       enunciado={p.enunciado}
                       valor={p.valor}
                       obtenido={null}
-                      respuesta={respuesta}
+                      respuesta={
+                        r.tipo === "texto"
+                          ? r
+                          : src
+                            ? {
+                                tipo: "imagen",
+                                src,
+                                alt: answerImageAlt(d.autor, i + 1),
+                              }
+                            : { tipo: "texto", texto: RESPUESTA_IMAGEN }
+                      }
                       level={3}
                     />
-                  ) : null;
+                  );
                 })}
               </ol>
             </section>
           ) : null}
         </>
+      ) : d.estado === "sin-equipo" ? (
+        <Card>
+          {/* PLACEHOLDER de copy (CONTENT_CHECKLIST fila 129) */}
+          <EmptyState
+            icon={Users}
+            headingLevel={2}
+            title="Todavía no tienes equipo"
+            description="Esta tarea es grupal. Cuando tu profe te asigne un equipo, su capitán podrá entregarla."
+          />
+        </Card>
+      ) : d.estado === "cerrada" ? (
+        <Card>
+          {/* PLACEHOLDER de copy (CONTENT_CHECKLIST fila 129) */}
+          <EmptyState
+            icon={ClipboardX}
+            headingLevel={2}
+            title="Esta tarea ya cerró"
+            description="Ya no recibe entregas. Si crees que es un error, habla con tu profe."
+          />
+        </Card>
       ) : (
         <TaskAnswerForm
-          tareaId={d.tareaId}
+          tareaId={id}
           preguntas={d.preguntas}
-          inicial={d.inicial}
-          bloqueadaPor={d.capitan?.corto}
-          autor={d.autor}
+          bloqueadaPor={
+            d.estado === "lector"
+              ? (d.capitan?.corto ?? "el capitán")
+              : undefined
+          }
+          autor={d.estado === "responder" ? d.autor : ""}
+          titular={datos.usuario.cedula}
+          acciones={ACCIONES}
           entregadaHref="/tareas"
         />
       )}
