@@ -74,7 +74,7 @@ function TabsTrigger({
         "[&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0",
         "focus-visible:outline-2 focus-visible:outline-focus",
         // Línea: barra de 3 px sobre el borde de la lista (dentro de la caja: el scroll no la recorta)
-        "group-data-[variant=line]/tabs-list:h-11 group-data-[variant=line]/tabs-list:-outline-offset-2",
+        "group-data-[variant=line]/tabs-list:h-11 group-data-[variant=line]/tabs-list:min-w-11 group-data-[variant=line]/tabs-list:justify-center group-data-[variant=line]/tabs-list:-outline-offset-2",
         "group-data-[variant=line]/tabs-list:data-[state=active]:text-accent-ink",
         "group-data-[variant=line]/tabs-list:after:absolute group-data-[variant=line]/tabs-list:after:inset-x-0 group-data-[variant=line]/tabs-list:after:bottom-0",
         "group-data-[variant=line]/tabs-list:after:h-0.75 group-data-[variant=line]/tabs-list:after:rounded-t-xs group-data-[variant=line]/tabs-list:after:bg-accent",
