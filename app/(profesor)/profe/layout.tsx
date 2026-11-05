@@ -9,8 +9,6 @@ import {
 } from "@/components/layout/route-nav";
 import { TopBarAccionProvider } from "@/components/layout/top-bar-accion";
 import { Toaster } from "@/components/ui/sonner";
-import { COLA } from "@/lib/demo/evaluar";
-import { titulosEvaluarDemo } from "@/lib/demo/topbar";
 import type { Rol } from "@/lib/layout";
 import { SideNavSesion, TopBarSesion } from "./_shell";
 
@@ -24,8 +22,8 @@ export const metadata: Metadata = {
 /**
  * Shell del profesor (fase 05): como el del estudiante (D128, D129, D131). El usuario sale de la
  * sesión (W6, como D189): barra lateral y topbar van en su `<Suspense>` (`cacheComponents`) con la
- * misma pieza sin usuario como reserva. El contador de Evaluar sigue con la cola de ejemplo
- * (`lib/demo/evaluar.ts`) hasta W7.
+ * misma pieza sin usuario como reserva. El contador de Evaluar sale de la cola real (W7): la
+ * reserva no lo pinta hasta que llega.
  */
 export default function ProfesorLayout({ children }: { children: ReactNode }) {
   return (
@@ -36,11 +34,7 @@ export default function ProfesorLayout({ children }: { children: ReactNode }) {
         sidebar={
           <Suspense
             fallback={
-              <RouteSideNav
-                rol={ROL}
-                usuario={null}
-                evaluarCount={COLA.length}
-              />
+              <RouteSideNav rol={ROL} usuario={null} evaluarCount={null} />
             }
           >
             <SideNavSesion />
@@ -52,7 +46,7 @@ export default function ProfesorLayout({ children }: { children: ReactNode }) {
               <RouteTopBar
                 rol={ROL}
                 usuario={null}
-                titulos={titulosEvaluarDemo()}
+                titulos={{}}
                 salirHref="/salir"
               />
             }

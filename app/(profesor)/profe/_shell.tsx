@@ -1,26 +1,31 @@
 import { cache } from "react";
 import { RouteSideNav, RouteTopBar } from "@/components/layout/route-nav";
 import { SincronizarApariencia } from "@/components/layout/sincronizar-apariencia";
-import { profesorActual, tareasProfe } from "@/lib/datos/profesor";
-import { COLA } from "@/lib/demo/evaluar";
-import { titulosEvaluarDemo } from "@/lib/demo/topbar";
+import { colaEvaluar, profesorActual, tareasProfe } from "@/lib/datos/profesor";
+import { tituloEntrega } from "@/lib/evaluar";
+import { rutaEntrega } from "@/lib/evaluar-datos";
 import { rutaTarea } from "@/lib/tareas-profe";
 import { navUsuarioDe } from "@/lib/vistas-estudiante";
 
 // Partes del shell del profesor que dependen de la sesión (D189, W6): cada una va en su
 // `<Suspense>` del layout (`cacheComponents`), con el mismo componente sin usuario como reserva.
-// Evaluar (contador y títulos) sigue con la cola de ejemplo hasta W7.
+// El contador y los títulos de Evaluar salen de la cola real (W7, D204).
 
 const shell = cache(async () => {
-  const [{ usuario }, tareas] = await Promise.all([
+  const [{ usuario }, tareas, cola] = await Promise.all([
     profesorActual(),
     tareasProfe(),
+    colaEvaluar(),
   ]);
   return {
     usuario: usuario ? navUsuarioDe(usuario) : null,
     apariencia: usuario?.apariencia ?? null,
+    porEvaluar: cola.length,
     titulos: {
-      ...titulosEvaluarDemo(),
+      // «Entrega n de m» en la topbar móvil; una ya evaluada queda con «Evaluar entrega»
+      ...Object.fromEntries(
+        cola.map((e, i) => [rutaEntrega(e.id), tituloEntrega(i, cola.length)]),
+      ),
       // Constructor de una tarea publicada: su título; el borrador queda con «Nueva tarea» (D152)
       ...Object.fromEntries(
         tareas
@@ -32,9 +37,9 @@ const shell = cache(async () => {
 });
 
 export async function SideNavSesion() {
-  const { usuario } = await shell();
+  const { usuario, porEvaluar } = await shell();
   return (
-    <RouteSideNav rol="profesor" usuario={usuario} evaluarCount={COLA.length} />
+    <RouteSideNav rol="profesor" usuario={usuario} evaluarCount={porEvaluar} />
   );
 }
 

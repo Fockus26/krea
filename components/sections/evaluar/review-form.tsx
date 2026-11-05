@@ -24,6 +24,12 @@ import {
   type SiguienteEntrega,
   sigueCortoTexto,
 } from "@/lib/evaluar";
+import {
+  type DeshacerEvaluacion,
+  errorEvaluarTexto,
+  type GuardarEvaluacion,
+  type ResultadoEvaluar,
+} from "@/lib/evaluar-datos";
 import { ReviewIndex } from "./review-index";
 
 export type ReviewQuestion = {
@@ -38,10 +44,16 @@ type Estado = {
   comentarios: string[];
 };
 
+/** Server Actions de Evaluar (W7); sin ellas (vista previa de /secciones) nada se guarda. */
+export type AccionesEvaluar = {
+  guardar: (e: GuardarEvaluacion) => Promise<ResultadoEvaluar>;
+  deshacer: (e: DeshacerEvaluacion) => Promise<ResultadoEvaluar>;
+};
+
 /*
  * Evaluaciones deshechas desde el toast, por entrega: "Deshacer" vuelve a la entrega con sus
- * puntajes y comentarios (D105). Vive en el módulo, así sobrevive a la navegación del cliente;
- * la fase 07 deshace en Firestore.
+ * puntajes y comentarios (D105). Vive en el módulo, así sobrevive a la navegación del cliente.
+ * Con `acciones`, antes devuelve en Firestore la evaluación anterior (D205).
  */
 const deshechas = new Map<string, Estado>();
 /** Tras guardar o deshacer, la entrega que se monta sube el scroll y lleva el foco a su `<h1>`. */
@@ -68,6 +80,7 @@ export function ReviewForm({
   siguiente,
   guardarHref,
   actualHref,
+  acciones,
 }: {
   /** Clave de la entrega (para deshacer). */
   entregaId: string;
@@ -86,6 +99,8 @@ export function ReviewForm({
   guardarHref: string;
   /** Esta entrega: a dónde vuelve "Deshacer". */
   actualHref: string;
+  /** Guardar y deshacer en Firestore (W7). */
+  acciones?: AccionesEvaluar;
 }) {
   const router = useRouter();
   const [estado, setEstado] = React.useState<Estado>(() => {
@@ -100,6 +115,8 @@ export function ReviewForm({
   });
   // Pregunta con el foco (para el chip "actual" del índice)
   const [actual, setActual] = React.useState<number | null>(null);
+  // Un guardado a la vez (doble clic o Ctrl+Enter repetido)
+  const guardando = React.useRef(false);
   const motivoId = React.useId();
   const motivoMovilId = React.useId();
 
@@ -119,18 +136,47 @@ export function ReviewForm({
     document.getElementById(tituloId)?.focus({ preventScroll: true });
   }, [tituloId]);
 
-  const guardar = () => {
-    if (!completo) return;
+  const guardar = async () => {
+    if (!completo || guardando.current) return;
     const valores = preguntas.map((p) => p.valor);
     const finales = normalizarPuntajes(puntajes, valores);
     const guardado: Estado = { puntajes: finales, comentarios };
-    // Fase 07: aquí se escribe la evaluación en Firestore
+    let evaluadaEn: number | null = null;
+    if (acciones) {
+      guardando.current = true;
+      const r = await acciones
+        .guardar({
+          entregaId,
+          puntos: Object.fromEntries(
+            preguntas.map((p, i) => [p.id, finales[i] ?? 0]),
+          ),
+          comentarios: Object.fromEntries(
+            preguntas.map((p, i) => [p.id, comentarios[i] ?? ""]),
+          ),
+        })
+        .catch((): ResultadoEvaluar => ({ ok: false, error: "red" }));
+      guardando.current = false;
+      if (!r.ok) {
+        toast.error(errorEvaluarTexto(r.error));
+        return;
+      }
+      evaluadaEn = r.evaluadaEn;
+    }
     toast.success(notaGuardadaTexto(notaGuardada(finales, base)), {
       duration: DESHACER_MS,
       action: {
         // Copy del handoff (§3)
         label: "Deshacer",
-        onClick: () => {
+        onClick: async () => {
+          if (acciones && evaluadaEn !== null) {
+            const d = await acciones
+              .deshacer({ entregaId, evaluadaEn })
+              .catch((): ResultadoEvaluar => ({ ok: false, error: "red" }));
+            if (!d.ok) {
+              toast.error(errorEvaluarTexto(d.error));
+              return;
+            }
+          }
           deshechas.set(entregaId, guardado);
           enfocarAlMontar = true;
           router.push(actualHref, { scroll: false });
@@ -150,7 +196,7 @@ export function ReviewForm({
       const target = e.target instanceof Element ? e.target : null;
       if (target?.closest("[role='dialog'], [role='alertdialog']")) return;
       e.preventDefault();
-      guardarRef.current();
+      void guardarRef.current();
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);

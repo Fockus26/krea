@@ -6,15 +6,24 @@ import { cache } from "react";
 import { exigirSesion } from "@/lib/dal";
 import { db, lista, parsear } from "@/lib/datos/comun";
 import {
+  colaPorEvaluar,
+  type MapasEvaluar,
+  mapasEvaluar,
+} from "@/lib/evaluar-datos";
+import {
+  type Ajuste,
   COL,
   type Entrega,
   type Equipo,
+  type RankingSeccion,
   SECCIONES,
   type SeccionId,
   type TareaDoc,
   type Usuario,
+  zAjuste,
   zEntrega,
   zEquipo,
+  zRankingSeccion,
   zTareaDoc,
   zUsuario,
 } from "@/lib/modelo";
@@ -96,6 +105,67 @@ export const conteos = cache(async (): Promise<Conteos> => {
     equipos: { "5A": e5A, "5C": e5C },
   };
 });
+
+/* ---------- Evaluar, Ajustes de puntos y Panel (W7) ---------- */
+
+/** Todos los perfiles (alumnos y profes): nombres de titulares, autores y destinatarios. */
+export const usuariosTodos = cache(async (): Promise<Usuario[]> => {
+  await exigirSesion("profesor");
+  return (
+    await lista(db().collection(COL.usuarios), zUsuario, COL.usuarios)
+  ).map(({ id: _, ...u }) => u);
+});
+
+/** Entregadas sin evaluar, de la más antigua a la más reciente (D204). */
+export const colaEvaluar = cache(async (): Promise<Array<ConId<Entrega>>> => {
+  await exigirSesion("profesor");
+  const q = db().collection(COL.entregas).where("estado", "==", "entregada");
+  return colaPorEvaluar(await lista(q, zEntrega, COL.entregas));
+});
+
+export const entregaProfe = cache(
+  async (id: string): Promise<ConId<Entrega> | null> => {
+    await exigirSesion("profesor");
+    const snap = await db().collection(COL.entregas).doc(id).get();
+    if (!snap.exists) return null;
+    const e = parsear(zEntrega, COL.entregas, id, snap.data());
+    return e ? { id, ...e } : null;
+  },
+);
+
+/** Usuarios, equipos y tareas por id (cola, Panel y Evaluar entrega). */
+export const mapasProfe = cache(async (): Promise<MapasEvaluar> => {
+  const [usuarios, equipos, tareas] = await Promise.all([
+    usuariosTodos(),
+    equiposTodos(),
+    tareasProfe(),
+  ]);
+  return mapasEvaluar({ usuarios, equipos, tareas });
+});
+
+/** Todos los ajustes de puntos, anulaciones incluidas (D121). */
+export const ajustesTodos = cache(async (): Promise<Array<ConId<Ajuste>>> => {
+  await exigirSesion("profesor");
+  return lista(db().collection(COL.ajustes), zAjuste, COL.ajustes);
+});
+
+/** `ranking/{seccion}` de las dos secciones (`null` si aún no existe). */
+export const rankingsTodos = cache(
+  async (): Promise<Record<SeccionId, RankingSeccion | null>> => {
+    await exigirSesion("profesor");
+    const snaps = await Promise.all(
+      SECCIONES.map((s) => db().collection(COL.ranking).doc(s).get()),
+    );
+    const r = {} as Record<SeccionId, RankingSeccion | null>;
+    SECCIONES.forEach((s, i) => {
+      const snap = snaps[i];
+      r[s] = snap?.exists
+        ? parsear(zRankingSeccion, COL.ranking, s, snap.data())
+        : null;
+    });
+    return r;
+  },
+);
 
 /** Secciones que ve el profe: la suya o las dos (`seccion: null`). */
 export function seccionesDelProfe(u: Usuario | null): readonly SeccionId[] {
