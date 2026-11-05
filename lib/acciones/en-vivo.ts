@@ -5,15 +5,21 @@
 import { verificarSesion } from "@/lib/dal";
 import { firebaseAdmin } from "@/lib/firebase/admin";
 
-export async function tokenEnVivo(): Promise<string | null> {
+/** `sin-sesion`: la cookie venció o se revocó (p. ej. el profe la movió de equipo, D210). */
+export type ResultadoTokenEnVivo =
+  | { ok: true; token: string }
+  | { ok: false; error: "sin-sesion" | "red" };
+
+export async function tokenEnVivo(): Promise<ResultadoTokenEnVivo> {
   const sesion = await verificarSesion();
+  if (!sesion) return { ok: false, error: "sin-sesion" };
   const admin = firebaseAdmin();
-  if (!sesion || !admin) return null;
+  if (!admin) return { ok: false, error: "red" };
   try {
     // Sin claims extra: el token de ID trae los de la cuenta (rol, sección, equipo)
-    return await admin.auth.createCustomToken(sesion.uid);
+    return { ok: true, token: await admin.auth.createCustomToken(sesion.uid) };
   } catch (e) {
     console.error("[tokenEnVivo]", (e as { code?: string }).code ?? "error");
-    return null;
+    return { ok: false, error: "red" };
   }
 }

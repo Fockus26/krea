@@ -22,6 +22,10 @@ export type FilaAlumno = {
   /** Puntos del ranking (D007). */
   puntos: number;
   estilo: DicebearEstilo;
+  /** Semilla del avatar elegida en Perfil (D191); sin ella, la cédula (vista previa). */
+  semilla?: string;
+  /** Email de recuperación (`privados`, D209); ausente en la vista previa (no se edita). */
+  email?: string | null;
 };
 
 /** Minúsculas, sin diacríticos y con los espacios colapsados: "  MÉndez  " → "mendez". */
@@ -116,6 +120,10 @@ export const MOTIVO_BASE_REQUERIDO =
 export const NOMBRES_VACIO = "Escribe el nombre.";
 export const APELLIDOS_VACIO = "Escribe el apellido.";
 export const BASE_INVALIDA = "La base va de 10 a 20, de medio en medio.";
+export const EMAIL_INVALIDO = "Escribe un email válido, como nombre@gmail.com.";
+
+/** Forma mínima de un email (el servidor lo valida con zod). */
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** Paso de la base (D004/D006). */
 export const BASE_PASO = 0.5;
@@ -126,6 +134,8 @@ export type EdicionAlumno = {
   motivo: string;
   nombres: string;
   apellidos: string;
+  /** Email de recuperación; ausente si no se edita (vista previa). Vacío = sin email. */
+  email?: string;
 };
 
 export type ErroresEdicion = {
@@ -133,6 +143,7 @@ export type ErroresEdicion = {
   apellidos?: string;
   base?: string;
   motivo?: string;
+  email?: string;
 };
 
 /** ¿Cambió la base? Es lo único que vuelve obligatorio el motivo. */
@@ -157,6 +168,8 @@ export function validarEdicion(e: EdicionAlumno): ErroresEdicion {
   else if (baseCambio(e.baseAnterior, e.baseNueva) && e.motivo.trim() === "") {
     errores.motivo = MOTIVO_BASE_REQUERIDO;
   }
+  const email = e.email?.trim() ?? "";
+  if (email !== "" && !EMAIL.test(email)) errores.email = EMAIL_INVALIDO;
   return errores;
 }
 

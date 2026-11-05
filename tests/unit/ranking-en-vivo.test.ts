@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type { RankingSeccion } from "@/lib/modelo";
 import {
   eventosEntre,
+  infoDeEquipos,
   itemsDeRanking,
   movimientosEntre,
   puestosDe,
@@ -126,5 +127,52 @@ describe("movimientos y anuncios", () => {
     expect(eventosEntre(antes, despues)).toEqual([
       { tipo: "podio", nombre: "Iris Díaz" },
     ]);
+  });
+});
+
+describe("logos de equipo (D212)", () => {
+  const conLogo = (logoPath: string | null): RankingSeccion => {
+    const r = ranking({});
+    return {
+      ...r,
+      equipos: {
+        ...r.equipos,
+        g1: { nombre: "5A-G1 Barbería", logoPath, puntos: 17 },
+      },
+    };
+  };
+  const infoLogos = infoDeEquipos(
+    [
+      {
+        id: "g1",
+        tema: "Barbería",
+        capitanId: null,
+        logoPath: "equipos/g1/a.webp",
+      },
+      { id: "g2", tema: null, capitanId: null, logoPath: null },
+    ],
+    new Map([["equipos/g1/a.webp", "https://firmada/a"]]),
+  );
+
+  test("pinta la URL firmada si el documento en vivo trae la misma ruta", () => {
+    const items = itemsDeRanking(
+      conLogo("equipos/g1/a.webp"),
+      "equipos",
+      tu,
+      infoLogos,
+    );
+    const g1 = items.find((i) => i.id === "g1");
+    expect(g1 && "src" in g1 ? g1.src : "x").toBe("https://firmada/a");
+  });
+
+  test("si el logo cambió con la página abierta: iniciales hasta recargar", () => {
+    const items = itemsDeRanking(
+      conLogo("equipos/g1/b.webp"),
+      "equipos",
+      tu,
+      infoLogos,
+    );
+    const g1 = items.find((i) => i.id === "g1");
+    expect(g1 && "src" in g1 ? g1.src : "x").toBeNull();
   });
 });

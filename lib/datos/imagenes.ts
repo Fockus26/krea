@@ -13,7 +13,7 @@ export async function urlsFirmadas(
   const out = new Map<string, string>();
   if (!almacen) return out;
   for (const ruta of new Set(rutas)) {
-    if (!ruta.startsWith("entregas/") && !ruta.startsWith("logos/")) continue;
+    if (!ruta.startsWith("entregas/") && !ruta.startsWith("equipos/")) continue;
     try {
       out.set(ruta, await almacen.urlFirmada(ruta));
     } catch {

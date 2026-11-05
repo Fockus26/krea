@@ -23,6 +23,7 @@ import {
   zAjuste,
   zEntrega,
   zEquipo,
+  zPrivado,
   zRankingSeccion,
   zTareaDoc,
   zUsuario,
@@ -164,6 +165,21 @@ export const rankingsTodos = cache(
         : null;
     });
     return r;
+  },
+);
+
+/* ---------- Alumnos y Equipos (W8) ---------- */
+
+/** cédula → email de recuperación (`privados`, D209): solo el profe y solo en Alumnos. */
+export const emailsTodos = cache(
+  async (): Promise<Map<string, string | null>> => {
+    await exigirSesion("profesor");
+    const docs = await lista(
+      db().collection(COL.privados),
+      zPrivado,
+      COL.privados,
+    );
+    return new Map(docs.map((d) => [d.id, d.email]));
   },
 );
 
