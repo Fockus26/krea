@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 /*
  * Errores dentro de una pantalla (lienzo Vacios.dc.html «Errores dentro de una pantalla», D171).
  * Siempre dicen qué pasó y qué hacer, y qué NO se perdió. `Alert err` (role="alert") o `warn`.
- * Se enchufan en la fase 07, cuando enviar/guardar puedan fallar de verdad (hoy todo es local).
+ * Enchufadas en la fase 07 (W8): Evaluar, Entrega, Alumnos y el ranking en vivo.
  */
 
 /** Alerta con título + explicación + enlace opcional. */
@@ -93,13 +93,22 @@ export function ErrorGuardarNota({
   );
 }
 
-/** Sesión vencida: entrar de nuevo sin perder lo escrito. */
-export function SesionVencida({ href = "/ingresar" }: { href?: string }) {
+/**
+ * Sesión vencida: entrar de nuevo sin perder lo escrito. `children` cambia la explicación (por
+ * defecto, la del lienzo) donde no hay nada escrito que conservar, como el ranking en vivo.
+ */
+export function SesionVencida({
+  href = "/ingresar",
+  children,
+}: {
+  href?: string;
+  children?: ReactNode;
+}) {
   return (
     <div className="flex flex-col items-start gap-3">
       <ErrorEnPantalla variant="warn" titulo="Tu sesión se cerró">
-        Por seguridad cerramos la sesión tras 30 días. Entra de nuevo para
-        seguir; lo que escribiste no se pierde.
+        {children ??
+          "Por seguridad cerramos la sesión tras 30 días. Entra de nuevo para seguir; lo que escribiste no se pierde."}
       </ErrorEnPantalla>
       <Button asChild>
         <Link href={href}>Entrar de nuevo</Link>

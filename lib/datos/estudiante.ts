@@ -5,6 +5,7 @@ import "server-only";
 import { cache } from "react";
 import { exigirSesion } from "@/lib/dal";
 import { db, lista, parsear } from "@/lib/datos/comun";
+import { urlsFirmadas } from "@/lib/datos/imagenes";
 import {
   type Ajuste,
   COL,
@@ -22,7 +23,7 @@ import {
   zTareaDoc,
   zUsuario,
 } from "@/lib/modelo";
-import type { InfoEquipos } from "@/lib/ranking-en-vivo";
+import { type InfoEquipos, infoDeEquipos } from "@/lib/ranking-en-vivo";
 import type { Sesion } from "@/lib/sesion";
 import type { ConId, DatosAlumno } from "@/lib/vistas-estudiante";
 
@@ -120,11 +121,29 @@ export async function entregasGrupales(seccion: SeccionId): Promise<Entrega[]> {
   return lista(q, zEntrega, COL.entregas);
 }
 
-/** Tema y capitán de los equipos de la sección (lo que el ranking no trae). */
-export async function infoEquipos(seccion: SeccionId): Promise<InfoEquipos> {
+/**
+ * Tema, capitán y logo de los equipos de la sección (lo que el ranking no trae). Los logos son de
+ * su propia sección, que el alumno ya ve en el ranking, y solo se firman si la vista los pinta
+ * (`conLogos`: la de equipos; la capa gratuita de B2 cuenta cada descarga, D212).
+ */
+export async function infoEquipos(
+  seccion: SeccionId,
+  { conLogos }: { conLogos: boolean },
+): Promise<InfoEquipos> {
   const q = db().collection(COL.equipos).where("seccion", "==", seccion);
   const equipos = await lista(q, zEquipo, COL.equipos);
-  return Object.fromEntries(
-    equipos.map((e) => [e.id, { tema: e.tema, capitan: e.capitanId }]),
-  );
+  const logos = conLogos
+    ? await urlsFirmadas(
+        equipos.flatMap((e) => (e.logoPath ? [e.logoPath] : [])),
+      )
+    : new Map<string, string>();
+  return infoDeEquipos(equipos, logos);
+}
+
+/** URL firmada del logo de su equipo (Inicio y Mi equipo), o `null` sin logo. */
+export async function logoDeEquipo(
+  equipo: Pick<Equipo, "logoPath"> | null,
+): Promise<string | null> {
+  if (!equipo?.logoPath) return null;
+  return (await urlsFirmadas([equipo.logoPath])).get(equipo.logoPath) ?? null;
 }

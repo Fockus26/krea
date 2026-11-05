@@ -9,10 +9,19 @@ import { UnassignedCard } from "@/components/sections/equipos-profe/unassigned-c
 import { Card } from "@/components/ui/card";
 import { toast } from "@/components/ui/sonner";
 import {
+  type CambiarCapitan,
+  errorEquiposTexto,
+  type MoverAlumno,
+  type ResultadoEquipos,
+  type ResultadoLogo,
+} from "@/lib/equipos-datos";
+import {
+  type AlumnoEquipo,
   cambiarCapitan,
   capitanTexto,
   conEquipoTotal,
   dibujarLogo,
+  type EquipoVista,
   type EstadoEquipos,
   equipoDeCedula,
   eyebrowEquipos,
@@ -23,22 +32,25 @@ import {
   type SeccionEquipos,
   validarLogo,
 } from "@/lib/equipos-profe";
+import { estiloDe } from "@/lib/vistas-estudiante";
 
-type Equipo = {
-  id: string;
-  nombre: string;
-  tema: string | null;
-  puesto: number;
-  puntos: number;
-  empate: boolean;
+/** Las Server Actions del tablero (D210, D212). Sin ellas (vista previa) nada se guarda. */
+export type AccionesEquipos = {
+  mover: (entrada: MoverAlumno) => Promise<ResultadoEquipos>;
+  capitan: (entrada: CambiarCapitan) => Promise<ResultadoEquipos>;
+  logo: (form: FormData) => Promise<ResultadoLogo>;
 };
+
+const RED: ResultadoEquipos = { ok: false, error: "red" };
 
 const SIN_EQUIPO_ID = "titulo-sin-equipo";
 const tituloDe = (id: string) => `titulo-${id}`;
 
 /**
- * Tablero de Equipos (cliente, vista previa: nada se guarda). Todo sale de un solo estado
- * (`EstadoEquipos`), así el eyebrow, «Sin equipo · n» y «n integrantes» siempre cuadran.
+ * Tablero de Equipos (cliente). Todo sale de un solo estado (`EstadoEquipos`), así el eyebrow,
+ * «Sin equipo · n» y «n integrantes» siempre cuadran. Con `acciones` cada cambio se pinta al
+ * momento y se guarda en el servidor; si falla, vuelve atrás y lo dice un toast de error (el
+ * cambio guardado con la sesión sin cerrar, «sesiones», se queda). Sin `acciones`, vista previa.
  * Foco tras mover (D111): el botón de la fila ya no existe, así que el foco va al título de la
  * tarjeta destino; al quitar del equipo, al de la tarjeta de origen. Cada acción lo dice con un
  * toast (región viva de Sonner): no hay otro `role="status"`.
@@ -50,16 +62,22 @@ export function TeamsBoard({
   alumnos,
   inicial,
   total,
+  acciones,
 }: {
   seccion: SeccionEquipos;
   base: string;
-  equipos: readonly Equipo[];
-  alumnos: Readonly<Record<string, { cedula: string; nombre: string }>>;
+  equipos: readonly EquipoVista[];
+  alumnos: Readonly<Record<string, AlumnoEquipo>>;
   inicial: EstadoEquipos;
   total: number;
+  acciones?: AccionesEquipos;
 }) {
   const [estado, setEstado] = useState(inicial);
-  const [logos, setLogos] = useState<Record<string, string>>({});
+  const [logos, setLogos] = useState<Record<string, string>>(() =>
+    Object.fromEntries(
+      equipos.flatMap((e) => (e.logo ? [[e.id, e.logo] as const] : [])),
+    ),
+  );
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [foco, setFoco] = useState<{ id: string; n: number } | null>(null);
   const urls = useRef<Record<string, string>>({});
@@ -77,6 +95,30 @@ export function TeamsBoard({
   }, [foco]);
 
   const nombreAlumno = (c: string) => alumnos[c]?.nombre ?? c;
+  const miembro = (c: string) => {
+    const a = alumnos[c];
+    return {
+      cedula: c,
+      nombre: a?.nombre ?? c,
+      seed: a?.seed,
+      estilo: a?.estilo ? estiloDe(a.estilo) : undefined,
+    };
+  };
+
+  /** Guarda en el servidor; si falla, vuelve al estado anterior (salvo «sesiones»: ya se guardó). */
+  function guardar(
+    anterior: EstadoEquipos,
+    pedido: Promise<ResultadoEquipos> | undefined,
+  ) {
+    if (!pedido) return;
+    void pedido
+      .catch(() => RED)
+      .then((r) => {
+        if (r.ok) return;
+        if (r.error !== "sesiones") setEstado(anterior);
+        toast.error(errorEquiposTexto(r.error));
+      });
+  }
   const nombreEquipo = (id: string) =>
     equipos.find((e) => e.id === id)?.nombre ?? id;
   const destinos = equipos.map((e) => ({ id: e.id, nombre: e.nombre }));
@@ -86,6 +128,7 @@ export function TeamsBoard({
     const siguiente = moverAlumno(estado, cedula, destino);
     if (siguiente === estado) return;
     setEstado(siguiente);
+    guardar(estado, acciones?.mover({ cedula, destino }));
     const nombre = nombreAlumno(cedula);
     const aviso =
       destino === null && origen
@@ -108,8 +151,27 @@ export function TeamsBoard({
       const { [equipo]: _quitado, ...resto } = e;
       return resto;
     });
+    const fallo = (mensaje: string) =>
+      setErrores((e) => ({ ...e, [equipo]: mensaje }));
     dibujarLogo(file).then(
-      (blob) => {
+      async (blob) => {
+        if (acciones) {
+          const form = new FormData();
+          form.set("equipoId", equipo);
+          form.set(
+            "logo",
+            blob,
+            blob.type === "image/png" ? "logo.png" : "logo.webp",
+          );
+          const r = await acciones
+            .logo(form)
+            .catch((): ResultadoLogo => ({ ok: false, error: "red" }));
+          if (!r.ok) {
+            fallo(errorEquiposTexto(r.error));
+            return;
+          }
+        }
+        // La vista previa local: la imagen ya está aquí, no hace falta pedir la firmada
         const anterior = urls.current[equipo];
         if (anterior) URL.revokeObjectURL(anterior);
         const url = URL.createObjectURL(blob);
@@ -117,11 +179,7 @@ export function TeamsBoard({
         setLogos((l) => ({ ...l, [equipo]: url }));
         toast(`Logo de ${nombreEquipo(equipo)} actualizado`);
       },
-      () =>
-        setErrores((e) => ({
-          ...e,
-          [equipo]: "No se pudo leer la imagen. Prueba con otra.",
-        })),
+      () => fallo("No se pudo leer la imagen. Prueba con otra."),
     );
   }
 
@@ -157,17 +215,20 @@ export function TeamsBoard({
               <TeamCard
                 equipo={eq}
                 tituloId={tituloDe(eq.id)}
-                miembros={miembrosOrdenados(e).map((c) => ({
-                  cedula: c,
-                  nombre: nombreAlumno(c),
-                }))}
+                miembros={miembrosOrdenados(e).map(miembro)}
                 capitan={e.capitan}
                 equipos={destinos}
                 logoSrc={logos[eq.id]}
                 logoError={errores[eq.id]}
                 onLogo={(f) => cambiarLogo(eq.id, f)}
                 onCapitan={(c) => {
-                  setEstado(cambiarCapitan(estado, eq.id, c));
+                  const siguiente = cambiarCapitan(estado, eq.id, c);
+                  if (siguiente === estado) return;
+                  setEstado(siguiente);
+                  guardar(
+                    estado,
+                    acciones?.capitan({ equipoId: eq.id, cedula: c }),
+                  );
                   toast(capitanTexto(nombreAlumno(c), eq.nombre));
                 }}
                 onMover={mover}
@@ -178,10 +239,7 @@ export function TeamsBoard({
       </ul>
       <UnassignedCard
         tituloId={SIN_EQUIPO_ID}
-        alumnos={estado.sinEquipo.map((c) => ({
-          cedula: c,
-          nombre: nombreAlumno(c),
-        }))}
+        alumnos={estado.sinEquipo.map(miembro)}
         equipos={destinos}
         onMover={mover}
       />

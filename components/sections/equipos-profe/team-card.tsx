@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { DicebearEstilo } from "@/lib/dicebear";
 import {
   CAPITAN_AYUDA,
   chipPuestoTexto,
@@ -27,7 +28,13 @@ import {
   metaEquipoTexto,
 } from "@/lib/equipos-profe";
 
-export type MiembroTarjeta = { cedula: string; nombre: string };
+export type MiembroTarjeta = {
+  cedula: string;
+  nombre: string;
+  /** Avatar del perfil (D191); sin él, el de por defecto con la cédula (vista previa). */
+  estilo?: DicebearEstilo;
+  seed?: string;
+};
 
 export type DatosTarjeta = {
   id: string;
@@ -172,8 +179,8 @@ export function TeamCard({
               className="flex min-h-11 items-center gap-3 border-b border-divider py-1 last:border-b-0"
             >
               <UserAvatar
-                estilo="adventurer-neutral"
-                seed={m.cedula}
+                estilo={m.estilo ?? "adventurer-neutral"}
+                seed={m.seed ?? m.cedula}
                 nombre={m.nombre}
                 size={32}
               />

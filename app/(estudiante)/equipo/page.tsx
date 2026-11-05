@@ -11,6 +11,7 @@ import {
   datosAlumno,
   entregasGrupales,
   integrantesDe,
+  logoDeEquipo,
 } from "@/lib/datos/estudiante";
 import { equipoVista } from "@/lib/vistas-estudiante";
 
@@ -22,16 +23,19 @@ export default async function EquipoPage() {
   const datos = await datosAlumno();
   const seccion = datos.usuario.seccion;
   let d: ReturnType<typeof equipoVista> = null;
+  let logo: string | null = null;
   if (datos.equipo && seccion) {
-    const [companeros, grupales] = await Promise.all([
+    const [companeros, grupales, firmado] = await Promise.all([
       integrantesDe(datos.equipo.id),
       entregasGrupales(seccion),
+      logoDeEquipo(datos.equipo),
     ]);
     d = equipoVista(datos, companeros, grupales);
+    logo = firmado;
   }
   return d ? (
     <>
-      <TeamHero equipo={d.equipo} />
+      <TeamHero equipo={{ ...d.equipo, logo }} />
       {/* ≥ 1024: g-home con integrantes | notas + premios; debajo, 1-2-3 en el orden del DOM */}
       <div className="g-home max-md:gap-6">
         <TeamMembers integrantes={d.integrantes} />

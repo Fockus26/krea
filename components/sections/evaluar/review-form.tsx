@@ -3,6 +3,7 @@
 import { Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import { ErrorGuardarNota } from "@/components/estados/errores";
 import { LiveTotal } from "@/components/krea/live-total";
 import type { QuestionAnswer } from "@/components/krea/question-card-detail";
 import { QuestionCardReview } from "@/components/krea/question-card-review";
@@ -81,6 +82,7 @@ export function ReviewForm({
   guardarHref,
   actualHref,
   acciones,
+  titular,
 }: {
   /** Clave de la entrega (para deshacer). */
   entregaId: string;
@@ -101,8 +103,11 @@ export function ReviewForm({
   actualHref: string;
   /** Guardar y deshacer en Firestore (W7). */
   acciones?: AccionesEvaluar;
+  /** Alumno o equipo de la entrega (título del error al guardar, D171). */
+  titular?: string;
 }) {
   const router = useRouter();
+  const [falloRed, setFalloRed] = React.useState(false);
   const [estado, setEstado] = React.useState<Estado>(() => {
     const previo = deshechas.get(entregaId);
     deshechas.delete(entregaId);
@@ -157,9 +162,12 @@ export function ReviewForm({
         .catch((): ResultadoEvaluar => ({ ok: false, error: "red" }));
       guardando.current = false;
       if (!r.ok) {
-        toast.error(errorEvaluarTexto(r.error));
+        // Sin red: el error en pantalla con «Reintentar guardar» (D171); lo demás, el toast
+        if (r.error === "red") setFalloRed(true);
+        else toast.error(errorEvaluarTexto(r.error));
         return;
       }
+      setFalloRed(false);
       evaluadaEn = r.evaluadaEn;
     }
     toast.success(notaGuardadaTexto(notaGuardada(finales, base)), {
@@ -310,6 +318,26 @@ export function ReviewForm({
           </p>
         </div>
       </div>
+
+      {falloRed ? (
+        <ErrorGuardarNota
+          equipo={titular ?? "esta entrega"}
+          onReintentar={() => void guardar()}
+          onCopiar={() => {
+            const texto = preguntas
+              .map((_p, i) => {
+                const c = comentarios[i]?.trim();
+                return c ? `Pregunta ${i + 1}: ${c}` : null;
+              })
+              .filter(Boolean)
+              .join("\n");
+            navigator.clipboard.writeText(texto).then(
+              () => toast("Comentarios copiados"),
+              () => toast.error("No se pudo copiar. Cópialos a mano."),
+            );
+          }}
+        />
+      ) : null}
 
       {/* < 1024: barra de acción sobre la barra inferior (§8: Evaluar sí la muestra) */}
       <ActionBar className="lg:hidden">

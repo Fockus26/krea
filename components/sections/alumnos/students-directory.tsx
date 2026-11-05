@@ -13,20 +13,24 @@ import {
   otraSeccion,
   type SeccionAlumnos,
 } from "@/lib/alumnos";
+import type { EditarAlumno, ResultadoAlumno } from "@/lib/alumnos-datos";
 import { StudentFilters } from "./student-filters";
 import { StudentsTable } from "./students-table";
 
 /**
  * Filtros + tabla (HANDOFF §3 Alumnos). Recibe la lista completa por props; la sección y la
- * búsqueda filtran en cliente. "Guardar" actualiza el estado local (sin Firestore: fase 07).
+ * búsqueda filtran en cliente. Con `guardar` (la Server Action, D209) «Guardar cambios» escribe en
+ * Firestore y la fila cambia solo si se guardó; sin él (vista previa) solo cambia el estado local.
  * Búsqueda sin resultados: vacío con «Buscar en {otra sección}» si allí hay coincidencias (D170).
  */
 export function StudentsDirectory({
   alumnos,
   seccionInicial = "5A",
+  guardar,
 }: {
   alumnos: readonly FilaAlumno[];
   seccionInicial?: SeccionAlumnos;
+  guardar?: (entrada: EditarAlumno) => Promise<ResultadoAlumno>;
 }) {
   const [filas, setFilas] = useState<readonly FilaAlumno[]>(alumnos);
   const [seccion, setSeccion] = useState<SeccionAlumnos>(seccionInicial);
@@ -88,7 +92,8 @@ export function StudentsDirectory({
           seccion={seccion}
           filas={visibles}
           consulta={consulta}
-          onGuardar={(cedula, cambios) =>
+          guardar={guardar}
+          onGuardado={(cedula, cambios) =>
             setFilas((actuales) =>
               actuales.map((a) =>
                 a.cedula === cedula ? { ...a, ...cambios } : a,

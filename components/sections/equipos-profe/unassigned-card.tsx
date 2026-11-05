@@ -4,6 +4,7 @@ import { TriangleAlert } from "lucide-react";
 import { UserAvatar } from "@/components/krea/user-avatar";
 import { MemberMenu } from "@/components/sections/equipos-profe/member-menu";
 import { Card } from "@/components/ui/card";
+import type { DicebearEstilo } from "@/lib/dicebear";
 import {
   type DestinoMover,
   SIN_EQUIPO_NOTA,
@@ -11,7 +12,13 @@ import {
   sinEquipoTitulo,
 } from "@/lib/equipos-profe";
 
-export type AlumnoFila = { cedula: string; nombre: string };
+export type AlumnoFila = {
+  cedula: string;
+  nombre: string;
+  /** Avatar del perfil (D191); sin él, el de por defecto con la cédula (vista previa). */
+  estilo?: DicebearEstilo;
+  seed?: string;
+};
 
 /**
  * Card «Sin equipo» (HANDOFF §3 Equipos): borde interior de 2 px `--warning` (el aviso lleva
@@ -53,8 +60,8 @@ export function UnassignedCard({
           {alumnos.map((a) => (
             <li key={a.cedula} className="flex min-h-11 items-center gap-3">
               <UserAvatar
-                estilo="adventurer-neutral"
-                seed={a.cedula}
+                estilo={a.estilo ?? "adventurer-neutral"}
+                seed={a.seed ?? a.cedula}
                 nombre={a.nombre}
                 size={32}
               />

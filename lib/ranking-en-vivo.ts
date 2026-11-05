@@ -13,10 +13,45 @@ import {
 } from "@/lib/ranking-vista";
 import { estiloDe } from "@/lib/vistas-estudiante";
 
-/** Lo que el ranking no trae y no cambia en vivo: tema y capitán de cada equipo (servidor). */
+/**
+ * Lo que el ranking no trae y no cambia en vivo: tema y capitán de cada equipo, y su logo con URL
+ * firmada (servidor, D212). `logoPath` es la ruta que se firmó: si el documento en vivo trae otra
+ * (el profe lo cambió con la página abierta), se pintan las iniciales hasta recargar.
+ */
 export type InfoEquipos = Readonly<
-  Record<string, { tema: string | null; capitan: string | null }>
+  Record<
+    string,
+    {
+      tema: string | null;
+      capitan: string | null;
+      logoPath?: string | null;
+      logo?: string | null;
+    }
+  >
 >;
+
+/** `InfoEquipos` de unos equipos y sus URLs firmadas (ruta → URL). */
+export function infoDeEquipos(
+  equipos: ReadonlyArray<{
+    id: string;
+    tema: string | null;
+    capitanId: string | null;
+    logoPath: string | null;
+  }>,
+  logos: ReadonlyMap<string, string>,
+): InfoEquipos {
+  return Object.fromEntries(
+    equipos.map((e) => [
+      e.id,
+      {
+        tema: e.tema,
+        capitan: e.capitanId,
+        logoPath: e.logoPath,
+        logo: (e.logoPath && logos.get(e.logoPath)) || null,
+      },
+    ]),
+  );
+}
 
 export type Tu = { cedula: string | null; equipoId: string | null };
 
@@ -95,8 +130,11 @@ export function itemsDeRanking(
       delta: delta(e.id, e.puesto),
       esTu: e.id === tu.equipoId,
       tema: info[e.id]?.tema ?? e.nombre,
-      // El logo sale de Storage (W8): mientras, las iniciales
-      src: null,
+      // Logo firmado en el servidor, solo si es el mismo que trae el documento en vivo (D212)
+      src:
+        e.logoPath && info[e.id]?.logoPath === e.logoPath
+          ? (info[e.id]?.logo ?? null)
+          : null,
     };
   });
 }

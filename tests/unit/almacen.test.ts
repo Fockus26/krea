@@ -1,8 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import {
+  claveLogo,
   esJpeg,
+  esPng,
+  esWebp,
   IMAGEN_SUBIDA_MAX_BYTES,
+  LOGO_SUBIDA_MAX_BYTES,
   validarImagenSubida,
+  validarLogoSubido,
 } from "@/lib/almacen/imagen";
 import {
   type ConfigS3,
@@ -163,5 +168,51 @@ describe("validarImagenSubida (D195)", () => {
     const grande = new Uint8Array(IMAGEN_SUBIDA_MAX_BYTES + 1);
     grande.set(JPEG);
     expect(validarImagenSubida(grande)).toEqual({ ok: false, error: "peso" });
+  });
+});
+
+describe("logo de equipo (D212)", () => {
+  const webp = new Uint8Array([
+    ...new TextEncoder().encode("RIFF"),
+    0x10,
+    0,
+    0,
+    0,
+    ...new TextEncoder().encode("WEBPVP8 "),
+  ]);
+  const png = new Uint8Array([
+    0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0,
+  ]);
+  const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0]);
+
+  test("tipo por la firma de los bytes: WebP y PNG sí, JPEG no", () => {
+    expect(esWebp(webp)).toBe(true);
+    expect(esPng(png)).toBe(true);
+    expect(validarLogoSubido(webp)).toEqual({
+      ok: true,
+      tipo: "image/webp",
+      extension: "webp",
+    });
+    expect(validarLogoSubido(png)).toMatchObject({
+      ok: true,
+      extension: "png",
+    });
+    expect(validarLogoSubido(jpeg)).toEqual({ ok: false, error: "tipo" });
+  });
+
+  test("vacío y peso máximo", () => {
+    expect(validarLogoSubido(new Uint8Array())).toEqual({
+      ok: false,
+      error: "vacia",
+    });
+    const grande = new Uint8Array(LOGO_SUBIDA_MAX_BYTES + 1);
+    grande.set(webp);
+    expect(validarLogoSubido(grande)).toEqual({ ok: false, error: "peso" });
+  });
+
+  test("clave equipos/{equipoId}/{uuid}.webp, válida para B2", () => {
+    const clave = claveLogo("5a-g2", "0b1c", "webp");
+    expect(clave).toBe("equipos/5a-g2/0b1c.webp");
+    expect(esClaveValida(clave)).toBe(true);
   });
 });

@@ -2,10 +2,12 @@
 
 import { Check, Clock, Copy, RefreshCw, WifiOff } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRutaActual } from "@/components/krea/use-en-linea";
+import type { NavUsuario } from "@/components/layout/nav-types";
 import { Button } from "@/components/ui/button";
 import { Toaster, toast } from "@/components/ui/sonner";
+import { type SesionPantalla, sesionDePantalla } from "@/lib/acciones/sesion";
 import {
   accionesNotFound,
   formatFechaHora,
@@ -17,23 +19,56 @@ import {
 import { accionEstadoClases, StatusScreen } from "./status-screen";
 
 /*
- * Variantes de la familia de pantallas de estado (HANDOFF §5b, D160–D162). Cliente: el 404 lee la
- * dirección pedida (sesión supuesta, D160), el 500 copia el código y las dos reintentan.
+ * Variantes de la familia de pantallas de estado (HANDOFF §5b, D160–D162, D213). Cliente: sin
+ * sesión conocida, la suponen por la dirección (D160) mientras llega la real; el 500 copia el
+ * código y las dos reintentan.
  */
 
 const recargar = () => window.location.reload();
 
 /**
- * 404. Sin `sesion`, la deduce de la dirección en el cliente (el 404 estático no la conoce:
- * en el servidor sale «sin sesión» y al hidratar cambia; fase 07: sesión real en el servidor).
+ * Sesión real de la pantalla de error (D213), pedida al servidor al montar. Mientras llega (o si
+ * falla), la supuesta por la dirección (D160), sin usuario. Para el 500, que es cliente.
  */
-export function PantallaNotFound({ sesion }: { sesion?: SesionEstado }) {
+export function useSesionPantalla(): {
+  sesion: SesionEstado;
+  usuario: NavUsuario | null;
+} {
+  const ruta = useRutaActual();
+  const [real, setReal] = useState<SesionPantalla | undefined>(undefined);
+  useEffect(() => {
+    let vivo = true;
+    sesionDePantalla().then(
+      (s) => vivo && setReal(s),
+      () => {},
+    );
+    return () => {
+      vivo = false;
+    };
+  }, []);
+  if (real !== undefined)
+    return { sesion: real?.rol ?? null, usuario: real?.usuario ?? null };
+  return { sesion: ruta ? sesionPorRuta(ruta) : null, usuario: null };
+}
+
+/**
+ * 404. Con `sesion` (la real, del servidor, D213; o la de la galería) la usa; sin ella, la deduce
+ * de la dirección en el cliente (el contenido de reserva mientras se lee la sesión).
+ */
+export function PantallaNotFound({
+  sesion,
+  usuario,
+}: {
+  sesion?: SesionEstado;
+  usuario?: NavUsuario | null;
+}) {
   const ruta = useRutaActual();
   const s = sesion !== undefined ? sesion : ruta ? sesionPorRuta(ruta) : null;
   const [principal, secundaria] = accionesNotFound(s);
   return (
     <StatusScreen
       sesion={s}
+      usuario={usuario}
       codigo="404"
       eyebrow="Error 404"
       titulo="Esta página se fue de recreo"
@@ -102,10 +137,12 @@ function CodigoSoporte({ codigo }: { codigo: string }) {
 /** 500 con código (`codigo`) o sin código. Monta su propio Toaster: no vive dentro del shell. */
 export function Pantalla500({
   sesion = null,
+  usuario,
   codigo,
   onRetry = recargar,
 }: {
   sesion?: SesionEstado;
+  usuario?: NavUsuario | null;
   codigo: string | null;
   onRetry?: () => void;
 }) {
@@ -113,6 +150,7 @@ export function Pantalla500({
     <>
       <StatusScreen
         sesion={sesion}
+        usuario={usuario}
         codigo="500"
         eyebrow="Error 500"
         titulo="Algo se nos rompió por dentro"
@@ -139,16 +177,19 @@ export function Pantalla500({
 /** Sin conexión y nada en caché. `ultimaActualizacion`: hora de los datos guardados, si hay. */
 export function PantallaSinConexion({
   sesion = null,
+  usuario,
   ultimaActualizacion,
   onRetry = recargar,
 }: {
   sesion?: SesionEstado;
+  usuario?: NavUsuario | null;
   ultimaActualizacion?: Date;
   onRetry?: () => void;
 }) {
   return (
     <StatusScreen
       sesion={sesion}
+      usuario={usuario}
       icono={WifiOff}
       eyebrow="Sin conexión"
       titulo="Se te fue la señal"

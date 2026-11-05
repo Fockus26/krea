@@ -8,6 +8,7 @@ import {
   PantallaNotFound,
   PantallaSinConexion,
 } from "@/components/estados/pantallas";
+import { USUARIO_ESTUDIANTE, USUARIO_PROFESOR } from "@/lib/demo/usuarios";
 import {
   galeriaEstadosVisible,
   PANTALLAS_ESTADO,
@@ -30,22 +31,42 @@ const CODIGO_EJEMPLO = "KR-500-7F3A9C";
 function Pantalla({ id }: { id: PantallaEstado }) {
   switch (id) {
     case "404-estudiante":
-      return <PantallaNotFound sesion="estudiante" />;
+      return (
+        <PantallaNotFound sesion="estudiante" usuario={USUARIO_ESTUDIANTE} />
+      );
     case "404-profesor":
-      return <PantallaNotFound sesion="profesor" />;
+      return <PantallaNotFound sesion="profesor" usuario={USUARIO_PROFESOR} />;
     case "404-sin-sesion":
       return <PantallaNotFound sesion={null} />;
     case "500-codigo":
-      return <Pantalla500 sesion="estudiante" codigo={CODIGO_EJEMPLO} />;
+      return (
+        <Pantalla500
+          sesion="estudiante"
+          usuario={USUARIO_ESTUDIANTE}
+          codigo={CODIGO_EJEMPLO}
+        />
+      );
     case "500-sin-codigo":
-      return <Pantalla500 sesion="estudiante" codigo={null} />;
+      return (
+        <Pantalla500
+          sesion="estudiante"
+          usuario={USUARIO_ESTUDIANTE}
+          codigo={null}
+        />
+      );
     case "sin-conexion":
-      return <PantallaSinConexion sesion="estudiante" />;
+      return (
+        <PantallaSinConexion sesion="estudiante" usuario={USUARIO_ESTUDIANTE} />
+      );
     case "sin-conexion-hora": {
       const hora = new Date();
       hora.setHours(16, 20, 0, 0);
       return (
-        <PantallaSinConexion sesion="estudiante" ultimaActualizacion={hora} />
+        <PantallaSinConexion
+          sesion="estudiante"
+          usuario={USUARIO_ESTUDIANTE}
+          ultimaActualizacion={hora}
+        />
       );
     }
     case "banner-sin-conexion":

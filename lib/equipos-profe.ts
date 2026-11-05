@@ -19,6 +19,37 @@ export type EstadoEquipos = {
   sinEquipo: readonly string[];
 };
 
+/** Integrante en el tablero: nombre completo y su avatar. */
+export type AlumnoEquipo = {
+  cedula: string;
+  nombre: string;
+  /** Semilla del avatar (la elegida en Perfil; en la vista previa, la cédula). */
+  seed: string;
+  /** Estilo del avatar (ausente en la vista previa: el de por defecto). */
+  estilo?: string;
+};
+
+export type EquipoVista = {
+  id: string;
+  nombre: string;
+  tema: string | null;
+  puesto: number;
+  puntos: number;
+  empate: boolean;
+  /** URL firmada del logo (D212); `null`/ausente → iniciales. */
+  logo?: string | null;
+};
+
+export type DatosEquiposProfe = {
+  seccion: SeccionEquipos;
+  /** Equipos de la sección en el orden del ranking (el del lienzo: puesto, luego nombre). */
+  equipos: EquipoVista[];
+  alumnos: Record<string, AlumnoEquipo>;
+  inicial: EstadoEquipos;
+  /** Alumnos de la sección (para «n de N con equipo»). */
+  total: number;
+};
+
 // ---------- Textos ----------
 
 /** "5A · 6 equipos · 30 de 35 con equipo". */

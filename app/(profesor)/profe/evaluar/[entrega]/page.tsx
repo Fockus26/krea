@@ -113,6 +113,7 @@ export default async function EvaluarEntregaPage({ params }: Props) {
           guardarHref={v.guardarHref}
           actualHref={rutaEntrega(v.entregaId)}
           acciones={ACCIONES}
+          titular={v.titulo}
         />
       )}
     </>

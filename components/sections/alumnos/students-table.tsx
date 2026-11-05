@@ -19,7 +19,11 @@ import {
 } from "@/lib/alumnos";
 import { formatNota } from "@/lib/grades";
 import { formatDecimal } from "@/lib/stepper";
-import { EditStudentDialog } from "./edit-student-dialog";
+import {
+  type CambiosAlumno,
+  EditStudentDialog,
+  type GuardarAlumno,
+} from "./edit-student-dialog";
 
 const COLUMNAS = 7;
 
@@ -33,15 +37,14 @@ export function StudentsTable({
   seccion,
   filas,
   consulta,
-  onGuardar,
+  guardar,
+  onGuardado,
 }: {
   seccion: SeccionAlumnos;
   filas: readonly FilaAlumno[];
   consulta: string;
-  onGuardar: (
-    cedula: string,
-    cambios: Pick<FilaAlumno, "nombres" | "apellidos" | "base">,
-  ) => void;
+  guardar?: GuardarAlumno;
+  onGuardado: (cedula: string, cambios: CambiosAlumno) => void;
 }) {
   return (
     <Table label={tablaLabel(seccion)}>
@@ -81,7 +84,7 @@ export function StudentsTable({
                 <span className="flex items-center gap-3">
                   <UserAvatar
                     estilo={a.estilo}
-                    seed={a.cedula}
+                    seed={a.semilla ?? a.cedula}
                     nombre={nombreAlumno(a)}
                     size={36}
                   />
@@ -110,7 +113,11 @@ export function StudentsTable({
                 {formatDecimal(a.puntos)}
               </TableCell>
               <TableCell numeric>
-                <EditStudentDialog alumno={a} onGuardar={onGuardar} />
+                <EditStudentDialog
+                  alumno={a}
+                  guardar={guardar}
+                  onGuardado={onGuardado}
+                />
               </TableCell>
             </TableRow>
           ))

@@ -118,6 +118,8 @@ export const zCambioBase = z.object({
   alumnoId: zCedula,
   de: zBase,
   a: zBase,
+  /** Por qué cambió (D108: el formulario lo exige; el alumno lo verá). */
+  motivo: texto(300),
   autorId: zCedula,
   en: zInstante,
 });

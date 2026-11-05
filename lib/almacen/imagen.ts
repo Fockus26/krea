@@ -26,3 +26,52 @@ export function validarImagenSubida(
   if (!esJpeg(bytes)) return { ok: false, error: "tipo" };
   return { ok: true };
 }
+
+/* ---------- Logos de equipo (W8, D212) ---------- */
+
+/**
+ * Peso máximo del logo ya recortado a 512 × 512 en el cliente (D113): un WebP de ese lado pesa
+ * mucho menos; el PNG (navegadores que no codifican WebP en `canvas`) cabe holgado.
+ */
+export const LOGO_SUBIDA_MAX_BYTES = 1.5 * 1024 * 1024;
+
+const ascii = (bytes: Uint8Array, desde: number, texto: string) =>
+  [...texto].every((c, i) => bytes[desde + i] === c.charCodeAt(0));
+
+/** WebP: `RIFF` + 4 bytes de tamaño + `WEBP`. */
+export function esWebp(bytes: Uint8Array): boolean {
+  return (
+    bytes.length >= 12 && ascii(bytes, 0, "RIFF") && ascii(bytes, 8, "WEBP")
+  );
+}
+
+/** PNG: 89 50 4E 47 0D 0A 1A 0A. */
+export function esPng(bytes: Uint8Array): boolean {
+  const firma = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+  return bytes.length >= 8 && firma.every((b, i) => bytes[i] === b);
+}
+
+export type TipoLogo = {
+  tipo: "image/webp" | "image/png";
+  extension: "webp" | "png";
+};
+
+/** Tipo del logo por la firma de sus bytes (nunca por lo que diga el navegador). */
+export function validarLogoSubido(
+  bytes: Uint8Array,
+): ({ ok: true } & TipoLogo) | { ok: false; error: ErrorImagen } {
+  if (bytes.length === 0) return { ok: false, error: "vacia" };
+  if (bytes.length > LOGO_SUBIDA_MAX_BYTES) return { ok: false, error: "peso" };
+  if (esWebp(bytes)) return { ok: true, tipo: "image/webp", extension: "webp" };
+  if (esPng(bytes)) return { ok: true, tipo: "image/png", extension: "png" };
+  return { ok: false, error: "tipo" };
+}
+
+/** Clave del logo en B2: `equipos/{equipoId}/{uuid}.webp` (D212). */
+export function claveLogo(
+  equipoId: string,
+  uuid: string,
+  extension: TipoLogo["extension"],
+): string {
+  return `equipos/${equipoId}/${uuid}.${extension}`;
+}

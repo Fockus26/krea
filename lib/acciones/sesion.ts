@@ -1,10 +1,14 @@
 "use server";
-// Server Actions de la sesión (D180): crear la cookie tras el login y cerrarla.
+// Server Actions de la sesión (D180): crear la cookie tras el login y cerrarla, y la sesión de las
+// pantallas de error (D213).
 import { cookies } from "next/headers";
 import { z } from "zod";
+import type { NavUsuario } from "@/components/layout/nav-types";
 import type { ErrorIngreso } from "@/lib/auth";
+import { verificarSesion } from "@/lib/dal";
 import { firebaseAdmin } from "@/lib/firebase/admin";
 import { sesionDeCookie } from "@/lib/firebase/sesion-servidor";
+import { COL, type RolUsuario, zUsuario } from "@/lib/modelo";
 import {
   COOKIE_SESION,
   inicioDe,
@@ -12,6 +16,7 @@ import {
   SESION_MS,
   sesionDeClaims,
 } from "@/lib/sesion";
+import { navUsuarioDe } from "@/lib/vistas-estudiante";
 
 export type ResultadoIngreso =
   | { ok: true; destino: string }
@@ -68,5 +73,37 @@ export async function cerrarSesion(): Promise<void> {
     } catch (e) {
       console.error("[cerrarSesion]", (e as { code?: string }).code ?? "error");
     }
+  }
+}
+
+/** Sesión de las pantallas 404/500 (D160 → D213): rol + usuario de la cabecera, o `null`. */
+export type SesionPantalla = {
+  rol: RolUsuario;
+  usuario: NavUsuario | null;
+} | null;
+
+/**
+ * Sesión real para la cabecera del 404 y el 500 (D213). La llaman el 404 (servidor, dentro de
+ * `<Suspense>`) y el 500 (cliente, al montar). Solo lee el perfil de la propia sesión. Sin cookie
+ * válida → `null` («Iniciar sesión»); si el perfil no se puede leer, el rol sin usuario.
+ */
+export async function sesionDePantalla(): Promise<SesionPantalla> {
+  const sesion = await verificarSesion();
+  if (!sesion) return null;
+  const admin = firebaseAdmin();
+  if (!admin) return { rol: sesion.rol, usuario: null };
+  try {
+    const snap = await admin.db.collection(COL.usuarios).doc(sesion.uid).get();
+    const u = zUsuario.safeParse(snap.data());
+    return {
+      rol: sesion.rol,
+      usuario: u.success ? navUsuarioDe(u.data) : null,
+    };
+  } catch (e) {
+    console.error(
+      "[sesionDePantalla]",
+      (e as { code?: string }).code ?? "error",
+    );
+    return { rol: sesion.rol, usuario: null };
   }
 }

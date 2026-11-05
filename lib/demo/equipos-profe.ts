@@ -10,33 +10,14 @@ import {
   nombreCompleto,
   rankingEquipos,
 } from "@/lib/demo/seed";
-import type { EstadoEquipos, SeccionEquipos } from "@/lib/equipos-profe";
+import type {
+  AlumnoEquipo,
+  DatosEquiposProfe,
+  EquipoVista,
+  SeccionEquipos,
+} from "@/lib/equipos-profe";
 
-export type AlumnoEquipo = {
-  cedula: string;
-  nombre: string;
-  /** Semilla del avatar (la cédula, como en el resto de vistas). */
-  seed: string;
-};
-
-export type EquipoVista = {
-  id: string;
-  nombre: string;
-  tema: string | null;
-  puesto: number;
-  puntos: number;
-  empate: boolean;
-};
-
-export type DatosEquiposProfe = {
-  seccion: SeccionEquipos;
-  /** Equipos de la sección en el orden del ranking (el del lienzo: puesto, luego nombre). */
-  equipos: EquipoVista[];
-  alumnos: Record<string, AlumnoEquipo>;
-  inicial: EstadoEquipos;
-  /** Alumnos de la sección (para «n de N con equipo»). */
-  total: number;
-};
+export type { AlumnoEquipo, DatosEquiposProfe, EquipoVista };
 
 function alumnoVista(a: DemoAlumno): AlumnoEquipo {
   return { cedula: a.cedula, nombre: nombreCompleto(a), seed: a.cedula };
