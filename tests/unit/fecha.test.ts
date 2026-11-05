@@ -1,5 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import { comparaFecha, diasEntre, formatFecha } from "@/lib/fecha";
+import {
+  comparaFecha,
+  diaDeInstante,
+  diasEntre,
+  formatFecha,
+} from "@/lib/fecha";
 
 describe("formatFecha", () => {
   test("día ISO → dd/mm/aaaa", () => {
@@ -26,5 +31,12 @@ describe("diasEntre y comparaFecha", () => {
       "2026-11-03",
       "2026-11-07",
     ]);
+  });
+});
+
+describe("diaDeInstante", () => {
+  test("el día civil es el de Caracas (UTC−4), no el de UTC", () => {
+    expect(diaDeInstante(Date.UTC(2026, 10, 6, 3, 59))).toBe("2026-11-05");
+    expect(diaDeInstante(Date.UTC(2026, 10, 6, 4, 0))).toBe("2026-11-06");
   });
 });

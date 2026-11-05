@@ -1,6 +1,8 @@
 // Textos y lógica de Perfil (HANDOFF §3 Perfil; lienzo design/canvas/Perfil.dc.html).
 // Lógica pura, sin React.
-import type { DicebearEstilo } from "@/lib/dicebear";
+import { z } from "zod";
+import { PASSWORD_MIN, validarPassword } from "@/lib/auth";
+import { DICEBEAR_ESTILOS, type DicebearEstilo } from "@/lib/dicebear";
 import { formatNota } from "@/lib/grades";
 
 /** "33272397" → "C.I. 33.272.397": puntos de miles solo para mostrar (la cédula se guarda sin ellos). */
@@ -57,3 +59,44 @@ export function semillasAvatar(base: string, tanda: number): string[] {
 export function opcionAvatarTexto(n: number): string {
   return `Opción ${n}`;
 }
+
+/* ---------- Lo que Perfil guarda (fase 07, D191, D192) ---------- */
+
+/**
+ * Avatar elegido por el alumno: uno de los 4 estilos y una semilla de las que ofrece Perfil
+ * (`semillasAvatar` con su cédula). Así nadie guarda una semilla arbitraria por el body.
+ */
+export function zAvatarElegido(cedula: string) {
+  const semilla = new RegExp(
+    `^${cedula}(-\\d{1,6}-[0-${OPCIONES_POR_TANDA - 1}])?$`,
+  );
+  return z.object({
+    estilo: z.enum(DICEBEAR_ESTILOS),
+    semilla: z.string().regex(semilla, "Avatar no válido"),
+  });
+}
+
+/** Cambio de contraseña: la actual no vacía y la nueva con el mínimo (D192). */
+export const zCambioPassword = z.object({
+  actual: z.string().min(1).max(4096),
+  nueva: z
+    .string()
+    .max(4096)
+    .refine((pw) => validarPassword(pw).estado === "ok", "Contraseña corta"),
+});
+
+export type ErrorCambioPassword =
+  | "actual"
+  | "invalida"
+  | "bloqueado"
+  | "red"
+  | "sesion";
+
+/** Copy de los errores del cambio de contraseña. PLACEHOLDER (CONTENT_CHECKLIST fila 127). */
+export const ERROR_CAMBIO_PASSWORD: Record<ErrorCambioPassword, string> = {
+  actual: "La contraseña actual no coincide.",
+  invalida: `La contraseña nueva necesita al menos ${PASSWORD_MIN} caracteres.`,
+  bloqueado: "Demasiados intentos. Espera unos minutos y vuelve a intentar.",
+  red: "No pudimos guardar la contraseña. Revisa tu internet y vuelve a intentar.",
+  sesion: "Tu sesión venció. Vuelve a entrar para cambiar la contraseña.",
+};

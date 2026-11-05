@@ -81,6 +81,13 @@ export const zAvatar = z.object({
   semilla: z.string().trim().min(1).max(80),
 });
 
+/** Tema y acento elegidos en Perfil (D001, D015); `localStorage` solo evita el parpadeo. */
+export const zApariencia = z.object({
+  tema: z.enum(["light", "dark", "system"]),
+  acento: z.enum(["azul", "rojo", "verde", "morado"]),
+});
+export type Apariencia = z.infer<typeof zApariencia>;
+
 export const zUsuario = z.object({
   cedula: zCedula,
   rol: zRol,
@@ -93,6 +100,8 @@ export const zUsuario = z.object({
   /** Base vigente del estudiante (D006, D176); 20 en el profesor (no se usa). */
   base: zBase,
   avatar: zAvatar,
+  /** Ausente hasta que el usuario elige tema o acento en Perfil (D191). */
+  apariencia: zApariencia.optional(),
   actualizadoEn: zInstante,
 });
 export type Usuario = z.infer<typeof zUsuario>;
@@ -273,6 +282,8 @@ export const zFilaRankingAlumno = z.object({
   apellidos: z.string(),
   equipoId: z.string().nullable(),
   estilo: z.string(),
+  /** Semilla del avatar (D191); los documentos anteriores no la traen: se usa la cédula. */
+  semilla: z.string().optional(),
   puntos: z.number(),
 });
 

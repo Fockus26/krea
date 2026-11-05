@@ -90,6 +90,7 @@ export function calcularRanking(
       apellidos: u.apellidos,
       equipoId: u.equipoId,
       estilo: u.avatar.estilo,
+      semilla: u.avatar.semilla,
       puntos: puntosDeAlumno(u, entregas, ajustes),
     };
   }
