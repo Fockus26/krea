@@ -15,12 +15,16 @@ Plan: `context/plans/phase-07-backend.md` · main @ f3a8d6d
 | W1 modelo de datos, reglas y emuladores (D174–D177) | #48 | merged (27bd040) |
 | W2 login, sesión, protección y salir (D180–D183) | #49 | merged (f3a8d6d) |
 | W4 lecturas del estudiante, ranking en vivo, Perfil (D189–D193) | #50 | merged (f775ec3) |
-| W3 recuperar contraseña con Brevo (D185–D188) | claude/dreamy-babbage-vloz3y | PR abierto |
-| W5–W8 (entregas, tareas, evaluar, gestión) | — | pendiente (ver plan) |
+| W3 recuperar contraseña con Brevo (D185–D188) | #51 | merged (1b22d77) |
+| W5 entregas: borrador local, enviar, imágenes en B2 (D194–D197) | claude/dreamy-babbage-vloz3y | PR abierto |
+| W6–W8 (tareas, evaluar, gestión) | — | pendiente (ver plan) |
 
 ## Blocked (actions for César or external)
 
 - QA pendiente: W3 — envío real por Brevo con el alumno de prueba 38291460 (la red del contenedor bloquea api.brevo.com), enlace → /recuperar/nueva → guardar → aviso en Ingresar y sesiones revocadas; axe de /recuperar y /recuperar/nueva. Fase 09.
+
+- QA pendiente: W5 — subida real a B2 (el host está bloqueado en el contenedor: probado con dobles), enviar individual y grupal (capitán / no capitán) contra los emuladores, borrador tras recargar, imagen en «Entregada» y en el detalle de nota; axe de /tareas y /tareas/[tarea]. Fase 09.
+- W5: en el entorno existen también `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`; el código solo lee `B2_*` (D194). Confirmar que Vercel tiene las `B2_*` (Production y Preview) y que el bucket es privado.
 
 - QA pendiente: W4 — pantallas del estudiante con datos (emuladores, axe), ranking en vivo en dos navegadores, cambio de contraseña (revoca y reabre). Fase 09.
 - QA pendiente: login/sesión/salir (functional-qa + axe de /ingresar y /salir) — sin servidor por decisión de César; probado contra los emuladores (cookie, revocación, reglas). Fase 09.
