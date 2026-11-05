@@ -3,6 +3,7 @@ import "server-only";
 // pregunta aquí, cerca del dato. El proxy solo hace la comprobación rápida.
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { cache } from "react";
 import { sesionDeCookie } from "@/lib/firebase/sesion-servidor";
 import type { RolUsuario } from "@/lib/modelo";
@@ -15,6 +16,8 @@ import {
 
 /** Sesión del request (con chequeo de revocación), una vez por render. */
 export const verificarSesion = cache(async (): Promise<Sesion | null> => {
+  // verifySessionCookie usa Date.now(): sin esto, Next lo rechaza durante el prerender (D219)
+  await connection();
   const valor = (await cookies()).get(COOKIE_SESION)?.value;
   return sesionDeCookie(valor, { revocadas: true });
 });

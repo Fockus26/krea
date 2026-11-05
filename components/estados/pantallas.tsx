@@ -51,9 +51,15 @@ export function useSesionPantalla(): {
   return { sesion: ruta ? sesionPorRuta(ruta) : null, usuario: null };
 }
 
+/** 404 real de la app: pide la sesión al montar, solo cuando la pantalla se muestra (D219). */
+export function PantallaNotFoundConSesion() {
+  const { sesion, usuario } = useSesionPantalla();
+  return <PantallaNotFound sesion={sesion} usuario={usuario} />;
+}
+
 /**
- * 404. Con `sesion` (la real, del servidor, D213; o la de la galería) la usa; sin ella, la deduce
- * de la dirección en el cliente (el contenido de reserva mientras se lee la sesión).
+ * 404. Con `sesion` (la real o la de la galería) la usa; sin ella, la deduce de la dirección en
+ * el cliente.
  */
 export function PantallaNotFound({
   sesion,
