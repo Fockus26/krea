@@ -1,0 +1,6 @@
+# D214 · Backend · `jwks-rsa` fijado en 3.2.2 para que el Admin SDK cargue en Vercel · Implemented
+
+**Decision:** `overrides` de `package.json` fija `jwks-rsa@3.2.2` (usa `jose@4`, con build CommonJS). `firebase-admin@14.5` pide `jwks-rsa@^4`, cuyo `require('jose')` llega a `jose@6`, solo ESM: en Vercel da `ERR_REQUIRE_ESM` al cargar `firebase-admin/auth`, y como el proxy lo importa, todas las rutas daban 500 desde el login (#49). `firebase-admin` solo usa `jwks({ jwksUri, cache, … })`, `getSigningKeys()` y `getPublicKey()`, presentes en 3.2.2. `tests/unit/firebase-admin-carga.test.ts` carga los tres módulos con `--no-experimental-require-module` y avisa si vuelve a pasar.
+**Why:** es el cambio más pequeño que arregla todas las rutas que usan el Admin SDK, no solo el proxy, sin tocar código de la app.
+**Discarded alternative:** `transpilePackages` para empaquetar el SDK — `firebase-admin` está en la lista de externos de Next; quitar el Admin SDK solo del proxy — las páginas y Server Actions seguirían cayendo al usarlo; volver a `firebase-admin@13` — baja de versión mayor todo el SDK por una sola dependencia.
+**Revisar:** quitar el override cuando `firebase-admin` deje de depender de un `jwks-rsa` solo ESM o el runtime de Vercel admita require(esm); la prueba de regresión lo confirma.
