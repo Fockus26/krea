@@ -26,6 +26,8 @@ export const COL = {
   ajustes: "ajustes",
   /** `ranking/{seccion}`: puntos derivados, un documento por sección (D174). */
   ranking: "ranking",
+  /** `recuperaciones/{cedula}`: envíos del enlace de recuperación (límite, D187). Solo servidor. */
+  recuperaciones: "recuperaciones",
 } as const;
 
 export function idEntrega(tareaId: string, titularId: string): string {

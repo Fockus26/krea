@@ -6,10 +6,59 @@ export type ResultadoPassword =
   | { ok: true; idToken: string }
   | { ok: false; error: ErrorPassword };
 
+/** URL de un método `accounts:*` de Identity Toolkit, la real o la del emulador de Auth. */
+export function urlIdentityToolkit(
+  metodo: "signInWithPassword" | "resetPassword",
+  apiKey: string,
+  emuladorHost?: string,
+): string {
+  const ruta = `identitytoolkit.googleapis.com/v1/accounts:${metodo}?key=${encodeURIComponent(apiKey)}`;
+  return emuladorHost ? `http://${emuladorHost}/${ruta}` : `https://${ruta}`;
+}
+
 /** URL de `accounts:signInWithPassword`, la real o la del emulador de Auth. */
 export function urlSignIn(apiKey: string, emuladorHost?: string): string {
-  const ruta = `identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${encodeURIComponent(apiKey)}`;
-  return emuladorHost ? `http://${emuladorHost}/${ruta}` : `https://${ruta}`;
+  return urlIdentityToolkit("signInWithPassword", apiKey, emuladorHost);
+}
+
+export type ResultadoReset =
+  | { ok: true; email: string }
+  | { ok: false; mensaje?: string; red?: true };
+
+/**
+ * `accounts:resetPassword` (D188): solo con `oobCode` comprueba el código sin gastarlo
+ * (= `verifyPasswordResetCode`); con `newPassword` lo gasta y cambia la contraseña
+ * (= `confirmPasswordReset`). Devuelve el email de la cuenta o el mensaje de error de la REST.
+ */
+export async function resetConCodigo(
+  oobCode: string,
+  newPassword: string | null,
+  destino: { apiKey: string; emuladorHost?: string },
+  pedir: typeof fetch = fetch,
+): Promise<ResultadoReset> {
+  let res: Response;
+  try {
+    res = await pedir(
+      urlIdentityToolkit("resetPassword", destino.apiKey, destino.emuladorHost),
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          newPassword === null ? { oobCode } : { oobCode, newPassword },
+        ),
+        cache: "no-store",
+      },
+    );
+  } catch {
+    return { ok: false, red: true };
+  }
+  const cuerpo = (await res.json().catch(() => null)) as {
+    email?: string;
+    error?: { message?: string };
+  } | null;
+  if (res.ok && cuerpo?.email) return { ok: true, email: cuerpo.email };
+  if (res.status >= 500) return { ok: false, red: true };
+  return { ok: false, mensaje: cuerpo?.error?.message };
 }
 
 /** Mensaje de error de la REST (`TOO_MANY_ATTEMPTS_TRY_LATER : …`) → error de la app. */

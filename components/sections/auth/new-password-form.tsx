@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { type FormEvent, useState } from "react";
 import { PasswordInput } from "@/components/krea/password-input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import {
@@ -22,16 +23,19 @@ import { focusPrimerInvalido } from "./focus-invalid";
  * cumplirse y la repetición dice si coincide. Los errores en rojo aparecen al enviar (no
  * mientras se escribe); al enviar con errores el foco va al primer campo inválido.
  * `vencido`: el enlace ya no sirve → "Este enlace ya venció" + "Pedir otro enlace".
+ * `error`: respuesta del servidor al guardar (alerta sobre el botón).
  */
 export function NewPasswordForm({
   vencido = false,
   pedirOtroHref,
   pending = false,
+  error,
   onSubmit,
 }: {
   vencido?: boolean;
   pedirOtroHref: string;
   pending?: boolean;
+  error?: string | null;
   onSubmit?: (password: string) => void;
 }) {
   const [pw, setPw] = useState("");
@@ -115,6 +119,11 @@ export function NewPasswordForm({
             onChange={(e) => setRepetida(e.currentTarget.value)}
           />
         </Field>
+        {error ? (
+          <Alert variant="err">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        ) : null}
         <Button
           type="submit"
           size="lg"

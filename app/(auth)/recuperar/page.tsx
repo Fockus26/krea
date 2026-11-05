@@ -1,17 +1,20 @@
 import type { Metadata } from "next";
 import { AuthLayout } from "@/components/sections/auth/auth-layout";
-import { RecoverForm } from "@/components/sections/auth/recover-form";
+import { Recuperar } from "@/components/sections/auth/recuperar";
 
 export const metadata: Metadata = {
   title: "Recuperar contraseña",
   robots: { index: false, follow: false },
 };
 
-/** Recuperar (HANDOFF §3). "Enviar enlace" valida y pasa a /recuperar/enviado (sin envío real). */
+/**
+ * Recuperar (HANDOFF §3, fase 07 D186): pide el enlace por cédula y muestra «Revisa tu correo»
+ * en la misma ruta, con la misma respuesta exista o no la cuenta.
+ */
 export default function RecuperarPage() {
   return (
     <AuthLayout>
-      <RecoverForm volverHref="/ingresar" enviadoHref="/recuperar/enviado" />
+      <Recuperar volverHref="/ingresar" />
     </AuthLayout>
   );
 }
