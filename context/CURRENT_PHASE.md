@@ -5,14 +5,14 @@
 
 ## Now
 
-**Phase:** 07 — Backend · **cerrada al mergear W8** (D211) · resumen: `PHASE_LOG/07-backend.md`
+**Phase:** 07 — Backend · **cerrada** (D211, W8 #55 b5de523, 2026-11-05) · resumen: `PHASE_LOG/07-backend.md`
 Fases 01–06 cerradas (D173) · **Track:** Product · main @ 73df0ea
 **Sin QA hasta el final** (César, 2026-10-29) · **sin servidor, solo build** (César, 2026-11-03).
 
 | Unit | Branch | Status |
 |---|---|---|
 | Fases 05–06 · fase 07 W1–W7 | #35–#54 | merged (73df0ea) |
-| W8 alumnos y equipos, errores con sesión, cierre (D209–D213) | claude/dreamy-babbage-vloz3y | PR abierto |
+| W8 alumnos y equipos, errores con sesión, cierre (D209–D213) | claude/dreamy-babbage-vloz3y | merged (#55, b5de523) |
 
 ## Blocked (actions for César or external)
 
@@ -52,6 +52,6 @@ Fases 01–06 cerradas (D173) · **Track:** Product · main @ 73df0ea
 | # | Phase | Status |
 |---|---|---|
 | 01–06 | Tokens · Layout · Components · Sections · Pages · States | closed |
-| 07 | Backend | closed al mergear W8 (D211) |
+| 07 | Backend | closed (D211) |
 | 08 | Responsive and polish | pending |
 | 09 | Final QA | pending |
