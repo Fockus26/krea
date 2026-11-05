@@ -37,3 +37,18 @@ function aUtc(iso: string): number {
   const [, a, m, d] = partes(iso);
   return Date.UTC(Number(a), Number(m) - 1, Number(d));
 }
+
+/** Huso del liceo: los instantes del servidor se muestran como el día civil de Venezuela. */
+export const ZONA_HORARIA = "America/Caracas";
+
+const DIA_CARACAS = new Intl.DateTimeFormat("en-CA", {
+  timeZone: ZONA_HORARIA,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+/** Instante (ms epoch) → día civil ISO en Caracas: `1762300800000` → "2025-11-04". */
+export function diaDeInstante(ms: number): string {
+  return DIA_CARACAS.format(new Date(ms));
+}

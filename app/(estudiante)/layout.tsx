@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import type { ReactNode } from "react";
+import { type ReactNode, Suspense } from "react";
 import { OfflineBanner } from "@/components/estados/offline-banner";
 import { AppShell } from "@/components/layout/AppShell";
 import {
@@ -9,9 +9,8 @@ import {
 } from "@/components/layout/route-nav";
 import { TopBarAccionProvider } from "@/components/layout/top-bar-accion";
 import { Toaster } from "@/components/ui/sonner";
-import { titulosTopbar } from "@/lib/demo/topbar";
-import { USUARIO_ESTUDIANTE } from "@/lib/demo/usuarios";
 import type { Rol } from "@/lib/layout";
+import { SideNavSesion, TopBarSesion } from "./_shell";
 
 const ROL: Rol = "estudiante";
 
@@ -23,7 +22,8 @@ export const metadata: Metadata = {
 /**
  * Shell del estudiante (fase 05): vive en el layout y persiste al navegar. Navegación por ruta
  * (D063), topbar, barra inferior y ancho por `pathname` (D128, D129), un único Toaster (D035,
- * D131). Usuario de ejemplo hasta la fase 07 (sin sesión ni cookies).
+ * D131). El usuario sale de la sesión (D189): barra lateral y topbar van en su `<Suspense>`
+ * (`cacheComponents`) con la misma pieza sin usuario como reserva.
  */
 export default function EstudianteLayout({
   children,
@@ -35,13 +35,15 @@ export default function EstudianteLayout({
       <AppShell
         role={ROL}
         anchoPorRuta
-        sidebar={<RouteSideNav rol={ROL} usuario={USUARIO_ESTUDIANTE} />}
+        sidebar={
+          <Suspense fallback={<RouteSideNav rol={ROL} usuario={null} />}>
+            <SideNavSesion />
+          </Suspense>
+        }
         topbar={
-          <RouteTopBar
-            rol={ROL}
-            usuario={USUARIO_ESTUDIANTE}
-            titulos={titulosTopbar(ROL)}
-          />
+          <Suspense fallback={<RouteTopBar rol={ROL} usuario={null} />}>
+            <TopBarSesion />
+          </Suspense>
         }
         bottomNav={<RouteBottomNav rol={ROL} />}
       >

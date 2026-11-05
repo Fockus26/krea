@@ -1,0 +1,402 @@
+import { describe, expect, test } from "bun:test";
+import alumnosJson from "@/data/seed/alumnos.json";
+import gruposJson from "@/data/seed/grupos.json";
+import tareaJson from "@/data/seed/tarea-identidad-marca.json";
+import { diaDeInstante } from "@/lib/fecha";
+import type { Ajuste, Entrega, SeccionId, Tarea, Usuario } from "@/lib/modelo";
+import { calcularRanking } from "@/lib/ranking-datos";
+import { docsDesdeSeed } from "@/lib/seed-firestore";
+import {
+  type ConId,
+  type DatosAlumno,
+  desgloseReal,
+  detalleNota,
+  equipoVista,
+  estiloDe,
+  filasMisNotas,
+  inicioVista,
+  navUsuarioDe,
+  notasDelAlumno,
+  perfilVista,
+  puestoAlumno,
+  RESPUESTA_IMAGEN,
+  RESPUESTA_SIN_REGISTRO,
+  titulosTopbarDe,
+} from "@/lib/vistas-estudiante";
+
+// 6 nov 2026, 01:00 en Caracas = 05:00 UTC
+const AHORA = Date.UTC(2026, 10, 6, 5, 0);
+const seed = docsDesdeSeed(alumnosJson, gruposJson, tareaJson, AHORA);
+
+const YEILIN = "33272397"; // 5A, capitana de 5a-g2, 18,5 en Identidad
+const HEYMI = "33282883"; // 5A, 5a-g6, con desglose
+const GABRIEL = "33456636"; // 5A, sin equipo ni nota
+
+const abierta: ConId<Tarea> = {
+  id: "presentacion",
+  titulo: "Presentación del producto",
+  tipo: "grupal",
+  secciones: ["5A"],
+  estado: "abierta",
+  fechaEntrega: "2026-11-07",
+  premio: "Salida al cine",
+  preguntas: [
+    { id: "p1", enunciado: "Sube una foto", formato: "imagen", valor: 20 },
+  ],
+  importada: false,
+  autorId: null,
+  actualizadoEn: AHORA,
+};
+
+/** Lo que leería el DAL para un alumno: lo de su sección y las entregas donde figura. */
+function datosDe(
+  cedula: string,
+  extra: {
+    tareas?: ConId<Tarea>[];
+    entregas?: ConId<Entrega>[];
+    ajustes?: Ajuste[];
+    usuario?: Partial<Usuario>;
+  } = {},
+): DatosAlumno {
+  const base = seed.usuarios.find((u) => u.id === cedula)?.data;
+  if (!base) throw new Error(cedula);
+  const usuario = { ...base, ...extra.usuario };
+  const seccion = usuario.seccion as SeccionId;
+  const equipoDoc = seed.equipos.find((e) => e.id === usuario.equipoId);
+  const entregas = [
+    ...seed.entregas.map((e) => ({ id: e.id, ...e.data })),
+    ...(extra.entregas ?? []),
+  ];
+  const ajustes = [
+    ...seed.ajustes.map((a) => a.data),
+    ...(extra.ajustes ?? []),
+  ];
+  return {
+    usuario,
+    equipo: equipoDoc ? { id: equipoDoc.id, ...equipoDoc.data } : null,
+    tareas: [
+      ...seed.tareas
+        .filter((t) => t.data.secciones.includes(seccion))
+        .map((t) => ({ id: t.id, ...t.data })),
+      ...(extra.tareas ?? []),
+    ],
+    entregas: entregas.filter((e) => e.integrantes.includes(cedula)),
+    ajustes: ajustes.filter(
+      (a) => a.destino === "alumno" && a.destinoId === cedula,
+    ),
+    ranking: calcularRanking(
+      seccion,
+      {
+        usuarios: seed.usuarios.map((u) =>
+          u.id === cedula ? usuario : u.data,
+        ),
+        equipos: seed.equipos.map((e) => ({ id: e.id, ...e.data })),
+        entregas,
+        ajustes,
+      },
+      AHORA,
+    ),
+  };
+}
+
+const companerosDe = (equipoId: string) =>
+  seed.usuarios.filter((u) => u.data.equipoId === equipoId).map((u) => u.data);
+
+describe("notasDelAlumno / filasMisNotas", () => {
+  test("evaluadas primero (más reciente), luego pendientes por fecha", () => {
+    const d = datosDe(YEILIN, { tareas: [abierta] });
+    const notas = notasDelAlumno(d);
+    expect(notas.map((n) => n.tarea.id)).toEqual([
+      "identidad-de-marca",
+      "logo-y-paleta",
+      "presentacion",
+    ]);
+    expect(notas[0]?.nota).toBe(18.5);
+    expect(notas[2]?.nota).toBeNull();
+  });
+
+  test("la fecha de una evaluada es el día de Caracas de `evaluadaEn`", () => {
+    expect(diaDeInstante(AHORA)).toBe("2026-11-06");
+    const filas = filasMisNotas(datosDe(YEILIN, { tareas: [abierta] }));
+    expect(filas[0]?.fecha).toBe("evaluada el 06/11/2026");
+    expect(filas[2]?.fecha).toBe("vence el 07/11/2026");
+    expect(filas[1]?.detalle).toBe("5A-G2 Repostería");
+  });
+
+  test("la base escala también la grupal (D177)", () => {
+    const d = datosDe(YEILIN, { usuario: { base: 15 } });
+    const grupal = filasMisNotas(d).find((f) => f.id === "logo-y-paleta");
+    // 19 × 15 / 20 = 14,25 → 14,3 (D013)
+    expect(grupal?.nota).toBe(14.3);
+    expect(grupal?.base).toBe(15);
+  });
+
+  test("sin nota: todo Pendiente (D003)", () => {
+    const filas = filasMisNotas(datosDe(GABRIEL));
+    expect(filas.every((f) => f.nota === null)).toBe(true);
+  });
+});
+
+describe("detalleNota", () => {
+  test("tarea de otra sección o inexistente → no-existe", () => {
+    expect(detalleNota(datosDe(YEILIN), "nada").estado).toBe("no-existe");
+  });
+
+  test("sin evaluar → sin-detalle", () => {
+    const d = detalleNota(
+      datosDe(YEILIN, { tareas: [abierta] }),
+      "presentacion",
+    );
+    expect(d).toEqual({
+      estado: "sin-detalle",
+      tipo: "grupal",
+      titulo: "Presentación del producto",
+    });
+  });
+
+  test("con desglose: puntos por pregunta sin escalar y respuesta faltante marcada", () => {
+    const d = detalleNota(datosDe(HEYMI), "identidad-de-marca");
+    if (d.estado !== "ok") throw new Error(d.estado);
+    expect(d.puntaje).toBe(18.5);
+    expect(d.final).toBe(18.5);
+    expect(d.preguntas).toHaveLength(tareaJson.preguntas.length);
+    const ev = tareaJson.evaluaciones.find((e) => e.cedula === HEYMI);
+    expect(d.preguntas.map((p) => p.obtenido)).toEqual(ev?.puntos ?? []);
+    expect(d.preguntas[0]?.respuesta).toBe(RESPUESTA_SIN_REGISTRO);
+    expect(d.eyebrow).toBe("Individual · evaluada el 06/11/2026");
+  });
+
+  test("respuestas de texto e imagen, comentarios del profe", () => {
+    const entrega: ConId<Entrega> = {
+      id: "presentacion__5a-g2",
+      tareaId: "presentacion",
+      tipo: "grupal",
+      titularId: "5a-g2",
+      seccion: "5A",
+      integrantes: [YEILIN],
+      estado: "evaluada",
+      respuestas: { p1: { imagenPath: "entregas/x.jpg" } },
+      enviadaPor: YEILIN,
+      enviadaEn: AHORA,
+      evaluacion: {
+        puntos: { p1: 17 },
+        comentarios: { p1: "  ¡Muy bien!  " },
+        puntaje: 17,
+        evaluadaPor: null,
+        evaluadaEn: AHORA,
+      },
+    };
+    const d = detalleNota(
+      datosDe(YEILIN, {
+        tareas: [abierta],
+        entregas: [entrega],
+        usuario: { base: 15 },
+      }),
+      "presentacion",
+    );
+    if (d.estado !== "ok") throw new Error(d.estado);
+    expect(d.preguntas[0]).toMatchObject({
+      respuesta: RESPUESTA_IMAGEN,
+      comentario: "¡Muy bien!",
+      obtenido: 17,
+    });
+    // 17 × 15 / 20 = 12,75 → 12,8
+    expect(d.final).toBe(12.8);
+  });
+
+  test("nota importada sin desglose → ok sin preguntas", () => {
+    const d = detalleNota(datosDe(YEILIN), "logo-y-paleta");
+    if (d.estado !== "ok") throw new Error(d.estado);
+    expect(d.preguntas).toEqual([]);
+    expect(d.final).toBe(19);
+  });
+});
+
+describe("desgloseReal", () => {
+  test("una de cada: el copy del lienzo", () => {
+    expect(
+      desgloseReal(
+        [
+          { nota: 18.5, tipo: "individual" },
+          { nota: 19, tipo: "grupal" },
+        ],
+        [],
+        true,
+      ),
+    ).toBe(
+      "18,5 de tu nota individual + 19 de la grupal. Las notas menores de 10 no suman.",
+    );
+  });
+  test("plurales, notas < 10 en 0 y conducta con signo", () => {
+    expect(
+      desgloseReal(
+        [
+          { nota: 12, tipo: "individual" },
+          { nota: 8, tipo: "individual" },
+          { nota: null, tipo: "grupal" },
+        ],
+        [{ valor: -1.5 }],
+        false,
+      ),
+    ).toBe(
+      "12 de tus notas individuales − 1,5 por conducta. Las notas menores de 10 no suman.",
+    );
+  });
+});
+
+describe("inicioVista", () => {
+  test("puntos y puesto del ranking, pendientes y equipo", () => {
+    const d = datosDe(YEILIN, { tareas: [abierta] });
+    const v = inicioVista(d, companerosDe("5a-g2"));
+    // 18,5 individual + 19 grupal (D007)
+    expect(v.puntos?.puntos).toBe(37.5);
+    expect(v.puntos?.puesto).toBe(
+      puestoAlumno(d.ranking, YEILIN)?.puesto ?? -1,
+    );
+    expect(v.puntos?.deltaSemana).toBe(0);
+    expect(v.saludo.titulo).toBe("¡Hola, Yeilin!");
+    expect(v.saludo.linea).toBe(
+      "Tienes 1 tarea por entregar. Vence el 07/11/2026.",
+    );
+    expect(v.pendientes[0]).toMatchObject({
+      id: "presentacion",
+      entregasTu: true,
+      avance: "sin-empezar",
+      premio: "Salida al cine",
+    });
+    expect(v.notas).toHaveLength(2);
+    expect(v.equipo?.capitan).toEqual({ etiqueta: "Capitán:", quien: "tú" });
+    expect(v.equipo?.integrantes[0]?.id).toBe(YEILIN);
+  });
+
+  test("una tarea ya entregada no está pendiente; un borrador sí, como «borrador»", () => {
+    const entrega = (estado: "borrador" | "entregada"): ConId<Entrega> => ({
+      id: `presentacion__5a-g2`,
+      tareaId: "presentacion",
+      tipo: "grupal",
+      titularId: "5a-g2",
+      seccion: "5A",
+      integrantes: [YEILIN],
+      estado,
+      respuestas: {},
+      enviadaPor: null,
+      enviadaEn: null,
+      evaluacion: null,
+    });
+    const conEntrega = inicioVista(
+      datosDe(YEILIN, { tareas: [abierta], entregas: [entrega("entregada")] }),
+      [],
+    );
+    expect(conEntrega.pendientes).toEqual([]);
+    expect(conEntrega.saludo.linea).toBe("Estás al día.");
+    const borrador = inicioVista(
+      datosDe(YEILIN, { tareas: [abierta], entregas: [entrega("borrador")] }),
+      [],
+    );
+    expect(borrador.pendientes[0]?.avance).toBe("borrador");
+  });
+
+  test("sin ranking: sin tarjeta de puntos; sin equipo: sin resumen", () => {
+    const d = { ...datosDe(GABRIEL), ranking: null };
+    const v = inicioVista(d, []);
+    expect(v.puntos).toBeNull();
+    expect(v.equipo).toBeNull();
+  });
+});
+
+describe("equipoVista", () => {
+  test("capitana primero, puntos del ranking y nota del equipo sin base", () => {
+    const d = datosDe(YEILIN, { usuario: { base: 15 } });
+    const grupales = seed.entregas
+      .map((e) => e.data)
+      .filter((e) => e.tipo === "grupal" && e.seccion === "5A");
+    const v = equipoVista(d, companerosDe("5a-g2"), grupales);
+    expect(v?.integrantes[0]).toMatchObject({
+      id: YEILIN,
+      esTu: true,
+      esCapitan: true,
+    });
+    expect(v?.notas[0]).toMatchObject({ id: "logo-y-paleta", nota: 19 });
+    expect(v?.equipo.puntos).toBe(19);
+    expect(v?.premios).toEqual([]); // la tarea importada no tiene premio
+  });
+
+  test("premio: solo el equipo con la mejor nota única", () => {
+    const tarea: ConId<Tarea> = {
+      ...abierta,
+      estado: "evaluada",
+      premio: "Cuenta Canva Pro",
+    };
+    const ent = (titularId: string, puntaje: number): Entrega => ({
+      tareaId: "presentacion",
+      tipo: "grupal",
+      titularId,
+      seccion: "5A",
+      integrantes: [YEILIN],
+      estado: "evaluada",
+      respuestas: {},
+      enviadaPor: null,
+      enviadaEn: null,
+      evaluacion: {
+        puntos: null,
+        comentarios: {},
+        puntaje,
+        evaluadaPor: null,
+        evaluadaEn: AHORA,
+      },
+    });
+    const d = datosDe(YEILIN, { tareas: [tarea] });
+    const gana = equipoVista(d, [], [ent("5a-g2", 19), ent("5a-g1", 17)]);
+    expect(gana?.premios).toEqual([
+      {
+        id: "presentacion",
+        premio: "Cuenta Canva Pro",
+        detalle: "Mejor nota en Presentación del producto · 19",
+      },
+    ]);
+    const empate = equipoVista(d, [], [ent("5a-g2", 19), ent("5a-g1", 19)]);
+    expect(empate?.premios).toEqual([]);
+  });
+
+  test("sin equipo → null", () => {
+    expect(equipoVista(datosDe(GABRIEL), [], [])).toBeNull();
+  });
+});
+
+describe("perfil, shell y topbar", () => {
+  test("perfil: campos partidos, capitán y base", () => {
+    const d = datosDe(YEILIN, { usuario: { base: 15 } });
+    const p = perfilVista(d.usuario, d.equipo);
+    expect(p.cedula).toBe("C.I. 33.272.397");
+    expect(p.capitan).toBe("Capitán · 5A-G2");
+    expect(p.base).toBe("Base 15");
+    expect(p.campos.map((c) => c.valor)).toEqual([
+      "Yeilin",
+      "Marilyn",
+      "Duarte",
+      "Moncayo",
+    ]);
+  });
+
+  test("usuario de la navegación con su avatar; estilo desconocido → el de defecto", () => {
+    const u = seed.usuarios.find((x) => x.id === YEILIN)?.data as Usuario;
+    expect(
+      navUsuarioDe({
+        ...u,
+        avatar: { estilo: "bottts-neutral", semilla: `${YEILIN}-1-2` },
+      }),
+    ).toEqual({
+      nombre: "Yeilin Duarte",
+      estilo: "bottts-neutral",
+      seed: `${YEILIN}-1-2`,
+    });
+    expect(estiloDe("pixel-art")).toBe("adventurer-neutral");
+  });
+
+  test("títulos de la topbar por ruta", () => {
+    expect(titulosTopbarDe([abierta])).toEqual({
+      "/notas/presentacion": "Presentación del producto",
+      "/tareas/presentacion": "Tarea grupal",
+    });
+  });
+});

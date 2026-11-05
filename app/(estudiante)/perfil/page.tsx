@@ -1,17 +1,23 @@
 import type { Metadata } from "next";
-import { AppearanceSettings } from "@/components/sections/perfil/appearance-settings";
-import { AvatarPicker } from "@/components/sections/perfil/avatar-picker";
+import {
+  AparienciaConectada,
+  AvatarPickerConectado,
+  SeguridadConectada,
+} from "@/components/sections/perfil/perfil-conectado";
 import { ProfileData } from "@/components/sections/perfil/profile-data";
 import { ProfileIdentity } from "@/components/sections/perfil/profile-identity";
-import { SecuritySettings } from "@/components/sections/perfil/security-settings";
-import { perfilDe } from "@/lib/demo/perfil";
+import { alumnoActual, equipoPorId } from "@/lib/datos/estudiante";
+import { perfilVista } from "@/lib/vistas-estudiante";
 
 export const metadata: Metadata = { title: "Perfil" };
 
-// Perfil (HANDOFF §3): una columna en todos los anchos (ancho de lectura por ruta, D129).
-// Datos: Yeilin Duarte del seed (D069). «Cerrar sesión» → /ingresar mientras no hay sesión (D135).
-export default function PerfilPage() {
-  const p = perfilDe();
+// Perfil (HANDOFF §3): una columna en todos los anchos (ancho de lectura por ruta, D129). Datos
+// del perfil de la sesión (D189); nombres y cédula solo lectura (los edita el profe). Avatar,
+// tema y acento se guardan al perfil; «Cambiar contraseña» por Server Action (D191, D192).
+export default async function PerfilPage() {
+  const { usuario } = await alumnoActual();
+  const equipo = usuario.equipoId ? await equipoPorId(usuario.equipoId) : null;
+  const p = perfilVista(usuario, equipo);
   return (
     <>
       <ProfileIdentity
@@ -24,14 +30,14 @@ export default function PerfilPage() {
         base={p.base}
       />
       <ProfileData campos={p.campos} />
-      <AvatarPicker
+      <AvatarPickerConectado
         nombre={p.nombre}
         estilo={p.estilo}
         seed={p.seed}
-        base={p.seed}
+        base={usuario.cedula}
       />
-      <AppearanceSettings />
-      <SecuritySettings salirHref="/salir" />
+      <AparienciaConectada inicial={usuario.apariencia ?? null} />
+      <SeguridadConectada salirHref="/salir" />
     </>
   );
 }
