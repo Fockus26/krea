@@ -1,6 +1,6 @@
 # Fase 08 — Responsive y pulido
 
-Hecha el 2026-11-05 en una sesión local. PRs #56–#61 (D214–D219).
+Hecha el 2026-11-05 en una sesión local. PRs #56–#61 (D214–D219). Cerrada con main @ d50568b: producción comprobada (`/ingresar` y `/recuperar` 200, rutas protegidas → `/ingresar`, inexistente → 404, sin errores en los logs del deployment).
 
 ## Unidades
 

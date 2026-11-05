@@ -5,33 +5,31 @@
 
 ## Now
 
-**Phase:** 08 — Responsive y pulido · **en curso** (2026-11-05) · **Track:** Product · main @ 9587d95
-Fases 01–07 cerradas (D211) · **Sin QA hasta el final** (César, 2026-10-29) · **sin servidor, solo build** (César, 2026-11-03): la fase 08 se mide en producción y previews de Vercel, solo lectura.
-Producción estuvo en 500 desde #49 hasta #56 (D214). Auditoría: `.qa/f08-auditoria.mjs` en wt1 (local).
+**Phase:** 08 — Responsive y pulido · **cerrada** (2026-11-05, #56–#61, D214–D219) · resumen: `PHASE_LOG/08-responsive-pulido.md`
+Fases 01–08 cerradas · **Track:** Product · main @ d50568b · sigue la **fase 09 — QA final**.
+**Build local suprimido** (César, 2026-11-05): lo corren CI y Vercel, y el agente comprueba el preview. **QA con sesión:** `qa:local` y `.env.test.local` (alumno y profesor de prueba), nunca pedirle a César que inicie sesión.
 
 | Unit | Branch | Status |
 |---|---|---|
 | Fases 05–07 | #35–#55 | merged |
-| 500 en todas las rutas por `jwks-rsa`/`jose` (D214) | fix/firebase-admin-jose | merged (#56, 9893869) |
-| Objetivos táctiles 44 px (D215) · Equipos a dos columnas hasta 1440 (D216) | #57, #58 | merged (40cbfb5) |
-| Contraste AA de la tarjeta de puntos (D217) · Con poca altura solo la acción sigue fija (D218) | #59, #60 | merged (9587d95) |
-| Errores en rutas con sesión y 404 desde el cliente (D219) | fix/not-found-sesion | PR #61, en revisión: al mergearlo se cierra la fase 08 |
+| Fase 08 (D214–D219) | #56–#61 | merged (d50568b) |
 
 ## Blocked (actions for César or external)
 
 **QA pendiente para la fase 09** (functional-qa contra emuladores + axe, teclado, 320 px):
-- W2 login/sesión/salir (+ axe /ingresar, /salir) · W3 envío real por Brevo con 38291460 (api.brevo.com bloqueado), enlace → /recuperar/nueva → aviso y sesiones revocadas.
-- W4 pantallas del estudiante con datos, ranking en vivo en dos navegadores, cambio de contraseña.
+- W2 login/sesión/salir · W3 envío real por Brevo con 38291460 (api.brevo.com bloqueado), enlace → /recuperar/nueva → aviso y sesiones revocadas.
+- W4 ranking en vivo en dos navegadores, cambio de contraseña.
 - W5 subida real a B2 (host bloqueado), enviar individual/grupal (capitán / no), borrador tras recargar.
 - W6 borrador a medias, publicar (suma 20), editar con/sin entregas, cerrar, empate de premio.
-- W7 evaluar la cola, corregir, «Deshacer», ajuste + anulación en el ranking y en el detalle del alumno.
-- W8 editar alumno (base + motivo → historial y ranking; email → «Olvidé mi contraseña»), mover/quitar/capitán (el alumno movido debe volver a entrar con su equipo nuevo), logo real en B2 (tablero, ranking equipos, Mi equipo, Inicio), 404/500 con cada sesión; axe de /profe/alumnos, /profe/equipos, /profe/ranking.
-- Fase 06: axe, teclado, 320 px y 4 acentos × claro/oscuro de `/estados` y los `loading.tsx`.
+- W7 evaluar la cola, corregir, «Deshacer», ajuste + anulación en el ranking y en el detalle del alumno. `evaluar/[entrega]` y `tareas/[id]` sin visitar en la fase 08 (el seed no trae entregas pendientes).
+- W8 editar alumno, mover/quitar/capitán, logo real en B2.
+- Ya hecho en la fase 08, con sesión: 320–3840 px, altura corta, contraste por tema y acento, foco con Tab, 404 con cada sesión.
 
 **Decisiones de César:**
+- Alumnos en móvil: «Desliza la tabla…» queda a unos 3400 px de la parte superior, debajo de la tabla (HANDOFF §2.15).
 - Cambiar a un alumno de **sección** (W7/W8): no hay acción; ¿hace falta? y sus ajustes viejos ¿siguen en la sección vieja? (fila 134).
 - El alumno no ve su historial de base en ninguna pantalla (D108 dice «el alumno lo verá»): ¿dónde?
-- Galerías `/secciones`, `/componentes`, `/estados` públicas con datos reales del seed (D181): ¿bloquear ya o en la fase 09?
+- Galerías `/secciones`, `/componentes`, `/estados` públicas con datos reales del seed (D181), y con scroll horizontal en móvil.
 - Perfil en la hoja Menú del profe (fila 97) y avatar/Menú junto a «En vivo» en Ranking móvil.
 - Género del capitán (D075) · tildes de «Identidad de marca» (fila 64) · empates de premio (D086, D123–D124, fila 96).
 - Seed de 5C sin notas evaluadas (ranking 5C empatado en 0) · HANDOFF §9 #3–#12 al llegar a su fase.
@@ -45,14 +43,13 @@ Producción estuvo en 500 desde #49 hasta #56 (D214). Auditoría: `.qa/f08-audit
 
 ## Next
 
-- Tras el merge de #61: fase 08 cerrada (`PHASE_LOG/08-responsive-pulido.md`). Sigue la **fase 09 — QA final** (`phases/09-QA-FINAL.md`). QA con sesión: `qa:local` y `.env.test.local`, sin pedir a César que inicie sesión; build local suprimido (CI y Vercel).
+- **Fase 09 — QA final** (`phases/09-QA-FINAL.md`): la lista de arriba, más `design-qa` y `functional-qa`.
 - Fase 09: bloquear o borrar `/secciones`, `/componentes`, `/tokens` (y `/estados` 404 en producción).
 
 ## Phases
 
 | # | Phase | Status |
 |---|---|---|
-| 01–06 | Tokens · Layout · Components · Sections · Pages · States | closed |
-| 07 | Backend | closed (D211) |
-| 08 | Responsive and polish | in progress |
-| 09 | Final QA | pending |
+| 01–07 | Tokens · Layout · Components · Sections · Pages · States · Backend | closed |
+| 08 | Responsive and polish | closed (2026-11-05) |
+| 09 | Final QA | next |
