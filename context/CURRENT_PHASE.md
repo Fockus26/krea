@@ -5,64 +5,53 @@
 
 ## Now
 
-**Phase:** 07 — Backend · en curso (2026-11-03) · fase 06 cerrada (D173) · **Track:** Product
-Plan: `context/plans/phase-07-backend.md` · main @ 7082686
+**Phase:** 07 — Backend · **cerrada al mergear W8** (D211) · resumen: `PHASE_LOG/07-backend.md`
+Fases 01–06 cerradas (D173) · **Track:** Product · main @ 73df0ea
 **Sin QA hasta el final** (César, 2026-10-29) · **sin servidor, solo build** (César, 2026-11-03).
 
 | Unit | Branch | Status |
 |---|---|---|
-| Fases 05–06 completas | #35–#47 | merged (03c6178) |
-| W1 modelo de datos, reglas y emuladores (D174–D177) | #48 | merged (27bd040) |
-| W2 login, sesión, protección y salir (D180–D183) | #49 | merged (f3a8d6d) |
-| W4 lecturas del estudiante, ranking en vivo, Perfil (D189–D193) | #50 | merged (f775ec3) |
-| W3 recuperar contraseña con Brevo (D185–D188) | #51 | merged (1b22d77) |
-| W5 entregas: borrador local, enviar, imágenes en B2 (D194–D197) | #52 | merged (94ae747) |
-| W6 tareas del profe: constructor, publicar, cerrar, premios (D199–D202) | #53 | merged (7082686) |
-| W7 evaluar, ajustes de puntos y Panel con Firestore (D204–D208) | claude/dreamy-babbage-vloz3y | PR abierto |
-| W8 (alumnos y equipos, cierre) | — | pendiente (ver plan) |
+| Fases 05–06 · fase 07 W1–W7 | #35–#54 | merged (73df0ea) |
+| W8 alumnos y equipos, errores con sesión, cierre (D209–D213) | claude/dreamy-babbage-vloz3y | PR abierto |
 
 ## Blocked (actions for César or external)
 
-- QA pendiente: W3 — envío real por Brevo con el alumno de prueba 38291460 (la red del contenedor bloquea api.brevo.com), enlace → /recuperar/nueva → guardar → aviso en Ingresar y sesiones revocadas; axe de /recuperar y /recuperar/nueva. Fase 09.
+**QA pendiente para la fase 09** (functional-qa contra emuladores + axe, teclado, 320 px):
+- W2 login/sesión/salir (+ axe /ingresar, /salir) · W3 envío real por Brevo con 38291460 (api.brevo.com bloqueado), enlace → /recuperar/nueva → aviso y sesiones revocadas.
+- W4 pantallas del estudiante con datos, ranking en vivo en dos navegadores, cambio de contraseña.
+- W5 subida real a B2 (host bloqueado), enviar individual/grupal (capitán / no), borrador tras recargar.
+- W6 borrador a medias, publicar (suma 20), editar con/sin entregas, cerrar, empate de premio.
+- W7 evaluar la cola, corregir, «Deshacer», ajuste + anulación en el ranking y en el detalle del alumno.
+- W8 editar alumno (base + motivo → historial y ranking; email → «Olvidé mi contraseña»), mover/quitar/capitán (el alumno movido debe volver a entrar con su equipo nuevo), logo real en B2 (tablero, ranking equipos, Mi equipo, Inicio), 404/500 con cada sesión; axe de /profe/alumnos, /profe/equipos, /profe/ranking.
+- Fase 06: axe, teclado, 320 px y 4 acentos × claro/oscuro de `/estados` y los `loading.tsx`.
 
-- QA pendiente: W7 — evaluar la cola (individual/grupal, imagen firmada), corregir una evaluada, «Deshacer», ajuste + anulación y verlo en el ranking en vivo y en el detalle de nota del alumno, contra los emuladores; axe de /profe, /profe/evaluar/[id] y /profe/puntos. Fase 09.
-- QA pendiente: W6 — crear borrador a medias, publicar (suma 20, fecha), editar con/sin entregas, cerrar (el alumno la ve cerrada), decidir empate y verlo en Mi equipo, contra los emuladores; axe de /profe/tareas, /profe/tareas/[id], /profe/premios y el diálogo Cerrar. Fase 09.
-- QA pendiente: W5 — subida real a B2 (el host está bloqueado en el contenedor: probado con dobles), enviar individual y grupal (capitán / no capitán) contra los emuladores, borrador tras recargar, imagen en «Entregada» y en el detalle de nota; axe de /tareas y /tareas/[tarea]. Fase 09.
-- W5: en el entorno existen también `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`; el código solo lee `B2_*` (D194). Confirmar que Vercel tiene las `B2_*` (Production y Preview) y que el bucket es privado.
+**Decisiones de César:**
+- Cambiar a un alumno de **sección** (W7/W8): no hay acción; ¿hace falta? y sus ajustes viejos ¿siguen en la sección vieja? (fila 134).
+- El alumno no ve su historial de base en ninguna pantalla (D108 dice «el alumno lo verá»): ¿dónde?
+- Galerías `/secciones`, `/componentes`, `/estados` públicas con datos reales del seed (D181): ¿bloquear ya o en la fase 09?
+- Contraste de la tarjeta de puntos de Inicio (axe 4,1:1 y 4,26:1, fase 04): decisión de diseño (backlog, alta).
+- Perfil en la hoja Menú del profe (fila 97) y avatar/Menú junto a «En vivo» en Ranking móvil.
+- Género del capitán (D075) · tildes de «Identidad de marca» (fila 64) · empates de premio (D086, D123–D124, fila 96).
+- Seed de 5C sin notas evaluadas (ranking 5C empatado en 0) · HANDOFF §9 #3–#12 al llegar a su fase.
+- Copy provisional de la fase 07: filas 121–136 del checklist.
 
-- QA pendiente: W4 — pantallas del estudiante con datos (emuladores, axe), ranking en vivo en dos navegadores, cambio de contraseña (revoca y reabre). Fase 09.
-- QA pendiente: login/sesión/salir (functional-qa + axe de /ingresar y /salir) — sin servidor por decisión de César; probado contra los emuladores (cookie, revocación, reglas). Fase 09.
-- Galerías `/secciones`, `/componentes`, `/estados` públicas con nombres y notas reales del seed (D181): ¿bloquearlas ya o en la fase 09?
-
-- QA pendiente: fase 06 — axe, teclado, 320 px y 4 acentos × claro/oscuro de `/estados` y los `loading.tsx` (sin servidor; QA final).
-- Contraste de la tarjeta de puntos de Inicio (axe: 4,1:1 y 4,26:1 en desglose y chip, fase 04): decisión de diseño de César (backlog, alta).
-- Perfil en la hoja Menú del profe (fila 97) y avatar/Menú junto al chip «En vivo» en Ranking móvil: confirmar.
-
-- Género del capitán: el seed no lo trae; hoy «Capitán» por defecto (D075). ¿Campo editable por el profe o texto neutro?
-- Enunciados de «Identidad de marca» sin tildes en el Excel (fila 64): ¿corregir en el Excel o en el import?
-- Empate en la mejor nota de una tarea con premio (HANDOFF §9 #3): al estudiante no se le muestra ganador (D086, fila 69); el profe da el premio o lo comparte (D123–D124, «Compartido» provisional, fila 96).
-- Seed de 5C sin notas evaluadas: ranking 5C todo empatado en 0. ¿Datos de ejemplo para 5C o esperar a datos reales?
-- HANDOFF §9 restantes (#3–#12: empates de premio, borrador compartido, entrega tardía…): se preguntan al llegar a su fase.
-- Firebase `krea-d22f7` creado (Auth + Firestore, plan Spark, sin Storage); reglas de Firestore publicadas y seed cargado (69 usuarios, 12 equipos, 2 tareas, 18 entregas, 3 ajustes, ranking 5A/5C; ) 2026-11-04. Cuentas de Auth creadas 2026-11-05 (69 alumnos + profesor César León 30262232, contraseña aleatoria por cuenta, lista CSV entregada a César; faltan los demás profesores). **Rotar la clave de la cuenta de servicio** (se pegó en el chat). Archivos → Backblaze B2 (registrar decisión en W5; claves cargadas como AWS_*; el host s3.us-east-005.backblazeb2.com está bloqueado por la red del entorno cloud).
-- Emails reales de los estudiantes para "Olvidé mi contraseña" (checklist #3).
-- Confirmar: indexación solo `/ingresar` (D023, provisional) y descripción de metadata (fila 22).
-- Fijar `NEXT_PUBLIC_SITE_URL` en Vercel cuando haya dominio (fila 21).
-- Java: en la nube ya está (emuladores OK); en la máquina de César falta para `qa:local`.
+**Acciones manuales:**
+- **Rotar la clave de la cuenta de servicio** de `krea-d22f7` (se pegó en el chat). Faltan las cuentas de los demás profesores.
+- Vercel: confirmar las `B2_*` (Production y Preview) y bucket privado; el código solo lee `B2_*` (D194), no `AWS_*`.
+- Emails reales de los estudiantes (checklist #3): ya se cargan desde Alumnos → Editar (D209).
+- Confirmar indexación solo `/ingresar` (D023) y metadata (fila 22) · `NEXT_PUBLIC_SITE_URL` con dominio (fila 21).
+- Java en la máquina de César para `qa:local`.
 
 ## Next
 
-- Fase 09: bloquear o borrar `/secciones`, `/componentes`, `/tokens` (y comprobar que `/estados` da 404 en producción).
+- Tras el merge de W8: **fase 08 — Responsive y pulido** (`phases/08-RESPONSIVE-POLISH.md`): pide navegador a 320–1920 px; con «sin servidor» vigente, César decide si se hace en preview de Vercel o se salta a la **fase 09 — QA final** (`phases/09-QA-FINAL.md`) con la lista de arriba.
+- Fase 09: bloquear o borrar `/secciones`, `/componentes`, `/tokens` (y `/estados` 404 en producción).
 
 ## Phases
 
 | # | Phase | Status |
 |---|---|---|
-| 01 | Tokens | closed |
-| 02 | Base layout | closed |
-| 03 | Components | closed |
-| 04 | Sections | closed |
-| 05 | Pages | closed |
-| 06 | States | closed |
-| 07 | Backend | in progress |
+| 01–06 | Tokens · Layout · Components · Sections · Pages · States | closed |
+| 07 | Backend | closed al mergear W8 (D211) |
 | 08 | Responsive and polish | pending |
 | 09 | Final QA | pending |

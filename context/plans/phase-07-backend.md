@@ -17,8 +17,8 @@
 | W4 | Lecturas del estudiante: Inicio, Notas, detalle, Equipo, Ranking en vivo (`onSnapshot` de `ranking/{seccion}`, D011), Perfil (avatar/tema/acento al perfil, D015) — reemplaza `lib/demo/*` por Firestore | cerrada (#50) |
 | W5 | Entregas: borrador local + enviar (individual; grupal solo el capitán, D012), respuestas en imagen a Storage (abrir `storage.rules`) · **functional-qa** | cerrada (#52) |
 | W6 | Profesor — tareas: constructor (borrador, publicar con suma 20), cerrar; premios (D123–D124) | cerrada (#53) |
-| W7 | Profesor — evaluar (puntos por pregunta en pasos de 0,5, comentario, recalcular ranking en transacción) y ajustes de puntos con motivo + anulación (D007, D121) · **functional-qa** | PR abierto (D204–D208) |
-| W8 | Profesor — alumnos y equipos: editar nombres, base con historial (D176), mover de equipo (claims), capitán, logo (Storage). Enchufar `components/estados/errores.tsx` (D171) y la sesión real en 404/500 (D160) · cierre de la fase | pendiente |
+| W7 | Profesor — evaluar (puntos por pregunta en pasos de 0,5, comentario, recalcular ranking en transacción) y ajustes de puntos con motivo + anulación (D007, D121) · **functional-qa** | cerrada (#54) |
+| W8 | Profesor — alumnos y equipos: editar nombres, base con historial (D176), mover de equipo (claims), capitán, logo (Storage). Enchufar `components/estados/errores.tsx` (D171) y la sesión real en 404/500 (D160) · cierre de la fase | PR abierto (D209–D213) |
 
 ## Números reservados (contra `origin/main`: última decisión D173, última fila 120)
 
@@ -110,3 +110,14 @@
   `seccion`: si W8 cambia a un alumno de sección, sus ajustes viejos siguen sumando en la vieja
   (decidir, fila 134).
 - `/secciones/*` sigue con `lib/demo/*` (evaluar, puntos, panel): solo las rutas reales cambiaron.
+
+## Para las siguientes (lo deja W8 · cierre de la fase)
+
+- Alumnos: `editarAlumno` (perfil + `historialBase` con `motivo` + `privados.email` + ranking, D209).
+  Equipos: `moverAlumnoDeEquipo` / `cambiarCapitanDeEquipo` / `subirLogoEquipo` (D210, D212);
+  `sincronizarClaims(auth, db, cedulas)` es el único sitio que pone claims tras un cambio de perfil.
+- Cambiar de **sección** no existe todavía (ni acción ni UI): si se hace, recalcular las DOS
+  secciones en una transacción, `sincronizarClaims` y decidir los ajustes viejos (fila 134).
+- Logos: `equipos/{equipoId}/{uuid}.{webp|png}`; firmar solo donde se pintan (`infoEquipos(s, {conLogos})`,
+  `logoDeEquipo`). El alumno aún no ve su `historialBase` en ninguna pantalla (las reglas ya lo dejan).
+- 404/500: `sesionDePantalla()` (D213). `/secciones/*` y `/estados` siguen con `lib/demo/*` (fase 09).
