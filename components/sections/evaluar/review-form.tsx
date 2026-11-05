@@ -228,7 +228,7 @@ export function ReviewForm({
         scores={puntajes}
         base={base}
         variant="bar"
-        className="sticky top-16 z-sticky lg:hidden"
+        className="sticky top-16 z-sticky bajo:static lg:hidden"
       />
       {indice ? (
         <ReviewIndex scores={puntajes} actual={actual} className="lg:hidden" />

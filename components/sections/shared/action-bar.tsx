@@ -24,7 +24,8 @@ export function ActionBar({
       className={cn(
         "sticky z-action-bar -mx-(--page-px) flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-divider bg-bg/94 px-4 py-3",
         "lg:static lg:mx-0 lg:border-t-0 lg:bg-transparent lg:px-0 lg:py-0",
-        sinBarraInferior ? "bottom-0" : "bottom-action",
+        // Con poca altura la barra inferior no es fija: la acción baja hasta el borde (D218)
+        sinBarraInferior ? "bottom-0" : "bottom-action bajo:bottom-0",
         className,
       )}
     >
