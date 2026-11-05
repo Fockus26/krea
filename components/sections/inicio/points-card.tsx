@@ -37,11 +37,12 @@ export function PointsCard({
   return (
     <section
       aria-labelledby={id}
-      className="relative overflow-hidden rounded-lg bg-accent p-6 text-on-accent shadow-2 dark:shadow-none"
+      // accent-ink = accent salvo en rojo claro, donde accent deja sin margen el texto (D217)
+      className="relative overflow-hidden rounded-lg bg-accent-ink p-6 text-on-accent shadow-2 dark:shadow-none"
     >
       <span
         aria-hidden="true"
-        className="absolute -top-9 -right-7 size-40 rounded-pill bg-splash opacity-28"
+        className="absolute -top-9 -right-7 size-40 rounded-pill bg-splash opacity-20"
       />
       <span
         aria-hidden="true"
@@ -72,7 +73,7 @@ export function PointsCard({
             <ArrowRight aria-hidden="true" />
           </Link>
           {delta ? (
-            <Badge className="bg-on-accent/18 text-on-accent">
+            <Badge className="bg-on-accent/12 text-on-accent">
               <DeltaIcon aria-hidden="true" />
               {delta}
             </Badge>
