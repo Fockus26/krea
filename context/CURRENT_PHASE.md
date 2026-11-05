@@ -5,14 +5,16 @@
 
 ## Now
 
-**Phase:** 07 — Backend · **cerrada** (D211, W8 #55 b5de523, 2026-11-05) · resumen: `PHASE_LOG/07-backend.md`
-Fases 01–06 cerradas (D173) · **Track:** Product · main @ 73df0ea
-**Sin QA hasta el final** (César, 2026-10-29) · **sin servidor, solo build** (César, 2026-11-03).
+**Phase:** 08 — Responsive y pulido · **en curso** (2026-11-05) · **Track:** Product · main @ 9893869
+Fases 01–07 cerradas (D211) · **Sin QA hasta el final** (César, 2026-10-29) · **sin servidor, solo build** (César, 2026-11-03): la fase 08 se mide en producción y previews de Vercel, solo lectura.
+Producción estuvo en 500 desde #49 hasta #56 (D214). Auditoría: `.qa/f08-auditoria.mjs` en wt1 (local).
 
 | Unit | Branch | Status |
 |---|---|---|
-| Fases 05–06 · fase 07 W1–W7 | #35–#54 | merged (73df0ea) |
-| W8 alumnos y equipos, errores con sesión, cierre (D209–D213) | claude/dreamy-babbage-vloz3y | merged (#55, b5de523) |
+| Fases 05–07 | #35–#55 | merged |
+| 500 en todas las rutas por `jwks-rsa`/`jose` (D214) | fix/firebase-admin-jose | merged (#56, 9893869) |
+| Objetivos táctiles 44 px (D215) | fix/objetivos-tactiles | draft (#57) |
+| Equipos del profe: columna de texto de 46 px a 1024 y scroll horizontal | — | espera decisión de César |
 
 ## Blocked (actions for César or external)
 
@@ -44,7 +46,7 @@ Fases 01–06 cerradas (D173) · **Track:** Product · main @ 73df0ea
 
 ## Next
 
-- Tras el merge de W8: **fase 08 — Responsive y pulido** (`phases/08-RESPONSIVE-POLISH.md`): pide navegador a 320–1920 px; con «sin servidor» vigente, César decide si se hace en preview de Vercel o se salta a la **fase 09 — QA final** (`phases/09-QA-FINAL.md`) con la lista de arriba.
+- Fase 08, pendiente: Equipos a 1024–1280, altura corta y horizontal, modo oscuro, movimiento reducido y pantallas con sesión real (César inicia sesión en el navegador, o `qa:local` con Java). Después, **fase 09 — QA final** (`phases/09-QA-FINAL.md`).
 - Fase 09: bloquear o borrar `/secciones`, `/componentes`, `/tokens` (y `/estados` 404 en producción).
 
 ## Phases
@@ -53,5 +55,5 @@ Fases 01–06 cerradas (D173) · **Track:** Product · main @ 73df0ea
 |---|---|---|
 | 01–06 | Tokens · Layout · Components · Sections · Pages · States | closed |
 | 07 | Backend | closed (D211) |
-| 08 | Responsive and polish | pending |
+| 08 | Responsive and polish | in progress |
 | 09 | Final QA | pending |
