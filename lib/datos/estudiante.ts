@@ -2,10 +2,9 @@ import "server-only";
 // Lecturas del estudiante en el servidor (fase 07, D189): Admin SDK detrás de `exigirSesion`,
 // una vez por request (`cache`). Solo lee lo de su sección y lo suyo; el mapeo a las pantallas
 // es puro (`lib/vistas-estudiante.ts`). Documento que no valida con zod: se omite y se registra.
-import type { Firestore, Query } from "firebase-admin/firestore";
 import { cache } from "react";
 import { exigirSesion } from "@/lib/dal";
-import { firebaseAdmin } from "@/lib/firebase/admin";
+import { db, lista, parsear } from "@/lib/datos/comun";
 import {
   type Ajuste,
   COL,
@@ -14,52 +13,18 @@ import {
   type RankingSeccion,
   type SeccionId,
   type Tarea,
+  type TareaDoc,
   type Usuario,
   zAjuste,
   zEntrega,
   zEquipo,
   zRankingSeccion,
-  zTarea,
+  zTareaDoc,
   zUsuario,
 } from "@/lib/modelo";
 import type { InfoEquipos } from "@/lib/ranking-en-vivo";
 import type { Sesion } from "@/lib/sesion";
 import type { ConId, DatosAlumno } from "@/lib/vistas-estudiante";
-
-type Esquema<T> = {
-  safeParse: (v: unknown) => { success: true; data: T } | { success: false };
-};
-
-function parsear<T>(
-  esquema: Esquema<T>,
-  coleccion: string,
-  id: string,
-  data: unknown,
-): T | null {
-  const r = esquema.safeParse(data);
-  if (r.success) return r.data;
-  console.error(`[datos] ${coleccion}/${id} no valida con el modelo`);
-  return null;
-}
-
-function db(): Firestore {
-  const admin = firebaseAdmin();
-  // Sin Firebase no hay sesión (D181): aquí solo se llega con Firebase configurado.
-  if (!admin) throw new Error("Firebase no está configurado");
-  return admin.db;
-}
-
-async function lista<T>(
-  q: Query,
-  esquema: Esquema<T>,
-  coleccion: string,
-): Promise<Array<ConId<T>>> {
-  const snap = await q.get();
-  return snap.docs.flatMap((d) => {
-    const v = parsear(esquema, coleccion, d.id, d.data());
-    return v ? [{ id: d.id, ...v }] : [];
-  });
-}
 
 /** Sesión de estudiante + su perfil. Sin perfil → a Ingresar no: es un error del dato. */
 export const alumnoActual = cache(
@@ -95,8 +60,9 @@ export const tareasDeSeccion = cache(
     const q = db()
       .collection(COL.tareas)
       .where("secciones", "array-contains", seccion);
-    const tareas = await lista(q, zTarea, COL.tareas);
-    return tareas.filter((t) => t.estado !== "borrador");
+    // `zTareaDoc`: los borradores a medias del profe (D199) no validan con `zTarea`
+    const tareas = await lista<TareaDoc>(q, zTareaDoc, COL.tareas);
+    return tareas.filter((t): t is ConId<Tarea> => t.estado !== "borrador");
   },
 );
 

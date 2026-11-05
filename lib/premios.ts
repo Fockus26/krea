@@ -3,6 +3,7 @@
 import { ganadorPremio } from "@/lib/equipo";
 import { formatFecha } from "@/lib/fecha";
 import { formatNota } from "@/lib/grades";
+import type { SeccionId } from "@/lib/modelo";
 
 export const PREMIOS_EYEBROW =
   "Se asignan al equipo con mejor nota de cada tarea grupal";
@@ -13,6 +14,20 @@ export function agregarPremioHref(tareaId: string): string {
 }
 
 export type NotaEquipo = { id: string; nota: number | null };
+
+/** Una tarjeta de Premios: una tarea grupal en una sección (o el borrador, sin sección, D201). */
+export type TarjetaPremio = {
+  id: string;
+  tarea: string;
+  tareaId: string;
+  /** Texto: "5A", "5A y 5C". */
+  seccion: string;
+  /** Sección donde se decide el empate; ausente en las vistas previas y en "por definir". */
+  seccionId?: SeccionId;
+  premio: string | null;
+  borrador: boolean;
+  estado: EstadoPremio;
+};
 
 export type EstadoPremio =
   | { tipo: "ganado"; equipoId: string; nota: number; fecha: string }

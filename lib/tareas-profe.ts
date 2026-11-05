@@ -223,11 +223,20 @@ export type TareaBorrador = {
 export type DatosBorrador = Partial<
   Omit<TareaBorrador, "preguntas" | "siguiente">
 > & {
-  preguntas?: ReadonlyArray<Omit<PreguntaBorrador, "id">>;
+  /** Las guardadas traen su id (las respuestas de los alumnos van por id, D200). */
+  preguntas?: ReadonlyArray<
+    Omit<PreguntaBorrador, "id"> & { id?: string | undefined }
+  >;
 };
 
 export function preguntaVacia(id: string): PreguntaBorrador {
   return { id, enunciado: "", formato: "texto", valor: null };
+}
+
+/** Siguiente número libre para "q{n}": no repite el id de una pregunta guardada. */
+function siguienteLibre(preguntas: ReadonlyArray<{ id: string }>): number {
+  const usados = preguntas.map((p) => Number(/^q(\d+)$/.exec(p.id)?.[1] ?? 0));
+  return Math.max(preguntas.length, ...usados) + 1;
 }
 
 /** Estado inicial: una tarea nueva (1 pregunta vacía) o un borrador guardado. */
@@ -236,7 +245,7 @@ export function crearBorrador(datos: DatosBorrador = {}): TareaBorrador {
     datos.preguntas && datos.preguntas.length > 0
       ? datos.preguntas
       : [{ enunciado: "", formato: "texto" as const, valor: null }]
-  ).map((p, i) => ({ ...p, id: `q${i + 1}` }));
+  ).map(({ id, ...p }, i) => ({ ...p, id: id ?? `q${i + 1}` }));
   return {
     titulo: datos.titulo ?? "",
     tipo: datos.tipo ?? "individual",
@@ -244,7 +253,7 @@ export function crearBorrador(datos: DatosBorrador = {}): TareaBorrador {
     seccion: datos.seccion ?? "5A y 5C",
     premio: datos.premio ?? "",
     preguntas,
-    siguiente: preguntas.length + 1,
+    siguiente: siguienteLibre(preguntas),
   };
 }
 
@@ -278,10 +287,12 @@ export function borradorReducer(
       return { ...estado, seccion: accion.valor };
     case "agregar": {
       if (estado.preguntas.length >= MAX_PREGUNTAS) return estado;
+      // Un id restaurado con «Deshacer» puede coincidir con el contador: se salta
+      const n = Math.max(estado.siguiente, siguienteLibre(estado.preguntas));
       return {
         ...estado,
-        preguntas: [...estado.preguntas, preguntaVacia(`q${estado.siguiente}`)],
-        siguiente: estado.siguiente + 1,
+        preguntas: [...estado.preguntas, preguntaVacia(`q${n}`)],
+        siguiente: n + 1,
       };
     }
     case "eliminar": {
@@ -383,14 +394,20 @@ export function motivoSuma(suma: number): string | null {
 
 /**
  * Errores por campo para publicar: título, fecha válida y no pasada, ≥ 1 pregunta, enunciados
- * no vacíos, valores puestos y suma exactamente 20 (D004).
+ * no vacíos, valores puestos y suma exactamente 20 (D004). `fechaGuardada`: la de una tarea ya
+ * publicada, que se puede conservar aunque haya pasado (D200).
  */
-export function validarTarea(t: TareaBorrador, hoy: string): ErroresTarea {
+export function validarTarea(
+  t: TareaBorrador,
+  hoy: string,
+  fechaGuardada: string | null = null,
+): ErroresTarea {
   const errores: ErroresTarea = { preguntas: {} };
   if (!t.titulo.trim()) errores.titulo = ERRORES.titulo;
   const iso = fechaIso(t.fecha);
   if (!iso) errores.fecha = ERRORES.fecha;
-  else if (comparaFecha(iso, hoy) < 0) errores.fecha = ERRORES.fechaPasada;
+  else if (comparaFecha(iso, hoy) < 0 && iso !== fechaGuardada)
+    errores.fecha = ERRORES.fechaPasada;
   for (const p of t.preguntas) {
     const e: ErroresPregunta = {};
     if (!p.enunciado.trim()) e.enunciado = ERRORES.enunciado;
@@ -408,13 +425,20 @@ export function tieneErrores(e: ErroresTarea): boolean {
   );
 }
 
+/** Para guardar un borrador basta el título (D199). */
+export function validarBorrador(t: TareaBorrador): ErroresTarea {
+  return t.titulo.trim()
+    ? { preguntas: {} }
+    : { preguntas: {}, titulo: ERRORES.titulo };
+}
+
 export function puedePublicar(t: TareaBorrador, hoy: string): boolean {
   return (
     t.preguntas.length >= MIN_PREGUNTAS && !tieneErrores(validarTarea(t, hoy))
   );
 }
 
-/** Lo que se guardaría (fase 07): fecha ISO o `null`, y el premio solo si es grupal. */
+/** Lo que se guarda (`guardarTarea`, D199): fecha ISO o `null`, y el premio solo si es grupal. */
 export function tareaAGuardar(t: TareaBorrador) {
   const premio = t.premio.trim();
   return {
@@ -423,7 +447,8 @@ export function tareaAGuardar(t: TareaBorrador) {
     fecha: fechaIso(t.fecha),
     seccion: t.seccion,
     premio: t.tipo === "grupal" && premio ? premio : null,
-    preguntas: t.preguntas.map(({ enunciado, formato, valor }) => ({
+    preguntas: t.preguntas.map(({ id, enunciado, formato, valor }) => ({
+      id,
       enunciado: enunciado.trim(),
       formato,
       valor,
@@ -443,3 +468,56 @@ export const MAX_PREGUNTAS_TEXTO = `Llegaste al máximo de ${MAX_PREGUNTAS} preg
 export const TOAST_ELIMINADA = "Pregunta eliminada";
 export const TOAST_PUBLICADA = "Tarea publicada";
 export const TOAST_BORRADOR = "Borrador guardado";
+
+/* ---------- Guardar en Firestore (fase 07 W6, D199–D202) ---------- */
+
+/**
+ * Qué deja tocar el constructor: todo en un borrador; en una publicada sin entregas, todo menos
+ * volver a borrador; con entregas, solo título, fecha y premio; cerrada, nada (D200).
+ */
+export type ModoConstructor =
+  | "borrador"
+  | "publicada"
+  | "con-entregas"
+  | "cerrada";
+
+export type AccionTarea = "borrador" | "publicar" | "guardar";
+
+export type ErrorTarea =
+  | "no-existe"
+  | "cerrada"
+  | "invalida"
+  | "fecha-pasada"
+  | "sin-empate"
+  | "red";
+
+/** Copy de los errores. PLACEHOLDER de copy (CONTENT_CHECKLIST fila 131). */
+export function mensajeErrorTarea(error: ErrorTarea): string {
+  switch (error) {
+    case "no-existe":
+      return "Esta tarea ya no existe.";
+    case "cerrada":
+      return "Esta tarea ya está cerrada: no se puede cambiar.";
+    case "invalida":
+      return "Revisa los datos de la tarea: hay algo que no se pudo guardar.";
+    case "fecha-pasada":
+      return ERRORES.fechaPasada;
+    case "sin-empate":
+      return "Ya no hay empate en esta sección: recarga la página.";
+    case "red":
+      return "No se pudo conectar. Revisa tu conexión e inténtalo otra vez.";
+  }
+}
+
+/* Textos de los modos publicados. PROVISIONAL (fila 131): el handoff no los define. */
+export const TOAST_GUARDADA = "Cambios guardados";
+export const TOAST_CERRADA = "Tarea cerrada";
+export const AVISO_CON_ENTREGAS =
+  "Ya hay entregas: solo puedes cambiar el título, la fecha y el premio.";
+export const AVISO_CERRADA =
+  "Esta tarea está cerrada: ya no recibe entregas y no se puede editar.";
+export const NOTA_PUBLICADA =
+  "Los cambios se ven al instante en «Por entregar».";
+export const CERRAR_TITULO = "¿Cerrar la tarea?";
+export const CERRAR_DESCRIPCION =
+  "Ya no recibirá entregas. Las que llegaron se siguen evaluando y, si tiene premio, se decide quién lo gana.";

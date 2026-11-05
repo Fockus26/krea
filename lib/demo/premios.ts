@@ -5,19 +5,11 @@ import { EQUIPOS } from "@/lib/demo/seed";
 import { TAREAS } from "@/lib/demo/tareas";
 import {
   type EntradaPremio,
-  type EstadoPremio,
   estadoPremio,
+  type TarjetaPremio,
 } from "@/lib/premios";
 
-export type TarjetaPremio = {
-  id: string;
-  tarea: string;
-  tareaId: string;
-  seccion: string;
-  premio: string | null;
-  borrador: boolean;
-  estado: EstadoPremio;
-};
+export type { TarjetaPremio };
 
 /** Nombres de todos los equipos por id (para "Ganó 5A-G2 Repostería"). */
 export const NOMBRES_EQUIPO: Readonly<Record<string, string>> =
