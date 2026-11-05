@@ -16,8 +16,8 @@
 | W3 | Recuperar contraseña: busca `privados/{cedula}.email`, enlace de Firebase Auth (D009; plantilla en la consola si se deja, si no Admin SDK + Brevo); misma respuesta exista o no la cédula · **functional-qa** | cerrada (#51) |
 | W4 | Lecturas del estudiante: Inicio, Notas, detalle, Equipo, Ranking en vivo (`onSnapshot` de `ranking/{seccion}`, D011), Perfil (avatar/tema/acento al perfil, D015) — reemplaza `lib/demo/*` por Firestore | cerrada (#50) |
 | W5 | Entregas: borrador local + enviar (individual; grupal solo el capitán, D012), respuestas en imagen a Storage (abrir `storage.rules`) · **functional-qa** | cerrada (#52) |
-| W6 | Profesor — tareas: constructor (borrador, publicar con suma 20), cerrar; premios (D123–D124) | PR abierto (D199–D202) |
-| W7 | Profesor — evaluar (puntos por pregunta en pasos de 0,5, comentario, recalcular ranking en transacción) y ajustes de puntos con motivo + anulación (D007, D121) · **functional-qa** | pendiente |
+| W6 | Profesor — tareas: constructor (borrador, publicar con suma 20), cerrar; premios (D123–D124) | cerrada (#53) |
+| W7 | Profesor — evaluar (puntos por pregunta en pasos de 0,5, comentario, recalcular ranking en transacción) y ajustes de puntos con motivo + anulación (D007, D121) · **functional-qa** | PR abierto (D204–D208) |
 | W8 | Profesor — alumnos y equipos: editar nombres, base con historial (D176), mover de equipo (claims), capitán, logo (Storage). Enchufar `components/estados/errores.tsx` (D171) y la sesión real en 404/500 (D160) · cierre de la fase | pendiente |
 
 ## Números reservados (contra `origin/main`: última decisión D173, última fila 120)
@@ -96,3 +96,17 @@
   entrega NO depende del estado de la tarea; el premio se resuelve solo (`estadoPremioSeccion`).
 - Con entregas, las preguntas de una tarea no cambian (D200): W7 puede confiar en los ids.
 - Panel (`lib/demo/panel.ts`) sigue en demo: es la cola y la actividad de evaluar (W7/W8).
+
+## Para las siguientes (lo deja W7)
+
+- Recalcular el ranking: `lib/firebase/ranking.ts` — `leerSeccionEnTx` (lee la sección entera y
+  `ranking/{s}` en la transacción), cambio en memoria (`conEntrega`/`conAjuste`) y
+  `escribirRankingEnTx`. W8 (cambiar base, mover de equipo/sección): lo mismo; al mover de sección,
+  recalcula las DOS secciones en la misma transacción.
+- Lecturas nuevas en `lib/datos/profesor.ts`: `usuariosTodos`, `colaEvaluar`, `entregaProfe`,
+  `mapasProfe`, `ajustesTodos`, `rankingsTodos`. El shell ya cuenta la cola real.
+- `entregas.evaluacionAnterior` (opcional, D205) existe: no lo borres al reescribir una entrega.
+- Ajustes: anulación = `{id}__anulacion`, `motivoId: "anulacion"` (D207). Un ajuste guarda su
+  `seccion`: si W8 cambia a un alumno de sección, sus ajustes viejos siguen sumando en la vieja
+  (decidir, fila 134).
+- `/secciones/*` sigue con `lib/demo/*` (evaluar, puntos, panel): solo las rutas reales cambiaron.

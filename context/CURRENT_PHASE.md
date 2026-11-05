@@ -6,7 +6,7 @@
 ## Now
 
 **Phase:** 07 — Backend · en curso (2026-11-03) · fase 06 cerrada (D173) · **Track:** Product
-Plan: `context/plans/phase-07-backend.md` · main @ 94ae747
+Plan: `context/plans/phase-07-backend.md` · main @ 7082686
 **Sin QA hasta el final** (César, 2026-10-29) · **sin servidor, solo build** (César, 2026-11-03).
 
 | Unit | Branch | Status |
@@ -17,13 +17,15 @@ Plan: `context/plans/phase-07-backend.md` · main @ 94ae747
 | W4 lecturas del estudiante, ranking en vivo, Perfil (D189–D193) | #50 | merged (f775ec3) |
 | W3 recuperar contraseña con Brevo (D185–D188) | #51 | merged (1b22d77) |
 | W5 entregas: borrador local, enviar, imágenes en B2 (D194–D197) | #52 | merged (94ae747) |
-| W6 tareas del profe: constructor, publicar, cerrar, premios (D199–D202) | claude/dreamy-babbage-vloz3y | PR abierto |
-| W7–W8 (evaluar, gestión) | — | pendiente (ver plan) |
+| W6 tareas del profe: constructor, publicar, cerrar, premios (D199–D202) | #53 | merged (7082686) |
+| W7 evaluar, ajustes de puntos y Panel con Firestore (D204–D208) | claude/dreamy-babbage-vloz3y | PR abierto |
+| W8 (alumnos y equipos, cierre) | — | pendiente (ver plan) |
 
 ## Blocked (actions for César or external)
 
 - QA pendiente: W3 — envío real por Brevo con el alumno de prueba 38291460 (la red del contenedor bloquea api.brevo.com), enlace → /recuperar/nueva → guardar → aviso en Ingresar y sesiones revocadas; axe de /recuperar y /recuperar/nueva. Fase 09.
 
+- QA pendiente: W7 — evaluar la cola (individual/grupal, imagen firmada), corregir una evaluada, «Deshacer», ajuste + anulación y verlo en el ranking en vivo y en el detalle de nota del alumno, contra los emuladores; axe de /profe, /profe/evaluar/[id] y /profe/puntos. Fase 09.
 - QA pendiente: W6 — crear borrador a medias, publicar (suma 20, fecha), editar con/sin entregas, cerrar (el alumno la ve cerrada), decidir empate y verlo en Mi equipo, contra los emuladores; axe de /profe/tareas, /profe/tareas/[id], /profe/premios y el diálogo Cerrar. Fase 09.
 - QA pendiente: W5 — subida real a B2 (el host está bloqueado en el contenedor: probado con dobles), enviar individual y grupal (capitán / no capitán) contra los emuladores, borrador tras recargar, imagen en «Entregada» y en el detalle de nota; axe de /tareas y /tareas/[tarea]. Fase 09.
 - W5: en el entorno existen también `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`; el código solo lee `B2_*` (D194). Confirmar que Vercel tiene las `B2_*` (Production y Preview) y que el bucket es privado.
