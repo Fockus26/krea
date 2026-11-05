@@ -5,7 +5,7 @@
 
 ## Now
 
-**Phase:** 08 — Responsive y pulido · **en curso** (2026-11-05) · **Track:** Product · main @ 9893869
+**Phase:** 08 — Responsive y pulido · **en curso** (2026-11-05) · **Track:** Product · main @ 9587d95
 Fases 01–07 cerradas (D211) · **Sin QA hasta el final** (César, 2026-10-29) · **sin servidor, solo build** (César, 2026-11-03): la fase 08 se mide en producción y previews de Vercel, solo lectura.
 Producción estuvo en 500 desde #49 hasta #56 (D214). Auditoría: `.qa/f08-auditoria.mjs` en wt1 (local).
 
@@ -14,8 +14,7 @@ Producción estuvo en 500 desde #49 hasta #56 (D214). Auditoría: `.qa/f08-audit
 | Fases 05–07 | #35–#55 | merged |
 | 500 en todas las rutas por `jwks-rsa`/`jose` (D214) | fix/firebase-admin-jose | merged (#56, 9893869) |
 | Objetivos táctiles 44 px (D215) · Equipos a dos columnas hasta 1440 (D216) | #57, #58 | merged (40cbfb5) |
-| Contraste AA de la tarjeta de puntos (D217) | fix/contraste-tarjeta-puntos | PR #59, en revisión |
-| Con poca altura solo la acción sigue fija (D218) | fix/altura-corta | PR #60, en revisión |
+| Contraste AA de la tarjeta de puntos (D217) · Con poca altura solo la acción sigue fija (D218) | #59, #60 | merged (9587d95) |
 
 ## Blocked (actions for César or external)
 
@@ -32,7 +31,6 @@ Producción estuvo en 500 desde #49 hasta #56 (D214). Auditoría: `.qa/f08-audit
 - Cambiar a un alumno de **sección** (W7/W8): no hay acción; ¿hace falta? y sus ajustes viejos ¿siguen en la sección vieja? (fila 134).
 - El alumno no ve su historial de base en ninguna pantalla (D108 dice «el alumno lo verá»): ¿dónde?
 - Galerías `/secciones`, `/componentes`, `/estados` públicas con datos reales del seed (D181): ¿bloquear ya o en la fase 09?
-- Contraste de la tarjeta de puntos de Inicio (axe 4,1:1 y 4,26:1, fase 04): decisión de diseño (backlog, alta).
 - Perfil en la hoja Menú del profe (fila 97) y avatar/Menú junto a «En vivo» en Ranking móvil.
 - Género del capitán (D075) · tildes de «Identidad de marca» (fila 64) · empates de premio (D086, D123–D124, fila 96).
 - Seed de 5C sin notas evaluadas (ranking 5C empatado en 0) · HANDOFF §9 #3–#12 al llegar a su fase.
@@ -43,11 +41,10 @@ Producción estuvo en 500 desde #49 hasta #56 (D214). Auditoría: `.qa/f08-audit
 - Vercel: confirmar las `B2_*` (Production y Preview) y bucket privado; el código solo lee `B2_*` (D194), no `AWS_*`.
 - Emails reales de los estudiantes (checklist #3): ya se cargan desde Alumnos → Editar (D209).
 - Confirmar indexación solo `/ingresar` (D023) y metadata (fila 22) · `NEXT_PUBLIC_SITE_URL` con dominio (fila 21).
-- Java en la máquina de César para `qa:local`.
 
 ## Next
 
-- Fase 08, medido en galerías sin hallazgos abiertos: contraste por tema y acento, movimiento reducido. Pendiente: pantallas con sesión real (César inicia sesión en el navegador, o `qa:local` con Java), hover/foco y ritmo vertical entre pantallas; 2560 y 3840 sin medir. Después, **fase 09 — QA final** (`phases/09-QA-FINAL.md`).
+- Fase 08, medido en galerías sin hallazgos abiertos: contraste por tema y acento, movimiento reducido. Pendiente: pantallas con sesión real (`qa:local`: Java 21 ya instalado), hover/foco y ritmo vertical entre pantallas; 2560 y 3840 sin medir. Después, **fase 09 — QA final** (`phases/09-QA-FINAL.md`).
 - Fase 09: bloquear o borrar `/secciones`, `/componentes`, `/tokens` (y `/estados` 404 en producción).
 
 ## Phases
