@@ -6,68 +6,55 @@ import { BackLink } from "@/components/sections/shared/back-link";
 import { PageHeader } from "@/components/sections/shared/page-header";
 import { TaskBuilder } from "@/components/sections/tareas-profe/task-builder";
 import { Card } from "@/components/ui/card";
-import { TAREAS } from "@/lib/demo/tareas";
-import {
-  BORRADOR_DEMO,
-  BORRADOR_ID,
-  BORRADOR_TITULO,
-  HOY_DEMO,
-} from "@/lib/demo/tareas-profe";
-import { type DatosBorrador, RUTA_TAREAS } from "@/lib/tareas-profe";
+import tareaSeed from "@/data/seed/tarea-identidad-marca.json";
+import { cerrarTarea, guardarTarea } from "@/lib/acciones/tareas";
+import { verificarSesion } from "@/lib/dal";
+import { tareaProfe, tieneEntregas } from "@/lib/datos/profesor";
+import { diaDeInstante } from "@/lib/fecha";
+import { TAREA_GRUPAL_SEED } from "@/lib/seed-firestore";
+import { RUTA_TAREAS } from "@/lib/tareas-profe";
+import { datosBorradorDe, modoConstructor } from "@/lib/tareas-profe-datos";
 
 type Props = PageProps<"/profe/tareas/[id]">;
 
-// Una página por enlace de la lista: las tareas de TAREAS + el borrador (D152)
+// `cacheComponents` pide al menos un parámetro para validar el shell: las tareas del seed. Las
+// demás (y los borradores nuevos) se renderizan al pedirlas (como /tareas/[tarea], D197).
 export function generateStaticParams() {
-  return [...TAREAS.map((t) => t.id), BORRADOR_ID].map((id) => ({ id }));
-}
-
-/** Datos del constructor para un id: el borrador, o la tarea de `TAREAS` con lo que trae (D152). */
-function datosDe(id: string): { titulo: string; datos: DatosBorrador } | null {
-  if (id === BORRADOR_ID)
-    return { titulo: BORRADOR_TITULO, datos: BORRADOR_DEMO };
-  const t = TAREAS.find((x) => x.id === id);
-  if (!t) return null;
-  return {
-    titulo: t.titulo,
-    datos: {
-      titulo: t.titulo,
-      tipo: t.tipo,
-      fecha: t.fecha,
-      premio: t.premio ?? "",
-      preguntas: t.preguntas.map(({ enunciado, formato, valor }) => ({
-        enunciado,
-        formato,
-        valor,
-      })),
-    },
-  };
+  return [{ id: tareaSeed.id }, { id: TAREA_GRUPAL_SEED.id }];
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
-  const d = datosDe(id);
-  return { title: d ? `Constructor · ${d.titulo}` : "Tarea" };
+  const s = await verificarSesion();
+  if (s?.rol !== "profesor") return { title: "Tarea" };
+  const t = await tareaProfe(id);
+  return { title: t ? `Constructor · ${t.titulo}` : "Tarea" };
 }
 
-// Constructor de una tarea existente (HANDOFF §3). Si el seed no trae sus preguntas, aviso vacío en
-// vez de inventarlas (D136, D152). Sin barra inferior; «Guardar borrador» en la topbar móvil (D130).
+const ACCIONES = { guardar: guardarTarea, cerrar: cerrarTarea };
+
+const DESCRIPCION =
+  "Las preguntas tienen que sumar exactamente 20 puntos para publicar.";
+
+// Constructor de una tarea de Firestore (HANDOFF §3; W6). El modo sale del estado y de si ya hay
+// entregas (D200). Una nota importada del Excel sin preguntas: aviso vacío en vez de inventarlas
+// (D136, D152). Sin barra inferior; «Guardar borrador» en la topbar móvil (D130).
 export default async function TareaProfePage({ params }: Props) {
   const { id } = await params;
-  const d = datosDe(id);
-  if (!d) notFound();
-  const sinPreguntas = !d.datos.preguntas || d.datos.preguntas.length === 0;
+  const t = await tareaProfe(id);
+  if (!t) notFound();
+  const conEntregas = await tieneEntregas(id);
+  const modo = modoConstructor(t, conEntregas);
+  const sinPreguntas = t.preguntas.length === 0;
 
   return (
     <>
       <div className="flex flex-col gap-2">
         <BackLink href={RUTA_TAREAS}>Tareas</BackLink>
         <PageHeader
-          title={id === BORRADOR_ID ? "Nueva tarea" : d.titulo}
+          title={t.estado === "borrador" ? "Nueva tarea" : t.titulo}
           description={
-            sinPreguntas
-              ? undefined
-              : "Las preguntas tienen que sumar exactamente 20 puntos para publicar."
+            sinPreguntas || modo === "cerrada" ? undefined : DESCRIPCION
           }
         />
       </div>
@@ -82,10 +69,14 @@ export default async function TareaProfePage({ params }: Props) {
         </Card>
       ) : (
         <TaskBuilder
-          inicial={d.datos}
-          hoy={HOY_DEMO}
+          inicial={datosBorradorDe(t)}
+          hoy={diaDeInstante(Date.now())}
           listaHref={RUTA_TAREAS}
           guardarEnTopbar
+          tareaId={id}
+          modo={modo}
+          fechaGuardada={t.estado === "borrador" ? null : t.fechaEntrega}
+          acciones={ACCIONES}
         />
       )}
     </>

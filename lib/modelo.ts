@@ -153,6 +153,32 @@ export const zPregunta = z.object({
 });
 export type Pregunta = z.infer<typeof zPregunta>;
 
+/** Decisión del profe ante un empate en la mejor nota de una sección (D123, D124, D201). */
+export const zDecisionPremio = z.discriminatedUnion("tipo", [
+  z.object({ tipo: z.literal("dar"), equipoId: z.string().min(1) }),
+  z.object({ tipo: z.literal("compartir") }),
+]);
+export type DecisionPremio = z.infer<typeof zDecisionPremio>;
+
+/** Por sección: el premio se disputa entre los equipos de cada sección (D201). */
+export const zDecisionesPremio = z.object({
+  "5A": zDecisionPremio.optional(),
+  "5C": zDecisionPremio.optional(),
+});
+export type DecisionesPremio = z.infer<typeof zDecisionesPremio>;
+
+const premioSoloGrupal = (
+  t: { tipo: TipoTareaId; premio: string | null },
+  ctx: z.RefinementCtx,
+) => {
+  if (t.tipo === "individual" && t.premio !== null) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Solo las grupales llevan premio",
+    });
+  }
+};
+
 export const zTarea = z
   .object({
     titulo: texto(120),
@@ -168,14 +194,11 @@ export const zTarea = z
     importada: z.boolean().default(false),
     autorId: zCedula.nullable(),
     actualizadoEn: zInstante,
+    /** Empates de premio ya decididos (ausente: ninguno). */
+    decisionesPremio: zDecisionesPremio.optional(),
   })
   .superRefine((t, ctx) => {
-    if (t.tipo === "individual" && t.premio !== null) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Solo las grupales llevan premio",
-      });
-    }
+    premioSoloGrupal(t, ctx);
     // Publicada (abierta/evaluada) = suma exacta de 20 (D004). Un borrador puede no sumar.
     if (
       !t.importada &&
@@ -186,6 +209,42 @@ export const zTarea = z
     }
   });
 export type Tarea = z.infer<typeof zTarea>;
+
+/**
+ * Pregunta de un borrador a medias (D199): enunciado vacío y valor sin poner (D103) se guardan
+ * para seguir otro día; al publicar tienen que cumplir `zPregunta`.
+ */
+export const zPreguntaBorrador = z.object({
+  id: zPregunta.shape.id,
+  enunciado: z.string().trim().max(500),
+  formato: zPregunta.shape.formato,
+  valor: zPregunta.shape.valor.nullable(),
+});
+export type PreguntaBorrador = z.infer<typeof zPreguntaBorrador>;
+
+/** Borrador del profe que aún no cumple `zTarea` (D199). Solo lo lee el profe. */
+export const zTareaBorrador = z
+  .object({
+    titulo: texto(120),
+    tipo: z.enum(TIPOS_TAREA),
+    secciones: z.array(zSeccion).min(1),
+    estado: z.literal("borrador"),
+    fechaEntrega: zDia.nullable(),
+    premio: texto(200).nullable(),
+    preguntas: z.array(zPreguntaBorrador).min(1).max(20),
+    importada: z.literal(false).default(false),
+    autorId: zCedula.nullable(),
+    actualizadoEn: zInstante,
+  })
+  .superRefine(premioSoloGrupal);
+export type TareaBorrador = z.infer<typeof zTareaBorrador>;
+
+/**
+ * Cualquier documento de `tareas`: una tarea válida (publicada o borrador completo) o un
+ * borrador a medias. Las lecturas del estudiante siguen con `zTarea` (no ve borradores).
+ */
+export const zTareaDoc = z.union([zTarea, zTareaBorrador]);
+export type TareaDoc = Tarea | TareaBorrador;
 
 /** Suma de valores en medios enteros (sin errores de coma flotante). */
 export function sumaValores(

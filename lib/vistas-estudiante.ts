@@ -12,7 +12,7 @@ import type { PreguntaDetalle } from "@/components/sections/notas/question-list"
 import type { FilaEntregada } from "@/components/sections/tareas/delivered-tasks";
 import type { PreguntaEntrega } from "@/components/sections/tareas/task-answer-form";
 import { type DicebearEstilo, esEstiloDicebear } from "@/lib/dicebear";
-import { enJuegoTexto, ganadorPremio, premioGanadoTexto } from "@/lib/equipo";
+import { enJuegoTexto, ganadoresPremio, premioGanadoTexto } from "@/lib/equipo";
 import {
   comparaFecha,
   diaDeInstante,
@@ -591,7 +591,10 @@ export function equipoVista(
             .map((e) => e.titularId),
         ),
       ].map((id) => ({ id, nota: notaDe(t.id, id) }));
-      return ganadorPremio(rivales) === eq.id
+      return ganadoresPremio(
+        rivales,
+        t.decisionesPremio?.[eq.seccion],
+      ).includes(eq.id)
         ? [
             {
               id: t.id,

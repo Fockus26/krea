@@ -2,14 +2,19 @@ import type { Metadata } from "next";
 import { BackLink } from "@/components/sections/shared/back-link";
 import { PageHeader } from "@/components/sections/shared/page-header";
 import { TaskBuilder } from "@/components/sections/tareas-profe/task-builder";
-import { HOY_DEMO, NUEVA_DEMO } from "@/lib/demo/tareas-profe";
+import { cerrarTarea, guardarTarea } from "@/lib/acciones/tareas";
+import { exigirSesion } from "@/lib/dal";
+import { diaDeInstante } from "@/lib/fecha";
 import { RUTA_TAREAS } from "@/lib/tareas-profe";
 
 export const metadata: Metadata = { title: "Nueva tarea" };
 
+const ACCIONES = { guardar: guardarTarea, cerrar: cerrarTarea };
+
 // Constructor con una tarea vacía (HANDOFF §3). Sin barra inferior; «Guardar borrador» < 1024 va
-// en la topbar (D130, D153). Nada se guarda hasta la fase 07.
-export default function NuevaTareaPage() {
+// en la topbar (D130, D153). El primer guardado crea la tarea y la URL pasa a la suya (W6, D199).
+export default async function NuevaTareaPage() {
+  await exigirSesion("profesor");
   return (
     <>
       <div className="flex flex-col gap-2">
@@ -20,10 +25,11 @@ export default function NuevaTareaPage() {
         />
       </div>
       <TaskBuilder
-        inicial={NUEVA_DEMO}
-        hoy={HOY_DEMO}
+        inicial={{}}
+        hoy={diaDeInstante(Date.now())}
         listaHref={RUTA_TAREAS}
         guardarEnTopbar
+        acciones={ACCIONES}
       />
     </>
   );

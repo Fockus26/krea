@@ -15,13 +15,20 @@ const TIPO_TAREA = {
   grupal: "Tarea grupal",
 } as const;
 
+/** Evaluar del profe: la cola de ejemplo (W7 la cambia por Firestore). */
+export function titulosEvaluarDemo(): TitulosTopbar {
+  return Object.fromEntries(
+    COLA.map((e, i) => [
+      `/profe/evaluar/${e.id}`,
+      tituloEntrega(i, COLA.length),
+    ]),
+  );
+}
+
 export function titulosTopbar(rol: Rol): TitulosTopbar {
   if (rol === "profesor") {
     return Object.fromEntries([
-      ...COLA.map((e, i) => [
-        `/profe/evaluar/${e.id}`,
-        tituloEntrega(i, COLA.length),
-      ]),
+      ...Object.entries(titulosEvaluarDemo()),
       // Constructor de una tarea existente: su título. El borrador queda con «Nueva tarea» (lienzo, D152)
       ...TAREAS.map((t) => [`/profe/tareas/${t.id}`, t.titulo]),
     ]);
