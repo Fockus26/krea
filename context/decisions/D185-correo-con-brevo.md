@@ -1,0 +1,5 @@
+# D185 · Email · El correo de restablecer lo envía la app con la API transaccional de Brevo; actualiza D009 · Implemented
+
+**Decision:** (César, 2026-11-05) el único correo de v1 se envía desde el servidor de la app con `POST https://api.brevo.com/v3/smtp/email` (cabecera `api-key`), variables `BREVO_API_KEY` (secreta) y `BREVO_SENDER_EMAIL`. El enlace lo genera el Admin SDK (`generatePasswordResetLink`) y el HTML/texto es el de HANDOFF §5c (`lib/correo/restablecer.ts`); el envío es `lib/correo/brevo.ts` con `fetch` inyectable (probado con dobles). Sin clave o sin remitente no se envía nada y el servidor registra un error genérico. Reemplaza la parte «plantilla de Firebase / Cloud Function» de D009.
+**Why:** la plantilla de Firebase Auth no admite el HTML del diseño y el plan Spark no tiene Cloud Functions; con la API de Brevo el correo sale tal cual el lienzo y sin desplegar nada aparte.
+**Discarded alternative:** plantilla de la consola de Firebase — sin el diseño ni el enlace propio a `/recuperar/nueva`. Cloud Function + SMTP — necesita plan Blaze.
