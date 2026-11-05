@@ -61,5 +61,8 @@
   "trustedDependencies": [
     "sharp",
     "unrs-resolver"
-  ]
+  ],
+  "overrides": {
+    "jwks-rsa": "3.2.2"
+  }
 }
