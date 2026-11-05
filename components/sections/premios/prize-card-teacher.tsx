@@ -21,7 +21,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { TarjetaPremio } from "@/lib/demo/premios";
 import {
   agregarPremioHref,
   agregarPremioLabel,
@@ -36,6 +35,7 @@ import {
   nombreCortoEquipo,
   notaFechaTexto,
   subtituloPremio,
+  type TarjetaPremio,
 } from "@/lib/premios";
 import { cn } from "@/lib/utils";
 

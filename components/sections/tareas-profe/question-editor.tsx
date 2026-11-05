@@ -37,7 +37,8 @@ function MensajeError({ id, children }: { id: string; children: string }) {
  * número + "Pregunta n" (`h3`, nombra el enunciado) + eliminar ghost `--error`; enunciado;
  * Formato Texto/Imagen (radiogroup) y Valor (stepper 0,5–20 paso 0,5; sin valor = `null`, D103).
  * Los errores salen tras intentar publicar y no se anuncian en cada tecla (D071): se leen por
- * `aria-describedby` al enfocar el campo.
+ * `aria-describedby` al enfocar el campo. `bloqueada` (tarea con entregas o cerrada, D200): se lee
+ * pero no se cambia (campos de solo lectura, formato deshabilitado, sin eliminar).
  */
 export function QuestionEditor({
   pregunta,
@@ -46,6 +47,7 @@ export function QuestionEditor({
   puedeEliminar,
   onCambio,
   onEliminar,
+  bloqueada = false,
 }: {
   pregunta: PreguntaBorrador;
   numero: number;
@@ -54,6 +56,7 @@ export function QuestionEditor({
   puedeEliminar: boolean;
   onCambio: (cambios: Partial<Omit<PreguntaBorrador, "id">>) => void;
   onEliminar: () => void;
+  bloqueada?: boolean;
 }) {
   const ids = preguntaDomId(pregunta.id);
   const errEnunciado = `${ids.error}-enunciado`;
@@ -75,18 +78,20 @@ export function QuestionEditor({
         >
           Pregunta {numero}
         </h3>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          icon
-          disabled={!puedeEliminar}
-          aria-label={`Eliminar la pregunta ${numero}`}
-          onClick={onEliminar}
-          className="text-error"
-        >
-          <Trash2 aria-hidden="true" />
-        </Button>
+        {bloqueada ? null : (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            icon
+            disabled={!puedeEliminar}
+            aria-label={`Eliminar la pregunta ${numero}`}
+            onClick={onEliminar}
+            className="text-error"
+          >
+            <Trash2 aria-hidden="true" />
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -95,6 +100,7 @@ export function QuestionEditor({
           compact
           rows={2}
           aria-labelledby={ids.titulo}
+          readOnly={bloqueada}
           aria-invalid={errores?.enunciado ? true : undefined}
           aria-describedby={errores?.enunciado ? errEnunciado : undefined}
           value={pregunta.enunciado}
@@ -112,6 +118,7 @@ export function QuestionEditor({
           </span>
           <ToggleGroup
             aria-label={`Formato de la pregunta ${numero}`}
+            disabled={bloqueada}
             value={pregunta.formato}
             onValueChange={(v) => onCambio({ formato: v as FormatoPregunta })}
           >
@@ -139,6 +146,7 @@ export function QuestionEditor({
             step={VALOR_PASO}
             unit="pts"
             emptyText="Sin valor"
+            readOnly={bloqueada}
             aria-invalid={errores?.valor ? true : undefined}
             aria-describedby={errores?.valor ? errValor : undefined}
           />

@@ -1,13 +1,32 @@
 "use client";
 
-import { Calendar, Gift, Plus, Send, User, Users } from "lucide-react";
+import {
+  Calendar,
+  Gift,
+  Lock,
+  Plus,
+  Save,
+  Send,
+  User,
+  Users,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { SumMeter } from "@/components/krea/sum-meter";
 import { TopBarAccion } from "@/components/layout/top-bar-accion";
 import { ActionBar } from "@/components/sections/shared/action-bar";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
@@ -22,7 +41,12 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { DESHACER_MS } from "@/lib/evaluar";
 import { METER_TEXT_CLASSES, SUM_STATE_TONE, sumMeterInfo } from "@/lib/meters";
 import {
+  type AccionTarea,
+  AVISO_CERRADA,
+  AVISO_CON_ENTREGAS,
   borradorReducer,
+  CERRAR_DESCRIPCION,
+  CERRAR_TITULO,
   crearBorrador,
   type DatosBorrador,
   type ErroresTarea,
@@ -30,21 +54,40 @@ import {
   MAX_PREGUNTAS,
   MAX_PREGUNTAS_TEXTO,
   MIN_PREGUNTAS,
+  type ModoConstructor,
+  mensajeErrorTarea,
   motivoSuma,
+  NOTA_PUBLICADA,
   preguntasTitulo,
+  rutaTarea,
   SECCIONES_TAREA,
   sumaValores,
   TOAST_BORRADOR,
+  TOAST_CERRADA,
   TOAST_ELIMINADA,
+  TOAST_GUARDADA,
   TOAST_PUBLICADA,
+  tareaAGuardar,
   tieneErrores,
+  validarBorrador,
   validarTarea,
 } from "@/lib/tareas-profe";
+import type { ResultadoTarea } from "@/lib/tareas-profe-datos";
 import { cn } from "@/lib/utils";
 import { preguntaDomId, QuestionEditor } from "./question-editor";
 
 const SIN_ERRORES: ErroresTarea = { preguntas: {} };
 const AGREGAR_ID = "agregar-pregunta";
+
+/** Server Actions de la página real (W6); sin ellas (galerías) solo hay toasts. */
+export type AccionesTarea = {
+  guardar: (envio: {
+    id: string | null;
+    accion: AccionTarea;
+    tarea: ReturnType<typeof tareaAGuardar>;
+  }) => Promise<ResultadoTarea>;
+  cerrar: (id: string) => Promise<ResultadoTarea>;
+};
 
 /*
  * Constructor de tareas (HANDOFF §3; lienzos Constructor y Constructor-movil; D114–D117).
@@ -55,13 +98,19 @@ const AGREGAR_ID = "agregar-pregunta";
  * región viva activa (la del `SumMeter`). Con la suma en 20, "Publicar" valida el resto al pulsar
  * (título, fecha, enunciados y valores) y lleva el foco al primer campo inválido (D071, D114).
  * Eliminar una pregunta no pide confirmación: toast "Pregunta eliminada" + "Deshacer" (§3).
- * Nada se guarda en la vista previa: publicar y guardar solo avisan con un toast.
+ * Con `acciones` (página real, W6) guarda en Firestore; en la vista previa solo avisa con un toast.
+ * `modo` (D200): un borrador se guarda o se publica; una publicada se guarda («Guardar cambios»)
+ * y se cierra (con confirmación); con entregas solo cambian título, fecha y premio; cerrada, nada.
  */
 export function TaskBuilder({
   inicial,
   hoy,
   listaHref,
   guardarEnTopbar = false,
+  tareaId = null,
+  modo = "borrador",
+  fechaGuardada = null,
+  acciones,
 }: {
   inicial: DatosBorrador;
   /** Día civil ISO: una fecha de entrega anterior no se puede publicar. */
@@ -73,6 +122,12 @@ export function TaskBuilder({
    * en vez de en el flujo. En `/secciones` (sin topbar) se queda en el flujo.
    */
   guardarEnTopbar?: boolean;
+  /** Id en Firestore; `null` = tarea nueva (lo pone el primer «Guardar borrador»). */
+  tareaId?: string | null;
+  modo?: ModoConstructor;
+  /** Fecha ISO ya guardada de una publicada: se puede conservar aunque haya pasado (D200). */
+  fechaGuardada?: string | null;
+  acciones?: AccionesTarea;
 }) {
   const router = useRouter();
   const raiz = React.useRef<HTMLDivElement>(null);
@@ -82,6 +137,13 @@ export function TaskBuilder({
     crearBorrador,
   );
   const [intentado, setIntentado] = React.useState(false);
+  const [intentoBorrador, setIntentoBorrador] = React.useState(false);
+  const [id, setId] = React.useState(tareaId);
+  const [pendiente, startTransition] = React.useTransition();
+  const [confirmarCierre, setConfirmarCierre] = React.useState(false);
+  const esBorrador = modo === "borrador";
+  const estructuraFija = modo === "con-entregas" || modo === "cerrada";
+  const cerrada = modo === "cerrada";
   // Id del elemento que recibe el foco tras el próximo render (añadir, eliminar, deshacer)
   const foco = React.useRef<string | null>(null);
 
@@ -94,8 +156,14 @@ export function TaskBuilder({
   const suma = sumaValores(tarea.preguntas);
   const info = sumMeterInfo(suma);
   const motivo = motivoSuma(suma);
-  const errores = intentado ? validarTarea(tarea, hoy) : SIN_ERRORES;
+  const errores = intentado
+    ? validarTarea(tarea, hoy, fechaGuardada)
+    : intentoBorrador
+      ? validarBorrador(tarea)
+      : SIN_ERRORES;
   const lleno = tarea.preguntas.length >= MAX_PREGUNTAS;
+  const textoPublicar = esBorrador ? "Publicar tarea" : "Guardar cambios";
+  const IconoPublicar = esBorrador ? Send : Save;
   const ids = {
     tipo: React.useId(),
     datos: React.useId(),
@@ -132,32 +200,190 @@ export function TaskBuilder({
     });
   };
 
+  const enfocarInvalido = () =>
+    // Un cuadro para que React pinte `aria-invalid`
+    requestAnimationFrame(() => {
+      raiz.current
+        ?.querySelector<HTMLElement>('[aria-invalid="true"]')
+        ?.focus();
+    });
+
+  /** Llama a la acción; con error, toast y (si la tarea cambió por fuera) recarga. */
+  const enviar = (
+    llamar: () => Promise<ResultadoTarea>,
+    alGuardar: (r: { id: string }) => void,
+  ) =>
+    startTransition(async () => {
+      let r: ResultadoTarea;
+      try {
+        r = await llamar();
+      } catch {
+        r = { ok: false, error: "red" };
+      }
+      if (r.ok) {
+        alGuardar(r);
+        return;
+      }
+      toast.error(mensajeErrorTarea(r.error));
+      if (r.error === "cerrada" || r.error === "no-existe") router.refresh();
+    });
+
   const publicar = () => {
-    if (motivo) return;
+    if (motivo || pendiente || cerrada) return;
     setIntentado(true);
-    if (tieneErrores(validarTarea(tarea, hoy))) {
-      // Un cuadro para que React pinte `aria-invalid`
-      requestAnimationFrame(() => {
-        raiz.current
-          ?.querySelector<HTMLElement>('[aria-invalid="true"]')
-          ?.focus();
-      });
+    if (tieneErrores(validarTarea(tarea, hoy, fechaGuardada))) {
+      enfocarInvalido();
       return;
     }
-    // Fase 07: aquí se escribe la tarea en Firestore (`tareaAGuardar`)
-    toast.success(TOAST_PUBLICADA);
-    router.push(listaHref);
+    const exito = esBorrador ? TOAST_PUBLICADA : TOAST_GUARDADA;
+    if (!acciones) {
+      toast.success(exito);
+      router.push(listaHref);
+      return;
+    }
+    enviar(
+      () =>
+        acciones.guardar({
+          id,
+          accion: esBorrador ? "publicar" : "guardar",
+          tarea: tareaAGuardar(tarea),
+        }),
+      () => {
+        toast.success(exito);
+        router.push(listaHref);
+      },
+    );
   };
 
-  // Fase 07: guarda `tareaAGuardar(tarea)` como borrador
-  const guardar = () => toast.success(TOAST_BORRADOR);
+  // Un borrador solo necesita el título (D199)
+  const guardar = () => {
+    if (pendiente) return;
+    setIntentoBorrador(true);
+    if (tieneErrores(validarBorrador(tarea))) {
+      enfocarInvalido();
+      return;
+    }
+    if (!acciones) {
+      toast.success(TOAST_BORRADOR);
+      return;
+    }
+    enviar(
+      () =>
+        acciones.guardar({
+          id,
+          accion: "borrador",
+          tarea: tareaAGuardar(tarea),
+        }),
+      (r) => {
+        toast.success(TOAST_BORRADOR);
+        // Tarea nueva: la URL pasa a la suya sin volver a montar el constructor (el foco se
+        // queda donde estaba) y el próximo guardado actualiza la misma tarea
+        if (id === null) {
+          setId(r.id);
+          window.history.replaceState(null, "", rutaTarea(r.id));
+        }
+      },
+    );
+  };
 
-  const notaPublicar = (
-    // Copy del lienzo
+  const cerrarTarea = () => {
+    if (pendiente) return;
+    const listo = () => {
+      setConfirmarCierre(false);
+      toast.success(TOAST_CERRADA);
+      router.push(listaHref);
+    };
+    if (!acciones || id === null) {
+      listo();
+      return;
+    }
+    enviar(() => acciones.cerrar(id), listo);
+  };
+
+  const notaPublicar = cerrada ? null : (
+    // Copy del lienzo (borrador); provisional en una publicada (fila 131)
     <p className="text-center text-small text-text-2">
-      Al publicar, las secciones elegidas la ven en «Por entregar».
+      {esBorrador
+        ? "Al publicar, las secciones elegidas la ven en «Por entregar»."
+        : NOTA_PUBLICADA}
     </p>
   );
+
+  const botonGuardarBorrador = (enTopbar: boolean) => (
+    <Button
+      type="button"
+      variant={enTopbar ? "ghost" : "secondary"}
+      size={enTopbar ? "sm" : undefined}
+      block={!enTopbar}
+      // Sin `disabled` mientras guarda: el foco se queda en el botón (`guardar` ignora el 2.º toque)
+      aria-busy={pendiente || undefined}
+      onClick={guardar}
+    >
+      Guardar borrador
+    </Button>
+  );
+
+  // Cerrar (solo una publicada abierta): un solo diálogo para los dos botones (< 1024 y ≥ 1024);
+  // al cerrarse, el foco vuelve al botón que lo abrió (cerrar no se deshace, D202)
+  const abrioCierre = React.useRef<HTMLButtonElement | null>(null);
+  const botonCerrar = (
+    <Button
+      type="button"
+      variant="secondary"
+      block
+      disabled={pendiente}
+      aria-haspopup="dialog"
+      onClick={(e) => {
+        abrioCierre.current = e.currentTarget;
+        setConfirmarCierre(true);
+      }}
+    >
+      <Lock aria-hidden="true" />
+      Cerrar tarea
+    </Button>
+  );
+  const dialogoCerrar = (
+    <Dialog
+      open={confirmarCierre}
+      onOpenChange={(o) => {
+        if (!pendiente) setConfirmarCierre(o);
+      }}
+    >
+      <DialogContent
+        onCloseAutoFocus={(e) => {
+          e.preventDefault();
+          abrioCierre.current?.focus();
+        }}
+      >
+        <DialogHeader>
+          <DialogTitle>{CERRAR_TITULO}</DialogTitle>
+          <DialogDescription>{CERRAR_DESCRIPCION}</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="secondary" disabled={pendiente}>
+              Cancelar
+            </Button>
+          </DialogClose>
+          <Button
+            onClick={cerrarTarea}
+            disabled={pendiente}
+            aria-busy={pendiente || undefined}
+          >
+            <Lock aria-hidden="true" />
+            {pendiente ? "Cerrando…" : "Cerrar tarea"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+
+  const aviso =
+    modo === "con-entregas"
+      ? AVISO_CON_ENTREGAS
+      : cerrada
+        ? AVISO_CERRADA
+        : null;
 
   return (
     <div
@@ -172,6 +398,8 @@ export function TaskBuilder({
         className="sticky top-16 z-sticky lg:hidden"
       />
 
+      {aviso ? <Alert variant="info">{aviso}</Alert> : null}
+
       <div className="g-side">
         <div className="flex flex-col gap-6">
           <section aria-labelledby={ids.datos}>
@@ -182,6 +410,7 @@ export function TaskBuilder({
               <Field label="Título" error={errores.titulo} announce={false}>
                 <Input
                   autoComplete="off"
+                  readOnly={cerrada}
                   value={tarea.titulo}
                   onChange={(e) =>
                     dispatch({ tipo: "titulo", valor: e.currentTarget.value })
@@ -196,6 +425,7 @@ export function TaskBuilder({
                   <ToggleGroup
                     block
                     aria-labelledby={ids.tipo}
+                    disabled={estructuraFija}
                     value={tarea.tipo}
                     onValueChange={(v) =>
                       dispatch({
@@ -225,6 +455,7 @@ export function TaskBuilder({
                     autoComplete="off"
                     placeholder="dd/mm/aaaa"
                     maxLength={10}
+                    readOnly={cerrada}
                     leading={<Calendar aria-hidden="true" />}
                     value={tarea.fecha}
                     onChange={(e) =>
@@ -242,7 +473,7 @@ export function TaskBuilder({
                         dispatch({ tipo: "seccion", valor: v });
                     }}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger disabled={estructuraFija}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -270,6 +501,7 @@ export function TaskBuilder({
                     <Input
                       autoComplete="off"
                       placeholder="Ej. Cuenta Canva Pro por 3 meses"
+                      readOnly={cerrada}
                       leading={<Gift aria-hidden="true" />}
                       value={tarea.premio}
                       onChange={(e) =>
@@ -300,6 +532,7 @@ export function TaskBuilder({
                   numero={i + 1}
                   errores={errores.preguntas[p.id]}
                   puedeEliminar={tarea.preguntas.length > MIN_PREGUNTAS}
+                  bloqueada={estructuraFija}
                   onCambio={(cambios) =>
                     dispatch({ tipo: "editar", id: p.id, cambios })
                   }
@@ -307,110 +540,111 @@ export function TaskBuilder({
                 />
               ))}
             </ol>
-            <div className="flex flex-col gap-1.5">
-              {/* Zona punteada `.drop` en `--accent-ink` (lienzo) */}
-              <button
-                id={AGREGAR_ID}
-                type="button"
-                disabled={lleno}
-                aria-describedby={lleno ? ids.max : undefined}
-                onClick={agregar}
-                className={cn(
-                  "flex min-h-11 w-full cursor-pointer items-center justify-center gap-3 rounded-md border-2 border-dashed border-accent-ink p-4 text-button text-accent-ink",
-                  "transition-colors duration-fast ease-krea hover:not-disabled:bg-accent-soft",
-                  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
-                  "disabled:cursor-not-allowed disabled:border-input disabled:text-text-dis",
-                  "[&_svg]:size-5 [&_svg]:shrink-0",
-                )}
-              >
-                <Plus aria-hidden="true" />
-                Agregar pregunta
-              </button>
-              {lleno ? (
-                <p id={ids.max} className="text-small text-text-2">
-                  {MAX_PREGUNTAS_TEXTO}
-                </p>
-              ) : null}
-            </div>
+            {estructuraFija ? null : (
+              <div className="flex flex-col gap-1.5">
+                {/* Zona punteada `.drop` en `--accent-ink` (lienzo) */}
+                <button
+                  id={AGREGAR_ID}
+                  type="button"
+                  disabled={lleno}
+                  aria-describedby={lleno ? ids.max : undefined}
+                  onClick={agregar}
+                  className={cn(
+                    "flex min-h-11 w-full cursor-pointer items-center justify-center gap-3 rounded-md border-2 border-dashed border-accent-ink p-4 text-button text-accent-ink",
+                    "transition-colors duration-fast ease-krea hover:not-disabled:bg-accent-soft",
+                    "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
+                    "disabled:cursor-not-allowed disabled:border-input disabled:text-text-dis",
+                    "[&_svg]:size-5 [&_svg]:shrink-0",
+                  )}
+                >
+                  <Plus aria-hidden="true" />
+                  Agregar pregunta
+                </button>
+                {lleno ? (
+                  <p id={ids.max} className="text-small text-text-2">
+                    {MAX_PREGUNTAS_TEXTO}
+                  </p>
+                ) : null}
+              </div>
+            )}
           </section>
 
-          {/* < 1024: "Guardar borrador" en la topbar (página real) o en el flujo (vista previa) */}
-          <div className="flex flex-col gap-2 lg:hidden">
-            {guardarEnTopbar ? (
-              <TopBarAccion>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={guardar}
-                >
-                  Guardar borrador
-                </Button>
-              </TopBarAccion>
-            ) : (
-              <Button type="button" variant="secondary" block onClick={guardar}>
-                Guardar borrador
-              </Button>
-            )}
-            {notaPublicar}
-          </div>
+          {/* < 1024: "Guardar borrador" en la topbar (página real) o en el flujo (vista previa);
+              en una publicada, "Cerrar tarea" en el flujo */}
+          {cerrada ? null : (
+            <div className="flex flex-col gap-2 lg:hidden">
+              {!esBorrador ? (
+                botonCerrar
+              ) : guardarEnTopbar ? (
+                <TopBarAccion>{botonGuardarBorrador(true)}</TopBarAccion>
+              ) : (
+                botonGuardarBorrador(false)
+              )}
+              {notaPublicar}
+            </div>
+          )}
         </div>
 
         {/* ≥ 1024: columna de 360 sticky a 24 */}
         <div className="sticky top-6 flex flex-col gap-6 max-lg:hidden">
           <SumMeter sum={suma} variant="card" headingLevel={2} />
-          <div className="flex flex-col gap-2">
-            <Button
-              type="button"
-              size="lg"
-              block
-              disabled={motivo !== null}
-              aria-describedby={motivo ? ids.motivo : undefined}
-              onClick={publicar}
-            >
-              <Send aria-hidden="true" />
-              Publicar tarea
-            </Button>
-            {motivo ? (
-              <p id={ids.motivo} className="sr-only">
-                {motivo}
-              </p>
-            ) : null}
-            <Button type="button" variant="secondary" block onClick={guardar}>
-              Guardar borrador
-            </Button>
-            {notaPublicar}
-          </div>
+          {cerrada ? null : (
+            <div className="flex flex-col gap-2">
+              <Button
+                type="button"
+                size="lg"
+                block
+                disabled={motivo !== null || pendiente}
+                aria-busy={pendiente || undefined}
+                aria-describedby={motivo ? ids.motivo : undefined}
+                onClick={publicar}
+              >
+                <IconoPublicar aria-hidden="true" />
+                {textoPublicar}
+              </Button>
+              {motivo ? (
+                <p id={ids.motivo} className="sr-only">
+                  {motivo}
+                </p>
+              ) : null}
+              {esBorrador ? botonGuardarBorrador(false) : botonCerrar}
+              {notaPublicar}
+            </div>
+          )}
         </div>
       </div>
 
       {/* < 1024: barra de acción (§8 pide `bottom: 0` sin barra inferior: pendiente de la fase 05) */}
-      <ActionBar className="lg:hidden">
-        <p
-          id={ids.motivoMovil}
-          className={cn(
-            "min-w-0 flex-1 text-small-b",
-            METER_TEXT_CLASSES[SUM_STATE_TONE[info.state]],
-          )}
-        >
-          {motivo ? (
-            <>
-              <span className="sr-only">{motivo}</span>
-              <span aria-hidden="true">{info.message}</span>
-            </>
-          ) : (
-            info.message
-          )}
-        </p>
-        <Button
-          type="button"
-          disabled={motivo !== null}
-          aria-describedby={motivo ? ids.motivoMovil : undefined}
-          onClick={publicar}
-        >
-          Publicar tarea
-        </Button>
-      </ActionBar>
+      {cerrada ? null : (
+        <ActionBar className="lg:hidden">
+          <p
+            id={ids.motivoMovil}
+            className={cn(
+              "min-w-0 flex-1 text-small-b",
+              METER_TEXT_CLASSES[SUM_STATE_TONE[info.state]],
+            )}
+          >
+            {motivo ? (
+              <>
+                <span className="sr-only">{motivo}</span>
+                <span aria-hidden="true">{info.message}</span>
+              </>
+            ) : (
+              info.message
+            )}
+          </p>
+          <Button
+            type="button"
+            disabled={motivo !== null || pendiente}
+            aria-busy={pendiente || undefined}
+            aria-describedby={motivo ? ids.motivoMovil : undefined}
+            onClick={publicar}
+          >
+            {textoPublicar}
+          </Button>
+        </ActionBar>
+      )}
+      {esBorrador || cerrada ? null : dialogoCerrar}
     </div>
   );
 }
