@@ -10,36 +10,66 @@
  * The local backend is picked by what the project has:
  *   - `supabase/config.toml` → Supabase stack in Docker (below).
  *   - `firebase.json` with `emulators` → Firebase emulators (needs Java; see "Firebase").
- *   - neither → the normal server: there is no external database to replace.
+ *   - `drizzle.config.*`, without Firebase and without Supabase in use → Postgres (below).
+ *     `--postgres` forces it while a project is migrating off Supabase and still has both.
+ *   - neither → the normal server: there is no external database to replace. It still aborts
+ *     if a `.env*` variable points at the VPS.
+ *
+ * Postgres (a project on the VPS Postgres, kit `reference/tech/vps-postgres.md`; built by
+ * world-flags in its migration):
+ *   1. A Postgres 17 container per project (`qa-<package name>-pg`) and Mailpit
+ *      (`qa-<package name>-mailpit`), reused if running, on free ports. They stay up afterwards.
+ *   2. One database per QA port (`qa_<port>`, so slots do not collide), owned by a role that is
+ *      not a superuser, like the real one. Dropped and recreated unless `--no-reset`. Then
+ *      `bun run db:migrate` and `drizzle/seed.sql`.
+ *   3. The server with `DATABASE_URL`/`DIRECT_URL` at the container and `SMTP_*` at Mailpit. Every
+ *      Supabase variable goes to a dead address: code not yet migrated cannot reach the real one.
+ *   4. Before printing `QA ready`, the `.env.test.local` accounts through Better Auth's sign-up
+ *      endpoint, then `email_verified = true` by SQL; the role in `assignRolePostgres`.
+ *   `--db-only` stops after step 2 and prints the URLs: for tests against the database, without
+ *   a server.
  *
  * Supabase:
- *   1. `supabase start` (Docker Desktop running): the project's local stack. If the first
- *      start fails, it is retried once: the first one on a machine failed with
- *      `StatusDbNotRunningError` and the second worked, three times (world-flags).
+ *   1. `supabase start` (Docker Desktop running): the project's local stack, with Auth's
+ *      `site_url` = `http://localhost:<port>` and that origin (and 127.0.0.1's) added to the
+ *      redirect URLs. Why: config.toml says 127.0.0.1:3000 and the QA server is on another
+ *      port, so the confirmation, email-change and recovery links did not come back to it and
+ *      wave-qa followed them by hand (melao ×5). If the stack is already running with another
+ *      `site_url` (another port), it is stopped first, keeping its data. Up to 3 attempts with a
+ *      `supabase stop` between them, and the database container's log if the last one fails:
+ *      the first start on a machine failed with `StatusDbNotRunningError` (world-flags ×3) and
+ *      storage's "Starting database from backup" twice in a row (melao).
  *   2. `supabase db reset`: an empty database with the current tree's migrations and seed
- *      (in a pool slot, `main`'s), with its output live (it takes minutes). The local
- *      database is disposable: keep nothing in it.
- *   3. Creates the `.env.test.local` test accounts in that database (local stack's Auth):
+ *      (in a pool slot, `main`'s), with its output live (it takes minutes). If it fails
+ *      (`DbSetupError`, melao ×2), stop + start + reset once more. The local database is
+ *      disposable: keep nothing in it.
+ *   3. Creates the `.env.test.local` test accounts in that database (local stack's Auth admin
+ *      API, already confirmed):
  *        EMAIL_TEST / PASSWORD_TEST              → role "user"
  *        ADMIN_EMAIL_TEST / ADMIN_PASSWORD_TEST  → role "admin"
  *        <ROLE>_EMAIL_TEST / <ROLE>_PASSWORD_TEST → role "<role>"
  *      The role goes to `app_metadata.role`. If the project decides it some other way, that
- *      is the only project-specific part:
- *        - role in a table (`profiles`) or access through a subscription/plan → `assignRole`;
- *        - role by a list of emails in a variable (`ADMIN_EMAILS`) → `ROLE_BY_ENV`.
+ *      is the only project-specific part, and it lives in `scripts/qa-roles.ts` (the kit
+ *      never replaces it): a table or a subscription → `assignRole`; a list of emails in a
+ *      variable → `ROLE_BY_ENV`.
  *   4. Starts `bun run dev -- --port <port>` with the Supabase variables pointing at the
- *      local stack. They go through process.env, which beats the `.env*` files in both Next
- *      and Vite (Astro, SvelteKit…): no file is written and the slot stays clean.
+ *      local stack and `<prefix>SITE_URL` = `http://localhost:<port>` (it was the production
+ *      URL of `.env.local`, and `emailRedirectTo` took it: melao). They go through
+ *      process.env, which beats the `.env*` files in both Next and Vite (Astro, SvelteKit…):
+ *      no file is written and the slot stays clean.
+ *   It warns if `config.toml` has `enable_confirmations` or `double_confirm_changes` off:
+ *   then local sign-up skips a confirmation the hosted project asks for, and a repro that
+ *   passes here may not pass there (melao).
  *
  * Firebase (`firebase.json` with an `emulators` block):
  *   1. Starts the emulators (`bun run emulators` if the project has that script, otherwise
- *      `bun x firebase emulators:start`) with the project `FIREBASE_QA_PROJECT` (`demo-*`:
+ *      `bunx firebase emulators:start`) with the project `FIREBASE_QA_PROJECT` (`demo-*`:
  *      the emulators then cannot reach real resources) and waits up to 4 minutes: the first
  *      start on a machine took more than 90 s (inversiones-js). If they are already
  *      listening, it uses them. The emulators start empty and go down with this script.
  *   2. `scripts/seed-emulator.ts` if the project has it (skipped with `--no-reset`).
  *   3. The same `.env.test.local` accounts, in the Auth emulator, with the role as a custom
- *      claim (`role`). Role in a Firestore document (`admins/{uid}`) → `assignRoleFirebase`.
+ *      claim (`role`). Role in a Firestore document (`admins/{uid}`) → `assignRoleFirebase` in `scripts/qa-roles.ts`.
  *   4. The server with `FIREBASE_AUTH_EMULATOR_HOST`/`FIRESTORE_EMULATOR_HOST` (the Admin SDK
  *      reads them), `<prefix>USE_EMULATORS=true` and `<prefix>FIREBASE_PROJECT_ID` for the
  *      client. The client code has to honour that flag (`connectAuthEmulator`,
@@ -59,6 +89,12 @@
  * Windows: `taskkill /PID <this script's pid> /T /F` (with /T the server goes down too; a
  * plain kill leaves the child orphaned on the port).
  *
+ * Once the server answers it warms `/` and each `--warm <route,route>` (a first `GET /` in
+ * dev took 178 s and Playwright gives up at 30: melao) and then prints one line to wait for:
+ *   QA ready: http://localhost:<port>
+ * Wait for that line in the log (`.qa/dev.log`), not for a process: `pgrep` does not exist in
+ * Git Bash and `until … ! pgrep` returned at once (melao).
+ *
  * Astro ≥ 7 detaches `astro dev`/`astro preview` into the background when it detects an
  * agent: the script exited with 0 and the server was left orphaned (world-flags). The server
  * starts with `ASTRO_DEV_BACKGROUND=0` and `ASTRO_PREVIEW_BACKGROUND=0` (foreground, so the
@@ -69,7 +105,9 @@
  * Safety: before starting, if any `.env*` variable points to a remote Supabase
  * (`*.supabase.co`) and this script does not override it, it aborts. Better not to start
  * than to test against the real database because of a variable with a different name.
- * With Firebase, it aborts if `FIREBASE_QA_PROJECT` does not start with `demo-`.
+ * With Firebase, it aborts if `FIREBASE_QA_PROJECT` does not start with `demo-`. The same for
+ * a variable at the VPS (`:6432`, the tunnel's `:5433`, or `KIT_VPS_HOST`) left without override:
+ * a project developing against the VPS has the real URL in its `.env*`, like one on Supabase.
  *
  * Before anything it checks Playwright's Chromium (wave-qa needs it) and installs it if it is
  * missing, with node and the project's own Playwright: `bunx` was not on the PATH and the QA
@@ -82,8 +120,8 @@
  * ran out on the first start, and the default 2 emails per hour blocked repeating sign-up
  * tests (world-flags). The first start downloads the images and takes minutes.
  *
- * Emails the app sends (sign-up, recovery) do not go out: Mailpit (Supabase) or the Auth
- * emulator's UI (Firebase) collects them.
+ * Emails the app sends (sign-up, recovery) do not go out: Mailpit (Supabase, Postgres) or the
+ * Auth emulator's UI (Firebase) collects them.
  *
  * Test passwords are never printed. The stack's local keys are public (the same on every
  * install) and are not secrets.
@@ -95,6 +133,35 @@
 import { type ChildProcess, spawn, spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { connect } from "node:net";
+import { pathToFileURL } from "node:url";
+
+// The project's part (scripts/qa-roles.ts). Without the file, the defaults: role in
+// app_metadata / the custom claim, nothing else. Typed here, not imported: a project without
+// the file must still typecheck.
+type Headers = Record<string, string>;
+interface QaRoles {
+  ROLE_BY_ENV: Record<string, string>;
+  EXTRA_ENV_MAP: Record<string, string>;
+  assignRole(
+    id: string,
+    role: string,
+    ctx: { api: string; headers: Headers },
+  ): Promise<void>;
+  assignRoleFirebase(
+    uid: string,
+    email: string,
+    role: string,
+    ctx: { firestore: string; project: string; headers: Headers },
+  ): Promise<void>;
+  assignRolePostgres(
+    id: string,
+    role: string,
+    ctx: { sql: (statement: string) => string },
+  ): Promise<void>;
+}
+const roles: Partial<QaRoles> = existsSync("scripts/qa-roles.ts")
+  ? await import(pathToFileURL("scripts/qa-roles.ts").href)
+  : {};
 
 // App variable ← field of `supabase status -o json`, for Next (NEXT_PUBLIC_*), Vite (VITE_*)
 // and Astro (PUBLIC_*). Add the one your project uses here if it has another name (the
@@ -110,14 +177,11 @@ Object.assign(ENV_MAP, {
   SUPABASE_SECRET_KEY: "SECRET_KEY",
   DATABASE_URL: "DB_URL",
   DIRECT_URL: "DB_URL",
+  ...roles.EXTRA_ENV_MAP,
 });
 
-// Role decided by a list of emails in an environment variable (e.g. the app treats an email
-// in ADMIN_EMAILS as admin): role → variable. The script fills it with that role's test
-// emails when starting the server. Empty if the role lives in the database.
-const ROLE_BY_ENV: Record<string, string> = {
-  // admin: 'ADMIN_EMAILS',
-};
+// Role by a list of emails in a variable: in scripts/qa-roles.ts.
+const ROLE_BY_ENV: Record<string, string> = roles.ROLE_BY_ENV ?? {};
 
 const pkg = existsSync("package.json")
   ? JSON.parse(readFileSync("package.json", "utf8"))
@@ -137,13 +201,27 @@ const args = process.argv.slice(2);
 const port = args[args.indexOf("--port") + 1];
 if (!args.includes("--port") || !/^\d+$/.test(port ?? "")) {
   console.error(
-    "Usage: node scripts/qa-local.ts --port <port> [--no-reset] [--offline] [--preview]",
+    "Usage: node scripts/qa-local.ts --port <port> [--no-reset] [--offline] [--preview] [--warm /a,/b] [--postgres] [--db-only]",
   );
   process.exit(2);
 }
 const reset = !args.includes("--no-reset");
 const offline = args.includes("--offline");
 const preview = args.includes("--preview");
+const dbOnly = args.includes("--db-only");
+// Git Bash turns `/login` into `C:/Program Files/Git/login` (melao ×4): undone here.
+const unMsys = (p: string) =>
+  p
+    .replace(/^[A-Za-z]:[\\/]Program Files[\\/]Git(?=[\\/])/, "")
+    .replaceAll("\\", "/");
+const warm = args.includes("--warm")
+  ? (args[args.indexOf("--warm") + 1] ?? "")
+      .split(",")
+      .filter(Boolean)
+      .map(unMsys)
+  : [];
+// localhost and not 127.0.0.1: it is what config.toml's redirects and the app's cookies get.
+const SITE = `http://localhost:${port}`;
 
 // Processes this script starts (emulators, build, server): they go down with it.
 const children: ChildProcess[] = [];
@@ -262,33 +340,116 @@ const SUPABASE_ENV = {
   SUPABASE_ANALYTICS_ENABLED: "false",
   SUPABASE_DB_HEALTH_TIMEOUT: "5m",
   SUPABASE_AUTH_RATE_LIMIT_EMAIL_SENT: "1000",
+  // Email links back to this server, not to config.toml's 127.0.0.1:3000 (melao ×5).
+  SUPABASE_AUTH_SITE_URL: SITE,
+  SUPABASE_AUTH_ADDITIONAL_REDIRECT_URLS: `${SITE}/**,http://127.0.0.1:${port}/**`,
   ...process.env, // whatever César set wins
 };
 
-// `live`: output straight to the terminal (long steps), nothing returned.
-function supabase(a: string[], { retry = false, live = false } = {}): string {
-  const run = () =>
-    spawnSync("supabase", a, {
+type Run = ReturnType<typeof spawnSync>;
+// `live`: output straight to the terminal (long steps). Returns the result; never aborts.
+function supabaseRun(a: string[], live = false): Run {
+  return spawnSync("supabase", a, {
+    encoding: "utf8",
+    stdio: live ? "inherit" : "pipe",
+    shell: process.platform === "win32",
+    env: SUPABASE_ENV,
+  });
+}
+
+function supabaseFail(a: string[], r: Run, extra = ""): never {
+  const detail = String(r.stderr || r.stdout || "").trim();
+  const docker = /docker|daemon|pipe/i.test(detail)
+    ? "\n→ Is Docker Desktop running?"
+    : "";
+  abort(`supabase ${a.join(" ")} failed:\n${detail}${docker}${extra}`);
+}
+
+function supabase(a: string[]): string {
+  const r = supabaseRun(a);
+  if (r.status !== 0) supabaseFail(a, r);
+  return String(r.stdout ?? "");
+}
+
+// config.toml's project_id names the containers (supabase_db_<id>, supabase_auth_<id>).
+const configToml = existsSync("supabase/config.toml")
+  ? readFileSync("supabase/config.toml", "utf8")
+  : "";
+const projectId =
+  configToml.match(/^\s*project_id\s*=\s*"([^"]+)"/m)?.[1] ?? "";
+
+function dockerLogs(container: string): string {
+  const r = spawnSync("docker", ["logs", "--tail", "40", container], {
+    encoding: "utf8",
+  });
+  const out = `${r.stdout ?? ""}${r.stderr ?? ""}`.trim();
+  return out ? `\n── docker logs --tail 40 ${container}\n${out}` : "";
+}
+
+// Auth reads site_url only when its container starts: a stack already up for another port
+// keeps sending links there.
+function runningSiteUrl(): string | null {
+  if (!projectId) return null;
+  const r = spawnSync(
+    "docker",
+    [
+      "inspect",
+      "-f",
+      "{{range .Config.Env}}{{println .}}{{end}}",
+      `supabase_auth_${projectId}`,
+    ],
+    {
       encoding: "utf8",
-      stdio: live ? "inherit" : "pipe",
-      shell: process.platform === "win32",
-      env: SUPABASE_ENV,
-    });
-  let r = run();
-  if (r.status !== 0 && retry) {
+    },
+  );
+  if (r.status !== 0) return null;
+  return r.stdout.match(/^GOTRUE_SITE_URL=(.*)$/m)?.[1]?.trim() ?? null;
+}
+
+function supabaseStart(): void {
+  const current = runningSiteUrl();
+  if (current && current !== SITE) {
     console.log(
-      `… supabase ${a.join(" ")} failed; retrying once (the first start often does)`,
+      `… the local stack sends links to ${current}: restarting it for ${SITE} (data kept)`,
     );
-    r = run();
+    supabaseRun(["stop"]);
   }
-  if (r.status !== 0) {
-    const detail = (r.stderr || r.stdout || "").trim();
-    const docker = /docker|daemon|pipe/i.test(detail)
-      ? "\n→ Is Docker Desktop running?"
-      : "";
-    abort(`supabase ${a.join(" ")} failed:\n${detail}${docker}`);
+  const attempts = 3;
+  for (let i = 1; i <= attempts; i++) {
+    const r = supabaseRun(["start"]);
+    if (r.status === 0) return;
+    if (i === attempts)
+      supabaseFail(["start"], r, dockerLogs(`supabase_db_${projectId}`));
+    console.log(
+      `… supabase start failed (attempt ${i}/${attempts}); supabase stop and again`,
+    );
+    supabaseRun(["stop"]);
   }
-  return r.stdout ?? "";
+}
+
+function supabaseReset(): void {
+  let r = supabaseRun(["db", "reset"], true);
+  if (r.status === 0) return;
+  console.log(
+    "… supabase db reset failed; supabase stop + start and once more",
+  );
+  supabaseRun(["stop"]);
+  supabaseStart();
+  r = supabaseRun(["db", "reset"], true);
+  if (r.status !== 0)
+    abort(
+      `supabase db reset failed twice (output above).${dockerLogs(`supabase_db_${projectId}`)}`,
+    );
+}
+
+// Local sign-up without the confirmations the hosted project asks for: a repro passes here
+// and not there, and it hid the double confirmation of an email change (melao).
+for (const key of ["enable_confirmations", "double_confirm_changes"]) {
+  if (new RegExp(`^\\s*${key}\\s*=\\s*false`, "m").test(configToml)) {
+    console.warn(
+      `! supabase/config.toml: ${key} = false. If the hosted project has it on, local QA skips that step.`,
+    );
+  }
 }
 
 function launch(
@@ -305,13 +466,58 @@ function launch(
   return child;
 }
 
+// Waits for the server to answer, then requests `/` and the --warm routes once each (a cold
+// first compile took 178 s: melao), and prints the line to wait for.
+async function warmUp(beforeReady?: () => Promise<void>): Promise<void> {
+  const deadline = Date.now() + 10 * 60_000;
+  while (Date.now() < deadline) {
+    // IPv4 or IPv6, like `taken`: Astro 7 listens only on [::1] and this loop ran its whole 10
+    // minutes before warming (world-flags).
+    if (
+      (await answers("127.0.0.1", Number(port))) ||
+      (await answers("::1", Number(port)))
+    )
+      break;
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+  for (const route of ["/", ...warm]) {
+    const started = Date.now();
+    try {
+      const r = await fetch(
+        `${SITE}${route.startsWith("/") ? route : `/${route}`}`,
+        {
+          redirect: "manual",
+          signal: AbortSignal.timeout(5 * 60_000),
+        },
+      );
+      console.log(
+        `  ~ warmed ${route} (${r.status}, ${Math.round((Date.now() - started) / 1000)} s)`,
+      );
+    } catch (e) {
+      console.warn(`! warming ${route} failed: ${(e as Error).message}`);
+    }
+  }
+  // Caught: a throw here left the server orphaned with no message (world-flags).
+  await beforeReady?.().catch((e: Error) =>
+    abort(`Before QA ready: ${e.message}`),
+  );
+  console.log(`QA ready: ${SITE}`);
+}
+
 // Never returns: the script lives as long as the server does.
-async function startServer(base: NodeJS.ProcessEnv): Promise<never> {
-  const env = {
+async function startServer(
+  base: NodeJS.ProcessEnv,
+  beforeReady?: () => Promise<void>,
+): Promise<never> {
+  const env: NodeJS.ProcessEnv = {
     ...base,
     ASTRO_DEV_BACKGROUND: "0",
     ASTRO_PREVIEW_BACKGROUND: "0",
   };
+  // The app's own URL (emailRedirectTo, absolute links) is this server, not production's.
+  for (const prefix of ["", "NEXT_PUBLIC_", "PUBLIC_", "VITE_"])
+    env[`${prefix}SITE_URL`] = SITE;
+  env.BETTER_AUTH_URL = SITE;
   let script = "dev";
   if (preview) {
     script = pkgScripts.preview ? "preview" : "start";
@@ -332,6 +538,7 @@ async function startServer(base: NodeJS.ProcessEnv): Promise<never> {
     stopAll();
     process.exit(code ?? 0);
   });
+  await warmUp(beforeReady);
   return new Promise<never>(() => {});
 }
 
@@ -363,26 +570,265 @@ const remote = envFiles.flatMap((f) =>
     .map(([k]) => ({ file: f, key: k })),
 );
 
+// …or to the VPS? (`:5433` is the migrations tunnel.)
+const vpsHost = process.env.KIT_VPS_HOST;
+const pointsAtVps = (v: string) =>
+  /:(6432|5433)\b/.test(v) || (vpsHost ? v.includes(vpsHost) : false);
+const atVps = envFiles.flatMap((f) =>
+  Object.entries(readEnv(f))
+    .filter(([, v]) => pointsAtVps(v))
+    .map(([k]) => ({ file: f, key: k })),
+);
+const listVars = (vars: { file: string; key: string }[]) =>
+  vars.map((r) => `  ${r.file}: ${r.key}`).join("\n");
+
+// Everything that could reach a database goes to an address where nobody listens.
+const dead = (k: string) =>
+  ENV_MAP[k] === "DB_URL"
+    ? "postgresql://offline@127.0.0.1:9/offline"
+    : /URL$/.test(k)
+      ? "http://127.0.0.1:9"
+      : "offline";
+
 if (offline) {
-  // Everything that could reach a database (ENV_MAP and any variable pointing to a remote
-  // Supabase) goes to an address where nobody listens.
-  const dead = (k: string) =>
-    ENV_MAP[k] === "DB_URL"
-      ? "postgresql://offline@127.0.0.1:9/offline"
-      : /URL$/.test(k)
-        ? "http://127.0.0.1:9"
-        : "offline";
+  // ENV_MAP and any variable pointing to a remote database.
   const env: NodeJS.ProcessEnv = {
     ...process.env,
     QA_LOCAL: "1",
     QA_OFFLINE: "1",
   };
-  for (const k of [...Object.keys(ENV_MAP), ...remote.map((r) => r.key)])
+  for (const k of [
+    ...Object.keys(ENV_MAP),
+    ...remote.map((r) => r.key),
+    ...atVps.map((r) => r.key),
+  ])
     env[k] = dead(k);
   console.log(
     "--offline: no database. The database variables point to 127.0.0.1:9; guest testing only.",
   );
   await startServer(env);
+}
+
+// ── Postgres ────────────────────────────────────────────────────────────────────────────
+const hasDrizzle = ["ts", "js", "mjs"].some((e) =>
+  existsSync(`drizzle.config.${e}`),
+);
+const usesSupabase =
+  existsSync("supabase/config.toml") &&
+  Boolean(pkg.dependencies?.["@supabase/supabase-js"]);
+if (
+  args.includes("--postgres") ||
+  (hasDrizzle && !usesSupabase && !existsSync("firebase.json"))
+) {
+  // Same rule as *.supabase.co, and before anything starts: better not to start than to test
+  // against the real database.
+  const uncoveredVps = atVps.filter((r) => !(r.key in ENV_MAP));
+  if (uncoveredVps.length) {
+    abort(
+      `These variables point at the VPS and the script does not override them (add them to ENV_MAP):\n${listVars(uncoveredVps)}`,
+    );
+  }
+
+  const slug = String(pkg.name ?? "app")
+    .replace(/^@[^/]+\//, "")
+    .replace(/[^a-z0-9-]/gi, "-")
+    .toLowerCase();
+  const PG = `qa-${slug}-pg`;
+  const MAILPIT = `qa-${slug}-mailpit`;
+  const DB = `qa_${port}`;
+  const ROLE = "qa_app";
+
+  const docker = (a: string[], input?: string) =>
+    spawnSync("docker", a, { encoding: "utf8", input });
+
+  const version = docker(["version", "--format", "{{.Server.Version}}"]);
+  if (version.status !== 0)
+    abort(
+      `Docker does not answer. Is Docker Desktop running?\n${version.stderr}`,
+    );
+
+  async function freePort(from: number): Promise<number> {
+    for (let p = from; p < from + 200; p++) {
+      if (!(await answers("127.0.0.1", p)) && !(await answers("::1", p)))
+        return p;
+    }
+    abort(`No free port from ${from}.`);
+  }
+
+  function mappedPort(container: string, internal: number): number {
+    const found = docker(["port", container, String(internal)]).stdout?.match(
+      /:(\d+)\s*$/m,
+    )?.[1];
+    if (!found) abort(`${container} does not publish port ${internal}.`);
+    return Number(found);
+  }
+
+  function ensureRunning(container: string, runArgs: string[]): void {
+    const state = docker(["inspect", "-f", "{{.State.Running}}", container]);
+    if (state.status === 0 && state.stdout.trim() === "true") {
+      console.log(`= ${container} already running`);
+      return;
+    }
+    const r =
+      state.status === 0
+        ? docker(["start", container])
+        : docker(["run", "-d", "--name", container, ...runArgs]);
+    if (r.status !== 0)
+      abort(
+        `Could not start ${container}:\n${r.stderr}${dockerLogs(container)}`,
+      );
+    console.log(`+ ${container} started`);
+  }
+
+  console.log(
+    "… Postgres and Mailpit in Docker (the first time: image downloads)",
+  );
+  ensureRunning(PG, [
+    "-e",
+    "POSTGRES_PASSWORD=postgres",
+    "-p",
+    `127.0.0.1:${await freePort(54329)}:5432`,
+    "postgres:17",
+  ]);
+  const smtpFree = await freePort(54325);
+  ensureRunning(MAILPIT, [
+    "-p",
+    `127.0.0.1:${smtpFree}:1025`,
+    "-p",
+    `127.0.0.1:${await freePort(Math.max(54326, smtpFree + 1))}:8025`,
+    "axllent/mailpit",
+  ]);
+  const pgPort = mappedPort(PG, 5432);
+  const smtpPort = mappedPort(MAILPIT, 1025);
+  const mailUi = mappedPort(MAILPIT, 8025);
+
+  // TCP, not the socket: during the image's init Postgres only listens on the socket.
+  let ready = false;
+  for (let i = 0; i < 120 && !ready; i++) {
+    ready =
+      docker([
+        "exec",
+        PG,
+        "psql",
+        "-h",
+        "127.0.0.1",
+        "-U",
+        "postgres",
+        "-c",
+        "select 1",
+      ]).status === 0;
+    if (!ready) await new Promise((r) => setTimeout(r, 1000));
+  }
+  if (!ready) abort(`Postgres did not answer in 2 minutes.${dockerLogs(PG)}`);
+
+  const sqlIn = (db: string, statement: string): string => {
+    const r = docker(
+      [
+        "exec",
+        "-i",
+        PG,
+        "psql",
+        "-U",
+        "postgres",
+        "-d",
+        db,
+        "-v",
+        "ON_ERROR_STOP=1",
+        "-qAt",
+      ],
+      statement,
+    );
+    if (r.status !== 0) abort(`SQL failed on ${db}:\n${r.stderr}`);
+    return r.stdout.trim();
+  };
+
+  sqlIn(
+    "postgres",
+    `do $$ begin
+      if not exists (select from pg_roles where rolname = '${ROLE}') then
+        create role ${ROLE} login password '${ROLE}';
+      end if;
+    end $$;`,
+  );
+  const dbExists =
+    sqlIn("postgres", `select 1 from pg_database where datname = '${DB}'`) ===
+    "1";
+  if (reset && dbExists) sqlIn("postgres", `drop database ${DB} with (force);`);
+  if (reset || !dbExists)
+    sqlIn("postgres", `create database ${DB} owner ${ROLE};`);
+
+  const databaseUrl = `postgresql://${ROLE}:${ROLE}@127.0.0.1:${pgPort}/${DB}`;
+
+  console.log("… bun run db:migrate");
+  const migrate = spawnSync("bun", ["run", "db:migrate"], {
+    stdio: "inherit",
+    shell: process.platform === "win32",
+    env: { ...process.env, DATABASE_URL: databaseUrl, DIRECT_URL: databaseUrl },
+  });
+  if (migrate.status !== 0) abort("bun run db:migrate failed.");
+  if (reset && existsSync("drizzle/seed.sql")) {
+    console.log("… drizzle/seed.sql");
+    sqlIn(DB, readFileSync("drizzle/seed.sql", "utf8"));
+  }
+
+  console.log(
+    `Local database: ${databaseUrl} · emails at http://127.0.0.1:${mailUi}`,
+  );
+  if (dbOnly) process.exit(0);
+
+  const env: NodeJS.ProcessEnv = { ...process.env, QA_LOCAL: "1" };
+  for (const k of [...Object.keys(ENV_MAP), ...remote.map((r) => r.key)])
+    env[k] = dead(k);
+  Object.assign(env, {
+    DATABASE_URL: databaseUrl,
+    DIRECT_URL: databaseUrl,
+    BETTER_AUTH_SECRET: "qa-local-secret-qa-local-secret-qa-local",
+    CRON_SECRET: "qa-local-cron",
+    SMTP_HOST: "127.0.0.1",
+    SMTP_PORT: String(smtpPort),
+    SMTP_USER: "",
+    SMTP_PASS: "",
+    SMTP_FROM: "QA <qa@example.test>",
+  });
+
+  await startServer(env, async () => {
+    for (const a of accounts) {
+      if (!a.email || !a.password) {
+        console.warn(
+          `! role ${a.role}: email or password missing in .env.test.local; skipped`,
+        );
+        continue;
+      }
+      const r = await fetch(`${SITE}/api/auth/sign-up/email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Origin: SITE },
+        body: JSON.stringify({
+          email: a.email,
+          password: a.password,
+          name: a.role,
+        }),
+      });
+      if (r.status === 404) {
+        console.warn(
+          "! The app has no Better Auth sign-up route yet: test accounts skipped.",
+        );
+        return;
+      }
+      const email = a.email.replaceAll("'", "''");
+      const id = sqlIn(
+        DB,
+        `update public."user" set email_verified = true where email = '${email}' returning id;`,
+      );
+      if (!id)
+        abort(
+          `Could not create the account for role ${a.role}: ${r.status} ${await r.text()}`,
+        );
+      await roles.assignRolePostgres?.(id, a.role, {
+        sql: (statement) => sqlIn(DB, statement),
+      });
+      console.log(`  + test account: role ${a.role}`);
+    }
+  });
 }
 
 // ── Firebase ────────────────────────────────────────────────────────────────────────────
@@ -457,21 +903,6 @@ if (firebaseJson?.emulators && !existsSync("supabase/config.toml")) {
   };
   const authApi = `http://${AUTH}/identitytoolkit.googleapis.com/v1/projects/${FIREBASE_QA_PROJECT}`;
 
-  async function assignRoleFirebase(
-    uid: string,
-    email: string,
-    role: string,
-  ): Promise<void> {
-    // The role already goes as a custom claim (`role`). If your project keeps it in a
-    // Firestore document instead, write it here with the emulator's REST API, e.g.:
-    //   if (role === 'admin') await fetch(`http://${FIRESTORE}/v1/projects/${FIREBASE_QA_PROJECT}` +
-    //     `/databases/(default)/documents/admins/${uid}`, { method: 'PATCH', headers: owner,
-    //     body: JSON.stringify({ fields: { email: { stringValue: email } } }) })
-    void uid;
-    void email;
-    void role;
-  }
-
   for (const a of accounts) {
     if (!a.email || !a.password) {
       console.warn(
@@ -481,6 +912,8 @@ if (firebaseJson?.emulators && !existsSync("supabase/config.toml")) {
     }
     // KREA (D183): la cuenta de prueba es una CÉDULA del seed (scripts/seed-emulator.ts ya la
     // creó con uid = cédula y sus claims). Solo se le pone la contraseña de .env.test.local.
+    // No cabe en qa-roles.ts (que solo actúa después de crear la cuenta): re-aplicar tras
+    // cada actualización del kit que reemplace este script.
     if (/^\d{7,9}$/.test(a.email)) {
       const u = await fetch(`${authApi}/accounts:update`, {
         method: "POST",
@@ -516,7 +949,12 @@ if (firebaseJson?.emulators && !existsSync("supabase/config.toml")) {
           customAttributes: JSON.stringify({ role: a.role }),
         }),
       });
-      await assignRoleFirebase(body.localId, a.email, a.role);
+      // The role already goes as a custom claim; a Firestore document → scripts/qa-roles.ts.
+      await roles.assignRoleFirebase?.(body.localId, a.email, a.role, {
+        firestore: FIRESTORE,
+        project: FIREBASE_QA_PROJECT,
+        headers: owner,
+      });
       console.log(`  + test account: role ${a.role}`);
     } else if (body.error?.message === "EMAIL_EXISTS") {
       console.log(`  = test account: role ${a.role} (already existed)`);
@@ -549,6 +987,11 @@ if (!existsSync("supabase/config.toml")) {
         "\nQA does not run against the real database. It needs `supabase init` and the migrations in the repo (backend-build).",
     );
   }
+  if (atVps.length) {
+    abort(
+      `Some variables point at the VPS but the project has no drizzle.config.*:\n${listVars(atVps)}\nQA does not run against the real database. It needs the migrations in the repo (kit reference/tech/vps-postgres.md).`,
+    );
+  }
   console.log(
     "No supabase/config.toml nor Firebase emulators: no external database to replace. Normal server.",
   );
@@ -567,10 +1010,10 @@ if (uncovered.length) {
 console.log(
   "… supabase start (the first time it downloads the images: minutes)",
 );
-supabase(["start"], { retry: true });
+supabaseStart();
 if (reset) {
   console.log("… supabase db reset (migrations + seed; minutes)");
-  supabase(["db", "reset"], { live: true });
+  supabaseReset();
 }
 const status = JSON.parse(supabase(["status", "-o", "json"])) as Record<
   string,
@@ -581,21 +1024,8 @@ const serviceKey = status.SERVICE_ROLE_KEY;
 if (!api || !serviceKey)
   abort("supabase status did not return API_URL / SERVICE_ROLE_KEY");
 
-// 3. Test accounts.
-async function assignRole(id: string, role: string): Promise<void> {
-  // By default the role already goes into app_metadata when the account is created. If your
-  // project keeps it in a table, upsert it here with the local REST API, e.g.:
-  //   await fetch(`${api}/rest/v1/profiles`, { method: 'POST', headers: { ...headers,
-  //     Prefer: 'resolution=merge-duplicates' }, body: JSON.stringify({ id, role }) })
-  // If access depends on a subscription or a plan (without it, the user only sees the
-  // paywall), give the test account of the role that needs it access here, e.g.:
-  //   if (role === 'user') await fetch(`${api}/rest/v1/subscriptions`, { method: 'POST',
-  //     headers, body: JSON.stringify({ user_id: id, plan: 'pro', status: 'active' }) })
-  // If the role is decided by a list of emails in a variable, it is not here: ROLE_BY_ENV.
-  void id;
-  void role;
-}
-
+// 3. Test accounts, through the admin API and already confirmed: a repro that signs up and
+// expects a session at once depends on enable_confirmations = false (melao).
 const headers = {
   apikey: serviceKey,
   Authorization: `Bearer ${serviceKey}`,
@@ -620,7 +1050,8 @@ for (const a of accounts) {
   });
   if (r.ok) {
     const { id } = (await r.json()) as { id: string };
-    await assignRole(id, a.role);
+    // The role already goes in app_metadata; a table or a subscription → scripts/qa-roles.ts.
+    await roles.assignRole?.(id, a.role, { api, headers });
     console.log(`  + test account: role ${a.role}`);
   } else if (r.status === 422 && !reset) {
     console.log(`  = test account: role ${a.role} (already existed)`);

@@ -33,8 +33,9 @@ inventories, `PHASE_LOG/`. `grep` for the word or the ID and open only what come
 
 ```bash
 grep -rhi "^# D.*modal\|^# D.*ranking" context/decisions/   # already decided? Don't re-litigate it
-grep -n "Button" context/COMPONENTS_INVENTORY.md            # does it exist already?
 ```
+
+**The kit's `reference/…`** = `~/.claude/kit-reference/…` (or `.claude/kit-reference/…`).
 
 ---
 
