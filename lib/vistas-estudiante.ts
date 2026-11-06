@@ -715,6 +715,8 @@ export type EntregaVista =
             fecha: string | null;
             hora: string | null;
             evaluada: boolean;
+            /** Su nota y el desglose por pregunta (D248) si ya está evaluada; si no, `null`. */
+            notaHref: string | null;
             /** Por pregunta, en orden; `null` si no hay respuesta guardada. */
             respuestas: Array<RespuestaEnviada | null>;
           }
@@ -725,7 +727,9 @@ export const SIN_FECHA_ENTREGA = "Sin fecha de entrega";
 
 /**
  * /tareas/[tarea] según la sesión y los datos: `no-existe` (no es de su sección o borrador →
- * 404); `entregada` si ya hay una entrega enviada donde figura; si no, con la tarea abierta,
+ * 404); `entregada` si ya hay una entrega enviada donde figura (también los integrantes de una
+ * grupal: ven las respuestas del capitán y, evaluada, el enlace a su nota; D248); si no, con la
+ * tarea abierta,
  * `responder` (individual, o grupal y es el capitán, D012) o `lector` (grupal, no capitán);
  * `sin-equipo` (grupal sin equipo); `cerrada` (ya no está abierta y no la entregó).
  */
@@ -767,6 +771,7 @@ export function entregaVista(
         e.enviadaEn !== null ? formatFecha(diaDeInstante(e.enviadaEn)) : null,
       hora: e.enviadaEn !== null ? horaDeInstante(e.enviadaEn) : null,
       evaluada: e.estado === "evaluada",
+      notaHref: e.estado === "evaluada" ? `/notas/${t.id}` : null,
       respuestas: t.preguntas.map((p): RespuestaEnviada | null => {
         const r = e.respuestas[p.id];
         if (!r) return null;

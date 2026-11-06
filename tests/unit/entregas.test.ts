@@ -26,6 +26,7 @@ import { ANSWER_MAX_LENGTH } from "@/lib/question";
 import { claveBorrador, leerBorrador } from "@/lib/tareas";
 import {
   type ConId,
+  detalleNota,
   entregaVista,
   SIN_FECHA_ENTREGA,
   tareasVista,
@@ -544,6 +545,115 @@ describe("entregaVista", () => {
       companeros,
     );
     expect(v.estado).toBe("responder");
+  });
+});
+
+// D248: lo que ve cada quien en una grupal (capitán / integrante / ajeno × abierta / enviada / evaluada)
+describe("entregaVista grupal por persona (D248)", () => {
+  const companeros = [CAPITAN, INTEGRANTE];
+  // Del mismo equipo pero que no figura en `integrantes` (entró después de la entrega)
+  const TARDIO = usuario("33111222", { nombres: "Luis", apellidos: "Mora" });
+  // De otro equipo de la sección
+  const AJENO = usuario("33999000", { equipoId: "5a-g3" });
+  const evaluada = (extra: Partial<ConId<Entrega>> = {}) =>
+    entrega(GRUPAL, {
+      estado: "evaluada",
+      evaluacion: {
+        puntos: { p1: 10, p2: 6 },
+        comentarios: {},
+        puntaje: 16,
+        evaluadaPor: null,
+        evaluadaEn: AHORA,
+      },
+      ...extra,
+    });
+
+  test("abierta sin enviar: el integrante ve las preguntas sin poder responder", () => {
+    const v = entregaVista(datos(INTEGRANTE, [GRUPAL]), GRUPAL.id, companeros);
+    if (v.estado !== "lector") throw new Error(v.estado);
+    expect(v.preguntas.map((p) => [p.enunciado, p.formato, p.valor])).toEqual([
+      ["Sube una foto", "imagen", 12],
+      ["¿A qué precio?", "texto", 8],
+    ]);
+    expect(v.capitan).toMatchObject({ corto: "Yeilin" });
+  });
+
+  test("enviada: el integrante ve las respuestas del capitán, no el formulario", () => {
+    const v = entregaVista(
+      datos(INTEGRANTE, [GRUPAL], [entrega(GRUPAL)]),
+      GRUPAL.id,
+      companeros,
+    );
+    if (v.estado !== "entregada") throw new Error(v.estado);
+    expect(v).toMatchObject({
+      quien: "Yeilin Duarte",
+      autor: "Yeilin",
+      evaluada: false,
+      notaHref: null,
+    });
+    expect(v.respuestas).toEqual([
+      { tipo: "imagen", imagenPath: "entregas/presentacion/abc/x.jpg" },
+      { tipo: "texto", texto: "A 2 dólares" },
+    ]);
+  });
+
+  test("evaluada: el integrante llega a su nota y al desglose", () => {
+    const v = entregaVista(
+      datos(INTEGRANTE, [GRUPAL], [evaluada()]),
+      GRUPAL.id,
+      companeros,
+    );
+    expect(v).toMatchObject({
+      estado: "entregada",
+      evaluada: true,
+      notaHref: "/notas/presentacion",
+    });
+    const d = detalleNota(datos(INTEGRANTE, [GRUPAL], [evaluada()]), GRUPAL.id);
+    if (d.estado !== "ok") throw new Error(d.estado);
+    expect(d.final).toBe(16);
+    expect(d.autor).toBe("tu equipo");
+    expect(d.preguntas.map((p) => p.obtenido)).toEqual([10, 6]);
+  });
+
+  test("el capitán ve lo mismo una vez enviada", () => {
+    const v = entregaVista(
+      datos(CAPITAN, [GRUPAL], [evaluada()]),
+      GRUPAL.id,
+      companeros,
+    );
+    expect(v).toMatchObject({
+      estado: "entregada",
+      notaHref: "/notas/presentacion",
+    });
+  });
+
+  test("quien no figura en la entrega no ve ni respuestas ni nota (como antes)", () => {
+    const abierta = entregaVista(
+      // `datosAlumno` solo trae las entregas donde figura: para TARDIO la lista llega vacía
+      datos(TARDIO, [GRUPAL]),
+      GRUPAL.id,
+      [...companeros, TARDIO],
+    );
+    expect(abierta.estado).toBe("lector");
+    const cerrada = { ...GRUPAL, estado: "evaluada" as const };
+    expect(entregaVista(datos(TARDIO, [cerrada]), cerrada.id, []).estado).toBe(
+      "cerrada",
+    );
+    expect(detalleNota(datos(TARDIO, [GRUPAL]), GRUPAL.id).estado).toBe(
+      "sin-detalle",
+    );
+  });
+
+  test("un alumno de otro equipo no responde la grupal de este", () => {
+    const v = entregaVista(
+      {
+        ...datos(AJENO, [GRUPAL]),
+        equipo: { ...EQUIPO, id: "5a-g3", capitanId: "otro" },
+      },
+      GRUPAL.id,
+      [],
+    );
+    expect(v.estado).toBe("lector");
   });
 });
 
