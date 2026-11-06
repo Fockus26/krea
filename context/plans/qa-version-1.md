@@ -24,10 +24,10 @@ Informes completos: [`qa-version-1-functional.md`](qa-version-1-functional.md) �
 | D-M3 | Medio | Ranking 320 px: nombre recortado en filas con «Empate» | wt3 `1-…` | `fix/ranking-estrecho` · #72 (D226) |
 | D-M4 | Medio | Foco con Tab tapado por la barra inferior | wt3 `6-…` | `fix/scroll-padding` · #68 |
 | F-B1 | Bajo | Contraseña de 8 espacios aceptada | wt2 `8-…` | con F-M2 |
-| F-B2 | Bajo | Tarea con fecha 31/12/9999 | wt2 `4-…` | decisión (D) |
-| F-B3 | Bajo | Pregunta de imagen entregada con ruta inventada | wt2 `5-…` | decisión (D) |
-| F-B4 | Bajo | Error de B2 mostrado como «Revisa tu conexión» | wt2 `9-…` | decisión (D) |
-| D-B1..3 | Bajo | Título «Nueva t…» a 320 px · `public/next.svg` sin uso · meta robots duplicado | — | decisión (D) |
+| F-B2 | Bajo | Tarea con fecha 31/12/9999 | wt2 `4-…` | #74 (D228) |
+| F-B3 | Bajo | Pregunta de imagen entregada con ruta inventada | wt2 `5-…` | #75 (D229) |
+| F-B4 | Bajo | Error de B2 mostrado como «Revisa tu conexión» | wt2 `9-…` | #75 (D229) |
+| D-B1..3 | Bajo | Título «Nueva t…» a 320 px · `public/next.svg` sin uso · meta robots duplicado | — | #76 (D230) · D-B3 en D225 |
 
 Sospechas descartadas (PASS en main, quedan como regresión): bucle con sesión revocada (`1-…`), id con `%2F` (`6-…`).
 

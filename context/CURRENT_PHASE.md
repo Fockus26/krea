@@ -6,7 +6,7 @@
 ## Now
 
 **Phase:** 08 — Responsive y pulido · **cerrada** (2026-11-05, #56–#61, D214–D219) · resumen: `PHASE_LOG/08-responsive-pulido.md`
-Fases 01–08 cerradas · **Track:** Product · main @ d50568b · **fase 09 — QA final**: QA hecho (2026-11-06) → `plans/qa-version-1.md` (0 críticos · 6 altos · 6 medios · 7 bajos). Altos mergeados (#62–#66). Medios: PRs #67–#73. Sigue: bajos y cierre.
+Fases 01–08 cerradas · **Track:** Product · main @ d50568b · **fase 09 — QA final**: QA hecho (2026-11-06) → `plans/qa-version-1.md` (0 críticos · 6 altos · 6 medios · 7 bajos). Altos mergeados (#62–#66). Medios y bajos: PRs #67–#76 (D-B3 entra en D225). Sigue: cierre.
 **Build local suprimido** (César, 2026-11-05): lo corren CI y Vercel, y el agente comprueba el preview. **QA con sesión:** `qa:local` y `.env.test.local` (alumno y profesor de prueba), nunca pedirle a César que inicie sesión.
 
 | Unit | Branch | Status |
@@ -22,6 +22,9 @@ Fases 01–08 cerradas · **Track:** Product · main @ d50568b · **fase 09 — 
 | D-M1 404 dinámica 200 aceptada (D225) | #71 `docs/not-found-200-aceptado` | PR abierto (solo decisión) |
 | D-M3 + D-A1b filas estrechas (D226) | #72 `fix/ranking-estrecho` | PR abierto · repro 1 FAIL main / PASS rama |
 | D-A1b botones con texto grande (D227) | #73 `fix/botones-texto-grande` | PR abierto · /perfil y tareas/nueva sin desborde |
+| F-B2 fecha de entrega (D228) | #74 `fix/fecha-entrega` | PR abierto |
+| F-B3+F-B4 imágenes y errores de B2 (D229) | #75 `fix/entrega-imagen` | PR abierto · repros 5 y 9 FAIL main / PASS rama |
+| D-B1+D-B2 título de la barra y SVG (D230) | #76 `chore/topbar-titulo-svg` | PR abierto |
 
 ## Blocked (actions for César or external)
 
@@ -46,7 +49,7 @@ QA de versión hecho (2026-11-06): lo no verificado está en `plans/qa-version-1
 ## Next
 
 - **Fase 09 — QA final** (`phases/09-QA-FINAL.md`): la lista de arriba, más `design-qa` y `functional-qa`.
-- Fase 09: bajos como decisiones (F-B2–B4, D-B1–B3) · cierre de fase (CONTENT_CHECKLIST, PHASE_LOG/09-qa.md, /kit-feedback, resumen de entrega).
+- Fase 09: cierre (CONTENT_CHECKLIST, PHASE_LOG/09-qa.md, /kit-feedback, resumen de entrega) tras mergear #67–#76.
 
 ## Phases
 
