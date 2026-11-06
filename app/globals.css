@@ -479,6 +479,33 @@
     url("/brand/krea-logo-splash.svg") no-repeat 101% 31.5% / 378.5% 163.5%;
 }
 
+/* ---------- Alto contraste (forced-colors; QA versión 1, D-A2/D-A3) ----------
+ * El modo forzado repinta todo background-color con Canvas y quita las sombras:
+ *  - el logo/isotipo (máscara + fondo) desaparecía → sus capas fijan colores del sistema;
+ *  - la opción activa de segmentados, pestañas y enlaces con aria-current solo se distinguía
+ *    por fondo + sombra → pasa a Highlight/HighlightText, como una selección nativa.
+ * Solo palabras clave del sistema: en este modo los tokens no aplican. */
+@media (forced-colors: active) {
+  .krea-mask-ink,
+  .krea-iso-ink,
+  .krea-mask-splash,
+  .krea-iso-splash {
+    forced-color-adjust: none;
+    background-color: CanvasText;
+  }
+  .krea-mask-splash,
+  .krea-iso-splash {
+    background-color: Highlight;
+  }
+  [data-slot="toggle-group-item"][data-state="on"],
+  [data-slot="tabs-trigger"][data-state="active"],
+  a[aria-current="page"] {
+    forced-color-adjust: none;
+    background-color: Highlight;
+    color: HighlightText;
+  }
+}
+
 /* ---------- Tailwind v4: exposición de los tokens ---------- */
 @theme inline {
   --color-bg: var(--bg);
