@@ -153,7 +153,12 @@ function CambiarPassword({
   }
 
   return (
-    <form noValidate onSubmit={enviar} className="flex flex-col gap-5">
+    <form
+      method="post"
+      noValidate
+      onSubmit={enviar}
+      className="flex flex-col gap-5"
+    >
       <DialogHeader>
         <DialogTitle>Cambiar contraseña</DialogTitle>
         <DialogDescription>

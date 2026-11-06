@@ -161,6 +161,7 @@ export function AdjustmentForm({
   return (
     <Card>
       <form
+        method="post"
         aria-labelledby={hTitulo}
         noValidate
         onSubmit={onSubmit}

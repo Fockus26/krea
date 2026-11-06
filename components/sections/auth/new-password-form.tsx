@@ -83,7 +83,12 @@ export function NewPasswordForm({
         Mínimo {PASSWORD_MIN} caracteres. Algo que recuerdes y que nadie
         adivine.
       </AuthHeading>
-      <form noValidate onSubmit={enviar} className="flex flex-col gap-5">
+      <form
+        method="post"
+        noValidate
+        onSubmit={enviar}
+        className="flex flex-col gap-5"
+      >
         <Field
           label="Nueva contraseña"
           help={
