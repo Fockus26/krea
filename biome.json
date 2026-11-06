@@ -14,6 +14,7 @@
       "!dist",
       "!build",
       "!**/.claude/worktrees",
+      "!.claude/kit-reference",
       "!design/prototype",
       "!design/canvas"
     ]
