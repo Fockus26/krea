@@ -36,7 +36,6 @@ export function AvatarPickerConectado({
   seed: string;
   base: string;
 }) {
-  const router = useRouter();
   return (
     <AvatarPicker
       nombre={nombre}
@@ -49,9 +48,8 @@ export function AvatarPickerConectado({
           toast(TOAST_NO_GUARDADO);
           return;
         }
+        // La topbar y la barra lateral ya vuelven a leer el perfil: `refresh()` en la acción
         toast(TOAST_AVATAR);
-        // La topbar y la barra lateral vuelven a leer el perfil
-        router.refresh();
       }}
     />
   );

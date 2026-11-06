@@ -2,6 +2,7 @@
 // Server Actions de Perfil (D175, D191, D192): avatar y apariencia al perfil, y cambio de
 // contraseña. La cédula sale SIEMPRE de la sesión, nunca del body; todo se valida con zod.
 import { FieldPath } from "firebase-admin/firestore";
+import { refresh } from "next/cache";
 import { cookies } from "next/headers";
 import { verificarSesion } from "@/lib/dal";
 import { firebaseAdmin } from "@/lib/firebase/admin";
@@ -55,6 +56,8 @@ export async function guardarAvatar(
         );
       }
     });
+    // La topbar, la barra lateral y el ranking vuelven a leer el perfil (D250)
+    refresh();
     return { ok: true };
   } catch (e) {
     console.error("[guardarAvatar]", (e as { code?: string }).code ?? "error");
@@ -76,6 +79,8 @@ export async function guardarApariencia(
       .collection(COL.usuarios)
       .doc(sesion.uid)
       .update({ apariencia: apariencia.data, actualizadoEn: Date.now() });
+    // El shell pinta tema y acento desde el perfil: ninguna ruta en caché con los de antes (D250)
+    refresh();
     return { ok: true };
   } catch (e) {
     console.error(
