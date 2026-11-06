@@ -16,6 +16,7 @@ Fases 01–08 cerradas · **Track:** Product · main @ d50568b · **fase 09 — 
 | F-A1 contraseña en URL | #62 `fix/formularios-post` | PR abierto · CI verde |
 | D-A2/A3 alto contraste | #63 `fix/forced-colors` | PR abierto · CI verde |
 | D-A1 texto 200 % móvil | #64 `fix/texto-200-movil` | PR abierto (14→6 rutas; D-A1b queda) |
+| D-A4 galerías en producción | #65 `fix/galerias-produccion` | PR abierto · repro en prod tras el merge |
 
 ## Blocked (actions for César or external)
 
