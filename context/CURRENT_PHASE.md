@@ -22,14 +22,7 @@ Fases 01–08 cerradas · **Track:** Product · main @ d50568b · **fase 09 — 
 
 ## Blocked (actions for César or external)
 
-**QA pendiente para la fase 09** (functional-qa contra emuladores + axe, teclado, 320 px):
-- W2 login/sesión/salir · W3 envío real por Brevo con 38291460 (api.brevo.com bloqueado), enlace → /recuperar/nueva → aviso y sesiones revocadas.
-- W4 ranking en vivo en dos navegadores, cambio de contraseña.
-- W5 subida real a B2 (host bloqueado), enviar individual/grupal (capitán / no), borrador tras recargar.
-- W6 borrador a medias, publicar (suma 20), editar con/sin entregas, cerrar, empate de premio.
-- W7 evaluar la cola, corregir, «Deshacer», ajuste + anulación en el ranking y en el detalle del alumno. `evaluar/[entrega]` y `tareas/[id]` sin visitar en la fase 08 (el seed no trae entregas pendientes).
-- W8 editar alumno, mover/quitar/capitán, logo real en B2.
-
+QA de versión hecho (2026-11-06): lo no verificado está en `plans/qa-version-1.md` › Sin verificar.
 
 **Decisiones de César:**
 - **D-M1 (404 dinámica con HTTP 200):** es el comportamiento documentado de Next con streaming (200 + `noindex`). Opciones: aceptarlo como decisión · comprobar la existencia en el proxy (1 lectura de Firestore por visita) · quitar los `loading.tsx` de esas 5 rutas (choca con D219).
