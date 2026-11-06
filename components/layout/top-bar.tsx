@@ -65,7 +65,11 @@ export function TopBar({
             </Link>
           </Button>
           {title ? (
-            <p className="text-h4 min-w-0 flex-1 truncate text-text">{title}</p>
+            // Junto a una acción («Guardar borrador») a 320 px no cabe en una línea: pasa a dos
+            // (44 px caben en los 56 de la barra) antes que quedar en «Nueva t…» (D-B1, D230)
+            <p className="text-h4 min-w-0 flex-1 line-clamp-2 text-text">
+              {title}
+            </p>
           ) : (
             <span className="flex-1" />
           )}
