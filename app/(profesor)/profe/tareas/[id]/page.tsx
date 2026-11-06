@@ -7,13 +7,25 @@ import { PageHeader } from "@/components/sections/shared/page-header";
 import { TaskBuilder } from "@/components/sections/tareas-profe/task-builder";
 import { Card } from "@/components/ui/card";
 import tareaSeed from "@/data/seed/tarea-identidad-marca.json";
-import { cerrarTarea, guardarTarea } from "@/lib/acciones/tareas";
+import {
+  cerrarTarea,
+  eliminarTarea,
+  guardarTarea,
+} from "@/lib/acciones/tareas";
 import { verificarSesion } from "@/lib/dal";
-import { tareaProfe, tieneEntregas } from "@/lib/datos/profesor";
+import {
+  entregasDeTarea,
+  tareaProfe,
+  tieneEntregas,
+} from "@/lib/datos/profesor";
 import { diaDeInstante } from "@/lib/fecha";
 import { TAREA_GRUPAL_SEED } from "@/lib/seed-firestore";
 import { RUTA_TAREAS } from "@/lib/tareas-profe";
-import { datosBorradorDe, modoConstructor } from "@/lib/tareas-profe-datos";
+import {
+  datosBorradorDe,
+  modoConstructor,
+  perdidaAlEliminar,
+} from "@/lib/tareas-profe-datos";
 
 type Props = PageProps<"/profe/tareas/[id]">;
 
@@ -31,7 +43,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: t ? `Constructor · ${t.titulo}` : "Tarea" };
 }
 
-const ACCIONES = { guardar: guardarTarea, cerrar: cerrarTarea };
+const ACCIONES = {
+  guardar: guardarTarea,
+  cerrar: cerrarTarea,
+  eliminar: eliminarTarea,
+};
 
 const DESCRIPCION =
   "Las preguntas tienen que sumar exactamente 20 puntos para publicar.";
@@ -43,7 +59,10 @@ export default async function TareaProfePage({ params }: Props) {
   const { id } = await params;
   const t = await tareaProfe(id);
   if (!t) notFound();
-  const conEntregas = await tieneEntregas(id);
+  const [conEntregas, entregas] = await Promise.all([
+    tieneEntregas(id),
+    entregasDeTarea(id),
+  ]);
   const modo = modoConstructor(t, conEntregas);
   const sinPreguntas = t.preguntas.length === 0;
 
@@ -77,6 +96,7 @@ export default async function TareaProfePage({ params }: Props) {
           modo={modo}
           fechaGuardada={t.estado === "borrador" ? null : t.fechaEntrega}
           acciones={ACCIONES}
+          perdida={perdidaAlEliminar(entregas)}
         />
       )}
     </>

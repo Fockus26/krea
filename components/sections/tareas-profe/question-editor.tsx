@@ -72,9 +72,10 @@ export function QuestionEditor({
         >
           {numero}
         </span>
+        {/* Arriba, en la línea del número (D245): el título ocupa su alto y crece hacia abajo */}
         <h3
           id={ids.titulo}
-          className="text-h4 min-w-0 flex-1 self-center text-text"
+          className="text-h4 flex min-h-8 min-w-0 flex-1 items-center text-text"
         >
           Pregunta {numero}
         </h3>
@@ -87,7 +88,8 @@ export function QuestionEditor({
             disabled={!puedeEliminar}
             aria-label={`Eliminar la pregunta ${numero}`}
             onClick={onEliminar}
-            className="text-error"
+            // 36 (44 < lg) centrado en la línea de 32 sin estirar la fila
+            className="-my-0.5 text-error max-lg:-my-1.5"
           >
             <Trash2 aria-hidden="true" />
           </Button>
