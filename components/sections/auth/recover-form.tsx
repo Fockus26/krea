@@ -54,7 +54,12 @@ export function RecoverForm({
         Escribe tu cédula y te enviamos un enlace al correo que tu profe tiene
         registrado.
       </AuthHeading>
-      <form noValidate onSubmit={enviar} className="flex flex-col gap-5">
+      <form
+        method="post"
+        noValidate
+        onSubmit={enviar}
+        className="flex flex-col gap-5"
+      >
         <Field label="Cédula" error={errorCedula} announce={false}>
           <CedulaInput
             name="cedula"

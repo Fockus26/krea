@@ -54,7 +54,12 @@ export function LoginForm({
         Entra con tu cédula y la contraseña que te dio tu profe.
       </AuthHeading>
       {aviso}
-      <form noValidate onSubmit={enviar} className="flex flex-col gap-5">
+      <form
+        method="post"
+        noValidate
+        onSubmit={enviar}
+        className="flex flex-col gap-5"
+      >
         <Field
           label="Cédula"
           help="Solo números, sin puntos."

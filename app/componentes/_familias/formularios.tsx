@@ -154,6 +154,7 @@ function EnviandoDemo() {
 
   return (
     <form
+      method="post"
       className="flex max-w-sm flex-col gap-4"
       onSubmit={(e) => {
         e.preventDefault();
