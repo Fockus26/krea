@@ -132,7 +132,7 @@ export function QuestionEditor({
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
-        <div className="flex flex-col gap-1.5">
+        <div className="flex min-w-0 max-w-full flex-col gap-1.5">
           <span id={labelValor} className="text-label text-text">
             Valor
             <span className="sr-only"> de la pregunta {numero}</span>

@@ -109,7 +109,8 @@ export function SumMeter({
       <span
         aria-hidden="true"
         className={cn(
-          "text-small-b whitespace-nowrap",
+          // Una línea mientras quepa; con texto grande se parte antes que salirse (D227)
+          "text-small-b min-w-0 text-right text-balance",
           METER_TEXT_CLASSES[tone],
         )}
       >

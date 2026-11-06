@@ -315,6 +315,12 @@ export function TaskBuilder({
       variant={enTopbar ? "ghost" : "secondary"}
       size={enTopbar ? "sm" : undefined}
       block={!enTopbar}
+      // En la topbar, con texto grande el rótulo se parte en dos líneas en vez de salirse (D227)
+      className={
+        enTopbar
+          ? "h-auto min-h-9 max-w-full shrink py-1 text-center whitespace-normal max-lg:h-auto max-lg:min-h-11"
+          : undefined
+      }
       // Sin `disabled` mientras guarda: el foco se queda en el botón (`guardar` ignora el 2.º toque)
       aria-busy={pendiente || undefined}
       onClick={guardar}

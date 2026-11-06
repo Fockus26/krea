@@ -56,7 +56,11 @@ export function SecuritySettings({
       <div className="flex flex-wrap gap-3">
         <Dialog open={abierto} onOpenChange={setAbierto}>
           <DialogTrigger asChild>
-            <Button variant="secondary">
+            {/* Con texto grande el rótulo se parte en dos líneas en vez de salirse (D227) */}
+            <Button
+              variant="secondary"
+              className="h-auto min-h-11 max-w-full shrink py-2 text-center whitespace-normal"
+            >
               <KeyRound aria-hidden="true" />
               Cambiar contraseña
             </Button>

@@ -112,7 +112,11 @@ function NumberStepper({
   return (
     <fieldset
       {...name}
-      className={cn("inline-flex min-w-0 items-center gap-2", className)}
+      // Con texto grande cede antes que salirse: el campo se encoge y la unidad baja (D227)
+      className={cn(
+        "inline-flex min-w-0 max-w-full flex-wrap items-center gap-2",
+        className,
+      )}
     >
       <Button
         variant="secondary"
@@ -137,7 +141,7 @@ function NumberStepper({
         disabled={disabled}
         readOnly={readOnly}
         value={shown}
-        className="w-24"
+        className="w-24 min-w-0 shrink"
         inputClassName="text-center font-heading font-bold nums"
         onFocus={(e) => e.currentTarget.select()}
         onChange={(e) => {
