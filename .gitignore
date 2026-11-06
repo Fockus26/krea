@@ -67,3 +67,6 @@ firestore-debug.log
 firebase-debug.log
 ui-debug.log
 storage-debug.log
+
+# capturas de PR (bun run shots)
+.pr-shots
