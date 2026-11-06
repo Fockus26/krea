@@ -152,13 +152,5 @@ export function pantallaDe(
   return PANTALLAS_ESTADO.find((p) => p.id === v)?.id ?? PANTALLAS_ESTADO[0].id;
 }
 
-/**
- * La galería solo existe en desarrollo y en las vistas previas de Vercel (donde César revisa sin
- * servidor local); en producción responde 404 (D162).
- */
-export function galeriaEstadosVisible(env: {
-  NODE_ENV?: string;
-  VERCEL_ENV?: string;
-}): boolean {
-  return env.NODE_ENV === "development" || env.VERCEL_ENV === "preview";
-}
+/** La galería de estados sigue la regla de todas las galerías internas (lib/galerias.ts). */
+export { galeriaVisible as galeriaEstadosVisible } from "./galerias";
