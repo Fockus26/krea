@@ -3,11 +3,13 @@ import { Nunito_Sans, Poppins } from "next/font/google";
 import {
   BRAND_BG_DARK,
   BRAND_BLUE,
+  OPEN_GRAPH_BASE,
   SITE_DESCRIPTION,
   SITE_NAME,
   SITE_TITLE,
   SITE_URL,
   THEME_SCRIPT,
+  TWITTER_BASE,
 } from "@/lib/site";
 import "./globals.css";
 
@@ -31,14 +33,12 @@ export const metadata: Metadata = {
   description: SITE_DESCRIPTION, // provisional (CONTENT_CHECKLIST fila 22)
   applicationName: SITE_NAME,
   openGraph: {
-    type: "website",
-    locale: "es_VE",
-    siteName: SITE_NAME,
+    ...OPEN_GRAPH_BASE,
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
   },
   twitter: {
-    card: "summary_large_image",
+    ...TWITTER_BASE,
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
   },

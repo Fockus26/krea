@@ -6,6 +6,18 @@ export const SITE_TITLE = "KREA — Escuela Creativa";
 // Bajada de la plantilla Open Graph (HANDOFF §5).
 export const SITE_DESCRIPTION = "Portal de la Escuela Creativa · 5.º año";
 
+/**
+ * Campos de Open Graph y Twitter que toda página comparte. La fusión de metadata de Next es
+ * superficial: una página que define `openGraph` o `twitter` los extiende, no los reemplaza
+ * (QA versión 1, D-M2: `/ingresar` perdía tipo, idioma, sitio y tarjeta grande).
+ */
+export const OPEN_GRAPH_BASE = {
+  type: "website",
+  locale: "es_VE",
+  siteName: SITE_NAME,
+} as const;
+export const TWITTER_BASE = { card: "summary_large_image" } as const;
+
 // Colores de marca del SO (manifest, viewport, OG): el SO no conoce el acento (HANDOFF §8).
 export const BRAND_BLUE = "#295AC3";
 export const BRAND_BG = "#F6F4FA";

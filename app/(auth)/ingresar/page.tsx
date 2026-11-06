@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { AuthLayout } from "@/components/sections/auth/auth-layout";
 import { Ingresar } from "@/components/sections/auth/ingresar";
-import { SITE_NAME, SITE_URL } from "@/lib/site";
+import { OPEN_GRAPH_BASE, SITE_NAME, SITE_URL, TWITTER_BASE } from "@/lib/site";
 
 // PROVISIONAL (CONTENT_CHECKLIST fila 98): título y descripción de la única página indexable.
 const TITULO = "Ingresar";
@@ -12,8 +12,17 @@ export const metadata: Metadata = {
   title: TITULO,
   description: DESCRIPCION,
   alternates: { canonical: "/ingresar" },
-  openGraph: { title: `${TITULO} · ${SITE_NAME}`, description: DESCRIPCION },
-  twitter: { title: `${TITULO} · ${SITE_NAME}`, description: DESCRIPCION },
+  // Extienden la base del layout; la imagen la pone `opengraph-image.tsx` de este segmento (D223).
+  openGraph: {
+    ...OPEN_GRAPH_BASE,
+    title: `${TITULO} · ${SITE_NAME}`,
+    description: DESCRIPCION,
+  },
+  twitter: {
+    ...TWITTER_BASE,
+    title: `${TITULO} · ${SITE_NAME}`,
+    description: DESCRIPCION,
+  },
 };
 
 // JSON-LD mínimo (seo, modo página): solo lo que la página dice. Sin SearchAction ni Organization
