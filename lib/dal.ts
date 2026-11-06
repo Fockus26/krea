@@ -10,6 +10,7 @@ import type { RolUsuario } from "@/lib/modelo";
 import {
   COOKIE_SESION,
   inicioDe,
+  RUTA_CREAR_PASSWORD,
   RUTA_INGRESAR,
   type Sesion,
 } from "@/lib/sesion";
@@ -22,10 +23,24 @@ export const verificarSesion = cache(async (): Promise<Sesion | null> => {
   return sesionDeCookie(valor, { revocadas: true });
 });
 
-/** Exige un rol: sin sesión → /ingresar; otro rol → su inicio. */
+/**
+ * Exige un rol: sin sesión → /ingresar; otro rol → su inicio. Con contraseña temporal, nada de
+ * su rol carga hasta crear la suya: → «Crea tu contraseña» (D232).
+ */
 export async function exigirSesion(rol: RolUsuario): Promise<Sesion> {
   const s = await verificarSesion();
   if (!s) redirect(RUTA_INGRESAR);
+  if (s.debeCambiarPassword) redirect(RUTA_CREAR_PASSWORD);
   if (s.rol !== rol) redirect(inicioDe(s.rol));
+  return s;
+}
+
+/**
+ * Exige el profesor admin (D231): la pantalla Profesores y sus Server Actions. Un profesor que no
+ * es admin vuelve al Panel; otro rol, a su inicio (lo hace `exigirSesion`).
+ */
+export async function exigirAdmin(): Promise<Sesion> {
+  const s = await exigirSesion("profesor");
+  if (!s.admin) redirect(inicioDe("profesor"));
   return s;
 }

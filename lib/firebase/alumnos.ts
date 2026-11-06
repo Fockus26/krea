@@ -29,7 +29,8 @@ export async function editarAlumnoEnTransaccion(
     ]);
     if (!snap.exists) return { ok: false, error: "no-existe" };
     const u = zUsuario.safeParse(snap.data());
-    if (!u.success || u.data.seccion === null)
+    // Solo alumnos: un profesor no edita los datos de otro profesor por aquí (D234)
+    if (!u.success || u.data.rol !== "estudiante" || u.data.seccion === null)
       return { ok: false, error: "invalida" };
     const p = zPrivado.safeParse(privado.data() ?? { email: null });
     const seccion = u.data.seccion;

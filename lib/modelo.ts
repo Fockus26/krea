@@ -107,6 +107,13 @@ export const zUsuario = z.object({
   avatar: zAvatar,
   /** Ausente hasta que el usuario elige tema o acento en Perfil (D191). */
   apariencia: zApariencia.optional(),
+  /**
+   * Profesor admin: gestiona a los demás profesores (D231). Ausente = false; en un estudiante no
+   * cuenta (`claimsDe` solo lo copia si el rol es profesor).
+   */
+  admin: z.boolean().optional(),
+  /** `true` al crear la cuenta con contraseña temporal; se borra al cambiarla (D232). */
+  debeCambiarPassword: z.boolean().optional(),
   actualizadoEn: zInstante,
 });
 export type Usuario = z.infer<typeof zUsuario>;
@@ -378,12 +385,28 @@ export type Claims = {
   rol: RolUsuario;
   seccion: SeccionId | null;
   equipoId: string | null;
+  /** Solo un profesor puede ser admin (D231). Ausente = false. */
+  admin?: true;
+  /** Cuenta con contraseña temporal: el proxy y el DAL la mandan a crear la suya (D232). */
+  debeCambiarPassword?: true;
 };
 
+/**
+ * Claims que salen del perfil. `admin` y `debeCambiarPassword` solo van cuando son `true` (un
+ * perfil sin ellas deja las claims como antes); quien las mezcla con las que ya tiene la cuenta
+ * y quiere quitarlas las borra antes (`lib/firebase/cuentas.ts`).
+ */
 export function claimsDe(
-  u: Pick<Usuario, "rol" | "seccion" | "equipoId">,
+  u: Pick<Usuario, "rol" | "seccion" | "equipoId"> &
+    Partial<Pick<Usuario, "admin" | "debeCambiarPassword">>,
 ): Claims {
-  return { rol: u.rol, seccion: u.seccion, equipoId: u.equipoId };
+  return {
+    rol: u.rol,
+    seccion: u.seccion,
+    equipoId: u.equipoId,
+    ...(u.rol === "profesor" && u.admin === true ? { admin: true } : {}),
+    ...(u.debeCambiarPassword === true ? { debeCambiarPassword: true } : {}),
+  };
 }
 
 /* ---------- Email interno de Auth (D008) ---------- */

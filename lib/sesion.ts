@@ -15,7 +15,14 @@ export type Sesion = {
   rol: RolUsuario;
   seccion: SeccionId | null;
   equipoId: string | null;
+  /** Profesor admin (D231): gestiona a los demás profesores. Ausente = no. */
+  admin?: true;
+  /** Entró con la contraseña temporal: solo puede crear la suya (D232). Ausente = no. */
+  debeCambiarPassword?: true;
 };
+
+/** «Crea tu contraseña»: única ruta de una cuenta con contraseña temporal (D232). */
+export const RUTA_CREAR_PASSWORD = "/crear-contrasena";
 
 /** Inicio de cada rol. */
 export function inicioDe(rol: RolUsuario): string {
@@ -39,11 +46,15 @@ export const RUTA_NUEVA_PASSWORD = "/recuperar/nueva";
 
 /**
  * Qué rol exige una ruta: `estudiante`, `profesor`, `invitado` (Ingresar y Recuperar: con sesión
- * se va a su inicio) o `null` (pública: galerías, estados, /salir, archivos, y la nueva contraseña
- * del enlace, que vale aunque haya una sesión abierta en ese navegador, D188).
+ * se va a su inicio), `sesion` («Crea tu contraseña»: cualquier rol, solo con contraseña temporal,
+ * D232) o `null` (pública: galerías, estados, /salir, archivos, y la nueva contraseña del enlace,
+ * que vale aunque haya una sesión abierta en ese navegador, D188).
  */
-export function accesoDeRuta(ruta: string): RolUsuario | "invitado" | null {
+export function accesoDeRuta(
+  ruta: string,
+): RolUsuario | "invitado" | "sesion" | null {
   if (EMPIEZA(ruta, RUTA_NUEVA_PASSWORD)) return null;
+  if (EMPIEZA(ruta, RUTA_CREAR_PASSWORD)) return "sesion";
   if (EMPIEZA(ruta, "/profe")) return "profesor";
   if (ruta === "/" || RUTAS_ESTUDIANTE.some((p) => EMPIEZA(ruta, p)))
     return "estudiante";
@@ -59,9 +70,20 @@ export function redireccion(
 ): string | null {
   const acceso = accesoDeRuta(ruta);
   if (acceso === null) return null;
-  if (acceso === "invitado") return sesion ? inicioDe(sesion.rol) : null;
+  if (acceso === "invitado") return sesion ? destinoDe(sesion) : null;
   if (!sesion) return RUTA_INGRESAR;
+  // Con contraseña temporal no carga nada de su rol hasta crear la suya (D232)
+  if (acceso === "sesion")
+    return sesion.debeCambiarPassword ? null : inicioDe(sesion.rol);
+  if (sesion.debeCambiarPassword) return RUTA_CREAR_PASSWORD;
   return sesion.rol === acceso ? null : inicioDe(sesion.rol);
+}
+
+/** A dónde va una sesión recién abierta: su inicio, o «Crea tu contraseña» si es temporal (D232). */
+export function destinoDe(sesion: Sesion): string {
+  return sesion.debeCambiarPassword
+    ? RUTA_CREAR_PASSWORD
+    : inicioDe(sesion.rol);
 }
 
 /** Claims del token → sesión; `null` si faltan o no son válidos (cuenta sin rol = sin acceso). */
@@ -69,7 +91,7 @@ export function sesionDeClaims(
   uid: string,
   claims: Record<string, unknown>,
 ): Sesion | null {
-  const { rol, seccion, equipoId } = claims;
+  const { rol, seccion, equipoId, admin, debeCambiarPassword } = claims;
   if (rol !== "estudiante" && rol !== "profesor") return null;
   if (!/^\d{7,9}$/.test(uid)) return null;
   const sec = seccion === "5A" || seccion === "5C" ? seccion : null;
@@ -79,6 +101,9 @@ export function sesionDeClaims(
     rol,
     seccion: sec,
     equipoId: typeof equipoId === "string" && equipoId ? equipoId : null,
+    // Solo un profesor puede ser admin (D231); las marcas van solo cuando son `true`
+    ...(rol === "profesor" && admin === true ? { admin: true } : {}),
+    ...(debeCambiarPassword === true ? { debeCambiarPassword: true } : {}),
   };
 }
 

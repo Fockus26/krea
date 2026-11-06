@@ -120,6 +120,32 @@ describe("utilidades", () => {
       equipoId: "5a-g1",
     });
   });
+  test("claims: admin solo en un profesor; las marcas solo cuando son true (D231, D232)", () => {
+    const profe = { rol: "profesor", seccion: null, equipoId: null } as const;
+    expect(claimsDe({ ...profe, admin: true })).toEqual({
+      ...profe,
+      admin: true,
+    });
+    expect(Object.keys(claimsDe({ ...profe, admin: false }))).toEqual([
+      "rol",
+      "seccion",
+      "equipoId",
+    ]);
+    expect(
+      claimsDe({
+        rol: "estudiante",
+        seccion: "5A",
+        equipoId: null,
+        admin: true,
+        debeCambiarPassword: true,
+      }),
+    ).toEqual({
+      rol: "estudiante",
+      seccion: "5A",
+      equipoId: null,
+      debeCambiarPassword: true,
+    });
+  });
 });
 
 describe("docsDesdeSeed", () => {

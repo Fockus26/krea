@@ -2,13 +2,81 @@ import { describe, expect, test } from "bun:test";
 import { errorIngresoDeCodigo } from "@/lib/auth";
 import {
   accesoDeRuta,
+  destinoDe,
   inicioDe,
   LOGIN_RECIENTE_MS,
   loginReciente,
+  RUTA_CREAR_PASSWORD,
   redireccion,
   type Sesion,
   sesionDeClaims,
 } from "@/lib/sesion";
+
+describe("contraseña temporal y admin (D231, D232)", () => {
+  const temporalEst: Sesion = {
+    uid: "33272397",
+    rol: "estudiante",
+    seccion: "5A",
+    equipoId: null,
+    debeCambiarPassword: true,
+  };
+  const temporalProfe: Sesion = {
+    uid: "32888687",
+    rol: "profesor",
+    seccion: null,
+    equipoId: null,
+    debeCambiarPassword: true,
+  };
+
+  test("«Crea tu contraseña» pide sesión de cualquier rol", () => {
+    expect(accesoDeRuta(RUTA_CREAR_PASSWORD)).toBe("sesion");
+    expect(redireccion(RUTA_CREAR_PASSWORD, null)).toBe("/ingresar");
+    expect(redireccion(RUTA_CREAR_PASSWORD, temporalEst)).toBeNull();
+    expect(redireccion(RUTA_CREAR_PASSWORD, temporalProfe)).toBeNull();
+  });
+
+  test("con la temporal, ninguna ruta de su rol (ni Ingresar) carga", () => {
+    for (const ruta of ["/", "/notas", "/perfil", "/profe", "/ingresar"])
+      expect(redireccion(ruta, temporalEst)).toBe(RUTA_CREAR_PASSWORD);
+    for (const ruta of ["/profe", "/profe/profesores", "/profe/perfil"])
+      expect(redireccion(ruta, temporalProfe)).toBe(RUTA_CREAR_PASSWORD);
+    // Lo público y Salir siguen abiertos
+    expect(redireccion("/salir", temporalProfe)).toBeNull();
+    expect(redireccion("/recuperar/nueva", temporalProfe)).toBeNull();
+  });
+
+  test("sin la marca, «Crea tu contraseña» lleva a su inicio", () => {
+    expect(redireccion(RUTA_CREAR_PASSWORD, est)).toBe("/");
+    expect(redireccion(RUTA_CREAR_PASSWORD, profe)).toBe("/profe");
+  });
+
+  test("destino tras ingresar", () => {
+    expect(destinoDe(temporalEst)).toBe(RUTA_CREAR_PASSWORD);
+    expect(destinoDe(profe)).toBe("/profe");
+  });
+
+  test("claims → marcas; admin solo en un profesor", () => {
+    expect(
+      sesionDeClaims("30262232", { rol: "profesor", admin: true }),
+    ).toEqual({ ...profe, uid: "30262232", admin: true });
+    expect(
+      sesionDeClaims("33272397", {
+        rol: "estudiante",
+        seccion: "5A",
+        admin: true,
+      })?.admin,
+    ).toBeUndefined();
+    expect(
+      sesionDeClaims("30262232", { rol: "profesor", admin: "true" })?.admin,
+    ).toBeUndefined();
+    expect(
+      sesionDeClaims("32888687", {
+        rol: "profesor",
+        debeCambiarPassword: true,
+      })?.debeCambiarPassword,
+    ).toBe(true);
+  });
+});
 
 const est: Sesion = {
   uid: "33272397",
