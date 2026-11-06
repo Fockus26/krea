@@ -55,9 +55,13 @@ function largo(pw: string): number {
   return Array.from(pw).length;
 }
 
+/**
+ * Solo espacios cuenta como vacía: «8 espacios» no es una contraseña (QA versión 1, F-B1). Los
+ * espacios dentro de una contraseña con otros caracteres sí cuentan para el mínimo.
+ */
 export function validarPassword(pw: string): ValidacionPassword {
   const n = largo(pw);
-  if (n === 0) return { estado: "vacia" };
+  if (n === 0 || pw.trim() === "") return { estado: "vacia" };
   if (n < PASSWORD_MIN) return { estado: "corta", faltan: PASSWORD_MIN - n };
   return { estado: "ok", largo: n };
 }

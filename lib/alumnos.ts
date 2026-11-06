@@ -134,6 +134,12 @@ export type EdicionAlumno = {
   motivo: string;
   nombres: string;
   apellidos: string;
+  /**
+   * Campos «Primer nombre» y «Primer apellido» del diálogo, si los hay: no pueden quedar en blanco
+   * aunque el segundo tenga texto (QA versión 1, F-M2: «Génesis Julibeth» pasaba a «Julibeth»).
+   */
+  primerNombre?: string;
+  primerApellido?: string;
   /** Email de recuperación; ausente si no se edita (vista previa). Vacío = sin email. */
   email?: string;
 };
@@ -153,12 +159,15 @@ export function baseCambio(baseAnterior: number, baseNueva: number): boolean {
 
 /**
  * Errores del formulario Editar (D071: al enviar). Motivo obligatorio **solo si la base cambió**;
- * nombres y apellidos no vacíos; base entre 10 y 20 en pasos de 0,5. `{}` = válido.
+ * nombres y apellidos no vacíos (y el primero de cada uno, si viene); base entre 10 y 20 en pasos de 0,5. `{}` = válido.
  */
 export function validarEdicion(e: EdicionAlumno): ErroresEdicion {
   const errores: ErroresEdicion = {};
-  if (e.nombres.trim() === "") errores.nombres = NOMBRES_VACIO;
-  if (e.apellidos.trim() === "") errores.apellidos = APELLIDOS_VACIO;
+  const vacio = (v: string | undefined) => v !== undefined && v.trim() === "";
+  if (e.nombres.trim() === "" || vacio(e.primerNombre))
+    errores.nombres = NOMBRES_VACIO;
+  if (e.apellidos.trim() === "" || vacio(e.primerApellido))
+    errores.apellidos = APELLIDOS_VACIO;
   const baseValida =
     Number.isFinite(e.baseNueva) &&
     e.baseNueva >= BASE_MIN &&

@@ -1,11 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import {
+  APELLIDOS_VACIO,
   baseCambio,
   cedulaConPuntos,
   contadorTexto,
   editarLabel,
   filtrarAlumnos,
   MOTIVO_BASE_REQUERIDO,
+  NOMBRES_VACIO,
   normalizar,
   resumenTexto,
   seccionOpcionTexto,
@@ -156,6 +158,24 @@ describe("validarEdicion", () => {
   });
   test("base inválida no pide además el motivo", () => {
     expect(validarEdicion({ ...ok, baseNueva: 25 }).motivo).toBeUndefined();
+  });
+  test("primer nombre o primer apellido en blanco con segundo lleno → error (F-M2)", () => {
+    const e = validarEdicion({
+      ...ok,
+      nombres: "Julibeth",
+      apellidos: "Pérez",
+      primerNombre: "   ",
+      primerApellido: "",
+    });
+    expect(e.nombres).toBe(NOMBRES_VACIO);
+    expect(e.apellidos).toBe(APELLIDOS_VACIO);
+    expect(
+      validarEdicion({
+        ...ok,
+        primerNombre: "Génesis",
+        primerApellido: "Pérez",
+      }),
+    ).toEqual({});
   });
 });
 
