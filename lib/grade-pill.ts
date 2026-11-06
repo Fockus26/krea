@@ -41,7 +41,7 @@ export const GRADE_PILL_SIZE_CLASSES: Record<GradePillSize, string> = {
   md: "h-8 min-w-13 px-2.5 text-grade-md",
   lg: "h-11 min-w-18 px-3.5 text-grade-lg",
   total: "h-16 min-w-22 px-3.5 text-grade-total",
-  xl: "h-26 min-w-37 rounded-grade-xl px-6 text-grade-xl md:h-30",
+  xl: "h-26 min-w-[min(--spacing(37),100%)] max-w-full rounded-grade-xl px-6 text-grade-xl md:h-30",
 };
 
 /** Pendiente: mismo alto que su tamaño, sin ancho mínimo, Nunito 700 14 (xl: Poppins 24/32). */

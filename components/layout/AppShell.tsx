@@ -43,7 +43,7 @@ export function AppShell({
       ) : null}
       <div className="flex min-w-0 flex-1 flex-col">
         {topbar ? (
-          <header className="h-topbar sticky top-0 z-topbar flex items-center gap-3 border-b border-divider bg-topbar px-(--page-px) bajo:static lg:hidden">
+          <header className="@container h-topbar sticky top-0 z-topbar flex items-center gap-3 border-b border-divider bg-topbar px-(--page-px) bajo:static lg:hidden">
             {topbar}
           </header>
         ) : null}

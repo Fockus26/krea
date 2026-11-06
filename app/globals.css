@@ -568,6 +568,7 @@
   --breakpoint-xl: 90rem; /* HANDOFF §4: 1440 (Tailwind trae 1280) */
   --breakpoint-3xl: 120rem;
   --container-seg: 25rem; /* §8: segmentado de ancho completo oculta íconos por debajo de 400 */
+  --container-estrecho: 18rem; /* barra superior: < 288 px en rem solo pasa con texto del sistema grande (D-A1) */
 }
 
 /* Las sombras cambian con el tema: Tailwind incrustaría el valor claro si fueran del tema,
@@ -1305,6 +1306,8 @@ body {
   font-family: var(--font-body);
   font-size: 1rem;
   line-height: 1.5rem;
+  /* Una palabra que no cabe se parte en vez de desbordar (texto del sistema grande, D-A1) */
+  overflow-wrap: break-word;
 }
 
 ::selection {

@@ -74,7 +74,8 @@ export function TopBar({
         <>
           <Link
             href={inicio}
-            className="rounded-nav focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            // Con texto del sistema grande no caben logo, chip y avatar/Menú: el logo cede (Inicio sigue en la barra inferior)
+            className="rounded-nav focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus @max-estrecho:hidden"
           >
             <Logo size="topbar" />
           </Link>

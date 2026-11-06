@@ -98,7 +98,7 @@ export function ReviewHeader({
           />
         )}
         {/* mín. 220 antes de envolver (lienzo) */}
-        <div className="flex min-w-55 flex-1 flex-col gap-1">
+        <div className="flex min-w-[min(--spacing(55),100%)] flex-1 flex-col gap-1">
           <h1 id={tituloId} tabIndex={-1} className="text-h1 text-text">
             {titulo}
           </h1>

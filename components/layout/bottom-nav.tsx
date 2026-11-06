@@ -23,7 +23,7 @@ export function BottomNav({ rol, pathname }: NavRoute & { rol: Rol }) {
             aria-current={active ? "page" : undefined}
             className="group/nav mt-1 flex h-14 flex-col items-center justify-center gap-0.5 rounded-md text-nav-sm text-text-2 no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus aria-[current=page]:font-bold aria-[current=page]:text-accent-ink"
           >
-            <span className="relative isolate grid h-8 w-14 place-items-center rounded-pill">
+            <span className="relative isolate grid h-8 w-full max-w-14 place-items-center rounded-pill">
               <span
                 aria-hidden="true"
                 className="absolute inset-0 -z-10 rounded-pill bg-accent-soft-2 opacity-0 transition-opacity duration-fast ease-krea group-aria-[current=page]/nav:opacity-100"
