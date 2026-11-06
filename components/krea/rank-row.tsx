@@ -66,8 +66,22 @@ export function RankRow({
     esTu,
   });
 
+  // Chip de empate o delta: a la derecha, o bajo el nombre si la fila es estrecha (D226). El
+  // contenido visual va `aria-hidden`: pintarlo en dos sitios no lo repite al lector.
+  const marca = chipEmpate ? (
+    <Badge variant="neutral" className="h-5.5 px-2 text-xs!">
+      Empate
+    </Badge>
+  ) : delta !== undefined ? (
+    <RankDelta delta={delta} />
+  ) : null;
+
   return (
-    <li ref={ref} aria-label={label} className={cn("list-none", className)}>
+    <li
+      ref={ref}
+      aria-label={label}
+      className={cn("@container list-none", className)}
+    >
       <div
         aria-hidden="true"
         data-slot="rank-row"
@@ -75,7 +89,7 @@ export function RankRow({
         data-me={esTu ? "true" : undefined}
         data-moving={moving ? "true" : undefined}
         className={cn(
-          "grid min-h-15 grid-cols-[2.25rem_2.5rem_minmax(0,1fr)_auto_auto] items-center gap-3 rounded-rank border border-transparent px-3 py-2",
+          "grid min-h-15 grid-cols-[2.25rem_2.5rem_minmax(0,1fr)_auto_auto] items-center @max-fila:grid-cols-[2.25rem_2.5rem_minmax(0,1fr)_auto] gap-3 rounded-rank border border-transparent px-3 py-2",
           kind === "top" &&
             "bg-surface shadow-1 dark:border-divider dark:shadow-none",
           kind === "riesgo" && "bg-surface-2",
@@ -108,22 +122,22 @@ export function RankRow({
             <span className="text-button min-w-0 truncate">{nombre}</span>
             {esTu ? <Badge variant="tu">tú</Badge> : null}
           </span>
-          {subtitulo ? (
-            <span className="text-small block truncate text-text-2">
-              {subtitulo}
+          {subtitulo || marca ? (
+            <span className="flex min-w-0 items-center gap-1.5">
+              {subtitulo ? (
+                <span className="text-small min-w-0 truncate text-text-2">
+                  {subtitulo}
+                </span>
+              ) : null}
+              {/* Fila estrecha (< 320 px, D226): el chip baja aquí y el nombre recupera el ancho */}
+              {marca ? (
+                <span className="hidden shrink-0 @max-fila:flex">{marca}</span>
+              ) : null}
             </span>
           ) : null}
         </span>
 
-        <span>
-          {chipEmpate ? (
-            <Badge variant="neutral" className="h-5.5 px-2 text-xs!">
-              Empate
-            </Badge>
-          ) : delta !== undefined ? (
-            <RankDelta delta={delta} />
-          ) : null}
-        </span>
+        <span className="@max-fila:hidden">{marca}</span>
 
         <span
           className={cn(
