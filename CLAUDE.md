@@ -36,6 +36,7 @@ grep -rhi "^# D.*modal\|^# D.*ranking" context/decisions/   # already decided? D
 ```
 
 **The kit's `reference/…`** = `~/.claude/kit-reference/…` (or `.claude/kit-reference/…`).
+**Tech refs:** firebase → its `tech/<name>.md` when the task touches it; only these.
 
 ---
 
