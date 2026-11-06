@@ -15,6 +15,10 @@ Fases 01–08 cerradas · **Track:** Product · main @ d50568b · **fase 09 — 
 | Fase 09 · QA de versión | wt2 / wt3 | hecho · arreglos pendientes |
 | Altos F-A1 · D-A2/A3 · D-A1 · D-A4 | #62–#65 | merged · repros en prod: galerías PASS, `method="post"` en el HTML |
 | F-A2 grupal al cambiar de equipo (regla a, D221) | #66 `fix/grupal-cambio-equipo` | PR abierto · emulador FAIL main / PASS rama |
+| F-M2+F-B1 validación con espacios | #67 `fix/validacion-espacios` | PR abierto · repros 8 y 10 PASS en la rama |
+| D-M4 foco bajo la barra inferior (D222) | #68 `fix/scroll-padding` | PR abierto · repro 6 FAIL main / PASS rama |
+| D-M2 OG de /ingresar (D223) | #69 `fix/og-ingresar` | PR abierto · preview con og:image |
+| F-M1 corrección pisa otra pestaña (D224) | #70 `fix/evaluacion-version` | PR abierto · repro 7b FAIL main / PASS rama |
 
 ## Blocked (actions for César or external)
 
@@ -28,6 +32,8 @@ Fases 01–08 cerradas · **Track:** Product · main @ d50568b · **fase 09 — 
 
 
 **Decisiones de César:**
+- **D-M1 (404 dinámica con HTTP 200):** es el comportamiento documentado de Next con streaming (200 + `noindex`). Opciones: aceptarlo como decisión · comprobar la existencia en el proxy (1 lectura de Firestore por visita) · quitar los `loading.tsx` de esas 5 rutas (choca con D219).
+- **D-M3 + D-A1b (filas del ranking y de equipos, `Button` nowrap):** decisión visual pendiente (3 opciones).
 - **Capitán movido tras una entrega** (#66): en `/tareas/<id>` ve la entrega vieja y no puede enviar la del equipo nuevo (ya pasaba antes).
 - Alumnos en móvil: «Desliza la tabla…» queda a unos 3400 px de la parte superior, debajo de la tabla (HANDOFF §2.15).
 - Cambiar a un alumno de **sección** (W7/W8): no hay acción; ¿hace falta? y sus ajustes viejos ¿siguen en la sección vieja? (fila 134).
@@ -46,7 +52,7 @@ Fases 01–08 cerradas · **Track:** Product · main @ d50568b · **fase 09 — 
 ## Next
 
 - **Fase 09 — QA final** (`phases/09-QA-FINAL.md`): la lista de arriba, más `design-qa` y `functional-qa`.
-- Fase 09: medios (D-A1b, F-M1, F-M2+F-B1, D-M1–D-M4) · bajos como decisiones · cierre de fase.
+- Fase 09: D-M1, D-M3, D-A1b (esperan decisión) · bajos como decisiones · cierre de fase.
 
 ## Phases
 

@@ -17,12 +17,12 @@ Informes completos: [`qa-version-1-functional.md`](qa-version-1-functional.md) �
 | D-A2/A3 | Alto | Alto contraste: logo invisible y opción activa de segmentados/tabs indistinguible | wt3 `4-…`, `5-…` | `fix/forced-colors` |
 | D-A4 | Alto (conocido) | `/secciones`, `/componentes`, `/tokens` públicas con datos del seed | wt5 `d-a4-…` (curl a prod) | `fix/galerias-produccion` · #65 |
 | D-A1b | Medio | Resto del 200 %: fila del ranking, `Button` nowrap (/perfil, /profe/tareas/nueva), fila de /profe/equipos | wt4 `3b-…` | `fix/texto-200-resto` |
-| F-M1 | Medio | Corrección de nota pisa sin aviso a otra pestaña | wt2 `7-…` | `fix/evaluacion-version` |
-| F-M2 | Medio | Primer nombre vacío con segundo nombre se guarda | wt2 `10-…` | `fix/validacion-espacios` (con F-B1) |
-| D-M1 | Medio | 404 dinámica responde HTTP 200 (+ meta robots duplicado) | wt3 `2-…` | `fix/not-found-200` |
-| D-M2 | Medio | `/ingresar` pierde og:image y compañía | — | `fix/og-ingresar` |
+| F-M1 | Medio | Corrección de nota pisa sin aviso a otra pestaña | wt2 `7-…` | `fix/evaluacion-version` · #70 |
+| F-M2 | Medio | Primer nombre vacío con segundo nombre se guarda | wt2 `10-…` | `fix/validacion-espacios` (con F-B1) · #67 |
+| D-M1 | Medio | 404 dinámica responde HTTP 200 (+ meta robots duplicado) | wt3 `2-…` | `fix/not-found-200` — **espera decisión** |
+| D-M2 | Medio | `/ingresar` pierde og:image y compañía | — | `fix/og-ingresar` · #69 |
 | D-M3 | Medio | Ranking 320 px: nombre recortado en filas con «Empate» | wt3 `1-…` | `fix/ranking-320` |
-| D-M4 | Medio | Foco con Tab tapado por la barra inferior | wt3 `6-…` | `fix/scroll-padding` |
+| D-M4 | Medio | Foco con Tab tapado por la barra inferior | wt3 `6-…` | `fix/scroll-padding` · #68 |
 | F-B1 | Bajo | Contraseña de 8 espacios aceptada | wt2 `8-…` | con F-M2 |
 | F-B2 | Bajo | Tarea con fecha 31/12/9999 | wt2 `4-…` | decisión (D) |
 | F-B3 | Bajo | Pregunta de imagen entregada con ruta inventada | wt2 `5-…` | decisión (D) |
