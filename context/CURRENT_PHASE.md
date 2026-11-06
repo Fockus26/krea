@@ -15,7 +15,8 @@ Fases 01–08 cerradas · **Track:** Product · main @ d50568b · **fase 09 — 
 | Fase 08 (D214–D219) | #56–#61 | merged (d50568b) |
 | Fase 09 · QA de versión | wt2 / wt3 | hecho · arreglos pendientes |
 | F-A1 contraseña en URL | #62 `fix/formularios-post` | PR abierto · CI verde |
-| D-A2/A3 alto contraste | #63 `fix/forced-colors` | PR abierto |
+| D-A2/A3 alto contraste | #63 `fix/forced-colors` | PR abierto · CI verde |
+| D-A1 texto 200 % móvil | #64 `fix/texto-200-movil` | PR abierto (14→6 rutas; D-A1b queda) |
 
 ## Blocked (actions for César or external)
 

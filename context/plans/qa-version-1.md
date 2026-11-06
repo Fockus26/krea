@@ -16,6 +16,7 @@ Informes completos: [`qa-version-1-functional.md`](qa-version-1-functional.md) �
 | D-A1 | Alto | Texto al 200 % en 390 px → scroll horizontal en todas las rutas | wt3 `3-…` | `fix/texto-200-movil` |
 | D-A2/A3 | Alto | Alto contraste: logo invisible y opción activa de segmentados/tabs indistinguible | wt3 `4-…`, `5-…` | `fix/forced-colors` |
 | D-A4 | Alto (conocido) | `/secciones`, `/componentes`, `/tokens` públicas con datos del seed | — | `fix/galerias-produccion` |
+| D-A1b | Medio | Resto del 200 %: fila del ranking, `Button` nowrap (/perfil, /profe/tareas/nueva), fila de /profe/equipos | wt4 `3b-…` | `fix/texto-200-resto` |
 | F-M1 | Medio | Corrección de nota pisa sin aviso a otra pestaña | wt2 `7-…` | `fix/evaluacion-version` |
 | F-M2 | Medio | Primer nombre vacío con segundo nombre se guarda | wt2 `10-…` | `fix/validacion-espacios` (con F-B1) |
 | D-M1 | Medio | 404 dinámica responde HTTP 200 (+ meta robots duplicado) | wt3 `2-…` | `fix/not-found-200` |
