@@ -5,6 +5,7 @@
 // Escrituras: SOLO el servidor (Server Actions + Admin SDK, D175). Las reglas niegan toda
 // escritura del cliente; el cliente solo lee lo que su rol le deja (firebase/firestore.rules).
 import { z } from "zod";
+import { esDiaValido } from "@/lib/fecha";
 import { BASE_MAX, BASE_MIN, NOTA_MAX } from "@/lib/grades";
 
 /* ---------- Colecciones ---------- */
@@ -69,7 +70,9 @@ export const zPuntaje = z
 /** Día civil `AAAA-MM-DD` con año de 4 cifras (nunca `new Date(<texto libre>)`). */
 export const zDia = z
   .string()
-  .regex(/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/, "Fecha inválida");
+  .regex(/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/, "Fecha inválida")
+  // El día tiene que existir: "2027-02-31" respondía `red` en vez de `invalida` (F-B2, D228)
+  .refine(esDiaValido, "Fecha inválida");
 
 /** Instante en milisegundos epoch (el servidor lo pone; Firestore lo guarda como número). */
 export const zInstante = z.number().int().nonnegative();

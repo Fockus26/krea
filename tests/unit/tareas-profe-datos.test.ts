@@ -4,6 +4,7 @@ import {
   type Entrega,
   type Tarea,
   type TareaDoc,
+  zDia,
   zTarea,
   zTareaDoc,
 } from "@/lib/modelo";
@@ -119,6 +120,21 @@ describe("armarTarea: nueva o borrador", () => {
     });
     expect(armar({ entrada: entrada({ fecha: HOY }) }).ok).toBe(true);
     expect(armar({ entrada: entrada({ fecha: null }) }).ok).toBe(false);
+  });
+
+  test("publicar a más de un año o con un día que no existe (F-B2, D228)", () => {
+    expect(armar({ entrada: entrada({ fecha: "9999-12-31" }) })).toEqual({
+      ok: false,
+      error: "fecha-lejana",
+    });
+    // 366 días desde 2026-11-05: 2027-11-06 entra; 2027-11-07 ya no
+    expect(armar({ entrada: entrada({ fecha: "2027-11-06" }) }).ok).toBe(true);
+    expect(armar({ entrada: entrada({ fecha: "2027-11-07" }) })).toEqual({
+      ok: false,
+      error: "fecha-lejana",
+    });
+    expect(zDia.safeParse("2027-02-31").success).toBe(false);
+    expect(zDia.safeParse("2028-02-29").success).toBe(true);
   });
 
   test("un borrador a medias se guarda (D199) pero necesita título", () => {
@@ -345,6 +361,7 @@ describe("constructor con ids guardados", () => {
       "cerrada",
       "invalida",
       "fecha-pasada",
+      "fecha-lejana",
       "sin-empate",
       "red",
     ] as const) {

@@ -20,6 +20,7 @@ import {
   filtroFrase,
   MAX_PREGUNTAS,
   mascaraFecha,
+  mensajeErrorTarea,
   metaTarea,
   motivoSuma,
   ordenarTareas,
@@ -292,6 +293,17 @@ describe("constructor: suma y validación", () => {
   test("una tarea completa se puede publicar", () => {
     expect(tieneErrores(validarTarea(lista, HOY_DEMO))).toBe(false);
     expect(puedePublicar(lista, HOY_DEMO)).toBe(true);
+  });
+
+  test("fecha a más de un año: error en el campo (F-B2, D228)", () => {
+    const t = crearBorrador({
+      fecha: "31/12/9999",
+      preguntas: [{ enunciado: "Uno", formato: "texto", valor: 20 }],
+    });
+    expect(validarTarea(t, HOY_DEMO).fecha).toBe(
+      "La fecha de entrega puede ser como mucho dentro de un año.",
+    );
+    expect(mensajeErrorTarea("fecha-lejana")).toBe(ERRORES.fechaLejana);
   });
 
   test("errores por campo", () => {

@@ -3,7 +3,12 @@
 // lista y en el constructor, y las tarjetas de Premios. Lo usan los adaptadores del Admin SDK
 // (`lib/firebase/tareas.ts`), las páginas del profe y las pruebas.
 import { z } from "zod";
-import { comparaFecha, diaDeInstante } from "@/lib/fecha";
+import {
+  comparaFecha,
+  diaDeInstante,
+  diasEntre,
+  FECHA_ENTREGA_MAX_DIAS,
+} from "@/lib/fecha";
 import { NOTA_MAX } from "@/lib/grades";
 import {
   type DecisionesPremio,
@@ -122,7 +127,7 @@ function idsUnicos(preguntas: ReadonlyArray<{ id: string }>): boolean {
   return new Set(preguntas.map((p) => p.id)).size === preguntas.length;
 }
 
-/** Fecha válida para publicar: hoy o después, o la que ya tenía la tarea. */
+/** Fecha válida para publicar: de hoy a un año (D228), o la que ya tenía la tarea. */
 function fechaOk(
   fecha: string | null,
   hoy: string,
@@ -130,6 +135,8 @@ function fechaOk(
 ): ErrorTarea | null {
   if (fecha === null) return "invalida";
   if (fecha !== guardada && comparaFecha(fecha, hoy) < 0) return "fecha-pasada";
+  if (fecha !== guardada && diasEntre(hoy, fecha) > FECHA_ENTREGA_MAX_DIAS)
+    return "fecha-lejana";
   return null;
 }
 
