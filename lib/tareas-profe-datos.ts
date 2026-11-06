@@ -41,8 +41,10 @@ import {
   fechaCampo,
   MAX_PREGUNTAS,
   type ModoConstructor,
+  type PerdidaEliminar,
   SECCIONES_TAREA,
   type SeccionTarea,
+  SIN_PERDIDA,
   type TareaProfe,
 } from "@/lib/tareas-profe";
 
@@ -276,6 +278,7 @@ export function tareaProfeDe(
   t: ConId<TareaDoc>,
   resumen: ResumenEntregas | undefined,
   conteos: Conteos,
+  perdida: PerdidaEliminar = SIN_PERDIDA,
 ): TareaProfe {
   const r = resumen ?? { entregadas: 0, evaluadas: 0 };
   const total = totalTitulares(t, conteos);
@@ -297,6 +300,85 @@ export function tareaProfeDe(
     suma: sumaModelo(t.preguntas.map((p) => ({ valor: p.valor ?? 0 }))),
     avance,
     porEvaluar: r.entregadas,
+    perdida,
+  };
+}
+
+/* ---------- Eliminar una tarea (D242, D243) ---------- */
+
+type EntregaPerdida = Pick<
+  Entrega,
+  "tareaId" | "estado" | "integrantes" | "seccion"
+>;
+
+/** Lo que pierde una tarea al eliminarla (el texto de la confirmación), de sus entregas. */
+export function perdidaAlEliminar(
+  entregas: ReadonlyArray<Omit<EntregaPerdida, "tareaId">>,
+): PerdidaEliminar {
+  let notas = 0;
+  let sinEvaluar = 0;
+  const conNotas = new Set<SeccionId>();
+  for (const e of entregas) {
+    if (e.estado === "evaluada") {
+      notas += e.integrantes.length;
+      conNotas.add(e.seccion);
+    } else if (e.estado === "entregada") sinEvaluar += 1;
+  }
+  return {
+    notas,
+    sinEvaluar,
+    secciones: SECCIONES.filter((s) => conNotas.has(s)),
+  };
+}
+
+/** `perdidaAlEliminar` de cada tarea, en una sola pasada por todas las entregas. */
+export function perdidasPorTarea(
+  entregas: ReadonlyArray<EntregaPerdida>,
+): Map<string, PerdidaEliminar> {
+  const por = new Map<string, EntregaPerdida[]>();
+  for (const e of entregas) {
+    const l = por.get(e.tareaId);
+    if (l) l.push(e);
+    else por.set(e.tareaId, [e]);
+  }
+  return new Map([...por].map(([id, l]) => [id, perdidaAlEliminar(l)]));
+}
+
+/** Tope de escrituras de una transacción de Firestore. */
+export const MAX_ESCRITURAS_TX = 500;
+
+export type PlanEliminar = {
+  /**
+   * Secciones cuyo `ranking/{s}` se recalcula: las de sus entregas (sin entregas, la tarea no
+   * aportaba puntos y el ranking no cambia).
+   */
+  secciones: SeccionId[];
+  /** Claves de B2 de las imágenes de respuesta: se borran después del commit (D229). */
+  imagenes: string[];
+  /** Tarea + entregas + un ranking por sección. */
+  escrituras: number;
+};
+
+/**
+ * Qué toca eliminar una tarea. Una entrega por titular y tarea (`idEntrega`): con 69 alumnos en
+ * las dos secciones son ≤ 69 entregas, 72 escrituras, lejos del tope de 500 (D242).
+ */
+export function planEliminar(
+  entregas: ReadonlyArray<Pick<Entrega, "seccion" | "respuestas">>,
+): PlanEliminar {
+  const secciones = new Set<SeccionId>();
+  const imagenes: string[] = [];
+  for (const e of entregas) {
+    secciones.add(e.seccion);
+    for (const r of Object.values(e.respuestas)) {
+      if ("imagenPath" in r) imagenes.push(r.imagenPath);
+    }
+  }
+  const s = SECCIONES.filter((x) => secciones.has(x));
+  return {
+    secciones: s,
+    imagenes: [...new Set(imagenes)],
+    escrituras: 1 + entregas.length + s.length,
   };
 }
 

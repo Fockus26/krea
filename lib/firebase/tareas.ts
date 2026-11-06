@@ -2,9 +2,11 @@
 // pruebas de tests/rules los corran contra los emuladores; la app los usa solo desde
 // lib/acciones/tareas.ts, después de `exigirSesion("profesor")` (el autor sale de la sesión).
 //
-// Ninguna de estas escrituras cambia puntos: solo una entrega evaluada aporta al ranking (D007) y
-// un premio no da puntos. Por eso `ranking/{seccion}` no se recalcula aquí (lo hace W7 al evaluar).
+// Guardar, cerrar y decidir el premio no cambian puntos: solo una entrega evaluada aporta al
+// ranking (D007) y un premio no da puntos. Eliminar sí (se van sus notas): recalcula en la
+// misma transacción (D206, D242).
 import { FieldPath, type Firestore } from "firebase-admin/firestore";
+import { escribirRankingEnTx, leerSeccionEnTx } from "@/lib/firebase/ranking";
 import {
   COL,
   type DecisionPremio,
@@ -17,6 +19,8 @@ import {
   armarTarea,
   estadoPremioSeccion,
   type GuardarTarea,
+  MAX_ESCRITURAS_TX,
+  planEliminar,
   puedeCerrar,
   type ResultadoTarea,
 } from "@/lib/tareas-profe-datos";
@@ -61,6 +65,69 @@ export async function guardarTareaEnTransaccion(
     if (!r.ok) return r;
     tx.set(ref, r.tarea);
     return { ok: true, id: ref.id };
+  });
+}
+
+/**
+ * Elimina una tarea con todas sus entregas (y con ellas sus notas) en UNA transacción, y
+ * recalcula `ranking/{s}` de cada sección que tenía entregas sin ellas (D206, D242). Los ajustes
+ * no se tocan (D007): solo desaparecen las notas. `decisionesPremio` vive en la tarea y se va con
+ * ella. Devuelve las claves de B2 de las imágenes para borrarlas después del commit (D229).
+ */
+export async function eliminarTareaEnTransaccion(
+  db: Firestore,
+  id: string,
+  ahora: number,
+): Promise<{ resultado: ResultadoTarea; imagenes: string[] }> {
+  const ref = db.collection(COL.tareas).doc(id);
+  return db.runTransaction(async (tx) => {
+    const [snap, ents] = await Promise.all([
+      tx.get(ref),
+      tx.get(db.collection(COL.entregas).where("tareaId", "==", id)),
+    ]);
+    if (!snap.exists) {
+      return {
+        resultado: { ok: false, error: "no-existe" } as ResultadoTarea,
+        imagenes: [],
+      };
+    }
+    // Las que no validan también se borran; para el plan solo cuentan las válidas
+    const entregas = ents.docs.flatMap((d) => {
+      const e = zEntrega.safeParse(d.data());
+      return e.success ? [e.data] : [];
+    });
+    const plan = planEliminar(entregas);
+    const escrituras = plan.escrituras + (ents.size - entregas.length);
+    if (escrituras > MAX_ESCRITURAS_TX) {
+      return {
+        resultado: { ok: false, error: "invalida" } as ResultadoTarea,
+        imagenes: [],
+      };
+    }
+    // Todas las lecturas antes de la primera escritura
+    const datos = await Promise.all(
+      plan.secciones.map((s) => leerSeccionEnTx(tx, db, s)),
+    );
+    for (const d of ents.docs) tx.delete(d.ref);
+    tx.delete(ref);
+    plan.secciones.forEach((s, i) => {
+      const leidos = datos[i];
+      if (!leidos) return;
+      escribirRankingEnTx(
+        tx,
+        db,
+        s,
+        {
+          ...leidos,
+          entregas: leidos.entregas.filter((e) => e.tareaId !== id),
+        },
+        ahora,
+      );
+    });
+    return {
+      resultado: { ok: true, id } as ResultadoTarea,
+      imagenes: plan.imagenes,
+    };
   });
 }
 

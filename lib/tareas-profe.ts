@@ -46,6 +46,8 @@ export type TareaProfe = {
   avance: AvanceTarea | null;
   /** Entregas en la cola "Por evaluar" de esta tarea. */
   porEvaluar: number;
+  /** Lo que se pierde al eliminarla; ausente en la vista previa (no lo sabe). */
+  perdida?: PerdidaEliminar;
 };
 
 /** Opciones del segmentado de estado, en el orden del lienzo. */
@@ -532,6 +534,61 @@ export const AVISO_CERRADA =
   "Esta tarea está cerrada: ya no recibe entregas y no se puede editar.";
 export const NOTA_PUBLICADA =
   "Los cambios se ven al instante en «Por entregar».";
+/* ---------- Eliminar una tarea (D242–D244) ---------- */
+
+/**
+ * Lo que se pierde al eliminar una tarea: las notas (una por integrante de cada entrega evaluada;
+ * en una grupal, una por alumno del equipo), las entregas enviadas sin evaluar y las secciones
+ * que pierden notas. Los borradores de los alumnos también se borran, pero no se cuentan.
+ */
+export type PerdidaEliminar = {
+  notas: number;
+  sinEvaluar: number;
+  secciones: ReadonlyArray<Exclude<SeccionTarea, "5A y 5C">>;
+};
+
+export const SIN_PERDIDA: PerdidaEliminar = {
+  notas: 0,
+  sinEvaluar: 0,
+  secciones: [],
+};
+
+const plural = (n: number, uno: string, varios: string) =>
+  `${n} ${n === 1 ? uno : varios}`;
+
+/* Copy PROVISIONAL: el handoff no define el borrado (lo describe el informe de W4). */
+export const eliminarTareaLabel = (titulo: string) => `Eliminar ${titulo}`;
+export const eliminarTareaTitulo = (titulo: string) => `¿Eliminar «${titulo}»?`;
+export const TOAST_TAREA_ELIMINADA = "Tarea eliminada";
+export const ELIMINAR_TAREA_BOTON = "Eliminar tarea";
+
+/**
+ * «Se borrarán 23 notas de 5A y 5C. Los puntos del ranking se recalculan.» Sin `perdida` (la
+ * vista previa no la conoce) dice lo mismo sin cifras.
+ */
+export function eliminarTareaDescripcion(perdida?: PerdidaEliminar): string {
+  const fin = "Esto no se puede deshacer.";
+  if (!perdida) {
+    return `Se borrarán sus entregas y sus notas, y los puntos del ranking se recalculan. ${fin}`;
+  }
+  const { notas, sinEvaluar, secciones } = perdida;
+  const pendientes = plural(
+    sinEvaluar,
+    "entrega sin evaluar",
+    "entregas sin evaluar",
+  );
+  const verbo = (uno: boolean) => (uno ? "Se borrará" : "Se borrarán");
+  if (notas > 0) {
+    const de = secciones.length > 0 ? ` de ${secciones.join(" y ")}` : "";
+    const y = sinEvaluar > 0 ? ` y ${pendientes}` : "";
+    return `${verbo(notas === 1 && sinEvaluar === 0)} ${plural(notas, "nota", "notas")}${de}${y}. Los puntos del ranking se recalculan. ${fin}`;
+  }
+  if (sinEvaluar > 0) {
+    return `${verbo(sinEvaluar === 1)} ${pendientes}. Nadie pierde notas ni puntos. ${fin}`;
+  }
+  return `Todavía no tiene entregas: nadie pierde notas ni puntos. ${fin}`;
+}
+
 export const CERRAR_TITULO = "¿Cerrar la tarea?";
 export const CERRAR_DESCRIPCION =
   "Ya no recibirá entregas. Las que llegaron se siguen evaluando y, si tiene premio, se decide quién lo gana.";

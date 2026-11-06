@@ -72,6 +72,16 @@ export const tieneEntregas = cache(async (id: string): Promise<boolean> => {
   return !q.empty;
 });
 
+/** Entregas de una tarea: lo que se pierde al eliminarla (D243). */
+export const entregasDeTarea = cache(async (id: string): Promise<Entrega[]> => {
+  await exigirSesion("profesor");
+  return lista(
+    db().collection(COL.entregas).where("tareaId", "==", id),
+    zEntrega,
+    COL.entregas,
+  );
+});
+
 export const entregasTodas = cache(async (): Promise<Entrega[]> => {
   await exigirSesion("profesor");
   return lista(db().collection(COL.entregas), zEntrega, COL.entregas);
