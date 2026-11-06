@@ -15,9 +15,9 @@ describe("rutaAlumnos (D252)", () => {
     expect(rutaAlumnos({})).toBe("/profe/alumnos");
   });
   test("pone solo los filtros dados, en orden estable", () => {
-    expect(rutaAlumnos({ tarea: "t1", estado: "raspados", seccion: "5C" })).toBe(
-      "/profe/alumnos?seccion=5C&estado=raspados&tarea=t1",
-    );
+    expect(
+      rutaAlumnos({ tarea: "t1", estado: "raspados", seccion: "5C" }),
+    ).toBe("/profe/alumnos?seccion=5C&estado=raspados&tarea=t1");
     expect(rutaAlumnos({ alumno: "37575127" })).toBe(
       "/profe/alumnos?alumno=37575127",
     );

@@ -84,7 +84,12 @@ export function StudentFilters({
               .filter(Boolean)
               .join(" · ")}
           </Badge>
-          <Button type="button" variant="ghost" size="sm" onClick={filtroActivo.onQuitar}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={filtroActivo.onQuitar}
+          >
             <X aria-hidden="true" />
             Quitar filtro
           </Button>
