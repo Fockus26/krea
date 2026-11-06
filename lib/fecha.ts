@@ -9,6 +9,22 @@ export function formatFecha(iso: string): string {
   return `${d}/${m}/${a}`;
 }
 
+/** ¿Es un día ISO que existe? ("2027-02-31" → false). */
+export function esDiaValido(iso: string): boolean {
+  try {
+    partes(iso);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * La fecha de entrega llega como mucho a un año de hoy (QA versión 1, F-B2: «31/12/9999» se
+ * publicaba; D228). 366 días cubre el mismo día del año siguiente aunque sea bisiesto.
+ */
+export const FECHA_ENTREGA_MAX_DIAS = 366;
+
 /** Días civiles de `desde` a `hasta` (negativo si `hasta` ya pasó). */
 export function diasEntre(desde: string, hasta: string): number {
   return (aUtc(hasta) - aUtc(desde)) / 86_400_000;

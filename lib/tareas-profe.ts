@@ -2,7 +2,12 @@
 // sin React ni reloj: "hoy" llega por argumento (con `cacheComponents` el servidor no lee
 // `Date.now()`). El constructor es un reducer: añadir / eliminar / restaurar preguntas y editar
 // campos; la validación y la suma salen de aquí para poder probarlas sin DOM.
-import { comparaFecha, formatFecha } from "@/lib/fecha";
+import {
+  comparaFecha,
+  diasEntre,
+  FECHA_ENTREGA_MAX_DIAS,
+  formatFecha,
+} from "@/lib/fecha";
 import { NOTA_MAX } from "@/lib/grades";
 import { percent, sumMeterInfo } from "@/lib/meters";
 
@@ -370,6 +375,7 @@ export const ERRORES = {
   titulo: "Escribe el título de la tarea.",
   fecha: "Escribe la fecha como dd/mm/aaaa.",
   fechaPasada: "La fecha de entrega ya pasó.",
+  fechaLejana: "La fecha de entrega puede ser como mucho dentro de un año.",
   enunciado: "Escribe el enunciado de la pregunta.",
   valor: "Ponle un valor a la pregunta.",
 } as const;
@@ -408,6 +414,11 @@ export function validarTarea(
   if (!iso) errores.fecha = ERRORES.fecha;
   else if (comparaFecha(iso, hoy) < 0 && iso !== fechaGuardada)
     errores.fecha = ERRORES.fechaPasada;
+  else if (
+    diasEntre(hoy, iso) > FECHA_ENTREGA_MAX_DIAS &&
+    iso !== fechaGuardada
+  )
+    errores.fecha = ERRORES.fechaLejana;
   for (const p of t.preguntas) {
     const e: ErroresPregunta = {};
     if (!p.enunciado.trim()) e.enunciado = ERRORES.enunciado;
@@ -488,6 +499,7 @@ export type ErrorTarea =
   | "cerrada"
   | "invalida"
   | "fecha-pasada"
+  | "fecha-lejana"
   | "sin-empate"
   | "red";
 
@@ -502,6 +514,8 @@ export function mensajeErrorTarea(error: ErrorTarea): string {
       return "Revisa los datos de la tarea: hay algo que no se pudo guardar.";
     case "fecha-pasada":
       return ERRORES.fechaPasada;
+    case "fecha-lejana":
+      return ERRORES.fechaLejana;
     case "sin-empate":
       return "Ya no hay empate en esta sección: recarga la página.";
     case "red":
