@@ -133,6 +133,8 @@ function EditForm({
     motivo,
     nombres,
     apellidos,
+    primerNombre: nombre1,
+    primerApellido: apellido1,
     ...(conEmail ? { email } : {}),
   });
   // D071: los errores aparecen al enviar y, ya a la vista, se corrigen en vivo sin anunciarse

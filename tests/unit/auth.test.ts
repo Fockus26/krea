@@ -17,6 +17,11 @@ describe("validarPassword", () => {
     expect(validarPassword("krea2026")).toEqual({ estado: "ok", largo: 8 });
     expect(validarPassword("krea2026!")).toEqual({ estado: "ok", largo: 9 });
   });
+  test("solo espacios es vacía; espacios entre caracteres sí cuentan (F-B1)", () => {
+    expect(validarPassword("        ")).toEqual({ estado: "vacia" });
+    expect(validarPassword(" 	  ")).toEqual({ estado: "vacia" });
+    expect(validarPassword("krea 2026")).toEqual({ estado: "ok", largo: 9 });
+  });
   test("un emoji cuenta como un carácter", () => {
     expect(validarPassword("krea202😀")).toEqual({ estado: "ok", largo: 8 });
   });
