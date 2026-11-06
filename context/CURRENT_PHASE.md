@@ -5,18 +5,13 @@
 
 ## Now
 
-**Phase:** 08 — Responsive y pulido · **cerrada** (2026-11-05, #56–#61, D214–D219) · resumen: `PHASE_LOG/08-responsive-pulido.md`
-Fases 01–08 cerradas · **Track:** Product · main @ d50568b · **fase 09 — QA final**: QA hecho (2026-11-06) → `plans/qa-version-1.md` (0 críticos · 6 altos · 6 medios · 7 bajos). Altos y medios mergeados (#62–#73). Bajos: #74–#76 abiertos (D-B3 entra en D225). Sigue: cierre.
-**Build local suprimido** (César, 2026-11-05): lo corren CI y Vercel, y el agente comprueba el preview. **QA con sesión:** `qa:local` y `.env.test.local` (alumno y profesor de prueba), nunca pedirle a César que inicie sesión.
+**Phase:** 09 — QA final · **cerrada** (2026-11-06, #62–#76, D220–D230) · resumen: `PHASE_LOG/09-qa.md`
+Fases 01–09 cerradas · **Track:** Product · main @ 8f818b8 · versión 1 entregada. Próximo QA de versión: `git diff --name-only d50568b..origin/main` (`plans/qa-version-1.md`).
+**Build local suprimido** (César, 2026-11-05): lo corren CI y Vercel. **QA con sesión:** `qa:local` y `.env.test.local`; nunca pedirle a César que inicie sesión.
 
 | Unit | Branch | Status |
 |---|---|---|
-| Fase 08 (D214–D219) | #56–#61 | merged (d50568b) |
-| Fase 09 · QA de versión | wt2 / wt3 | hecho · arreglos pendientes |
-| Altos y medios del QA (D221–D227) | #62–#73 | merged · repros en `PHASE_LOG/fix-*.md` |
-| F-B2 fecha de entrega (D228) | #74 `fix/fecha-entrega` | PR abierto |
-| F-B3+F-B4 imágenes y errores de B2 (D229) | #75 `fix/entrega-imagen` | PR abierto · repros 5 y 9 FAIL main / PASS rama |
-| D-B1+D-B2 título de la barra y SVG (D230) | #76 `chore/topbar-titulo-svg` | PR abierto |
+| Fase 09 · QA + arreglos | #62–#76 | merged (8f818b8) |
 
 ## Blocked (actions for César or external)
 
@@ -34,14 +29,15 @@ QA de versión hecho (2026-11-06): lo no verificado está en `plans/qa-version-1
 
 **Acciones manuales:**
 - **Rotar la clave de la cuenta de servicio** de `krea-d22f7` (se pegó en el chat). Faltan las cuentas de los demás profesores.
-- Vercel: confirmar las `B2_*` (Production y Preview) y bucket privado; el código solo lee `B2_*` (D194), no `AWS_*`.
+- Vercel: confirmar las `B2_*` (Production y Preview) y bucket privado; el código solo lee `B2_*` (D194), no `AWS_*`; la clave necesita **lectura**, escritura y borrado (el HEAD de D229).
+- Brevo: `BREVO_API_KEY` y `BREVO_SENDER_EMAIL` en Vercel; probar recuperar con 38291460.
 - Emails reales de los estudiantes (checklist #3): ya se cargan desde Alumnos → Editar (D209).
 - Confirmar indexación solo `/ingresar` (D023) y metadata (fila 22) · `NEXT_PUBLIC_SITE_URL` con dominio (fila 21).
 
 ## Next
 
-- **Fase 09 — QA final** (`phases/09-QA-FINAL.md`): la lista de arriba, más `design-qa` y `functional-qa`.
-- Fase 09: cierre (CONTENT_CHECKLIST, PHASE_LOG/09-qa.md, /kit-feedback, resumen de entrega) tras mergear #74–#76.
+- Lanzamiento: contenido real (CONTENT_CHECKLIST filas 2–11, 14, 21, 64) y acciones de César de arriba.
+- Pendientes chicos: capitán movido tras una entrega (D221) · Editar alumno «el último gana».
 
 ## Phases
 
@@ -49,4 +45,4 @@ QA de versión hecho (2026-11-06): lo no verificado está en `plans/qa-version-1
 |---|---|---|
 | 01–07 | Tokens · Layout · Components · Sections · Pages · States · Backend | closed |
 | 08 | Responsive and polish | closed (2026-11-05) |
-| 09 | Final QA | in progress |
+| 09 | Final QA | closed (2026-11-06) |
