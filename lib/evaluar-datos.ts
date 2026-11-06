@@ -55,6 +55,12 @@ export const zGuardarEvaluacion = z.object({
   puntos: z.record(zIdPregunta, zPuntaje),
   /** Comentario por pregunta (id → texto); vacío = sin comentario. */
   comentarios: z.record(zIdPregunta, z.string().trim().max(1000)),
+  /**
+   * `evaluadaEn` de la evaluación con la que se abrió el formulario (`null` = estaba Pendiente).
+   * Si ya no es la vigente, otro la cambió mientras tanto y no se pisa (`cambio`; QA versión 1,
+   * F-M1; D224).
+   */
+  version: zInstante.nullable(),
 });
 export type GuardarEvaluacion = z.infer<typeof zGuardarEvaluacion>;
 
@@ -123,6 +129,9 @@ export function armarEvaluacion({
   // Un borrador del alumno todavía no se entregó (D196)
   if (entrega.estado === "borrador")
     return { ok: false, error: "no-entregada" };
+  // Otra pestaña u otro profe guardó desde que se abrió el formulario (D224)
+  if ((entrega.evaluacion?.evaluadaEn ?? null) !== envio.version)
+    return { ok: false, error: "cambio" };
   const preguntas = preguntasDe(tarea);
   if (preguntas.length === 0) return { ok: false, error: "sin-preguntas" };
 

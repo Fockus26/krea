@@ -64,8 +64,12 @@ const usuario = (cedula: string, base = 15): Usuario => ({
   actualizadoEn: 1,
 });
 
-const envio = (puntos: Record<string, number>, comentarios = {}) =>
-  zGuardarEvaluacion.parse({ entregaId: "e1", puntos, comentarios });
+const envio = (
+  puntos: Record<string, number>,
+  comentarios = {},
+  version: number | null = null,
+) =>
+  zGuardarEvaluacion.parse({ entregaId: "e1", puntos, comentarios, version });
 
 describe("armarEvaluacion", () => {
   const armar = (puntos: Record<string, number>, e = ent({ id: "e1" })) =>
@@ -113,6 +117,44 @@ describe("armarEvaluacion", () => {
       zGuardarEvaluacion.safeParse({
         entregaId: "e1",
         puntos: { p1: 3.2 },
+        comentarios: {},
+        version: null,
+      }).success,
+    ).toBe(false);
+  });
+
+  test("la versión con la que se abrió debe ser la vigente; si no, `cambio` (F-M1, D224)", () => {
+    const evaluada = ent({
+      id: "e1",
+      estado: "evaluada",
+      evaluacion: {
+        puntos: { p1: 12, p2: 8 },
+        comentarios: {},
+        puntaje: 20,
+        evaluadaPor: "30262232",
+        evaluadaEn: 100,
+      },
+    });
+    const con = (e: typeof evaluada, version: number | null) =>
+      armarEvaluacion({
+        entrega: e,
+        tarea,
+        envio: envio({ p1: 4, p2: 4 }, {}, version),
+        autorId: "30262232",
+        ahora: 200,
+      });
+    // Abierta Pendiente, pero otro ya la evaluó
+    expect(con(evaluada, null)).toEqual({ ok: false, error: "cambio" });
+    // Abierta con una evaluación que ya no es la vigente
+    expect(con(evaluada, 50)).toEqual({ ok: false, error: "cambio" });
+    expect(con(evaluada, 100).ok).toBe(true);
+    // Pendiente y abierta Pendiente
+    expect(con(ent({ id: "e1" }), null).ok).toBe(true);
+    // Sin versión no se acepta
+    expect(
+      zGuardarEvaluacion.safeParse({
+        entregaId: "e1",
+        puntos: {},
         comentarios: {},
       }).success,
     ).toBe(false);

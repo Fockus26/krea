@@ -156,7 +156,7 @@ describe("evaluar (emulador)", () => {
       evaluarEnTransaccion(
         db(),
         PROFE,
-        { entregaId: E1, puntos, comentarios: {} },
+        { entregaId: E1, puntos, comentarios: {}, version: null },
         AHORA,
       );
     expect(await intentar({ p1: 12.5, p2: 8 })).toEqual({
@@ -182,6 +182,7 @@ describe("evaluar (emulador)", () => {
         entregaId: E1,
         puntos: { p1: 12, p2: 6.5 },
         comentarios: { p1: "  Muy clara  ", p2: "   " },
+        version: null,
       },
       AHORA,
     );
@@ -204,7 +205,12 @@ describe("evaluar (emulador)", () => {
     const r = await evaluarEnTransaccion(
       db(),
       PROFE_2,
-      { entregaId: E1, puntos: { p1: 6, p2: 2 }, comentarios: {} },
+      {
+        entregaId: E1,
+        puntos: { p1: 6, p2: 2 },
+        comentarios: {},
+        version: AHORA,
+      },
       AHORA + 10,
     );
     expect(r.ok).toBe(true);
@@ -247,7 +253,12 @@ describe("evaluar (emulador)", () => {
     await evaluarEnTransaccion(
       db(),
       PROFE,
-      { entregaId: E2, puntos: { p1: 10, p2: 8 }, comentarios: {} },
+      {
+        entregaId: E2,
+        puntos: { p1: 10, p2: 8 },
+        comentarios: {},
+        version: null,
+      },
       AHORA + 20,
     );
     expect(await puntosDe(A2)).toBe(18);
@@ -268,7 +279,7 @@ describe("evaluar (emulador)", () => {
     const r = await evaluarEnTransaccion(
       db(),
       PROFE,
-      { entregaId: EG, puntos: { p1: 16 }, comentarios: {} },
+      { entregaId: EG, puntos: { p1: 16 }, comentarios: {}, version: null },
       AHORA + 30,
     );
     expect(r.ok).toBe(true);
@@ -406,13 +417,23 @@ describe("concurrencia: dos profes a la vez (emulador)", () => {
       evaluarEnTransaccion(
         db(),
         PROFE,
-        { entregaId: E2, puntos: { p1: 12, p2: 8 }, comentarios: {} },
+        {
+          entregaId: E2,
+          puntos: { p1: 12, p2: 8 },
+          comentarios: {},
+          version: null,
+        },
         AHORA + 60,
       ),
       evaluarEnTransaccion(
         db(),
         PROFE_2,
-        { entregaId: E3, puntos: { p1: 11, p2: 8 }, comentarios: {} },
+        {
+          entregaId: E3,
+          puntos: { p1: 11, p2: 8 },
+          comentarios: {},
+          version: null,
+        },
         AHORA + 61,
       ),
       aplicarAjusteEnTransaccion(
@@ -434,28 +455,67 @@ describe("concurrencia: dos profes a la vez (emulador)", () => {
     expect(await puntosDe(A3)).toBe(21);
   });
 
-  test("la misma entrega: gana una evaluación entera y el ranking coincide con ella", async () => {
+  test("la misma entrega, abierta con la misma versión: gana una y la otra recibe `cambio` (F-M1, D224)", async () => {
+    const intentar = (autor: string, p1: number, ahora: number) =>
+      evaluarEnTransaccion(
+        db(),
+        autor,
+        {
+          entregaId: E3,
+          puntos: { p1, p2: 4 },
+          comentarios: {},
+          version: AHORA + 61,
+        },
+        ahora,
+      );
     const [r1, r2] = await Promise.all([
-      evaluarEnTransaccion(
-        db(),
-        PROFE,
-        { entregaId: E3, puntos: { p1: 4, p2: 4 }, comentarios: {} },
-        AHORA + 70,
-      ),
-      evaluarEnTransaccion(
-        db(),
-        PROFE_2,
-        { entregaId: E3, puntos: { p1: 12, p2: 4 }, comentarios: {} },
-        AHORA + 71,
-      ),
+      intentar(PROFE, 4, AHORA + 70),
+      intentar(PROFE_2, 12, AHORA + 71),
     ]);
-    expect(r1.ok && r2.ok).toBe(true);
+    expect([r1.ok, r2.ok].filter(Boolean)).toHaveLength(1);
+    const perdedora = r1.ok ? r2 : r1;
+    expect(perdedora).toEqual({ ok: false, error: "cambio" });
     const e = await entrega(E3);
     const puntaje = e.evaluacion?.puntaje;
     expect([8, 16]).toContain(puntaje ?? -1);
-    // Una de las dos reemplazó a la otra: la anterior es la que perdió, no la de antes de ambas
-    expect([8, 16]).toContain(e.evaluacionAnterior?.puntaje ?? -1);
+    // La anterior es la de antes de ambas (19): la perdedora no escribió nada
+    expect(e.evaluacionAnterior?.puntaje).toBe(19);
     // 8 no aporta (< 10); 16 sí. Más los 2 del ajuste.
     expect(await puntosDe(A3)).toBe((puntaje === 16 ? 16 : 0) + 2);
+  });
+
+  test("una pestaña con la versión vieja no pisa la nota que guardó otra (F-M1, D224)", async () => {
+    const antes = await entrega(E3);
+    const vigente = antes.evaluacion?.evaluadaEn ?? null;
+    const puntosA3 = await puntosDe(A3);
+    // Pestaña abierta cuando E3 tenía la evaluación de AHORA + 61
+    expect(
+      await evaluarEnTransaccion(
+        db(),
+        PROFE,
+        {
+          entregaId: E3,
+          puntos: { p1: 0, p2: 0 },
+          comentarios: {},
+          version: AHORA + 61,
+        },
+        AHORA + 80,
+      ),
+    ).toEqual({ ok: false, error: "cambio" });
+    expect((await entrega(E3)).evaluacion?.evaluadaEn ?? null).toBe(vigente);
+    expect(await puntosDe(A3)).toBe(puntosA3);
+    // Con la versión vigente, sí
+    const r = await evaluarEnTransaccion(
+      db(),
+      PROFE,
+      {
+        entregaId: E3,
+        puntos: { p1: 0, p2: 0 },
+        comentarios: {},
+        version: vigente,
+      },
+      AHORA + 81,
+    );
+    expect(r.ok).toBe(true);
   });
 });

@@ -1,0 +1,4 @@
+# D224 · Data · Guardar una evaluación exige la versión con la que se abrió · Implemented
+
+**Decision:** `zGuardarEvaluacion` lleva `version`: el `evaluadaEn` de la evaluación vigente al abrir el formulario, o `null` si estaba Pendiente. `armarEvaluacion` responde `cambio` si ya no coincide con la vigente, dentro de la misma transacción. La página la pasa a `ReviewForm` (`version`) y el formulario la envía. El copy «Otra persona cambió esta nota. Recarga para ver la última.» ya existía para Deshacer.
+**Why:** QA de la versión 1 (F-M1): con la misma entrega abierta en dos pestañas o por dos profes, el último en guardar pisaba sin aviso la nota y el comentario del otro. Dos guardados simultáneos con la misma versión: gana uno y el otro recibe `cambio`. Editar alumno sigue con «el último gana», porque no está en este hallazgo.
