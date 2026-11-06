@@ -12,6 +12,7 @@ import {
   type EnvioEntrega,
   type ErrorEntrega,
   type ErrorEnvio,
+  enOtraEntrega,
   type PermisoEntrega,
   permisoEntrega,
   yaEnviada,
@@ -94,7 +95,7 @@ export async function permisoSubida(
 
 /**
  * Envía la entrega en UNA transacción: lee perfil, tarea, equipo, la entrega existente y (grupal)
- * los integrantes actuales; comprueba permiso (D012) y respuestas; crea la entrega `entregada`.
+ * los integrantes actuales y las demás entregas de la tarea (D221); comprueba permiso (D012) y respuestas; crea la entrega `entregada`.
  */
 export async function enviarEnTransaccion(
   db: Firestore,
@@ -119,15 +120,28 @@ export async function enviarEnTransaccion(
       return { ok: false, error: "ya-entregada" };
     }
     let integrantes: string[] = [];
+    let excluidos = new Set<string>();
     if (p.permiso.tipo === "grupal") {
-      const q = await tx.get(
-        db
-          .collection(COL.usuarios)
-          .where("equipoId", "==", p.permiso.titularId),
-      );
+      const [q, otras] = await Promise.all([
+        tx.get(
+          db
+            .collection(COL.usuarios)
+            .where("equipoId", "==", p.permiso.titularId),
+        ),
+        // Las demás entregas de la tarea (pocas: una por equipo de la sección), en la misma
+        // transacción: si el equipo viejo entrega a la vez, una de las dos se reintenta.
+        tx.get(db.collection(COL.entregas).where("tareaId", "==", tareaId)),
+      ]);
       integrantes = q.docs
         .filter((d) => d.get("rol") === "estudiante")
         .map((d) => d.id);
+      excluidos = enOtraEntrega(
+        otras.docs.flatMap((d) => {
+          const e = zEntrega.safeParse(d.data());
+          return e.success ? [{ id: d.id, entrega: e.data }] : [];
+        }),
+        ref.id,
+      );
     }
     const armada = armarEntrega({
       tareaId,
@@ -135,6 +149,7 @@ export async function enviarEnTransaccion(
       permiso: p.permiso,
       usuario: c.usuario,
       integrantes,
+      excluidos,
       respuestas,
       carpeta: await carpetaEntrega(p.permiso.entregaId),
       ahora,

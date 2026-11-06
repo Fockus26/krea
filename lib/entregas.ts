@@ -189,8 +189,28 @@ export function respuestasValidas(
 }
 
 /**
+ * Cédulas que ya figuran en OTRA entrega enviada de la misma tarea. Un alumno que el profe cambió
+ * de equipo después de que su equipo viejo entregó conserva la nota de ese equipo y no entra en
+ * la del nuevo (D221; QA versión 1, F-A2: antes contaba dos veces en el ranking).
+ */
+export function enOtraEntrega(
+  entregas: ReadonlyArray<{
+    id: string;
+    entrega: Pick<Entrega, "estado" | "integrantes">;
+  }>,
+  propiaId: string,
+): Set<string> {
+  return new Set(
+    entregas
+      .filter((e) => e.id !== propiaId && yaEnviada(e.entrega))
+      .flatMap((e) => e.entrega.integrantes),
+  );
+}
+
+/**
  * La entrega que se escribe al enviar (estado `entregada`, sin evaluación). Integrantes: el
- * alumno, o los del equipo en ese momento (foto fija del modelo).
+ * alumno, o los del equipo en ese momento (foto fija del modelo), salvo quienes ya están en otra
+ * entrega enviada de la tarea (`excluidos`, D221).
  */
 export function armarEntrega(args: {
   tareaId: string;
@@ -198,6 +218,7 @@ export function armarEntrega(args: {
   permiso: PermisoEntrega;
   usuario: Pick<Usuario, "cedula" | "seccion">;
   integrantes: readonly string[];
+  excluidos?: ReadonlySet<string>;
   respuestas: EnvioEntrega["respuestas"];
   carpeta: string;
   ahora: number;
@@ -216,7 +237,9 @@ export function armarEntrega(args: {
   const integrantes =
     permiso.tipo === "individual"
       ? [usuario.cedula]
-      : [...new Set([...args.integrantes, usuario.cedula])].sort();
+      : [...new Set([...args.integrantes, usuario.cedula])]
+          .filter((c) => !args.excluidos?.has(c))
+          .sort();
   return {
     ok: true,
     entrega: {

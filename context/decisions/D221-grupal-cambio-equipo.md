@@ -1,0 +1,4 @@
+# D221 · Data · La nota grupal se queda con el equipo con el que el alumno entregó · Implemented
+
+**Decision:** al enviar una grupal, la transacción lee también las demás entregas de la tarea y deja fuera de `integrantes` a quien ya figura en otra entrega enviada (`enOtraEntrega` en `lib/entregas.ts`). Un alumno que el profe mueve de equipo después de una entrega conserva la nota del equipo viejo y no entra en la del nuevo. Los borradores no cuentan. Regla elegida por César (opción a) entre: (a) se queda con el equipo con el que entregó, (b) pasa al nuevo si la vieja no está evaluada, (c) no dejar mover a alumnos con grupales abiertas.
+**Why:** QA de la versión 1 (F-A2): el alumno quedaba en las dos entregas y el ranking le sumaba la nota grupal dos veces (17 → 57), mientras «Mis notas» mostraba solo una.

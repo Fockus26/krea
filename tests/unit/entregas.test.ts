@@ -3,6 +3,7 @@ import {
   armarEntrega,
   carpetaEntrega,
   claveImagen,
+  enOtraEntrega,
   esImagenDe,
   mensajeErrorEntrega,
   permisoEntrega,
@@ -232,6 +233,50 @@ describe("respuestas y entrega armada", () => {
       evaluacion: null,
     });
     expect(zEntrega.safeParse(r.entrega).success).toBe(true);
+  });
+
+  test("grupal: quien ya está en otra entrega enviada de la tarea no entra (F-A2, D221)", async () => {
+    const excluidos = enOtraEntrega(
+      [
+        // La del equipo viejo, ya enviada: el alumno movido sale de la nueva.
+        {
+          id: "t__5a-g1",
+          entrega: { estado: "evaluada", integrantes: [INTEGRANTE.cedula] },
+        },
+        // Un borrador no cuenta.
+        {
+          id: "t__5a-g3",
+          entrega: { estado: "borrador", integrantes: ["30000009"] },
+        },
+        // La propia (reenvío sobre un borrador) tampoco.
+        {
+          id: "t__5a-g2",
+          entrega: { estado: "entregada", integrantes: [CAPITAN.cedula] },
+        },
+      ],
+      "t__5a-g2",
+    );
+    expect([...excluidos]).toEqual([INTEGRANTE.cedula]);
+    const p = permisoEntrega(CAPITAN, GRUPAL, GRUPAL.id, EQUIPO);
+    if (!p.ok) throw new Error(p.error);
+    const carpeta = await carpetaEntrega(p.permiso.entregaId);
+    const r = armarEntrega({
+      tareaId: GRUPAL.id,
+      tarea: GRUPAL,
+      permiso: p.permiso,
+      usuario: CAPITAN,
+      integrantes: [INTEGRANTE.cedula, "30000009"],
+      excluidos,
+      respuestas: {
+        p1: { imagenPath: claveImagen(GRUPAL.id, carpeta, UUID) },
+        p2: { texto: "A 2 dólares" },
+      },
+      carpeta,
+      ahora: AHORA,
+    });
+    expect(r.ok && r.entrega.integrantes).toEqual(
+      [CAPITAN.cedula, "30000009"].sort(),
+    );
   });
 
   test("individual: solo el titular; tarea sin preguntas → incompleta", async () => {

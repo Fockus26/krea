@@ -28,6 +28,10 @@ const CAPITAN = "39000001";
 const INTEGRANTE = "39000002";
 const SOLO = "39000003";
 const EQUIPO = "w5-g1";
+// F-A2: segundo equipo, al que el profe mueve a un alumno tras la entrega del primero.
+const CAPITAN_2 = "39000004";
+const MOVIDO = "39000005";
+const EQUIPO_2 = "w5-g2";
 
 const usuario = (cedula: string, equipoId: string | null): Usuario => ({
   cedula,
@@ -83,6 +87,16 @@ beforeAll(async () => {
   b.set(db().collection(COL.usuarios).doc(SOLO), usuario(SOLO, null));
   b.set(db().collection(COL.equipos).doc(EQUIPO), equipo);
   b.set(
+    db().collection(COL.usuarios).doc(CAPITAN_2),
+    usuario(CAPITAN_2, EQUIPO_2),
+  );
+  b.set(db().collection(COL.usuarios).doc(MOVIDO), usuario(MOVIDO, EQUIPO));
+  b.set(db().collection(COL.equipos).doc(EQUIPO_2), {
+    ...equipo,
+    nombre: "W5 Equipo 2",
+    capitanId: CAPITAN_2,
+  });
+  b.set(
     db().collection(COL.tareas).doc("w5-ind"),
     tarea("individual", "abierta"),
   );
@@ -92,7 +106,7 @@ beforeAll(async () => {
     tarea("individual", "evaluada"),
   );
   for (const id of ["w5-ind", "w5-gru", "w5-cerrada"]) {
-    for (const t of [SOLO, CAPITAN, EQUIPO]) {
+    for (const t of [SOLO, CAPITAN, EQUIPO, EQUIPO_2]) {
       b.delete(db().collection(COL.entregas).doc(idEntrega(id, t)));
     }
   }
@@ -158,8 +172,36 @@ describe("enviarEnTransaccion (emulador)", () => {
       .collection(COL.entregas)
       .doc(idEntrega("w5-gru", EQUIPO))
       .get();
-    expect(snap.get("integrantes")).toEqual([CAPITAN, INTEGRANTE]);
+    expect(snap.get("integrantes")).toEqual([CAPITAN, INTEGRANTE, MOVIDO]);
     expect(snap.get("titularId")).toBe(EQUIPO);
+  });
+
+  test("grupal: el alumno movido tras la entrega se queda con su equipo viejo (F-A2, D221)", async () => {
+    // Depende del test anterior: EQUIPO ya entregó w5-gru con MOVIDO dentro.
+    await db()
+      .collection(COL.usuarios)
+      .doc(MOVIDO)
+      .update({ equipoId: EQUIPO_2 });
+    const envio = {
+      tareaId: "w5-gru",
+      respuestas: await respuestas("w5-gru", EQUIPO_2),
+    };
+    expect(await enviarEnTransaccion(db(), CAPITAN_2, envio, AHORA)).toEqual({
+      ok: true,
+    });
+    const nueva = await db()
+      .collection(COL.entregas)
+      .doc(idEntrega("w5-gru", EQUIPO_2))
+      .get();
+    expect(nueva.get("integrantes")).toEqual([CAPITAN_2]);
+    const conMovido = await db()
+      .collection(COL.entregas)
+      .where("tareaId", "==", "w5-gru")
+      .where("integrantes", "array-contains", MOVIDO)
+      .get();
+    expect(conMovido.docs.map((d) => d.id)).toEqual([
+      idEntrega("w5-gru", EQUIPO),
+    ]);
   });
 
   test("sin equipo, tarea cerrada, imagen ajena o inexistente: no escribe nada", async () => {
