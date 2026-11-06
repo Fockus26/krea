@@ -80,7 +80,13 @@ export async function subirLogoEquipo(form: FormData): Promise<ResultadoLogo> {
   await exigirSesion("profesor");
   const admin = firebaseAdmin();
   const almacen = almacenB2();
-  if (!admin || !almacen) return { ok: false, error: "red" };
+  if (!admin) return { ok: false, error: "red" };
+  if (!almacen) {
+    console.error(
+      "[subirLogoEquipo] almacén sin configurar (faltan las variables B2_*)",
+    );
+    return { ok: false, error: "almacen" };
+  }
   const equipoId = zIdDocumento.safeParse(form.get("equipoId"));
   const logo = form.get("logo");
   if (!equipoId.success || !(logo instanceof Blob))
@@ -98,7 +104,8 @@ export async function subirLogoEquipo(form: FormData): Promise<ResultadoLogo> {
       };
     clave = claveLogo(equipoId.data, crypto.randomUUID(), v.extension);
     const subida = await almacen.subir(clave, bytes, v.tipo);
-    if (!subida.ok) return { ok: false, error: "red" };
+    // B2 falló del lado del servidor: no es la conexión del profe (D229)
+    if (!subida.ok) return { ok: false, error: "almacen" };
 
     const r = await cambiarLogoEnTransaccion(
       admin.db,

@@ -11,7 +11,9 @@ import { exigirSesion } from "@/lib/dal";
 import {
   carpetaEntrega,
   claveImagen,
+  comprobarImagenes,
   type ErrorSubida,
+  imagenesDe,
   zEnvioEntrega,
   zIdPregunta,
   zIdTarea,
@@ -29,6 +31,14 @@ export type ResultadoSubida =
 
 export type { ResultadoEnvio };
 
+/** Sin `B2_*` en el servidor: se registra para que alguien lo vea (D229). */
+function sinAlmacen(accion: string): { ok: false; error: "almacen" } {
+  console.error(
+    `[${accion}] almacén sin configurar (faltan las variables B2_*)`,
+  );
+  return { ok: false, error: "almacen" };
+}
+
 /** Sube la imagen de una respuesta (FormData: `tareaId`, `preguntaId`, `imagen`). */
 export async function subirImagenRespuesta(
   form: FormData,
@@ -36,7 +46,8 @@ export async function subirImagenRespuesta(
   const sesion = await exigirSesion("estudiante");
   const admin = firebaseAdmin();
   const almacen = almacenB2();
-  if (!admin || !almacen) return { ok: false, error: "red" };
+  if (!admin) return { ok: false, error: "red" };
+  if (!almacen) return sinAlmacen("subirImagenRespuesta");
 
   const tareaId = zIdTarea.safeParse(form.get("tareaId"));
   const preguntaId = zIdPregunta.safeParse(form.get("preguntaId"));
@@ -69,7 +80,8 @@ export async function subirImagenRespuesta(
       crypto.randomUUID(),
     );
     const r = await almacen.subir(clave, bytes, "image/jpeg");
-    if (!r.ok) return { ok: false, error: "red" };
+    // B2 falló del lado del servidor: no es la conexión del alumno (D229)
+    if (!r.ok) return { ok: false, error: "almacen" };
     return { ok: true, imagenPath: clave };
   } catch (e) {
     console.error(
@@ -88,6 +100,11 @@ export async function enviarEntrega(entrada: unknown): Promise<ResultadoEnvio> {
   const envio = zEnvioEntrega.safeParse(entrada);
   if (!envio.success) return { ok: false, error: "incompleta" };
   try {
+    const almacen = almacenB2();
+    if (!almacen && imagenesDe(envio.data.respuestas).length > 0)
+      return sinAlmacen("enviarEntrega");
+    const faltan = await comprobarImagenes(almacen, envio.data.respuestas);
+    if (faltan) return { ok: false, error: faltan };
     const r = await enviarEnTransaccion(
       admin.db,
       sesion.uid,

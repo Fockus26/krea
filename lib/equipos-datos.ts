@@ -43,6 +43,7 @@ export type ErrorEquipos =
   | "sesiones"
   | "logo-peso"
   | "logo-tipo"
+  | "almacen"
   | "red";
 
 export type ResultadoEquipos =
@@ -69,6 +70,8 @@ export function errorEquiposTexto(e: ErrorEquipos): string {
       return "No pudimos leer el logo. Prueba con una imagen JPG, PNG o WebP.";
     case "invalida":
       return "No se pudo guardar el cambio. Recarga la página e inténtalo otra vez.";
+    case "almacen":
+      return "No se guardó el logo por un problema del portal, no de tu conexión. Inténtalo más tarde.";
     case "red":
       return "No se guardó: revisa tu conexión e inténtalo otra vez.";
   }

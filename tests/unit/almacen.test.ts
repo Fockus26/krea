@@ -122,6 +122,31 @@ describe("crearAlmacen (dobles, sin red)", () => {
     ).toEqual({ ok: false, error: "red" });
   });
 
+  test("existe: HEAD firmado; 200 sí, 404 no, otro estado o sin red → error (F-B3, D229)", async () => {
+    const { f, llamadas } = fetchDoble(200);
+    expect(
+      await crearAlmacen(CONFIG, { fetch: f }).existe("entregas/t1/abc/x.jpg"),
+    ).toEqual({ ok: true, existe: true });
+    expect(llamadas[0]?.method).toBe("HEAD");
+    expect(llamadas[0]?.url).toBe(urlObjeto(CONFIG, "entregas/t1/abc/x.jpg"));
+    expect(
+      await crearAlmacen(CONFIG, { fetch: fetchDoble(404).f }).existe(
+        "a/b.jpg",
+      ),
+    ).toEqual({ ok: true, existe: false });
+    expect(
+      await crearAlmacen(CONFIG, { fetch: fetchDoble(403).f }).existe(
+        "a/b.jpg",
+      ),
+    ).toEqual({ ok: false, error: "rechazado" });
+    const caida = (async () => {
+      throw new TypeError("fetch failed");
+    }) as unknown as typeof fetch;
+    expect(
+      await crearAlmacen(CONFIG, { fetch: caida }).existe("a/b.jpg"),
+    ).toEqual({ ok: false, error: "red" });
+  });
+
   test("urlFirmada: GET por query, 5 min por defecto, sin llamar a la red", async () => {
     const { f, llamadas } = fetchDoble();
     const almacen = crearAlmacen(CONFIG, { fetch: f });

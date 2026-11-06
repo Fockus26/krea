@@ -3,8 +3,10 @@ import {
   armarEntrega,
   carpetaEntrega,
   claveImagen,
+  comprobarImagenes,
   enOtraEntrega,
   esImagenDe,
+  imagenesDe,
   mensajeErrorEntrega,
   permisoEntrega,
   respuestasValidas,
@@ -327,10 +329,55 @@ describe("respuestas y entrega armada", () => {
       "incompleta",
       "imagen-tipo",
       "imagen-peso",
+      "almacen",
+      "imagen-falta",
       "red",
     ] as const) {
       expect(mensajeErrorEntrega(e).length).toBeGreaterThan(10);
     }
+  });
+
+  test("el fallo del almacén no culpa a la conexión del alumno (F-B4, D229)", () => {
+    expect(mensajeErrorEntrega("almacen")).toContain("no de tu internet");
+    expect(mensajeErrorEntrega("almacen")).not.toContain("Revisa tu conexión");
+    expect(mensajeErrorEntrega("imagen-falta")).toContain("Súbela otra vez");
+  });
+
+  test("comprobarImagenes: una ruta nunca subida no se entrega (F-B3, D229)", async () => {
+    const enB2 = new Set(["entregas/t/c/si.jpg"]);
+    const almacen = {
+      existe: async (c: string) => ({ ok: true as const, existe: enB2.has(c) }),
+    };
+    const con = (path: string) => ({
+      p1: { texto: "Hola" },
+      p2: { imagenPath: path },
+    });
+    expect(
+      await comprobarImagenes(almacen, con("entregas/t/c/si.jpg")),
+    ).toBeNull();
+    expect(
+      await comprobarImagenes(almacen, con("entregas/t/c/inventada.jpg")),
+    ).toBe("imagen-falta");
+    // Sin imágenes no se llama al almacén (aunque no esté configurado)
+    expect(await comprobarImagenes(null, { p1: { texto: "Hola" } })).toBeNull();
+    expect(await comprobarImagenes(null, con("entregas/t/c/si.jpg"))).toBe(
+      "almacen",
+    );
+    const caido = {
+      existe: async () => ({ ok: false as const, error: "red" as const }),
+    };
+    expect(await comprobarImagenes(caido, con("entregas/t/c/si.jpg"))).toBe(
+      "almacen",
+    );
+  });
+
+  test("imagenesDe: solo las respuestas de imagen", () => {
+    expect(
+      imagenesDe({
+        p1: { texto: "Hola" },
+        p2: { imagenPath: "entregas/t/c/u.jpg" },
+      }),
+    ).toEqual(["entregas/t/c/u.jpg"]);
   });
 });
 

@@ -2,6 +2,7 @@
 // imágenes en el almacén y la entrega que se escribe al «Enviar». Puro (sin Firebase ni reloj):
 // lo usan las Server Actions (`lib/acciones/entregas.ts`) y las pruebas.
 import { z } from "zod";
+import type { ResultadoExiste } from "@/lib/almacen/s3";
 import {
   type Entrega,
   type Equipo,
@@ -259,8 +260,43 @@ export function armarEntrega(args: {
 
 /* ---------- Mensajes ---------- */
 
-export type ErrorSubida = ErrorEntrega | "imagen-tipo" | "imagen-peso" | "red";
-export type ErrorEnvio = ErrorEntrega | "red";
+/**
+ * `almacen`: el servidor no pudo usar B2 (sin configurar, caído o rechazó). No es la conexión del
+ * alumno: esa falla en el cliente y llega como `red` (QA versión 1, F-B4; D229). `imagen-falta`:
+ * una respuesta de imagen apunta a un objeto que no está en B2 (F-B3).
+ */
+export type ErrorSubida =
+  | ErrorEntrega
+  | "imagen-tipo"
+  | "imagen-peso"
+  | "almacen"
+  | "red";
+export type ErrorEnvio = ErrorEntrega | "almacen" | "imagen-falta" | "red";
+
+/**
+ * Cada imagen del envío tiene que estar en B2: una ruta con el formato correcto pero nunca subida
+ * llegaba al profe como «Imagen no disponible» (F-B3, D229). `null` = todas están (o no hay
+ * imágenes). Se llama fuera de la transacción: es otro servicio y no cambia con ella.
+ */
+export async function comprobarImagenes(
+  almacen: { existe: (clave: string) => Promise<ResultadoExiste> } | null,
+  respuestas: EnvioEntrega["respuestas"],
+): Promise<"almacen" | "imagen-falta" | null> {
+  const imagenes = imagenesDe(respuestas);
+  if (imagenes.length === 0) return null;
+  if (!almacen) return "almacen";
+  const vistas = await Promise.all(imagenes.map((c) => almacen.existe(c)));
+  if (vistas.some((v) => !v.ok)) return "almacen";
+  if (vistas.some((v) => v.ok && !v.existe)) return "imagen-falta";
+  return null;
+}
+
+/** Rutas de las respuestas de imagen de un envío (para comprobar que existen en B2). */
+export function imagenesDe(respuestas: EnvioEntrega["respuestas"]): string[] {
+  return Object.values(respuestas).flatMap((r) =>
+    r && "imagenPath" in r ? [r.imagenPath] : [],
+  );
+}
 
 /** Copy de los errores (PLACEHOLDER de copy, CONTENT_CHECKLIST fila 129). */
 export function mensajeErrorEntrega(error: ErrorSubida | ErrorEnvio): string {
@@ -281,6 +317,10 @@ export function mensajeErrorEntrega(error: ErrorSubida | ErrorEnvio): string {
       return "Solo se aceptan imágenes JPG o PNG.";
     case "imagen-peso":
       return "La imagen es muy pesada. Prueba con otra.";
+    case "almacen":
+      return "No pudimos guardar la imagen por un problema del portal, no de tu internet. Inténtalo más tarde y, si sigue, avísale a tu profe.";
+    case "imagen-falta":
+      return "Una de tus imágenes no llegó a guardarse. Súbela otra vez y vuelve a entregar.";
     case "red":
       return "No se pudo conectar. Revisa tu conexión e inténtalo otra vez.";
   }
