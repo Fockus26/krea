@@ -1286,6 +1286,21 @@
 [id] {
   scroll-margin-top: var(--scroll-offset);
 }
+/*
+ * Foco con Tab (<lg): el navegador desplaza el elemento enfocado hasta que no queda bajo la barra
+ * inferior fija (QA versión 1, D-M4; D222). Solo abajo: arriba ya lo resuelve `scroll-margin-top`
+ * de las anclas, y sumar `scroll-padding-top` las bajaría el doble. Con poca altura la barra no es
+ * fija (D218) y no hace falta.
+ */
+@media (width < 64rem) and (height >= 30rem) {
+  html {
+    scroll-padding-bottom: calc(
+      var(--h-bnav) +
+      env(safe-area-inset-bottom, 0px) +
+      1rem
+    );
+  }
+}
 /* Smooth scroll solo con movimiento permitido (en reduce, salto directo) */
 @media (prefers-reduced-motion: no-preference) {
   html {
