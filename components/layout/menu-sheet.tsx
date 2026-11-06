@@ -34,11 +34,14 @@ export function MenuSheet({
   onSignOut,
   salirHref,
   compacto = false,
+  admin = false,
 }: NavRoute & {
   onSignOut?: () => void;
   /** Destino de "Cerrar sesión" mientras no hay sesión real. */
   salirHref?: string;
   compacto?: boolean;
+  /** Profesor admin (D231): suma «Profesores». */
+  admin?: boolean;
 }) {
   return (
     <Sheet>
@@ -56,7 +59,7 @@ export function MenuSheet({
           </SheetDescription>
         </SheetHeader>
         <ul className="flex flex-col gap-1">
-          {navItems("profesor", "menu").map((item) => (
+          {navItems("profesor", "menu", { admin }).map((item) => (
             <li key={item.id}>
               <SheetClose asChild>
                 <NavItemLink item={item} pathname={pathname} size="sheet" />

@@ -28,6 +28,7 @@ const PROFESOR = [
   "/profe/premios",
   "/profe/ranking",
   "/profe/perfil",
+  "/profe/profesores",
 ];
 
 describe("tabla de rutas", () => {
@@ -113,6 +114,7 @@ describe("topbarDe · profesor", () => {
     "/profe/puntos",
     "/profe/premios",
     "/profe/perfil",
+    "/profe/profesores",
   ])("%s: logo, sin En vivo, con barra inferior", (ruta) => {
     expect(topbarDe("profesor", ruta)).toEqual({
       variante: "logo",

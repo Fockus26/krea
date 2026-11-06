@@ -10,6 +10,7 @@ import {
   SlidersHorizontal,
   Trophy,
   User,
+  UserCog,
   Users,
 } from "lucide-react";
 import type { NavIconKey } from "@/lib/nav";
@@ -28,6 +29,7 @@ const ICONS: Record<NavIconKey, LucideIcon> = {
   equipos: Users,
   puntos: SlidersHorizontal,
   premios: Gift,
+  profesores: UserCog,
 };
 
 /** Ícono decorativo de un ítem: el texto del enlace es el nombre accesible. */

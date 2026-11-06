@@ -34,7 +34,7 @@ export function SideNav({
         <Logo size="lateral" />
       </Link>
       <ul className="flex flex-col gap-1">
-        {navItems(rol, "lateral").map((item) => (
+        {navItems(rol, "lateral", { admin: usuario?.admin }).map((item) => (
           <li key={item.id}>
             <NavItemLink
               item={item}

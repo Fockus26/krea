@@ -66,6 +66,34 @@ describe("navItems (HANDOFF §2.7)", () => {
     expect(navItems("estudiante", "menu")).toHaveLength(0);
   });
 
+  test("Profesores solo para el admin, tras Premios en la lateral y el Menú (D231, D233)", () => {
+    const admin = { admin: true };
+    expect(navItems("profesor", "lateral", admin).map((i) => i.label)).toEqual([
+      "Panel",
+      "Evaluar",
+      "Tareas",
+      "Alumnos",
+      "Equipos",
+      "Puntos",
+      "Ranking",
+      "Premios",
+      "Profesores",
+    ]);
+    expect(navItems("profesor", "menu", admin).map((i) => i.label)).toEqual([
+      "Tareas",
+      "Equipos",
+      "Premios",
+      "Profesores",
+      "Perfil",
+    ]);
+    expect(
+      navItems("profesor", "inferior", admin).map((i) => i.id),
+    ).not.toContain("profesores");
+    expect(navItems("profesor", "menu").map((i) => i.id)).not.toContain(
+      "profesores",
+    );
+  });
+
   test("el profesor alcanza cada ítem del lateral en inferior o Menú (y Perfil, que en la lateral es la tarjeta)", () => {
     const lateral = navItems("profesor", "lateral").map((i) => i.id);
     const alcanzables = [

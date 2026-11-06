@@ -12,13 +12,16 @@ import { navUsuarioDe } from "@/lib/vistas-estudiante";
 // El contador y los títulos de Evaluar salen de la cola real (W7, D204).
 
 const shell = cache(async () => {
-  const [{ usuario }, tareas, cola] = await Promise.all([
+  const [{ sesion, usuario }, tareas, cola] = await Promise.all([
     profesorActual(),
     tareasProfe(),
     colaEvaluar(),
   ]);
   return {
-    usuario: usuario ? navUsuarioDe(usuario) : null,
+    // «Profesores» sale del claim de la sesión, el mismo que exige `exigirAdmin` (D231)
+    usuario: usuario
+      ? { ...navUsuarioDe(usuario), admin: sesion.admin === true }
+      : null,
     apariencia: usuario?.apariencia ?? null,
     porEvaluar: cola.length,
     titulos: {
