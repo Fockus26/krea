@@ -1,0 +1,5 @@
+# D235 · Data · `scripts/admin-profesor.ts` crea profesores y marca al admin desde la terminal; en producción lo corre César · Implemented
+
+**Decision:** `bun scripts/admin-profesor.ts --crear-profesor <cédula> --nombres "…" --apellidos "…" [--email …]` crea la cuenta con `crearCuentaCon` (la misma pieza que `crearCuenta`) e imprime la contraseña temporal una vez; `--hacer-admin <cédula>` marca el admin (D231). Idempotente (cédula existente → «ya tiene cuenta: no se tocó»). Usa el Admin SDK con las credenciales del entorno (`.env.local`/`.env`): sin emuladores es la base real, por eso lo corre César, no un agente. Importa `lib/firebase/cuentas.ts` y no `lib/cuentas.ts` porque `server-only` no carga fuera de Next.
+**Why:** hace falta un primer admin antes de que exista la pantalla para nombrarlo; los nombres de 30262232 y 32888687 no están en los datos y no se inventan.
+**Discarded alternative:** crear el admin con un seed o una migración automática — tocaría producción sin que César lo vea.
