@@ -11,7 +11,6 @@ Fases 01–08 cerradas · **Track:** Product · main @ d50568b · **fase 09 — 
 
 | Unit | Branch | Status |
 |---|---|---|
-| Fases 05–07 | #35–#55 | merged |
 | Fase 08 (D214–D219) | #56–#61 | merged (d50568b) |
 | Fase 09 · QA de versión | wt2 / wt3 | hecho · arreglos pendientes |
 | F-A1 contraseña en URL | #62 `fix/formularios-post` | PR abierto · CI verde |
@@ -27,7 +26,7 @@ Fases 01–08 cerradas · **Track:** Product · main @ d50568b · **fase 09 — 
 - W6 borrador a medias, publicar (suma 20), editar con/sin entregas, cerrar, empate de premio.
 - W7 evaluar la cola, corregir, «Deshacer», ajuste + anulación en el ranking y en el detalle del alumno. `evaluar/[entrega]` y `tareas/[id]` sin visitar en la fase 08 (el seed no trae entregas pendientes).
 - W8 editar alumno, mover/quitar/capitán, logo real en B2.
-- Ya hecho en la fase 08, con sesión: 320–3840 px, altura corta, contraste por tema y acento, foco con Tab, 404 con cada sesión.
+
 
 **Decisiones de César:**
 - **F-A2 (alto):** alumno movido tras una grupal cuenta doble: regla (a) nota con el equipo que entregó · (b) pasa al nuevo si no está evaluada · (c) bloquear el cambio con grupales abiertas.
