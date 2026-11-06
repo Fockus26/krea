@@ -6,17 +6,15 @@
 ## Now
 
 **Phase:** 08 — Responsive y pulido · **cerrada** (2026-11-05, #56–#61, D214–D219) · resumen: `PHASE_LOG/08-responsive-pulido.md`
-Fases 01–08 cerradas · **Track:** Product · main @ d50568b · **fase 09 — QA final**: QA hecho (2026-11-06) → `plans/qa-version-1.md` (0 críticos · 6 altos · 6 medios · 7 bajos). Sigue: arreglos por severidad, uno por PR.
+Fases 01–08 cerradas · **Track:** Product · main @ d50568b · **fase 09 — QA final**: QA hecho (2026-11-06) → `plans/qa-version-1.md` (0 críticos · 6 altos · 6 medios · 7 bajos). Altos: 5 de 6 mergeados, F-A2 en #66. Sigue: medios.
 **Build local suprimido** (César, 2026-11-05): lo corren CI y Vercel, y el agente comprueba el preview. **QA con sesión:** `qa:local` y `.env.test.local` (alumno y profesor de prueba), nunca pedirle a César que inicie sesión.
 
 | Unit | Branch | Status |
 |---|---|---|
 | Fase 08 (D214–D219) | #56–#61 | merged (d50568b) |
 | Fase 09 · QA de versión | wt2 / wt3 | hecho · arreglos pendientes |
-| F-A1 contraseña en URL | #62 `fix/formularios-post` | PR abierto · CI verde |
-| D-A2/A3 alto contraste | #63 `fix/forced-colors` | PR abierto · CI verde |
-| D-A1 texto 200 % móvil | #64 `fix/texto-200-movil` | PR abierto (14→6 rutas; D-A1b queda) |
-| D-A4 galerías en producción | #65 `fix/galerias-produccion` | PR abierto · repro en prod tras el merge |
+| Altos F-A1 · D-A2/A3 · D-A1 · D-A4 | #62–#65 | merged · repros en prod: galerías PASS, `method="post"` en el HTML |
+| F-A2 grupal al cambiar de equipo (regla a, D221) | #66 `fix/grupal-cambio-equipo` | PR abierto · emulador FAIL main / PASS rama |
 
 ## Blocked (actions for César or external)
 
@@ -30,11 +28,10 @@ Fases 01–08 cerradas · **Track:** Product · main @ d50568b · **fase 09 — 
 
 
 **Decisiones de César:**
-- **F-A2 (alto):** alumno movido tras una grupal cuenta doble: regla (a) nota con el equipo que entregó · (b) pasa al nuevo si no está evaluada · (c) bloquear el cambio con grupales abiertas.
+- **Capitán movido tras una entrega** (#66): en `/tareas/<id>` ve la entrega vieja y no puede enviar la del equipo nuevo (ya pasaba antes).
 - Alumnos en móvil: «Desliza la tabla…» queda a unos 3400 px de la parte superior, debajo de la tabla (HANDOFF §2.15).
 - Cambiar a un alumno de **sección** (W7/W8): no hay acción; ¿hace falta? y sus ajustes viejos ¿siguen en la sección vieja? (fila 134).
 - El alumno no ve su historial de base en ninguna pantalla (D108 dice «el alumno lo verá»): ¿dónde?
-- Galerías `/secciones`, `/componentes`, `/estados` públicas con datos reales del seed (D181), y con scroll horizontal en móvil.
 - Perfil en la hoja Menú del profe (fila 97) y avatar/Menú junto a «En vivo» en Ranking móvil.
 - Género del capitán (D075) · tildes de «Identidad de marca» (fila 64) · empates de premio (D086, D123–D124, fila 96).
 - Seed de 5C sin notas evaluadas (ranking 5C empatado en 0) · HANDOFF §9 #3–#12 al llegar a su fase.
@@ -49,7 +46,7 @@ Fases 01–08 cerradas · **Track:** Product · main @ d50568b · **fase 09 — 
 ## Next
 
 - **Fase 09 — QA final** (`phases/09-QA-FINAL.md`): la lista de arriba, más `design-qa` y `functional-qa`.
-- Fase 09: bloquear o borrar `/secciones`, `/componentes`, `/tokens` (y `/estados` 404 en producción).
+- Fase 09: medios (D-A1b, F-M1, F-M2+F-B1, D-M1–D-M4) · bajos como decisiones · cierre de fase.
 
 ## Phases
 

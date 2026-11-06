@@ -12,7 +12,7 @@ Informes completos: [`qa-version-1-functional.md`](qa-version-1-functional.md) �
 | ID | Sev. | Qué | Repro | Unidad propuesta |
 |---|---|---|---|---|
 | F-A1 | Alto | Contraseña en la URL si se envía antes de hidratar (`/ingresar`, `/recuperar/nueva`, `/recuperar`) | wt2 `2-…` | `fix/formularios-post` |
-| F-A2 | Alto | Alumno movido de equipo tras una grupal cuenta dos veces en el ranking | wt2 `3-…` | `fix/grupal-cambio-equipo` — **espera regla de César** |
+| F-A2 | Alto | Alumno movido de equipo tras una grupal cuenta dos veces en el ranking | wt2 `3-…` | `fix/grupal-cambio-equipo` · #66 (regla a, D221) |
 | D-A1 | Alto | Texto al 200 % en 390 px → scroll horizontal en todas las rutas | wt3 `3-…` | `fix/texto-200-movil` |
 | D-A2/A3 | Alto | Alto contraste: logo invisible y opción activa de segmentados/tabs indistinguible | wt3 `4-…`, `5-…` | `fix/forced-colors` |
 | D-A4 | Alto (conocido) | `/secciones`, `/componentes`, `/tokens` públicas con datos del seed | wt5 `d-a4-…` (curl a prod) | `fix/galerias-produccion` · #65 |
@@ -44,7 +44,7 @@ axe 0 violaciones (todas las rutas, 4 acentos × 2 temas) · 320–3840 sin scro
 
 ## Acciones para César
 
-1. Regla de F-A2: (a) la nota se queda con el equipo con que entregó · (b) pasa al nuevo si la vieja no está evaluada · (c) no dejar mover alumnos con grupales abiertas.
+1. F-A2: regla (a) elegida (2026-11-06) → #66. Queda: capitán movido tras una entrega.
 2. Brevo: `BREVO_API_KEY`, `BREVO_SENDER_EMAIL`; probar con 38291460.
 3. `B2_*` en Production y Preview, bucket privado, clave limitada al bucket.
 4. Cuentas de los demás profesores · rotar la clave de la cuenta de servicio.
