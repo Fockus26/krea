@@ -115,9 +115,6 @@ export function AvatarPicker({
           );
         })}
       </ToggleGroup>
-      <p className="text-small text-text-2">
-        Se guarda al tocarlo. Avatares de DiceBear.
-      </p>
     </Card>
   );
 }

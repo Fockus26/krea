@@ -74,7 +74,7 @@ export function PanelView({
       {/* Única región viva del panel: frase estable, sin cifras sueltas */}
       <output className="sr-only">{filtroTexto(filtro)}</output>
       <PanelMetrics datos={metricas} />
-      <div className="g-home max-md:gap-6">
+      <div className="g-home max-md:gap-6 lg:items-stretch!">
         <PendingReviews filas={entregas} />
         <RecentAdjustments filas={ajustes} />
       </div>

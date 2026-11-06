@@ -30,9 +30,10 @@ export function CerrarSesion() {
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8">
-      {/* PLACEHOLDER de copy (CONTENT_CHECKLIST fila 124) */}
-      <h1 className="text-h1 text-text">Cerrando sesión…</h1>
-      <Spinner label="Cerrando sesión" />
+      {/* PROVISIONAL (CONTENT_CHECKLIST fila 139): copy del tema escolar */}
+      <h1 className="text-h1 text-text">¡Hasta luego!</h1>
+      <p className="text-body text-text-2">Guardando tu mochila…</p>
+      <Spinner label="Guardando tu mochila" />
     </div>
   );
 }

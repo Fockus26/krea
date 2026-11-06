@@ -105,9 +105,6 @@ export function LoginForm({
           Entrar
         </Button>
       </form>
-      <p className="text-small text-text-2">
-        ¿Eres profe? Entras aquí mismo con tu cédula y te llevamos a tu panel.
-      </p>
     </div>
   );
 }
