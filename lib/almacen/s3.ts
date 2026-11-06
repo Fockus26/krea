@@ -33,6 +33,9 @@ export type ErrorAlmacen = "red" | "rechazado";
 export type ResultadoAlmacen =
   | { ok: true }
   | { ok: false; error: ErrorAlmacen };
+export type ResultadoExiste =
+  | { ok: true; existe: boolean }
+  | { ok: false; error: ErrorAlmacen };
 
 /** Vida de las URLs firmadas de lectura: 5 minutos (la imagen se pide al pintar la página). */
 export const URL_FIRMADA_SEGUNDOS = 300;
@@ -70,6 +73,8 @@ export type Almacen = {
   /** URL GET firmada de vida corta; no hace ninguna llamada de red. */
   urlFirmada: (clave: string, segundos?: number) => Promise<string>;
   borrar: (clave: string) => Promise<ResultadoAlmacen>;
+  /** ¿Existe el objeto? (HEAD firmado: 200 sí, 404 no; otro estado o sin red → error, D229). */
+  existe: (clave: string) => Promise<ResultadoExiste>;
 };
 
 export function crearAlmacen(config: ConfigS3, deps: DepsS3): Almacen {
@@ -117,6 +122,21 @@ export function crearAlmacen(config: ConfigS3, deps: DepsS3): Almacen {
         aws: { signQuery: true },
       });
       return req.url;
+    },
+    async existe(clave) {
+      const req = await cliente.sign(urlObjeto(config, clave), {
+        method: "HEAD",
+      });
+      try {
+        const res = await deps.fetch(req);
+        if (res.ok) return { ok: true, existe: true };
+        if (res.status === 404) return { ok: true, existe: false };
+        console.error("[almacen] respuesta", res.status);
+        return { ok: false, error: "rechazado" };
+      } catch {
+        console.error("[almacen] sin conexión");
+        return { ok: false, error: "red" };
+      }
     },
     async borrar(clave) {
       const req = await cliente.sign(urlObjeto(config, clave), {

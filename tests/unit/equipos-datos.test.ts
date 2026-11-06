@@ -189,6 +189,11 @@ test("zMoverAlumno: destino null = quitar; id con barra, inválido", () => {
   ).toBe(false);
 });
 
+test("errorEquiposTexto: el fallo del almacén no culpa a la conexión (F-B4, D229)", () => {
+  expect(errorEquiposTexto("almacen")).toContain("no de tu conexión");
+  expect(errorEquiposTexto("almacen")).not.toContain("revisa tu conexión");
+});
+
 test("errorEquiposTexto: «sesiones» dice que el cambio sí se guardó", () => {
   expect(errorEquiposTexto("sesiones")).toContain("se guardó");
 });
