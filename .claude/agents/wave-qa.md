@@ -29,25 +29,35 @@ Your prompt brings: the slot's path (already on an updated `main`, with `node_mo
 
 ```bash
 cd <slot>
-bun run qa:local -- --port <port>     # in the background; wait until it responds
+mkdir -p .qa && bun run qa:local -- --port <port> > .qa/dev.log 2>&1   # in the background
 ```
+
+Wait for the line `QA ready: http://localhost:<port>` in `.qa/dev.log` (`grep -q` in a loop;
+not `pgrep`, which Git Bash does not have): it comes after the server answers and `/` is
+warmed. Routes you will measure first: `-- --warm /login,/cuenta` warms them too (a cold
+first compile took 178 s and Playwright gives up at 30: melao). Use **`localhost`**, not
+`127.0.0.1`: Auth's `site_url` and redirects are set to `http://localhost:<port>`, so the
+email links (confirmation, email change, recovery) in Mailpit come back to your server.
+In Git Bash a route argument (`/login`) is rewritten to `C:/Program Files/Git/login`:
+`qa:local` undoes it for `--warm`, but any other script that takes a path needs
+`MSYS_NO_PATHCONV=1` in front (melao ×4).
 
 `qa:local` (`scripts/qa-local.ts`) picks the local backend by what the project has:
 **Supabase** (`supabase/config.toml`) → its stack in Docker, with `main`'s migrations and
 seed; **Firebase** (`firebase.json` with `emulators`) → the emulators with a `demo-*`
-project, which need **Java, not Docker**. It creates the test accounts there and starts the
+project, which need **Java, not Docker**; **Postgres** (`drizzle.config.*`) → a Postgres and a
+Mailpit in Docker, even though the project develops against the VPS. It creates the test accounts there and starts the
 server pointing at that backend. A Firebase project on a machine without Docker is not "no
 local database": do not use `--offline` for that reason. **You never test against the
-real database:** that is why the script aborts if any variable still points at
-`*.supabase.co`. If it aborts, do not work around it: the reason goes to "Not verified" and
+real database:** that is why the script aborts if any variable it does not override
+still points at `*.supabase.co` or at the VPS. If it aborts, do not work around it: the reason goes to "Not verified" and
 to "Actions for César", and you test only what does not touch data. If Docker does not
-respond (Supabase) or Java is missing (Firebase), the same ("open Docker Desktop" /
+respond (Supabase, Postgres) or Java is missing (Firebase), the same ("open Docker Desktop" /
 "install a JDK"). If the port is taken, it aborts too: something
 from a previous run is still listening there.
 
-Without `supabase/` in the project, the script starts the normal server. Another external
-database with a local equivalent (Postgres in Docker): the same, with its local
-`DATABASE_URL`. An external service **without** a local equivalent: the only case in which
+With none of those, the script starts the normal server. Another external database with a
+local equivalent: the same, with its local `DATABASE_URL`. An external service **without** a local equivalent: the only case in which
 you touch remote data, with the rules of §3.
 
 If the prompt says "no local database" (no Docker on the machine, or the project still has
@@ -61,7 +71,7 @@ server"): only in your slot and on your port. Shut it down when done by killing 
 server orphaned on the port). Not `supabase stop`: César may be using the stack. Astro ≥ 7 detaches its server into
 the background: `qa:local` starts it in the foreground and, if a lock is left, runs
 `astro dev stop` **in your slot** on exit (the lock is per folder: it never stops another
-slot's). If the server still answers after the kill, run `bun x astro dev stop` yourself, in
+slot's). If the server still answers after the kill, run `bunx astro dev stop` yourself, in
 the slot. Playwright
 scripts: with `node`, never with `bun` (on Windows it hangs launching Chromium).
 
@@ -86,7 +96,14 @@ They live in `.env.test.local` (copied to your slot), one pair per role:
 | `ADMIN_EMAIL_TEST` / `ADMIN_PASSWORD_TEST` | administrator |
 | `<ROLE>_EMAIL_TEST` / `<ROLE>_PASSWORD_TEST` | any other role (`EDITOR_`, `SELLER_`…) |
 
-With a local database, `qa:local` creates them on every run: they exist only there.
+With a local database, `qa:local` creates them on every run, through the admin API and
+already confirmed: they exist only there. **Accounts your repro scripts create** go the same
+way (the admin API with the local service key, `email_confirm: true`), not through the
+public sign-up expecting a session at once: that only worked because the local
+`enable_confirmations` was off, which also hid the double confirmation of an email change
+(melao). If `qa:local` warns that `config.toml` turns a confirmation off, the flows that
+depend on it go to "Not verified" unless you test them against the setting the hosted
+project has.
 
 **The values do not go through your context.** Find out which roles exist only from the names:
 
@@ -151,6 +168,17 @@ With Playwright (`@playwright/test` comes with the project; if the browser is mi
 `bunx playwright install chromium`, which does not touch the repo). Verify by measuring
 (DOM, network responses, console), not by looking at screenshots. Redirects (guest →
 login): `curl -sI`, instantly (headers only).
+
+Playwright traps that gave false findings (melao):
+- It does not click an element with `aria-disabled="true"` (it waits for it to be enabled):
+  to prove a disabled button does nothing, `click({ force: true })` and measure that nothing
+  happened.
+- `textContent` includes hidden text (a button's `loadingText`, an `sr-only` span): compare
+  visible text with `innerText()` or `toHaveText`, not `textContent`.
+- **Supabase Storage / Edge Functions in local:** signed URLs come back with the internal
+  host `kong:8000`, which the browser cannot reach (the media falls back to its placeholder).
+  It is a local artifact, not a finding: rewrite the host to the `API_URL` in your script or
+  mark the media "not verified locally".
 
 **Every finding leaves its reproduction script**, `.qa/repro/<n>-<slug>.mjs` in your slot:
 it takes the base URL as its argument and ends printing `PASS` or `FAIL <what it measured>`.
