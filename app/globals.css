@@ -569,6 +569,7 @@
   --breakpoint-3xl: 120rem;
   --container-seg: 25rem; /* §8: segmentado de ancho completo oculta íconos por debajo de 400 */
   --container-estrecho: 18rem; /* barra superior: < 288 px en rem solo pasa con texto del sistema grande (D-A1) */
+  --container-fila: 20rem; /* fila del ranking y de equipos: < 320 px el chip o el botón bajan de línea (D-M3, D226) */
 }
 
 /* Las sombras cambian con el tema: Tailwind incrustaría el valor claro si fueran del tema,

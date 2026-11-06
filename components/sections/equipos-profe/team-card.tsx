@@ -86,7 +86,8 @@ export function TeamCard({
 
   return (
     <Card className="flex flex-col gap-4">
-      <div className="flex items-start gap-4">
+      {/* Si la columna del nombre no llega a 8rem (texto grande, D226), baja debajo del logo */}
+      <div className="flex flex-wrap items-start gap-4">
         <div className="flex shrink-0 flex-col items-center gap-2">
           <TeamLogo
             teamId={equipo.id}
@@ -120,7 +121,7 @@ export function TeamCard({
             {accion}
           </Button>
         </div>
-        <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
+        <div className="flex min-w-[min(--spacing(32),100%)] flex-1 flex-col items-start gap-1">
           <h3
             id={tituloId}
             tabIndex={-1}
@@ -180,7 +181,7 @@ export function TeamCard({
           {miembros.map((m) => (
             <li
               key={m.cedula}
-              className="flex min-h-11 items-center gap-3 border-b border-divider py-1 last:border-b-0"
+              className="flex min-h-11 flex-wrap items-center gap-3 border-b border-divider py-1 last:border-b-0"
             >
               <UserAvatar
                 estilo={m.estilo ?? "adventurer-neutral"}
@@ -188,7 +189,8 @@ export function TeamCard({
                 nombre={m.nombre}
                 size={32}
               />
-              <span className="text-body-strong min-w-0 flex-1 text-text">
+              {/* Con texto grande el nombre no baja de 6rem: «Mover a…» pasa a otra línea (D226) */}
+              <span className="text-body-strong min-w-[min(--spacing(24),100%)] flex-1 text-text">
                 {m.nombre}
               </span>
               {m.cedula === capitan ? (
