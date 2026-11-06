@@ -159,7 +159,7 @@ describe("foco de los campos (D237)", () => {
   });
 });
 
-describe("botón ocupado vs deshabilitado (D239)", () => {
+describe("botón ocupado vs deshabilitado (D285)", () => {
   const boton = readFileSync(
     join(import.meta.dir, "..", "..", "components", "ui", "button.tsx"),
     "utf8",

@@ -16,7 +16,7 @@ const buttonCva = cva(
     "transition-[translate,background-color,box-shadow,color] duration-fast ease-krea",
     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
     "[&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0",
-    // Un botón ocupado (aria-busy) no es un botón deshabilitado: conserva los colores de su variante (D239)
+    // Un botón ocupado (aria-busy) no es un botón deshabilitado: conserva los colores de su variante (D285)
     "not-aria-busy:disabled:cursor-not-allowed not-aria-busy:disabled:bg-surface-3 not-aria-busy:disabled:text-text-dis not-aria-busy:disabled:shadow-none",
     "not-aria-busy:aria-disabled:cursor-not-allowed not-aria-busy:aria-disabled:bg-surface-3 not-aria-busy:aria-disabled:text-text-dis not-aria-busy:aria-disabled:shadow-none",
     "aria-busy:cursor-progress",
