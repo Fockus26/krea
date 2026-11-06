@@ -25,6 +25,20 @@ send carries it with the new count). What repeats is what is most worth fixing.
 
 | # | Date | Type | Times | Kit piece | What happened (1 line) | Proposal (1 line) |
 |---|---|---|---|---|---|---|
+| 51 | 2026-11-06 | Prevention | 1 | QA-PREVENTION §6 (nueva) | Alto contraste: el logo con máscara + background-color desaparece y ningún segmentado/tab marca la opción activa (sin reglas forced-colors) | Estado seleccionado y dibujos con máscara llevan variante `forced-colors:` (outline Highlight) |
+| 52 | 2026-11-06 | Prevention | 1 | QA-PREVENTION §4 | Texto al 200 % en 390 px: scroll horizontal en todas las rutas por `w-*`/`min-w-*` en rem en filas que no envuelven | Medir con CDP `Page.setFontSizes` (no inyectar font-size); barras fijas con `max-w` |
+| 53 | 2026-11-06 | Prevention | 1 | QA-PREVENTION §5 | Con barra inferior fija el foco con Tab queda tapado | `scroll-padding-bottom/top` igual al alto de las barras fijas |
+| 54 | 2026-11-06 | Prevention | 1 | STATUS-SCREENS | `notFound()` en ruta con `loading.tsx` responde HTTP 200 | Comprobar la existencia fuera del límite de Suspense |
+| 55 | 2026-11-06 | Prevention | 1 | stack Next · seo | `openGraph`/`twitter` de la página reemplazan los del layout (/ingresar sin og:image) | Extender una base compartida de metadata |
+| 56 | 2026-11-06 | Prevention | 1 | QA-PREVENTION | Formulario enviado antes de hidratar: contraseña en la URL por GET nativo | `method="post"` o Server Action y submit deshabilitado hasta hidratar |
+| 57 | 2026-11-06 | Prevention | 1 | QA-PREVENTION | Miembros copiados a la entrega grupal y reasignación posterior → doble conteo en ranking | Comprobar que nadie esté ya en otra entrega del mismo padre; prueba «mover y reentregar» |
+| 58 | 2026-11-06 | Prevention | 1 | QA-PREVENTION | Edición concurrente: el último en guardar pisa la nota sin aviso | La acción recibe la versión con que se abrió y responde «cambió» |
+| 59 | 2026-11-06 | Prevention | 1 | QA-PREVENTION | Espacios como contenido: contraseña de espacios, primer nombre vacío aceptado al validar el nombre unido | Validar cada campo recortado y por separado |
+| 60 | 2026-11-06 | Prevention | 1 | QA-PREVENTION | Error del servidor (B2) mostrado como «Revisa tu conexión» | Separar «sin red» de «el servicio falló» en el tipo de error |
+| 61 | 2026-11-06 | Gap | 1 | qa-local · Firebase | Los emuladores se cuelgan en silencio sin `NO_UPDATE_NOTIFIER=1`; el firebase-tools del slot falla con `chalk.blue is not a function` | Exportar NO_UPDATE_NOTIFIER=1 en qa-local y fijar la versión de firebase-tools |
+| 62 | 2026-11-06 | Gap | 1 | orchestrate · pool | Los slots tenían `node_modules` desfasado (sin firebase-admin): seed y servidor fallaban en QA | Comprobar la huella de node_modules contra bun.lock al asignar un slot |
+| 63 | 2026-11-06 | Friction | 1 | agentes QA en segundo plano | design-qa y functional-qa se cortaron dos veces al cerrar la sesión sin escribir el informe | Los QA escriben el informe desde el primer hallazgo y lo amplían, no al final |
+| 64 | 2026-11-06 | Gap | 1 | design-qa · browserWithFont | `browserWithFont` falla en Windows con `spawn UNKNOWN`; CDP sí funciona | Usar CDP Page.setFontSizes como camino por defecto |
 
 ## Sending it to the kit
 

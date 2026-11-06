@@ -6,13 +6,14 @@
 ## Now
 
 **Phase:** 08 — Responsive y pulido · **cerrada** (2026-11-05, #56–#61, D214–D219) · resumen: `PHASE_LOG/08-responsive-pulido.md`
-Fases 01–08 cerradas · **Track:** Product · main @ d50568b · sigue la **fase 09 — QA final**.
+Fases 01–08 cerradas · **Track:** Product · main @ d50568b · **fase 09 — QA final**: QA hecho (2026-11-06) → `plans/qa-version-1.md` (0 críticos · 5 altos · 6 medios · 7 bajos). Sigue: arreglos por severidad, uno por PR.
 **Build local suprimido** (César, 2026-11-05): lo corren CI y Vercel, y el agente comprueba el preview. **QA con sesión:** `qa:local` y `.env.test.local` (alumno y profesor de prueba), nunca pedirle a César que inicie sesión.
 
 | Unit | Branch | Status |
 |---|---|---|
 | Fases 05–07 | #35–#55 | merged |
 | Fase 08 (D214–D219) | #56–#61 | merged (d50568b) |
+| Fase 09 · QA de versión | wt2 / wt3 | hecho · arreglos pendientes |
 
 ## Blocked (actions for César or external)
 
@@ -26,6 +27,7 @@ Fases 01–08 cerradas · **Track:** Product · main @ d50568b · sigue la **fas
 - Ya hecho en la fase 08, con sesión: 320–3840 px, altura corta, contraste por tema y acento, foco con Tab, 404 con cada sesión.
 
 **Decisiones de César:**
+- **F-A2 (alto):** alumno movido tras una grupal cuenta doble: regla (a) nota con el equipo que entregó · (b) pasa al nuevo si no está evaluada · (c) bloquear el cambio con grupales abiertas.
 - Alumnos en móvil: «Desliza la tabla…» queda a unos 3400 px de la parte superior, debajo de la tabla (HANDOFF §2.15).
 - Cambiar a un alumno de **sección** (W7/W8): no hay acción; ¿hace falta? y sus ajustes viejos ¿siguen en la sección vieja? (fila 134).
 - El alumno no ve su historial de base en ninguna pantalla (D108 dice «el alumno lo verá»): ¿dónde?
@@ -52,4 +54,4 @@ Fases 01–08 cerradas · **Track:** Product · main @ d50568b · sigue la **fas
 |---|---|---|
 | 01–07 | Tokens · Layout · Components · Sections · Pages · States · Backend | closed |
 | 08 | Responsive and polish | closed (2026-11-05) |
-| 09 | Final QA | next |
+| 09 | Final QA | in progress |
