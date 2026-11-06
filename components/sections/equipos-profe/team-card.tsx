@@ -1,7 +1,7 @@
 "use client";
 
 import { CircleAlert, Pencil, Upload } from "lucide-react";
-import { useId, useRef } from "react";
+import { useId, useRef, useState } from "react";
 import { CaptainBadge } from "@/components/krea/status-badge";
 import { TeamLogo } from "@/components/krea/team-logo";
 import { UserAvatar } from "@/components/krea/user-avatar";
@@ -27,6 +27,12 @@ import {
   logoLabel,
   metaEquipoTexto,
 } from "@/lib/equipos-profe";
+import {
+  archivoDeEntrada,
+  arrastreLlevaArchivos,
+  IMAGE_DROP_TEXT,
+} from "@/lib/image-entrada";
+import { cn } from "@/lib/utils";
 
 export type MiembroTarjeta = {
   cedula: string;
@@ -81,6 +87,9 @@ export function TeamCard({
   const inputId = useId();
   const errorId = `${inputId}-error`;
   const inputRef = useRef<HTMLInputElement>(null);
+  // Arrastrar y pegar un logo (D246): el archivo va a `onLogo`, que valida con las reglas del logo
+  const [dragging, setDragging] = useState(false);
+  const dragDepth = useRef(0);
   const accion = logoSrc ? "Cambiar" : "Subir logo";
   const Icono = logoSrc ? Pencil : Upload;
 
@@ -88,7 +97,37 @@ export function TeamCard({
     <Card className="flex flex-col gap-4">
       {/* Si la columna del nombre no llega a 8rem (texto grande, D226), baja debajo del logo */}
       <div className="flex flex-wrap items-start gap-4">
-        <div className="flex shrink-0 flex-col items-center gap-2">
+        {/* biome-ignore lint/a11y/noStaticElementInteractions: solo recibe el arrastre; la acción accesible es el botón */}
+        <div
+          className={cn(
+            "flex shrink-0 flex-col items-center gap-2 rounded-md border-2 p-1",
+            dragging
+              ? "border-accent-ink bg-accent-soft"
+              : "border-transparent",
+          )}
+          onDragEnter={(e) => {
+            if (!arrastreLlevaArchivos(e.dataTransfer)) return;
+            e.preventDefault();
+            dragDepth.current += 1;
+            setDragging(true);
+          }}
+          onDragOver={(e) => {
+            if (!arrastreLlevaArchivos(e.dataTransfer)) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "copy";
+          }}
+          onDragLeave={() => {
+            dragDepth.current = Math.max(0, dragDepth.current - 1);
+            if (dragDepth.current === 0) setDragging(false);
+          }}
+          onDrop={(e) => {
+            dragDepth.current = 0;
+            setDragging(false);
+            e.preventDefault();
+            const f = archivoDeEntrada(e.dataTransfer);
+            if (f) onLogo(f);
+          }}
+        >
           <TeamLogo
             teamId={equipo.id}
             tema={equipo.tema ?? equipo.nombre}
@@ -116,10 +155,25 @@ export function TeamCard({
             aria-label={logoLabel(accion, equipo.nombre)}
             aria-describedby={logoError ? errorId : undefined}
             onClick={() => inputRef.current?.click()}
+            onPaste={(e) => {
+              const f = archivoDeEntrada(e.clipboardData);
+              if (!f) return;
+              e.preventDefault();
+              onLogo(f);
+            }}
           >
             <Icono aria-hidden="true" className="size-4" />
             {accion}
           </Button>
+          <output
+            className={
+              dragging
+                ? "text-small-b max-w-28 text-center text-text"
+                : "sr-only"
+            }
+          >
+            {dragging ? IMAGE_DROP_TEXT : ""}
+          </output>
         </div>
         <div className="flex min-w-[min(--spacing(32),100%)] flex-1 flex-col items-start gap-1">
           <h3
