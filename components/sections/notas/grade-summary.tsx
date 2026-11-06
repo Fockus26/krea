@@ -49,7 +49,7 @@ export function GradeSummary({
       </div>
       <div className="flex flex-wrap items-center gap-6">
         <GradePill nota={final} size="xl" />
-        <dl className="m-0 flex min-w-55 flex-1 flex-col gap-2">
+        <dl className="m-0 flex min-w-[min(--spacing(55),100%)] flex-1 flex-col gap-2">
           <div className="flex flex-wrap items-center justify-between gap-x-3">
             <dt className="text-body text-text-2">Puntaje</dt>
             <dd className="text-h3 nums m-0 text-text">

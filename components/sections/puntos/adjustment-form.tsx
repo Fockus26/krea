@@ -380,7 +380,7 @@ export function AdjustmentForm({
           </div>
 
           <Field
-            className="min-w-60 flex-1"
+            className="min-w-[min(--spacing(60),100%)] flex-1"
             label={
               <>
                 Detalle{" "}

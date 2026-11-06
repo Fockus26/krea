@@ -36,7 +36,7 @@ export function TeamHero({ equipo }: { equipo: DatosEquipo }) {
           src={equipo.logo}
           size={112}
         />
-        <div className="flex min-w-55 flex-1 flex-col gap-2">
+        <div className="flex min-w-[min(--spacing(55),100%)] flex-1 flex-col gap-2">
           <p className="text-eyebrow text-text-2">
             {eyebrowEquipo(equipo.eyebrowSeccion)}
           </p>

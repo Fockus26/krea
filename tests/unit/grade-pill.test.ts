@@ -57,7 +57,11 @@ describe("GRADE_PILL_SIZE_CLASSES (krea.css:249-257)", () => {
   test("xl: 104 de alto (120 desde 768) y ancho mínimo 148", () => {
     expect(GRADE_PILL_SIZE_CLASSES.xl).toContain("h-26");
     expect(GRADE_PILL_SIZE_CLASSES.xl).toContain("md:h-30");
-    expect(GRADE_PILL_SIZE_CLASSES.xl).toContain("min-w-37");
+    // 148 con texto normal; con texto grande no pasa del contenedor (D-A1)
+    expect(GRADE_PILL_SIZE_CLASSES.xl).toContain(
+      "min-w-[min(--spacing(37),100%)]",
+    );
+    expect(GRADE_PILL_SIZE_CLASSES.xl).toContain("max-w-full");
   });
 
   test("total: 88 × 64 con número de 32 (§3 Evaluar entrega, D102)", () => {

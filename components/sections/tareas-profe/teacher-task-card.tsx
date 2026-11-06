@@ -41,7 +41,7 @@ export function TeacherTaskCard({
 
   return (
     <li className={cn(cardVariants(), "flex flex-wrap items-center gap-4")}>
-      <div className="flex min-w-60 flex-1 flex-col gap-2">
+      <div className="flex min-w-[min(--spacing(60),100%)] flex-1 flex-col gap-2">
         <div className="flex flex-wrap gap-2">
           <StatusBadge status={tarea.estado} />
           <Badge>

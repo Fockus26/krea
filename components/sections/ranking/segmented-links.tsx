@@ -28,7 +28,7 @@ export function SegmentedLinks({
 }) {
   return (
     <nav aria-label={label} className={className}>
-      <ul className="m-0 inline-flex w-fit max-w-full list-none gap-1 rounded-md bg-surface-2 p-1">
+      <ul className="m-0 inline-flex w-fit max-w-full list-none flex-wrap gap-1 rounded-md bg-surface-2 p-1">
         {opciones.map((o) => (
           <li key={o.clave}>
             <Link

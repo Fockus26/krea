@@ -47,7 +47,12 @@ export function GradePill({
   const isXl = size === "xl";
 
   return (
-    <span className={cn("inline-flex flex-wrap items-center gap-2", className)}>
+    <span
+      className={cn(
+        "inline-flex max-w-full flex-wrap items-center gap-2",
+        className,
+      )}
+    >
       {nota === null ? (
         <span
           data-slot="grade-pill"

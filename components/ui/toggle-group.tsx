@@ -79,7 +79,9 @@ function ToggleGroup({
         className={cn(
           "group/toggle-group gap-1 rounded-md bg-surface-2 p-1",
           // `@container` (container-type: inline-size) solo en block: en un grupo de ancho propio colapsaría al padding
-          block ? "@container flex w-full" : "inline-flex w-fit max-w-full",
+          block
+            ? "@container flex w-full"
+            : "inline-flex w-fit max-w-full flex-wrap", // envuelve si no cabe (texto grande, D-A1)
           className,
         )}
       />

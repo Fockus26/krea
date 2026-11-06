@@ -43,7 +43,7 @@ export function StudentFilters({
           </ToggleGroupItem>
         ))}
       </ToggleGroup>
-      <div className="flex min-w-60 max-w-105 flex-1 flex-col">
+      <div className="flex min-w-[min(--spacing(60),100%)] max-w-105 flex-1 flex-col">
         <Label htmlFor="buscar-alumno" className="sr-only">
           Buscar por nombre o cédula
         </Label>

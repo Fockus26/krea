@@ -40,7 +40,7 @@ export function ProfileIdentity({
         ring
         className="shrink-0"
       />
-      <div className="flex min-w-50 flex-1 flex-col gap-2">
+      <div className="flex min-w-[min(--spacing(50),100%)] flex-1 flex-col gap-2">
         <p className="text-eyebrow text-text-2">Mi perfil</p>
         <h1 className="text-h2 text-text">{nombre}</h1>
         <div className="flex flex-wrap gap-2">
