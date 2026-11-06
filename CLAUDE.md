@@ -33,8 +33,10 @@ inventories, `PHASE_LOG/`. `grep` for the word or the ID and open only what come
 
 ```bash
 grep -rhi "^# D.*modal\|^# D.*ranking" context/decisions/   # already decided? Don't re-litigate it
-grep -n "Button" context/COMPONENTS_INVENTORY.md            # does it exist already?
 ```
+
+**The kit's `reference/…`** = `~/.claude/kit-reference/…` (or `.claude/kit-reference/…`).
+**Tech refs:** firebase, vercel → its `tech/<name>.md` when the task touches it; only these.
 
 ---
 
@@ -98,7 +100,7 @@ In git: `.kit-version`, `firebase/` (rules, indexes, functions), `data/seed/` an
 of `context/`: PROJECT_CONTEXT, DESIGN_RULES, COLORS, DESIGN_TOKENS, TYPOGRAPHY, decisions/.
 Local (gitignored): CURRENT_PHASE, CONTENT_CHECKLIST, KIT_FEEDBACK, GIT_STATE, inventories, PHASE_LOG/,
 plans/ — backed up to `context-state` with `bun run context:backup`. `.env.local` is
-pulled from Vercel, never hand-edited (`vercel env pull`; kit `reference/DEPLOY.md` §2c).
+pulled from Vercel, never hand-edited (`vercel env pull`; kit `tech/vercel.md` §2c).
 Pool slots and worktrees get the `.env*` files but **not** the local `context/`: read it in
 the main folder (first line of `git worktree list`); if you cannot write there, return the
 `context/` changes in your report.
