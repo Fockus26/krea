@@ -158,3 +158,35 @@ describe("foco de los campos (D237)", () => {
     expect(css).toContain('[data-slot="input-group"]:focus-within');
   });
 });
+
+describe("botón ocupado vs deshabilitado (D239)", () => {
+  const boton = readFileSync(
+    join(import.meta.dir, "..", "..", "components", "ui", "button.tsx"),
+    "utf8",
+  );
+
+  test("los colores de deshabilitado no aplican a un botón con aria-busy", () => {
+    expect(boton).not.toMatch(/(^|[\s"])(?:aria-)?disabled:bg-surface-3/m);
+    expect(boton).toContain("not-aria-busy:disabled:bg-surface-3");
+    expect(boton).toContain("not-aria-busy:aria-disabled:text-text-dis");
+  });
+
+  test("ocupado conserva la variante: pares ya cubiertos arriba, 4,5:1 en 4 acentos × 2 temas", () => {
+    for (const tema of ["claro", "oscuro"] as const) {
+      for (const nombre of ACENTOS) {
+        const t = acento(tema, nombre);
+        // primario: --on-accent sobre --accent; secundario: --accent-ink sobre --surface;
+        // ghost: --accent-ink sobre --bg
+        expect(
+          contraste(t["--on-accent"], t["--accent"]),
+        ).toBeGreaterThanOrEqual(MIN);
+        expect(
+          contraste(t["--accent-ink"], t["--surface"]),
+        ).toBeGreaterThanOrEqual(MIN);
+        expect(contraste(t["--accent-ink"], t["--bg"])).toBeGreaterThanOrEqual(
+          MIN,
+        );
+      }
+    }
+  });
+});
