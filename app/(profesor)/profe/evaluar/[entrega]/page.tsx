@@ -108,6 +108,7 @@ export default async function EvaluarEntregaPage({ params }: Props) {
           tipo={v.tipo}
           preguntas={preguntas}
           inicial={v.inicial}
+          version={entrega.evaluacion?.evaluadaEn ?? null}
           base={v.base}
           siguiente={v.siguiente}
           guardarHref={v.guardarHref}

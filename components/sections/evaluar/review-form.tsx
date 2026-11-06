@@ -77,6 +77,7 @@ export function ReviewForm({
   tipo,
   preguntas,
   inicial,
+  version = null,
   base,
   siguiente,
   guardarHref,
@@ -94,6 +95,11 @@ export function ReviewForm({
     puntajes: readonly (number | null)[];
     comentarios: readonly string[];
   };
+  /**
+   * `evaluadaEn` de la evaluación vigente al abrir (`null` = Pendiente). Va con Guardar: si otro
+   * la cambió mientras tanto, el servidor responde `cambio` y no se pisa (D224).
+   */
+  version?: number | null;
   /** Base con la que sale la nota (grupal: 20, D014). */
   base: number;
   siguiente: SiguienteEntrega;
@@ -158,6 +164,7 @@ export function ReviewForm({
           comentarios: Object.fromEntries(
             preguntas.map((p, i) => [p.id, comentarios[i] ?? ""]),
           ),
+          version,
         })
         .catch((): ResultadoEvaluar => ({ ok: false, error: "red" }));
       guardando.current = false;
