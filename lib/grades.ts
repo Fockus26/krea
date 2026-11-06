@@ -44,6 +44,43 @@ export function gradeColor(n: number): string {
   return hslToHex(52 + 88 * t, 100 - 30 * t, 48 - 14 * t);
 }
 
+/** Luminancia relativa WCAG de un hex `#RRGGBB`. */
+function luminancia(hex: string): number {
+  const canal = (i: number) => {
+    const c = Number.parseInt(hex.slice(i, i + 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * canal(1) + 0.7152 * canal(3) + 0.0722 * canal(5);
+}
+
+/** Razón de contraste WCAG 2.1 entre dos hex `#RRGGBB` (1–21). */
+export function contraste(a: string, b: string): number {
+  const x = luminancia(a);
+  const y = luminancia(b);
+  return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+}
+
+/** Tintas del número sobre la píldora (D236). Espejo de `--grade-ink` y `--grade-ink-on-dark`. */
+export const GRADE_INK_OSCURA = "#111111";
+export const GRADE_INK_CLARA = "#FFFFFF";
+
+/**
+ * Tinta del número sobre `gradeColor(n)` (D236): la que pasa 4,5:1; si pasan las dos, la de
+ * mayor contraste (elegir la de mayor contraste cubre ambos casos).
+ */
+export function gradeInk(n: number): "oscura" | "clara" {
+  const fondo = gradeColor(n);
+  return contraste(GRADE_INK_CLARA, fondo) > contraste(GRADE_INK_OSCURA, fondo)
+    ? "clara"
+    : "oscura";
+}
+
+/** Clase de color del número según `gradeInk` (literales para que Tailwind las vea). */
+export const GRADE_INK_CLASS = {
+  oscura: "text-grade-ink",
+  clara: "text-grade-ink-on-dark",
+} as const;
+
 /** Nota para mostrar: coma decimal, 1 decimal máximo. `null` → "Pendiente" (D003). */
 export function formatNota(n: number | null): string {
   if (n === null) return "Pendiente";

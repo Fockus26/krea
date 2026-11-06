@@ -1,7 +1,12 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardTitle } from "@/components/ui/card";
 import { GRADE_PILL_SIZE_CLASSES } from "@/lib/grade-pill";
-import { formatNota, gradeColor } from "@/lib/grades";
+import {
+  formatNota,
+  GRADE_INK_CLASS,
+  gradeColor,
+  gradeInk,
+} from "@/lib/grades";
 import { puntosConSigno, REGLAS, REGLAS_TITULO } from "@/lib/ranking-vista";
 import { cn } from "@/lib/utils";
 
@@ -15,7 +20,8 @@ function EjemploNota({ valor }: { valor: number }) {
     <span
       style={{ backgroundColor: gradeColor(valor) }}
       className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-pill text-grade-ink",
+        "inline-flex shrink-0 items-center justify-center rounded-pill",
+        GRADE_INK_CLASS[gradeInk(valor)],
         GRADE_PILL_SIZE_CLASSES.sm,
       )}
     >

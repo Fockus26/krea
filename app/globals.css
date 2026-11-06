@@ -66,7 +66,7 @@
   --secondary: #ffc23d;
   --on-secondary: #221d2b;
   --grade-ink: #111111;
-  --sel-bg: #e4dcf7;
+  --grade-ink-on-dark: #ffffff; /* tinta clara de la píldora cuando la oscura no llega a 4,5:1 (D236) */
   --sel-text: #221d2b;
   --scroll-thumb: #7a7486;
   --scroll-track: #ece9f2;
@@ -86,8 +86,10 @@
   --shadow-bnav: 0 -4px 16px rgb(34 29 43 / 0.06);
 
   /* Porcentajes de los tintes (los usan los derivados de la capa 5) */
-  --tint-1: 12%;
-  --tint-2: 22%;
+  --tint-1: 10%;
+  --tint-2: 16%;
+  --tint-sel: 22%; /* ::selection: acento sobre --bg (D236) */
+  --tint-prize-card: 22%; /* card de premio: secundario sobre la superficie */
   --tint-ok: 10%;
   --tint-warn: 10%;
   --tint-err: 12%;
@@ -132,7 +134,6 @@
   --warning: #ffc23d;
   --error: #ff6b5e;
   --on-error: #14121a; /* 6,64:1 sobre --error (HANDOFF §2.1) */
-  --sel-bg: #3b3350;
   --sel-text: #f4f1f8;
   --scroll-thumb: #6e687a;
   --scroll-track: #1e1b26;
@@ -149,8 +150,10 @@
   --shadow-3: 0 18px 48px rgb(0 0 0 / 0.5);
   --shadow-bnav: none;
 
-  --tint-1: 16%;
-  --tint-2: 28%;
+  --tint-1: 12%;
+  --tint-2: 18%;
+  --tint-sel: 40%;
+  --tint-prize-card: 28%;
   --tint-ok: 14%;
   --tint-warn: 14%;
   --tint-prize: 18%;
@@ -187,7 +190,6 @@
     --warning: #ffc23d;
     --error: #ff6b5e;
     --on-error: #14121a;
-    --sel-bg: #3b3350;
     --sel-text: #f4f1f8;
     --scroll-thumb: #6e687a;
     --scroll-track: #1e1b26;
@@ -203,8 +205,10 @@
     --shadow-3: 0 18px 48px rgb(0 0 0 / 0.5);
     --shadow-bnav: none;
 
-    --tint-1: 16%;
-    --tint-2: 28%;
+    --tint-1: 12%;
+    --tint-2: 18%;
+    --tint-sel: 40%;
+    --tint-prize-card: 28%;
     --tint-ok: 14%;
     --tint-warn: 14%;
     --tint-prize: 18%;
@@ -241,6 +245,7 @@
     var(--surface)
   );
   --accent-hover: color-mix(in srgb, var(--accent) 88%, var(--hover-mix));
+  --sel-bg: color-mix(in srgb, var(--accent) var(--tint-sel), var(--bg));
 
   --chip-ok-bg: color-mix(
     in srgb,
@@ -524,6 +529,7 @@
   --color-secondary: var(--secondary);
   --color-on-secondary: var(--on-secondary);
   --color-grade-ink: var(--grade-ink);
+  --color-grade-ink-on-dark: var(--grade-ink-on-dark);
   --color-sel-bg: var(--sel-bg);
   --color-sel-text: var(--sel-text);
   --color-toast-bg: var(--toast-bg);
@@ -1336,6 +1342,27 @@ body {
   outline-offset: 2px;
 }
 
+/*
+ * Campos (Input, Textarea, SelectTrigger; D237): el foco lo pinta la caja entera (borde + halo
+ * de `controlClasses`), no el elemento interior. Esta regla va sin capa como la global y le
+ * gana la `outline-none` de Tailwind (que está en una capa), así que se apaga aquí. El botón del
+ * ojo/unidad dentro de la caja conserva su propio `:focus-visible`.
+ */
+[data-slot="input-group"] > input:focus-visible,
+[data-slot="textarea"]:focus-visible,
+[data-slot="select-trigger"]:focus-visible {
+  outline: none;
+}
+/* Alto contraste: sombras y colores de borde se pierden; la caja se rodea con un contorno del sistema */
+@media (forced-colors: active) {
+  [data-slot="input-group"]:focus-within,
+  [data-slot="textarea"]:focus-visible,
+  [data-slot="select-trigger"]:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+}
+
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -1452,7 +1479,7 @@ html:has([data-slot="action-bar"]) {
 @utility bg-prize-card {
   background-color: color-mix(
     in srgb,
-    var(--secondary) var(--tint-2),
+    var(--secondary) var(--tint-prize-card),
     var(--surface)
   );
 }

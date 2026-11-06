@@ -1,0 +1,5 @@
+# D238 · Accessibility · Barrido de contraste de los pares de acento (4 acentos × claro/oscuro) versionado como prueba · Implemented
+
+**Decision:** `tests/unit/contraste-tokens.test.ts` lee `app/globals.css`, recalcula los derivados `color-mix` y exige ≥ 4,5:1 en: `--on-accent` sobre `--accent` y `--accent-hover`; `--accent-ink` sobre `--bg`, `--surface`, `--surface-2`, `--accent-soft` y `--accent-soft-2`; `--text` sobre `--accent-soft-2`; `--sel-text` sobre `--sel-bg`; y `--text`, `--text-2`, `--success`, `--warning`, `--error` sobre las tres superficies. Los tokens base de acento no cambian de tono: lo que no llegaba era el tinte `--tint-2` (ver D236).
+**Why:** el único par que fallaba en el rojo oscuro (y en el resto de acentos) era `--accent-ink` sobre `--accent-soft-2` (3,83:1 en rojo oscuro). Botón primario, tinta sobre fondo y hover ya pasaban (rojo oscuro: 6,64:1 / 6,64:1 / 7,44:1). Lo deshabilitado (`--text-dis`) queda exento por WCAG 1.4.3 y no se toca.
+**Discarded alternative:** aclarar `--accent-ink` en oscuro o oscurecer `--accent` en claro: cambian la marca más que bajar un tinte.
