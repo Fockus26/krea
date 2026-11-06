@@ -2,13 +2,14 @@ import type { Metadata } from "next";
 import { StudentsDirectory } from "@/components/sections/alumnos/students-directory";
 import { PageHeader } from "@/components/sections/shared/page-header";
 import { editarAlumno } from "@/lib/acciones/alumnos";
-import { resumenTexto } from "@/lib/alumnos";
+import { leerFiltrosAlumnos, resumenTexto } from "@/lib/alumnos";
 import { filasAlumnos } from "@/lib/alumnos-datos";
 import {
   emailsTodos,
   entregasTodas,
   equiposTodos,
   rankingsTodos,
+  tareasProfe,
   usuariosTodos,
 } from "@/lib/datos/profesor";
 import { SECCIONES } from "@/lib/modelo";
@@ -18,17 +19,30 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
+// Los filtros viajan en la URL (D252): ?seccion=5A|5C&estado=evaluados|raspados|pendientes&tarea=<id>&alumno=<cédula>.
 // Alumnos (HANDOFF §3; W8, D209): las mismas secciones que /secciones/alumnos con Firestore. La
 // búsqueda y la sección filtran en el cliente; «Guardar cambios» escribe perfil, historial de base
 // (D176), email de recuperación y ranking en una transacción y la página se refresca.
-export default async function AlumnosPage() {
-  const [usuarios, equipos, entregas, rankings, emails] = await Promise.all([
-    usuariosTodos(),
-    equiposTodos(),
-    entregasTodas(),
-    rankingsTodos(),
-    emailsTodos(),
-  ]);
+export default async function AlumnosPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const filtros = leerFiltrosAlumnos(await searchParams);
+  const [usuarios, equipos, entregas, rankings, emails, tareas] =
+    await Promise.all([
+      usuariosTodos(),
+      equiposTodos(),
+      entregasTodas(),
+      rankingsTodos(),
+      emailsTodos(),
+      tareasProfe(),
+    ]);
+  // Una tarea que no existe se ignora, como cualquier otro valor inválido.
+  const tarea = tareas.find((t) => t.id === filtros.tarea);
+  const alumnoExiste = usuarios.some(
+    (u) => u.rol === "estudiante" && u.cedula === filtros.alumno,
+  );
   const alumnos = filasAlumnos({
     usuarios,
     equipos,
@@ -42,7 +56,16 @@ export default async function AlumnosPage() {
         eyebrow={resumenTexto(alumnos.length, SECCIONES.length)}
         title="Alumnos"
       />
-      <StudentsDirectory alumnos={alumnos} guardar={editarAlumno} />
+      <StudentsDirectory
+        alumnos={alumnos}
+        guardar={editarAlumno}
+        filtrosIniciales={{
+          ...filtros,
+          tarea: tarea?.id,
+          alumno: alumnoExiste ? filtros.alumno : undefined,
+        }}
+        tarea={tarea ? { id: tarea.id, titulo: tarea.titulo } : undefined}
+      />
     </>
   );
 }

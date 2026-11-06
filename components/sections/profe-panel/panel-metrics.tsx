@@ -20,6 +20,8 @@ export type DatosMetricas = {
     texto: string;
   };
   raspados: { total: number; detalle: string };
+  /** Destino de «Evaluados» y «Raspados»: Alumnos filtrado por la tarea y la sección (D252). */
+  hrefs: { evaluados: string; raspados: string };
 };
 
 // Tarjeta enlace entera (HANDOFF §3 Panel §2): un solo `<a>`, sin botones dentro; foco en toda la tarjeta
@@ -44,7 +46,7 @@ function Detalle({ children }: { children: string }) {
  * enlace. "Raspados" lleva el título en `--error` y TriangleAlert, además del texto (nunca solo color, D003).
  */
 export function PanelMetrics({ datos }: { datos: DatosMetricas }) {
-  const { porEvaluar, evaluados, raspados } = datos;
+  const { porEvaluar, evaluados, raspados, hrefs } = datos;
   return (
     <section aria-label="Métricas" className="g3">
       <Link href="/profe/evaluar" className={TARJETA}>
@@ -59,7 +61,7 @@ export function PanelMetrics({ datos }: { datos: DatosMetricas }) {
         <Detalle>{porEvaluar.detalle}</Detalle>
       </Link>
 
-      <Link href="/profe/alumnos" className={TARJETA}>
+      <Link href={hrefs.evaluados} className={TARJETA}>
         <span className="flex items-center gap-2 text-small-b text-text-2">
           <CircleCheck
             aria-hidden="true"
@@ -75,7 +77,7 @@ export function PanelMetrics({ datos }: { datos: DatosMetricas }) {
         <MeterBar pct={evaluados.pct} tone="accent" className="h-2" />
       </Link>
 
-      <Link href="/profe/alumnos" className={TARJETA}>
+      <Link href={hrefs.raspados} className={TARJETA}>
         <span className="flex items-center gap-2 text-small-b text-error">
           <TriangleAlert aria-hidden="true" className="size-5 shrink-0" />
           Raspados

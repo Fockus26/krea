@@ -171,6 +171,7 @@ export function panelDatosDe({
       .slice(0, AJUSTES_RECIENTES)
       .map((a) => filaAjuste(a, mapas)),
     tareaEvaluada: tarea?.titulo ?? SIN_TAREA_EVALUADA,
+    tareaId: tarea ? tareaId : null,
     avance,
     raspados: raspados.sort((a, b) => a.nota - b.nota),
   };

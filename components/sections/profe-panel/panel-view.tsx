@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { rutaAlumnos } from "@/lib/alumnos";
 import {
   detallePorEvaluar,
   detalleRaspados,
@@ -22,6 +23,8 @@ export type DatosPanel = {
   ajustes: readonly FilaAjuste[];
   /** Tarea que miden "Evaluados" y "Raspados" (hoy la única evaluada: Identidad de marca). */
   tareaEvaluada: string;
+  /** Id de esa tarea; sin él (vista previa) los enlaces van a Alumnos sin tarea (D252). */
+  tareaId?: string | null;
   avance: Readonly<Record<SeccionPanel, { evaluados: number; total: number }>>;
   raspados: ReadonlyArray<Raspado & { seccion: SeccionPanel }>;
 };
@@ -53,6 +56,12 @@ export function PanelView({
   );
   const total = secciones.reduce((n, s) => n + datos.avance[s].total, 0);
 
+  // La sección elegida en el Panel (D099) viaja a Alumnos; «ambas» no filtra.
+  const base = {
+    ...(filtro === "ambas" ? {} : { seccion: filtro }),
+    ...(datos.tareaId ? { tarea: datos.tareaId } : {}),
+  };
+
   const metricas: DatosMetricas = {
     porEvaluar: {
       total: entregas.length,
@@ -66,6 +75,10 @@ export function PanelView({
       texto: evaluadosTexto(evaluados, total),
     },
     raspados: { total: raspados.length, detalle: detalleRaspados(raspados) },
+    hrefs: {
+      evaluados: rutaAlumnos({ ...base, estado: "evaluados" }),
+      raspados: rutaAlumnos({ ...base, estado: "raspados" }),
+    },
   };
 
   return (
