@@ -38,3 +38,4 @@
 - (tanda 11-06, W14) `EditStudentDialog` al guardar cierra con `setAbierto(false)` sin `onAbierto`: la URL conserva `?alumno=` tras guardar.
 - (tanda 11-06, W16) Con la hoja del calendario abierta el botón «Elegir fecha» dice `aria-expanded=false`; D116 y el docblock de `TaskBuilder` aún dicen «sin calendario».
 - (tanda 11-06, W15) Sin FLIP en «Sin equipo» ni tableros de equipos/premios (cuadrículas; `useFlip` solo mide en vertical); alumno eliminado sin salida animada.
+- **Offline: deshabilitar sin red las acciones que no se encolan** (evaluar, puntos, alumnos, profes…), con «Sin conexión» en el botón. Hoy las cubre el banner global y el error «No se pudo conectar». Propuesta de W18 (#99), después de que #98 esté en main (toca sus archivos). Decisión de César 2026-11-07: «el resto muestra Sin conexión y no deja enviar».
