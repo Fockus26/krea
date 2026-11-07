@@ -4,6 +4,10 @@ import { ClipboardCheck, Trash2 } from "lucide-react";
 import * as React from "react";
 import { EmptyState } from "@/components/krea/empty-state";
 import { useFlip } from "@/components/krea/use-flip";
+import { EliminarEnLote } from "@/components/sections/shared/eliminar-en-lote";
+import { useSeleccionLote } from "@/components/sections/shared/use-seleccion-lote";
+import { useVista } from "@/components/sections/shared/use-vista";
+import { vistaListaId } from "@/components/sections/shared/vista-toggle";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -17,14 +21,17 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/sonner";
 import { parseCssTime } from "@/lib/flip";
+import { type ResultadoLote, TAREAS } from "@/lib/lote";
 import {
   ELIMINAR_TAREA_BOTON,
+  type ErrorTarea,
   eliminarTareaDescripcion,
   eliminarTareaTitulo,
   type FiltroEstado,
   filtrarTareas,
   filtroVacio,
   mensajeErrorTarea,
+  sumarPerdidas,
   type TareaProfe,
   TOAST_TAREA_ELIMINADA,
 } from "@/lib/tareas-profe";
@@ -34,8 +41,10 @@ import {
   type Quitando,
   vecinaAlQuitar,
 } from "@/lib/tareas-profe-lista";
+import { CLAVE_VISTA_TAREAS } from "@/lib/vista";
 import { TaskStatusFilter } from "./task-status-filter";
 import { TeacherTaskCard, tituloTareaId } from "./teacher-task-card";
+import { TeacherTaskTable } from "./teacher-task-table";
 
 /**
  * Lista de tareas del profesor (cliente: el filtro y la eliminación). Recibe todas las tareas por
@@ -45,19 +54,26 @@ import { TeacherTaskCard, tituloTareaId } from "./teacher-task-card";
  * `tareas`), sale con opacidad y escala y las demás suben con el FLIP del ranking. Con reduced
  * motion (duraciones a 0) desaparece al instante. El foco pasa al título de la siguiente tarjeta
  * (o de la anterior; sin ninguna, al `<h1>`). Sin `eliminar` (vista previa) no hay botón.
+ * Vista Lista (D313, el interruptor de la cabecera): la misma lista y el mismo filtro en una
+ * tabla; con `eliminarVarias`, casillas y la barra del lote (D314). El lote no anima: con
+ * `refresh()` las filas borradas desaparecen; si no queda selección, el foco va a «Lista».
  */
 export function TeacherTaskList({
   tareas,
   hoy,
   filtroInicial = "todas",
   eliminar,
+  eliminarVarias,
 }: {
   tareas: readonly TareaProfe[];
   hoy: string;
   filtroInicial?: FiltroEstado;
   /** Server Action de la página real; sin ella (galería) no hay «Eliminar». */
   eliminar?: (id: string) => Promise<ResultadoTarea>;
+  /** Eliminar en lote desde la vista Lista (D314); sin ella, la Lista no lleva casillas. */
+  eliminarVarias?: (ids: string[]) => Promise<ResultadoLote<ErrorTarea>>;
 }) {
+  const [vista] = useVista(CLAVE_VISTA_TAREAS);
   const [filtro, setFiltro] = React.useState<FiltroEstado>(filtroInicial);
   const [confirmar, setConfirmar] = React.useState<TareaProfe | null>(null);
   // `confirmar` se queda con la última tarea: el diálogo no se vacía mientras se cierra
@@ -71,6 +87,25 @@ export function TeacherTaskList({
   const { registrar } = useFlip<HTMLLIElement>();
 
   const visibles = conLaQueSale(filtrarTareas(tareas, filtro), quitando);
+
+  // Lote (D314): solo en Lista y solo lo visible. Al cambiar de filtro o de vista, o cuando
+  // `refresh()` trae la lista sin las borradas, lo que ya no se ve sale de la selección
+  const conLote = vista === "lista" && eliminarVarias !== undefined;
+  const idsLote = conLote ? visibles.map((t) => t.id) : [];
+  const seleccion = useSeleccionLote(idsLote);
+  const claveLote = idsLote.join("\n");
+  const [claveAntes, setClaveAntes] = React.useState(claveLote);
+  if (claveLote !== claveAntes) {
+    setClaveAntes(claveLote);
+    seleccion.podar(idsLote);
+  }
+  const marcadas = visibles.filter((t) => seleccion.marcadas.has(t.id));
+
+  const abrirEliminar = (t: TareaProfe, boton: HTMLButtonElement) => {
+    abrio.current = boton;
+    setConfirmar(t);
+    setAbierto(true);
+  };
 
   const refDe = (id: string) => {
     const flip = registrar(id);
@@ -143,7 +178,43 @@ export function TeacherTaskList({
   return (
     <div className="flex flex-col gap-6">
       <TaskStatusFilter filtro={filtro} onFiltro={setFiltro} />
-      {visibles.length > 0 ? (
+      {visibles.length > 0 && vista === "lista" ? (
+        <div className="flex flex-col gap-3">
+          {conLote && eliminarVarias ? (
+            <EliminarEnLote<ErrorTarea>
+              seleccionados={marcadas.map((t) => ({
+                id: t.id,
+                nombre: t.titulo,
+              }))}
+              sustantivo={TAREAS}
+              onLimpiar={seleccion.limpiar}
+              descripcion={eliminarTareaDescripcion(
+                sumarPerdidas(marcadas.map((t) => t.perdida)),
+                true,
+              )}
+              eliminar={eliminarVarias}
+              errorTexto={mensajeErrorTarea}
+              errorRed="red"
+              onEliminados={seleccion.quitar}
+              focoAlTerminar={vistaListaId(CLAVE_VISTA_TAREAS)}
+            />
+          ) : null}
+          <TeacherTaskTable
+            tareas={visibles}
+            hoy={hoy}
+            seleccion={
+              conLote
+                ? {
+                    marcadas: seleccion.marcadas,
+                    casilla: seleccion.casilla,
+                    onTodas: seleccion.alternarTodos,
+                  }
+                : undefined
+            }
+            onEliminar={eliminar ? abrirEliminar : undefined}
+          />
+        </div>
+      ) : visibles.length > 0 ? (
         <ul className="flex flex-col gap-6">
           {visibles.map((t) => (
             <TeacherTaskCard
@@ -153,13 +224,7 @@ export function TeacherTaskList({
               hoy={hoy}
               saliendo={quitando?.hecha === true && quitando.tarea.id === t.id}
               onEliminar={
-                eliminar
-                  ? (boton) => {
-                      abrio.current = boton;
-                      setConfirmar(t);
-                      setAbierto(true);
-                    }
-                  : undefined
+                eliminar ? (boton) => abrirEliminar(t, boton) : undefined
               }
             />
           ))}

@@ -26,17 +26,23 @@ import {
   consecuenciasTexto,
   creadoEquipoTexto,
   type EditarEquipo,
+  type ErrorGestionEquipo,
   errorGestionEquipoTexto,
   type ResultadoGestionEquipo,
   TEMA_AYUDA,
   validarEquipo,
 } from "@/lib/equipos-gestion";
 import type { SeccionEquipos } from "@/lib/equipos-profe";
+import type { ResultadoLote } from "@/lib/lote";
 
 export type AccionesGestionEquipos = {
   crear: (entrada: CrearEquipo) => Promise<ResultadoGestionEquipo>;
   editar: (entrada: EditarEquipo) => Promise<ResultadoGestionEquipo>;
   eliminar: (equipoId: string) => Promise<ResultadoGestionEquipo>;
+  /** Eliminar en lote desde la vista Lista (D315); sin ella, la Lista no lleva casillas. */
+  eliminarVarios?: (
+    ids: string[],
+  ) => Promise<ResultadoLote<ErrorGestionEquipo>>;
 };
 
 const RED: ResultadoGestionEquipo = { ok: false, error: "red" };

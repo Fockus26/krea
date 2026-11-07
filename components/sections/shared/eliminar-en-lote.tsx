@@ -1,6 +1,7 @@
 "use client";
 // Eliminar en lote (W22, D298–D300): la barra «N seleccionados · Eliminar» y su confirmación.
-// Alumnos y Profesores la comparten; cada pantalla pone su acción de servidor, sus textos y, si
+// Alumnos, Profesores, Tareas y Equipos la comparten (por `id`: cédula, tarea o equipo, D314);
+// cada pantalla pone su acción de servidor, sus textos y, si
 // quiere, un detalle de lo que se borra (Alumnos lo cuenta en el servidor al abrir). Confirmar
 // borra trozo a trozo (TOPE_LOTE); si alguno falla, el diálogo sigue abierto con quiénes y por qué,
 // y esos siguen seleccionados para reintentar. Sin fallos: se cierra con un toast.
@@ -33,9 +34,9 @@ import {
   separarResultados,
 } from "@/lib/lote";
 
-export type ItemLote = { cedula: string; nombre: string };
+export type ItemLote = { id: string; nombre: string };
 
-type Fallo = { cedula: string; nombre: string; motivo: string };
+type Fallo = { id: string; nombre: string; motivo: string };
 
 export function EliminarEnLote<E>({
   seleccionados,
@@ -60,12 +61,12 @@ export function EliminarEnLote<E>({
   /** Lo contado al abrir (región viva); `listo` = se puede confirmar. */
   detalle?: ReactNode;
   listo?: boolean;
-  onAbrir?: (cedulas: string[]) => void;
-  eliminar: (cedulas: string[]) => Promise<ResultadoLote<E>>;
+  onAbrir?: (ids: string[]) => void;
+  eliminar: (ids: string[]) => Promise<ResultadoLote<E>>;
   errorTexto: (e: E) => string;
   errorRed: E;
-  /** Las cédulas que ya no están: la pantalla las quita de la lista y de la selección. */
-  onEliminados: (cedulas: string[]) => void;
+  /** Los ids que ya no están: la pantalla los quita de la lista y de la selección. */
+  onEliminados: (ids: string[]) => void;
   /** Id del control que recibe el foco si se borraron todos (la barra desaparece). */
   focoAlTerminar?: string;
 }) {
@@ -90,7 +91,7 @@ export function EliminarEnLote<E>({
     setHechos(0);
     if (v) {
       terminado.current = false;
-      onAbrir?.(seleccionados.map((s) => s.cedula));
+      onAbrir?.(seleccionados.map((s) => s.id));
     }
   }
 
@@ -101,7 +102,7 @@ export function EliminarEnLote<E>({
     setFallos([]);
     const lista = [...seleccionados];
     const r = await eliminarPorTrozos(
-      lista.map((s) => s.cedula),
+      lista.map((s) => s.id),
       eliminar,
       errorRed,
     );
@@ -115,12 +116,12 @@ export function EliminarEnLote<E>({
       toast(eliminadosTexto(ok.length, sustantivo));
       return;
     }
-    const nombre = new Map(lista.map((s) => [s.cedula, s.nombre]));
+    const nombre = new Map(lista.map((s) => [s.id, s.nombre]));
     setHechos(ok.length);
     setFallos(
       fallidos.map((f) => ({
-        cedula: f.cedula,
-        nombre: nombre.get(f.cedula) ?? f.cedula,
+        id: f.id,
+        nombre: nombre.get(f.id) ?? f.id,
         motivo: errorTexto(f.error),
       })),
     );
@@ -177,7 +178,7 @@ export function EliminarEnLote<E>({
             className="flex max-h-40 flex-col gap-1 overflow-y-auto rounded-sm bg-surface-2 px-3 py-2 text-body text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
           >
             {mostrados.map((s) => (
-              <li key={s.cedula} className="break-words">
+              <li key={s.id} className="break-words">
                 {s.nombre}
               </li>
             ))}
@@ -188,7 +189,7 @@ export function EliminarEnLote<E>({
             >
               <span className="flex flex-col gap-1">
                 {fallos.map((f) => (
-                  <span key={f.cedula}>
+                  <span key={f.id}>
                     <span className="text-small-b">{f.nombre}</span>: {f.motivo}
                   </span>
                 ))}

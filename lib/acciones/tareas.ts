@@ -16,8 +16,10 @@ import {
   guardarPremioEnTransaccion,
   guardarTareaEnTransaccion,
 } from "@/lib/firebase/tareas";
+import { borrarEnLote, type ResultadoLote, zIdsLote } from "@/lib/lote";
 import { zQuien } from "@/lib/offline/operacion";
 import type { ResultadoPremio } from "@/lib/premios";
+import type { ErrorTarea } from "@/lib/tareas-profe";
 import {
   type CambioFoto,
   type ResultadoTarea,
@@ -116,13 +118,47 @@ export async function eliminarTarea(id: unknown): Promise<ResultadoTarea> {
   if (!admin) return { ok: false, error: "red" };
   const tareaId = zIdTareaProfe.safeParse(id);
   if (!tareaId.success) return { ok: false, error: "invalida" };
+  const r = await borrarUnaTarea(admin, tareaId.data);
+  if (r.ok) refresh();
+  return r;
+}
+
+/**
+ * Lo mismo para varias (X4, D314): hasta TOPE_LOTE ids por llamada, una tras otra (cada una es su
+ * propia transacción con el ranking de sus secciones), con el resultado de cada id. Idempotente:
+ * una tarea que ya no existe cuenta como borrada. Un fallo no corta el lote.
+ */
+export async function eliminarTareas(
+  ids: unknown,
+): Promise<ResultadoLote<ErrorTarea>> {
+  await exigirSesion("profesor");
+  const admin = firebaseAdmin();
+  if (!admin) return { ok: false, error: "red" };
+  const d = zIdsLote(zIdTareaProfe).safeParse(ids);
+  if (!d.success) return { ok: false, error: "invalida" };
+  const resultados = await borrarEnLote<ErrorTarea>(
+    d.data,
+    async (id) => {
+      const r = await borrarUnaTarea(admin, id);
+      return !r.ok && r.error === "no-existe" ? { ok: true } : r;
+    },
+    "red",
+  );
+  refresh();
+  return { ok: true, resultados };
+}
+
+/**
+ * El borrado de una, sin sesión ni `refresh()` (lo ponen `eliminarTarea` y `eliminarTareas`):
+ * la transacción y, después, sus imágenes de B2. No lanza: cualquier fallo vuelve como error.
+ */
+async function borrarUnaTarea(
+  admin: NonNullable<ReturnType<typeof firebaseAdmin>>,
+  id: string,
+): Promise<ResultadoTarea> {
   let imagenes: string[];
   try {
-    const r = await eliminarTareaEnTransaccion(
-      admin.db,
-      tareaId.data,
-      Date.now(),
-    );
+    const r = await eliminarTareaEnTransaccion(admin.db, id, Date.now());
     if (!r.resultado.ok) return r.resultado;
     imagenes = r.imagenes;
   } catch (e) {
@@ -130,8 +166,7 @@ export async function eliminarTarea(id: unknown): Promise<ResultadoTarea> {
     return { ok: false, error: "red" };
   }
   await borrarImagenes(imagenes);
-  refresh();
-  return { ok: true, id: tareaId.data };
+  return { ok: true, id };
 }
 
 /** Borra una foto de premio que ya no se usa; si falla, se registra y queda huérfana (D265). */

@@ -87,6 +87,22 @@ export function consecuenciasEliminar(c: {
   };
 }
 
+/** Lo que arrastran varios equipos juntos (lote, D315): la suma de cada recuento. */
+export function sumarConsecuencias(
+  cs: readonly ConsecuenciasEliminar[],
+): ConsecuenciasEliminar {
+  return consecuenciasEliminar(
+    cs.reduce(
+      (t, c) => ({
+        integrantes: t.integrantes + c.integrantes,
+        entregas: t.entregas + c.entregas,
+        ajustes: t.ajustes + c.ajustes,
+      }),
+      { integrantes: 0, entregas: 0, ajustes: 0 },
+    ),
+  );
+}
+
 /**
  * Escrituras de la transacción de eliminar: un perfil por integrante, `titularNombre` en cada
  * entrega grupal, un borrado por ajuste, el equipo y el ranking. Tope de Firestore: 500.
@@ -136,9 +152,13 @@ const contar = (n: number, uno: string, varios: string) =>
 /**
  * Texto del diálogo de eliminar (D307): qué tiene y qué pasa con cada cosa, con números. «Tiene 3
  * integrantes, 2 entregas grupales y 1 ajuste: los integrantes quedan sin equipo, las notas se
- * quedan con cada alumno y el ajuste se borra.» Solo nombra lo que tiene.
+ * quedan con cada alumno y el ajuste se borra.» Solo nombra lo que tiene. `varios`: la del lote
+ * (D315: «Tienen…», «sus logos»). PROVISIONAL (lote: CONTENT_CHECKLIST fila 165).
  */
-export function consecuenciasTexto(c: ConsecuenciasEliminar): string {
+export function consecuenciasTexto(
+  c: ConsecuenciasEliminar,
+  varios = false,
+): string {
   const tiene: string[] = [];
   const pasa: string[] = [];
   if (c.integrantes > 0) {
@@ -161,10 +181,13 @@ export function consecuenciasTexto(c: ConsecuenciasEliminar): string {
     tiene.push(contar(c.ajustes, "ajuste", "ajustes"));
     pasa.push(c.ajustes === 1 ? "el ajuste se borra" : "los ajustes se borran");
   }
-  const cierre = "Se borra también su logo. No se puede deshacer.";
+  const cierre = varios
+    ? "Se borran también sus logos. No se puede deshacer."
+    : "Se borra también su logo. No se puede deshacer.";
+  const tener = varios ? "tienen" : "tiene";
   if (tiene.length === 0)
-    return `No tiene integrantes, entregas grupales ni ajustes: no se pierde ninguna nota. ${cierre}`;
-  return `Tiene ${enumerar(tiene)}: ${enumerar(pasa)}. ${cierre}`;
+    return `No ${tener} integrantes, entregas grupales ni ajustes: no se pierde ninguna nota. ${cierre}`;
+  return `${varios ? "Tienen" : "Tiene"} ${enumerar(tiene)}: ${enumerar(pasa)}. ${cierre}`;
 }
 
 export function errorGestionEquipoTexto(

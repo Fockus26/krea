@@ -1,12 +1,15 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { capitanesTexto, sumarResumenes } from "@/lib/alumnos-alta";
+import { zIdDocumento } from "@/lib/evaluar-datos";
 import {
   ALUMNOS,
   alternarRango,
   alternarTodos,
   alternarUno,
   borrarEnLote,
+  EQUIPOS,
+  eliminadosTexto,
   eliminarLoteTitulo,
   eliminarPorTrozos,
   estadoTodos,
@@ -16,10 +19,14 @@ import {
   podarSeleccion,
   type ResultadoLote,
   seleccionadosTexto,
+  seleccionarLabel,
   separarResultados,
+  TAREAS,
   TOPE_LOTE,
   zCedulasLote,
+  zIdsLote,
 } from "@/lib/lote";
+import { zIdTareaProfe } from "@/lib/tareas-profe-datos";
 
 const cedulas = (n: number) =>
   Array.from({ length: n }, (_, i) => String(10_000_000 + i));
@@ -40,8 +47,32 @@ describe("zCedulasLote (D299)", () => {
   });
 });
 
+describe("zIdsLote (D314, D315)", () => {
+  const tareas = zIdsLote(zIdTareaProfe);
+  const equipos = zIdsLote(zIdDocumento);
+  test("ids de documento sin repetir, 1..TOPE_LOTE", () => {
+    expect(tareas.parse(["t-1", "t-1", "abc_2"])).toEqual(["t-1", "abc_2"]);
+    expect(equipos.parse(["g1"])).toEqual(["g1"]);
+    expect(
+      tareas.safeParse(Array.from({ length: TOPE_LOTE }, (_, i) => `t${i}`))
+        .success,
+    ).toBe(true);
+  });
+  test("rechaza vacío, más del tope, ids con barra y lo que no es lista", () => {
+    expect(tareas.safeParse([]).success).toBe(false);
+    expect(
+      equipos.safeParse(
+        Array.from({ length: TOPE_LOTE + 1 }, (_, i) => `g${i}`),
+      ).success,
+    ).toBe(false);
+    expect(tareas.safeParse(["a/b"]).success).toBe(false);
+    expect(equipos.safeParse([""]).success).toBe(false);
+    expect(equipos.safeParse("g1").success).toBe(false);
+  });
+});
+
 describe("borrarEnLote", () => {
-  test("uno por uno, en orden, con resultado por cédula", async () => {
+  test("uno por uno, en orden, con resultado por id", async () => {
     const orden: string[] = [];
     const r = await borrarEnLote(
       ["1", "2", "3"],
@@ -53,9 +84,9 @@ describe("borrarEnLote", () => {
     );
     expect(orden).toEqual(["1", "2", "3"]);
     expect(r).toEqual([
-      { cedula: "1", ok: true },
-      { cedula: "2", ok: false, error: "no-alumno" },
-      { cedula: "3", ok: true },
+      { id: "1", ok: true },
+      { id: "2", ok: false, error: "no-alumno" },
+      { id: "3", ok: true },
     ]);
   });
   test("si uno lanza, ese queda en `red` y el lote sigue", async () => {
@@ -68,8 +99,8 @@ describe("borrarEnLote", () => {
       "red",
     );
     expect(r).toEqual([
-      { cedula: "1", ok: false, error: "red" },
-      { cedula: "2", ok: true },
+      { id: "1", ok: false, error: "red" },
+      { id: "2", ok: true },
     ]);
   });
 });
@@ -90,7 +121,7 @@ describe("troceo del cliente", () => {
         if (llamada === 2) throw new Error("sin red");
         return {
           ok: true,
-          resultados: trozo.map((cedula) => ({ cedula, ok: true })),
+          resultados: trozo.map((id) => ({ id, ok: true })),
         };
       },
       "red",
@@ -98,7 +129,7 @@ describe("troceo del cliente", () => {
     expect(r).toHaveLength(todas.length);
     const { ok, fallidos } = separarResultados(r);
     expect(ok).toHaveLength(TOPE_LOTE);
-    expect(fallidos.map((f) => f.cedula)).toEqual(todas.slice(TOPE_LOTE));
+    expect(fallidos.map((f) => f.id)).toEqual(todas.slice(TOPE_LOTE));
     expect(fallidos.every((f) => f.error === "red")).toBe(true);
   });
 });
@@ -188,6 +219,39 @@ describe("textos (fila 159)", () => {
     );
     expect(fallidosTitulo(0, 2, PROFESORES)).toBe(
       "No se eliminó a nadie. No se pudo eliminar a 2 profesores:",
+    );
+    expect(seleccionarLabel("Ana Pérez")).toBe("Seleccionar a Ana Pérez");
+    expect(eliminadosTexto(3, ALUMNOS)).toBe("Eliminaste a 3 alumnos");
+  });
+});
+
+describe("textos con género y sin «a» (fila 165, D314)", () => {
+  test("tareas: femenino y cosa", () => {
+    expect(seleccionadosTexto(0, TAREAS)).toBe("Ninguna tarea seleccionada");
+    expect(seleccionadosTexto(1, TAREAS)).toBe("1 tarea seleccionada");
+    expect(seleccionadosTexto(4, TAREAS)).toBe("4 tareas seleccionadas");
+    expect(eliminarLoteTitulo(2, TAREAS)).toBe("¿Eliminar 2 tareas?");
+    expect(eliminadosTexto(1, TAREAS)).toBe("Eliminaste 1 tarea");
+    expect(fallidosTitulo(0, 2, TAREAS)).toBe(
+      "No se eliminó ninguna. No se pudo eliminar 2 tareas:",
+    );
+    expect(fallidosTitulo(1, 1, TAREAS)).toBe(
+      "Se eliminó 1. No se pudo eliminar 1 tarea:",
+    );
+    expect(seleccionarLabel("«Fotosíntesis»", TAREAS)).toBe(
+      "Seleccionar «Fotosíntesis»",
+    );
+  });
+  test("equipos: masculino y cosa", () => {
+    expect(seleccionadosTexto(0, EQUIPOS)).toBe("Ningún equipo seleccionado");
+    expect(seleccionadosTexto(2, EQUIPOS)).toBe("2 equipos seleccionados");
+    expect(eliminarLoteTitulo(1, EQUIPOS)).toBe("¿Eliminar 1 equipo?");
+    expect(eliminadosTexto(3, EQUIPOS)).toBe("Eliminaste 3 equipos");
+    expect(fallidosTitulo(0, 1, EQUIPOS)).toBe(
+      "No se eliminó ninguno. No se pudo eliminar 1 equipo:",
+    );
+    expect(seleccionarLabel("el equipo Los Rayos", EQUIPOS)).toBe(
+      "Seleccionar el equipo Los Rayos",
     );
   });
 });
