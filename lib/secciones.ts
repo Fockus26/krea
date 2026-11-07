@@ -523,3 +523,32 @@ export function errorSeccionesTexto(e: ErrorSecciones, que?: string): string {
       return "Se perdió la conexión. No cambiamos nada: vuelve a intentarlo.";
   }
 }
+
+/**
+ * Letras iniciales de «Nuevo año» escritas a mano: «A, B, C», «a b c» o «ABC». Vacío = ninguna.
+ * Ordenadas; repetidas o con algo que no sea una letra de la A a la Z → el error.
+ */
+export function letrasDeTexto(
+  texto: string,
+): { ok: true; letras: string[] } | { ok: false; error: string } {
+  const trozos = texto
+    .toUpperCase()
+    .split(/[\s,;]+/)
+    .filter(Boolean);
+  if (trozos.some((t) => !/^[A-Z]+$/.test(t)))
+    return {
+      ok: false,
+      error:
+        "Escribe solo letras de la A a la Z, separadas por comas: A, B, C.",
+    };
+  const letras = trozos.flatMap((t) => [...t]);
+  const repetida = letras.find((l, i) => letras.indexOf(l) !== i);
+  if (repetida)
+    return { ok: false, error: `La letra ${repetida} está repetida.` };
+  return { ok: true, letras: [...letras].sort() };
+}
+
+/** Por qué no se puede renombrar o eliminar: lo que tiene y la regla (D318). */
+export function bloqueoTexto(uso: UsoSeccion, que: "año" | "sección"): string {
+  return `${usoTexto(uso)}. Solo se cambia o se elimina ${que === "año" ? "un año cuyas secciones están vacías" : "una sección vacía"}: así no se pierde ni se desordena nada de lo guardado.`;
+}

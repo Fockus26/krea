@@ -7,6 +7,7 @@ import {
   ListChecks,
   type LucideIcon,
   NotebookPen,
+  School,
   SlidersHorizontal,
   Trophy,
   User,
@@ -30,6 +31,7 @@ const ICONS: Record<NavIconKey, LucideIcon> = {
   puntos: SlidersHorizontal,
   premios: Gift,
   profesores: UserCog,
+  secciones: School,
 };
 
 /** Ícono decorativo de un ítem: el texto del enlace es el nombre accesible. */

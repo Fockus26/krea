@@ -5,6 +5,7 @@ import {
   agregarSeccion,
   anioDoc,
   aplicarOperacion,
+  bloqueoTexto,
   CATALOGO_INICIAL,
   type CatalogoSecciones,
   catalogoDeDocumento,
@@ -13,6 +14,7 @@ import {
   errorSeccionesTexto,
   esCodigoSeccion,
   filasSecciones,
+  letrasDeTexto,
   letrasLibres,
   listaSecciones,
   nombreAnio,
@@ -436,5 +438,38 @@ describe("uso de una sección (D318)", () => {
       "Ya existe 4.º año.",
     );
     expect(errorSeccionesTexto("con-datos")).toContain("no se puede");
+  });
+
+  test("por qué no se puede: lo que tiene y la regla", () => {
+    expect(bloqueoTexto({ ...USO_VACIO, alumnos: 3 }, "sección")).toBe(
+      "Tiene 3 alumnos. Solo se cambia o se elimina una sección vacía: así no se pierde ni se desordena nada de lo guardado.",
+    );
+    expect(bloqueoTexto({ ...USO_VACIO, tareas: 1 }, "año")).toContain(
+      "un año cuyas secciones están vacías",
+    );
+  });
+});
+
+describe("letras de «Nuevo año»", () => {
+  test("comas, espacios, minúsculas o juntas; ordenadas", () => {
+    expect(letrasDeTexto("C, a, B")).toEqual({
+      ok: true,
+      letras: ["A", "B", "C"],
+    });
+    expect(letrasDeTexto("abc")).toEqual({ ok: true, letras: ["A", "B", "C"] });
+    expect(letrasDeTexto(" a ; b ")).toEqual({ ok: true, letras: ["A", "B"] });
+    expect(letrasDeTexto("")).toEqual({ ok: true, letras: [] });
+    expect(letrasDeTexto("  ,  ")).toEqual({ ok: true, letras: [] });
+  });
+
+  test("repetidas o con algo que no es una letra A–Z → error con texto", () => {
+    expect(letrasDeTexto("A, a")).toEqual({
+      ok: false,
+      error: "La letra A está repetida.",
+    });
+    for (const malo of ["A, 1", "Ñ", "A-B", "é"]) {
+      const r = letrasDeTexto(malo);
+      expect(r.ok).toBe(false);
+    }
   });
 });

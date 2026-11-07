@@ -34,7 +34,8 @@ describe("zCrearAlumno (D267)", () => {
     expect(zCrearAlumno.safeParse({ ...valido, cedula: "12ab" }).success).toBe(
       false,
     );
-    expect(zCrearAlumno.safeParse({ ...valido, seccion: "5B" }).success).toBe(
+    // Sección = código año + letra (D317): «5B» tiene forma válida; «5b» no
+    expect(zCrearAlumno.safeParse({ ...valido, seccion: "5b" }).success).toBe(
       false,
     );
     expect(
