@@ -1,14 +1,13 @@
 "use client";
 // Diálogos de la pantalla Profesores (D233): crear/editar, la contraseña temporal (se ve una sola
 // vez, D232) y la confirmación de eliminar. Cada formulario corta el doble envío con una ref y el
-// botón queda `aria-disabled` mientras vuela; si el servidor no guarda, el diálogo sigue abierto
-// con lo escrito y el error (D171).
-import { Copy, Pencil, Trash2, UserPlus } from "lucide-react";
+// botón queda ocupado (`loading`, D285) mientras vuela; si el servidor no guarda, el diálogo sigue
+// abierto con lo escrito y el error (D171).
+import { Pencil, Trash2, UserPlus } from "lucide-react";
 import { type FormEvent, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ErrorEnPantalla } from "@/components/estados/errores";
 import { CedulaInput } from "@/components/krea/cedula-input";
-import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -304,85 +303,16 @@ function ProfesorForm({
             Cancelar
           </Button>
         </DialogClose>
-        <Button type="submit" aria-disabled={guardando || undefined}>
-          {guardando ? "Guardando…" : textoBoton}
+        <Button type="submit" loading={guardando} loadingLabel="Guardando…">
+          {textoBoton}
         </Button>
       </DialogFooter>
     </form>
   );
 }
 
-/* ---------- Contraseña temporal (una sola vez) ---------- */
-
-/**
- * Muestra la contraseña temporal recién creada. Vive solo en el estado de este navegador: al
- * cerrar se descarta y no hay forma de volver a verla (D232). Un clic fuera no lo cierra (sería
- * perderla sin querer); Esc y «Listo» sí.
- */
-export function PasswordTemporalDialog({
-  creado,
-  onCerrar,
-}: {
-  creado: { nombre: string; passwordTemporal: string } | null;
-  onCerrar: () => void;
-}) {
-  async function copiar(pw: string) {
-    try {
-      await navigator.clipboard.writeText(pw);
-      toast("Contraseña copiada");
-    } catch {
-      toast.error("No se pudo copiar. Anótala a mano.");
-    }
-  }
-  return (
-    <Dialog
-      open={creado !== null}
-      onOpenChange={(abierto) => {
-        if (!abierto) onCerrar();
-      }}
-    >
-      <DialogContent onInteractOutside={(e) => e.preventDefault()}>
-        {creado ? (
-          <>
-            <DialogHeader>
-              <DialogTitle>Cuenta creada</DialogTitle>
-              <DialogDescription>
-                Contraseña temporal de {creado.nombre}. Al entrar con su cédula
-                y esta contraseña, la app le pedirá crear la suya.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="flex min-h-11 items-center rounded-nav bg-surface-2 px-3.5 text-code break-all text-text">
-                {creado.passwordTemporal}
-              </span>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => copiar(creado.passwordTemporal)}
-              >
-                <Copy aria-hidden="true" />
-                Copiar<span className="sr-only"> contraseña</span>
-              </Button>
-            </div>
-            <Alert variant="warn">
-              <p className="text-small">
-                <strong>No se vuelve a mostrar.</strong> Cópiala o anótala ahora
-                y dásela en persona.
-              </p>
-            </Alert>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button">Listo</Button>
-              </DialogClose>
-            </DialogFooter>
-          </>
-        ) : null}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 /* ---------- Eliminar ---------- */
+// La contraseña temporal vive en `components/sections/shared/password-temporal-dialog.tsx` (W12)
 
 export function EliminarProfesorDialog({
   profesor,
@@ -450,11 +380,12 @@ export function EliminarProfesorDialog({
           <Button
             type="button"
             variant="danger"
-            aria-disabled={borrando || undefined}
+            loading={borrando}
+            loadingLabel="Eliminando…"
             onClick={confirmar}
           >
             <Trash2 aria-hidden="true" />
-            {borrando ? "Eliminando…" : "Eliminar"}
+            Eliminar
           </Button>
         </DialogFooter>
       </DialogContent>

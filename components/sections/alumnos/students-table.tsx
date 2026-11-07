@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { GradePill } from "@/components/krea/grade-pill";
 import { UserAvatar } from "@/components/krea/user-avatar";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +45,7 @@ export function StudentsTable({
   onAbierto,
   guardar,
   onGuardado,
+  eliminar,
 }: {
   seccion: SeccionAlumnos;
   filas: readonly FilaAlumno[];
@@ -57,6 +59,8 @@ export function StudentsTable({
   onAbierto?: (cedula: string, abierto: boolean) => void;
   guardar?: GuardarAlumno;
   onGuardado: (cedula: string, cambios: CambiosAlumno) => void;
+  /** «Eliminar alumno» de la ficha de cada fila (D268). */
+  eliminar?: (a: FilaAlumno) => ReactNode;
 }) {
   return (
     <Table label={tablaLabel(seccion)}>
@@ -135,6 +139,7 @@ export function StudentsTable({
                   onAbierto={onAbierto}
                   guardar={guardar}
                   onGuardado={onGuardado}
+                  eliminar={eliminar?.(a)}
                 />
               </TableCell>
             </TableRow>

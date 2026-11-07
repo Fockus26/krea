@@ -5,6 +5,10 @@
 import { useState } from "react";
 import { UserAvatar } from "@/components/krea/user-avatar";
 import { PageHeader } from "@/components/sections/shared/page-header";
+import {
+  type CuentaCreada,
+  PasswordTemporalDialog,
+} from "@/components/sections/shared/password-temporal-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import {
@@ -19,7 +23,6 @@ import {
   CrearProfesorDialog,
   EditarProfesorDialog,
   EliminarProfesorDialog,
-  PasswordTemporalDialog,
 } from "./profesor-dialogs";
 
 export function ProfesoresDirectory({
@@ -29,10 +32,7 @@ export function ProfesoresDirectory({
   profesores: readonly FilaProfesor[];
   acciones: AccionesProfesores;
 }) {
-  const [creado, setCreado] = useState<{
-    nombre: string;
-    passwordTemporal: string;
-  } | null>(null);
+  const [creado, setCreado] = useState<CuentaCreada | null>(null);
 
   return (
     <>

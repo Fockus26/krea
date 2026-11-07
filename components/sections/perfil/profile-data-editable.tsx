@@ -141,8 +141,8 @@ export function ProfileDataEditable({
           </ErrorEnPantalla>
         ) : null}
         <div className="flex flex-wrap gap-3">
-          <Button type="submit" aria-disabled={guardando || undefined}>
-            {guardando ? "Guardando…" : "Guardar cambios"}
+          <Button type="submit" loading={guardando} loadingLabel="Guardando…">
+            Guardar cambios
           </Button>
         </div>
       </form>
