@@ -198,7 +198,7 @@ export function TeamCard({
           {/* Con «empate» o en 320 px no cabe en una línea: envuelve dentro de su columna (D216) */}
           <Badge
             variant="acc"
-            className="nums h-auto min-h-7 max-w-full py-1 whitespace-normal"
+            className="nums h-auto max-w-full whitespace-normal"
           >
             {chipPuestoTexto(equipo.puesto, equipo.puntos, equipo.empate)}
           </Badge>
@@ -209,7 +209,7 @@ export function TeamCard({
         <p
           id={errorId}
           role="alert"
-          className="text-small-b flex items-start gap-1.5 text-error"
+          className="text-small-b flex icono-linea gap-1.5 text-error"
         >
           <CircleAlert aria-hidden="true" className="size-4 shrink-0" />
           <span>{logoError}</span>

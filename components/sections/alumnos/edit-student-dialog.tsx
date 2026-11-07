@@ -279,11 +279,11 @@ function EditForm({
       {otros ? (
         <p
           aria-hidden="true"
-          className="flex items-start gap-2 rounded-sm bg-accent-soft-2 px-3 py-2 text-small text-text"
+          className="flex icono-linea gap-2 rounded-sm bg-accent-soft-2 px-3 py-2 text-small text-text"
         >
           <UserPen
             aria-hidden="true"
-            className="mt-0.5 size-4 shrink-0 text-accent-ink"
+            className="size-4 shrink-0 text-accent-ink"
           />
           <span>{avisoPresencia(otros)}</span>
         </p>

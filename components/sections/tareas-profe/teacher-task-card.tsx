@@ -61,7 +61,7 @@ export function TeacherTaskCard({
   const barra = barraEvaluadas(tarea);
   const editar = rutaTarea(tarea.id);
   // Chips largos (premios) envuelven en vez de desbordar a 320
-  const chipLargo = "h-auto min-h-7 py-1 whitespace-normal";
+  const chipLargo = "h-auto whitespace-normal";
 
   return (
     <li

@@ -93,7 +93,7 @@ function Field({
         <p
           id={messageId}
           role={announce ? "alert" : undefined}
-          className="text-small-b flex items-start gap-1.5 text-error"
+          className="text-small-b flex icono-linea gap-1.5 text-error"
         >
           <CircleAlert aria-hidden="true" className="size-4 shrink-0" />
           <span>{error}</span>
@@ -103,7 +103,7 @@ function Field({
         <p
           id={messageId}
           role={announce ? "status" : undefined}
-          className="text-small-b flex items-center gap-1.5 text-success"
+          className="text-small-b flex icono-linea gap-1.5 text-success"
         >
           <CircleCheck aria-hidden="true" className="size-4 shrink-0" />
           <span>{success}</span>

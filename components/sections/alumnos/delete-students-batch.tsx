@@ -100,8 +100,10 @@ export function DeleteStudentsBatch({
         // El recuento llega del servidor: región viva para que se lea al aparecer
         <div aria-live="polite" className="flex flex-col gap-2">
           {resumen.estado === "contando" ? (
-            <p className="flex items-center gap-2 text-body text-text-2">
-              <Spinner />
+            <p className="flex icono-linea gap-2 text-body text-text-2">
+              <span className="icono-linea-caja">
+                <Spinner />
+              </span>
               Contando sus notas y ajustes…
             </p>
           ) : resumen.estado === "error" ? (

@@ -463,7 +463,7 @@ export function TaskAnswerForm({
               <output aria-live="polite" className="flex flex-col">
                 {enEspera ? (
                   <>
-                    <span className="flex items-center gap-1.5 text-small-b text-text">
+                    <span className="flex icono-linea gap-1.5 text-small-b text-text">
                       <Clock aria-hidden="true" className="size-4 shrink-0" />
                       {PENDIENTE_TITULO}
                     </span>

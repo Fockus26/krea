@@ -64,10 +64,10 @@ export function QuestionCardDetail({
           )}
         </div>
         {comentario ? (
-          <div className="flex gap-2.5 rounded-nav bg-accent-soft px-3.5 py-3 text-callout text-text">
+          <div className="icono-linea flex gap-2.5 rounded-nav bg-accent-soft px-3.5 py-3 text-callout text-text">
             <Sparkles
               aria-hidden="true"
-              className="mt-px size-5 shrink-0 text-accent-ink"
+              className="size-5 shrink-0 text-accent-ink"
             />
             <div className="min-w-0 flex-1">
               <p className="text-small-b">Comentario de tu profe</p>

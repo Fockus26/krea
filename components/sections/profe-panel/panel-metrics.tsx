@@ -34,7 +34,7 @@ const TARJETA = cn(
 
 function Detalle({ children }: { children: string }) {
   return (
-    <span className="flex items-center gap-2 text-small text-text-2">
+    <span className="flex icono-linea gap-2 text-small text-text-2">
       <span className="min-w-0 break-words">{children}</span>
       <ChevronRight aria-hidden="true" className="ml-auto size-4 shrink-0" />
     </span>
@@ -50,7 +50,7 @@ export function PanelMetrics({ datos }: { datos: DatosMetricas }) {
   return (
     <section aria-label="Métricas" className="g3">
       <Link href="/profe/evaluar" className={TARJETA}>
-        <span className="flex items-center gap-2 text-small-b text-text-2">
+        <span className="flex icono-linea gap-2 text-small-b text-text-2">
           <ClipboardList
             aria-hidden="true"
             className="size-5 shrink-0 text-accent-ink"
@@ -62,7 +62,7 @@ export function PanelMetrics({ datos }: { datos: DatosMetricas }) {
       </Link>
 
       <Link href={hrefs.evaluados} className={TARJETA}>
-        <span className="flex items-center gap-2 text-small-b text-text-2">
+        <span className="flex icono-linea gap-2 text-small-b text-text-2">
           <CircleCheck
             aria-hidden="true"
             className="size-5 shrink-0 text-accent-ink"
@@ -78,7 +78,7 @@ export function PanelMetrics({ datos }: { datos: DatosMetricas }) {
       </Link>
 
       <Link href={hrefs.raspados} className={TARJETA}>
-        <span className="flex items-center gap-2 text-small-b text-error">
+        <span className="flex icono-linea gap-2 text-small-b text-error">
           <TriangleAlert aria-hidden="true" className="size-5 shrink-0" />
           Raspados
         </span>

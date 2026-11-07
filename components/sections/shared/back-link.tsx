@@ -16,7 +16,7 @@ export function BackLink({
     <nav aria-label="Ruta" className="hidden lg:block">
       <Link
         href={href}
-        className="text-small-b inline-flex items-center gap-1 rounded-sm text-accent-ink no-underline hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+        className="text-small-b inline-flex icono-linea gap-1 rounded-sm text-accent-ink no-underline hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
       >
         <ChevronLeft aria-hidden="true" className="size-4 shrink-0" />
         {children}

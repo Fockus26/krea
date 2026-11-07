@@ -58,7 +58,7 @@ export function QuestionCardAnswer(props: QuestionCardAnswerProps) {
           {formato === "texto" ? "Texto" : "Imagen"}
         </Badge>
         {bloqueadaPor ? (
-          <p className="text-small-b flex items-center gap-2 rounded-nav bg-surface-2 px-3.5 py-3 text-text-2">
+          <p className="text-small-b flex icono-linea gap-2 rounded-nav bg-surface-2 px-3.5 py-3 text-text-2">
             <Lock aria-hidden="true" className="size-4 shrink-0" />
             {lockedMessage(bloqueadaPor)}
           </p>

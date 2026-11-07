@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
  * 15/22 no existe como rol tipográfico (D017): medida suelta en rem, pendiente de token.
  */
 const alertVariants = cva(
-  "flex items-start gap-3 rounded-md px-4 py-3 text-callout text-text",
+  "flex icono-linea gap-3 rounded-md px-4 py-3 text-callout text-text",
   {
     variants: {
       variant: {
@@ -67,7 +67,7 @@ function Alert({
     >
       <Icon
         aria-hidden="true"
-        className={cn("mt-px size-5 shrink-0", ICON_COLOR[variant])}
+        className={cn("size-5 shrink-0", ICON_COLOR[variant])}
       />
       <div className="min-w-0 flex-1">{children}</div>
     </div>

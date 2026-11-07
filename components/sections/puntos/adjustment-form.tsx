@@ -265,7 +265,7 @@ export function AdjustmentForm({
                       setValor(valorPropuesto(m.id));
                     }}
                   />
-                  <span className="flex min-w-0 items-center gap-2">
+                  <span className="flex min-w-0 icono-linea gap-2">
                     {elegido ? (
                       <Check
                         aria-hidden="true"
@@ -415,12 +415,12 @@ export function AdjustmentForm({
               {previa.variante === "ok" ? (
                 <TrendingUp
                   aria-hidden="true"
-                  className="mt-px size-5 shrink-0 text-success"
+                  className="size-5 shrink-0 text-success"
                 />
               ) : (
                 <TrendingDown
                   aria-hidden="true"
-                  className="mt-px size-5 shrink-0 text-error"
+                  className="size-5 shrink-0 text-error"
                 />
               )}
               <span className="min-w-0 flex-1">

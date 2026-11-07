@@ -30,10 +30,7 @@ export function TeamGrades({
               {...fila}
               chips={
                 enJuego ? (
-                  <Badge
-                    variant="prize"
-                    className="h-auto min-h-7 py-1 whitespace-normal"
-                  >
+                  <Badge variant="prize" className="h-auto whitespace-normal">
                     <Gift aria-hidden="true" />
                     {enJuego}
                   </Badge>

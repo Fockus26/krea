@@ -25,7 +25,7 @@ export const preguntaDomId = (id: string) => ({
 
 function MensajeError({ id, children }: { id: string; children: string }) {
   return (
-    <p id={id} className="text-small-b flex items-start gap-1.5 text-error">
+    <p id={id} className="text-small-b flex icono-linea gap-1.5 text-error">
       <CircleAlert aria-hidden="true" className="size-4 shrink-0" />
       <span>{children}</span>
     </p>

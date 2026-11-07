@@ -46,7 +46,7 @@ function Table({
       {hint ? (
         <p
           data-slot="table-hint"
-          className="mt-2 flex items-center gap-2 text-small text-text-2 lg:hidden"
+          className="mt-2 flex icono-linea gap-2 text-small text-text-2 lg:hidden"
         >
           <MoveHorizontal aria-hidden="true" className="size-4 shrink-0" />
           Desliza la tabla para ver más columnas

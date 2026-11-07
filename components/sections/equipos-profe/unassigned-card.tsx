@@ -46,7 +46,7 @@ export function UnassignedCard({
         <h2
           id={tituloId}
           tabIndex={-1}
-          className="text-h2 flex items-center gap-2 text-text outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          className="text-h2 flex icono-linea gap-2 text-text outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
         >
           <TriangleAlert aria-hidden="true" className="size-6 text-warning" />
           {sinEquipoTitulo(alumnos.length)}

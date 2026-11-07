@@ -65,7 +65,7 @@ export function PendingTasks({ filas }: { filas: readonly FilaPendiente[] }) {
                 <Link href={f.href} className="items-start">
                   <span className="flex min-w-0 flex-1 flex-col gap-1.5">
                     <h3 className="text-h4 text-text">{f.titulo}</h3>
-                    <span className="text-small flex items-center gap-1.5 text-text-2">
+                    <span className="text-small flex icono-linea gap-1.5 text-text-2">
                       <Icon aria-hidden="true" className="size-4 shrink-0" />
                       <span>
                         {tipoTareaTexto(f.tipo)} · vence {f.vence}
@@ -75,7 +75,7 @@ export function PendingTasks({ filas }: { filas: readonly FilaPendiente[] }) {
                       {f.premio ? (
                         <Badge
                           variant="prize"
-                          className="h-auto min-h-7 py-1 whitespace-normal"
+                          className="h-auto whitespace-normal"
                         >
                           <Gift aria-hidden="true" />
                           {f.premio}

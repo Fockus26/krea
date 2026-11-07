@@ -41,7 +41,7 @@ export function GradeSummary({
   return (
     <Card variant="hero" className="flex flex-col gap-4 p-6 md:p-6">
       <div className="flex flex-col gap-2">
-        <p className="text-eyebrow flex items-center gap-1.5 text-text-2">
+        <p className="text-eyebrow flex icono-linea gap-1.5 text-text-2">
           <Icon aria-hidden="true" className="size-4 shrink-0" />
           {eyebrow}
         </p>
@@ -69,7 +69,7 @@ export function GradeSummary({
           <div className="flex flex-wrap items-center justify-between gap-x-3">
             <dt className="text-body text-text-2">Aporta al ranking</dt>
             {suma ? (
-              <dd className="text-h4 nums m-0 flex items-center gap-1 text-success">
+              <dd className="text-h4 nums m-0 flex icono-linea gap-1 text-success">
                 <ChevronUp aria-hidden="true" className="size-4 shrink-0" />
                 {aporteTexto(final)}
               </dd>

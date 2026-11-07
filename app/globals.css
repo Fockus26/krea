@@ -473,6 +473,28 @@
   line-height: 1;
 }
 
+/*
+ * Ícono + texto que puede partirse en varias líneas (D304): el contenedor alinea arriba y cada
+ * ícono hijo ocupa una caja de al menos la altura de una línea (1lh) con el dibujo centrado en
+ * ella (el viewBox lo centra). Con una línea el ícono queda al centro; con varias, junto a la
+ * primera. Se usa con `flex`/`inline-flex` y sin `items-center`. `icono-linea-caja` es lo mismo
+ * para un ícono envuelto en un span (insignia, círculo).
+ */
+@utility icono-linea {
+  align-items: flex-start;
+  & > svg {
+    min-height: 1lh;
+    flex-shrink: 0;
+  }
+}
+@utility icono-linea-caja {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  min-height: 1lh;
+}
+
 /* Logo e isotipo como máscara de las capas de public/brand (D002, D048): el color sale de --accent/--splash */
 @utility krea-mask-ink {
   mask: url("/brand/krea-logo-ink.svg") center / contain no-repeat;
