@@ -11,6 +11,13 @@ import {
   progressPercent,
   validateImage,
 } from "@/lib/image";
+import {
+  archivoDeEntrada,
+  arrastreLlevaArchivos,
+  destinoDelPegado,
+  IMAGE_DROP_TEXT,
+  IMAGE_HELP_TEXT,
+} from "@/lib/image-entrada";
 import { cn } from "@/lib/utils";
 
 export type ImageUploadStatus = "vacia" | "subiendo" | "lista" | "error";
@@ -62,6 +69,46 @@ function usePreviewUrl(src: string | Blob | undefined): string | undefined {
   return url;
 }
 
+/** Zonas vacías montadas y visibles → su manejador de archivo. Alimenta el pegado global. */
+const zonasVacias = new Map<symbol, (file: File) => void>();
+
+function enCampoDeTexto(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  return (
+    target.isContentEditable ||
+    target instanceof HTMLTextAreaElement ||
+    (target instanceof HTMLInputElement && target.type !== "file")
+  );
+}
+
+function handleDocumentPaste(event: ClipboardEvent) {
+  // La zona con foco ya lo atendió con su propio onPaste
+  if (event.defaultPrevented) return;
+  if (
+    destinoDelPegado(zonasVacias.size, enCampoDeTexto(event.target)) ===
+    "ninguno"
+  )
+    return;
+  const pasted = archivoDeEntrada(event.clipboardData);
+  const [accept] = zonasVacias.values();
+  if (!(pasted && accept)) return;
+  event.preventDefault();
+  accept(pasted);
+}
+
+/** Registra una zona vacía; un único listener en `document` mientras haya alguna. Devuelve el desregistro. */
+function registrarZona(accept: (file: File) => void): () => void {
+  const id = Symbol("image-upload");
+  if (zonasVacias.size === 0)
+    document.addEventListener("paste", handleDocumentPaste);
+  zonasVacias.set(id, accept);
+  return () => {
+    zonasVacias.delete(id);
+    if (zonasVacias.size === 0)
+      document.removeEventListener("paste", handleDocumentPaste);
+  };
+}
+
 const ZONE =
   "flex w-full cursor-pointer items-center gap-3 rounded-md border-2 border-dashed p-4 text-left text-text-2 transition-colors duration-fast ease-krea hover:bg-accent-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
 
@@ -70,6 +117,7 @@ const ZONE =
  * CONTROLADO: recibe `status`/`progress`/`error` y emite `onSelect`/`onRemove`; no sube nada
  * (lo hace el llamador: la entrega, D195). Valida tipo y peso y comprime en el cliente antes de `onSelect`.
  * El `<input type="file">` va oculto con `hidden`, abierto por un botón real y enfocable.
+ * También acepta arrastrar y soltar y pegar (D246, D247); las tres vías entran por `acceptFile`.
  * Anuncio: una región `role="status"` siempre montada cambia de texto solo al empezar y al
  * terminar la subida; el porcentaje es visual y nunca se anuncia 1 % a 1 %.
  */
@@ -89,13 +137,67 @@ export function ImageUpload({
   const previewUrl = usePreviewUrl(file?.src);
   const percent = progress === undefined ? null : progressPercent(progress);
 
+  const [dragging, setDragging] = useState(false);
+  const dragDepth = useRef(0);
+  const zoneVisible = status === "vacia" || status === "error";
+  const zoneOpen = zoneVisible && !preparing;
+
   const openPicker = () => inputRef.current?.click();
 
-  async function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
+  function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     const chosen = event.currentTarget.files?.[0];
     // Permite elegir el mismo archivo otra vez
     event.currentTarget.value = "";
-    if (!chosen) return;
+    if (chosen) void acceptFile(chosen);
+  }
+
+  function handleDragEnter(event: React.DragEvent) {
+    if (!zoneOpen || !arrastreLlevaArchivos(event.dataTransfer)) return;
+    event.preventDefault();
+    dragDepth.current += 1;
+    setDragging(true);
+  }
+
+  function handleDragOver(event: React.DragEvent) {
+    // Sin preventDefault el navegador no deja soltar
+    if (!zoneOpen || !arrastreLlevaArchivos(event.dataTransfer)) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+  }
+
+  function handleDragLeave() {
+    dragDepth.current = Math.max(0, dragDepth.current - 1);
+    if (dragDepth.current === 0) setDragging(false);
+  }
+
+  function handleDrop(event: React.DragEvent) {
+    dragDepth.current = 0;
+    setDragging(false);
+    if (!zoneOpen) return;
+    // Siempre se evita que el navegador abra el archivo soltado
+    event.preventDefault();
+    const dropped = archivoDeEntrada(event.dataTransfer);
+    if (dropped) void acceptFile(dropped);
+  }
+
+  function handlePaste(event: React.ClipboardEvent) {
+    if (!zoneOpen) return;
+    const pasted = archivoDeEntrada(event.clipboardData);
+    // Texto pegado: no se toca
+    if (!pasted) return;
+    event.preventDefault();
+    void acceptFile(pasted);
+  }
+
+  // Pegar sin foco en la zona: solo si es la única zona vacía visible de la página.
+  const acceptRef = useRef(acceptFile);
+  acceptRef.current = acceptFile;
+  useEffect(() => {
+    if (!zoneOpen) return;
+    return registrarZona((file) => acceptRef.current(file));
+  }, [zoneOpen]);
+
+  async function acceptFile(chosen: File) {
     const check = validateImage(chosen);
     if (!check.ok) {
       onReject(check.message);
@@ -112,8 +214,9 @@ export function ImageUpload({
     }
   }
 
-  const announcement =
-    status === "subiendo"
+  const announcement = dragging
+    ? IMAGE_DROP_TEXT
+    : status === "subiendo"
       ? "Subiendo la imagen. No cierres la app."
       : status === "lista" && file
         ? `Imagen lista: ${file.name}`
@@ -205,15 +308,27 @@ export function ImageUpload({
       ) : null}
 
       {status === "vacia" || status === "error" ? (
-        <>
+        // biome-ignore lint/a11y/noStaticElementInteractions: solo recibe el arrastre; la acción accesible es el botón de dentro
+        <div
+          className="flex flex-col gap-3"
+          onDragEnter={handleDragEnter}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
           <button
             type="button"
             onClick={openPicker}
+            onPaste={handlePaste}
             disabled={preparing}
             aria-busy={preparing || undefined}
             className={cn(
               ZONE,
-              status === "error" ? "border-error" : "border-input",
+              dragging
+                ? "border-solid border-accent-ink bg-accent-soft"
+                : status === "error"
+                  ? "border-error"
+                  : "border-input",
               "disabled:cursor-progress",
             )}
           >
@@ -221,10 +336,14 @@ export function ImageUpload({
             <span className="text-small">
               {preparing ? (
                 "Preparando la imagen…"
+              ) : dragging ? (
+                <span className="text-small-b text-text">
+                  {IMAGE_DROP_TEXT}
+                </span>
               ) : (
                 <>
                   <span className="text-small-b text-text">
-                    Toca para subir una imagen
+                    {IMAGE_HELP_TEXT}
                   </span>{" "}
                   · JPG o PNG, hasta 5 MB
                 </>
@@ -234,7 +353,7 @@ export function ImageUpload({
           {status === "error" && error ? (
             <Alert variant="err">{error}</Alert>
           ) : null}
-        </>
+        </div>
       ) : null}
     </div>
   );
