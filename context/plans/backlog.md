@@ -27,3 +27,5 @@
 - (tanda 11-06 W6, media) Grupal enviada por alguien que ya no está en el equipo: `entregaVista` deja `quien = null` y sale el texto del Excel «se cargó con la nota, sin el registro del envío» (engañoso).
 - (tanda 11-06 W6, baja) Integrante que entró al equipo tras la entrega: ve «las respuestas aparecen cuando él las envíe» aunque ya se envió.
 - (tanda 11-06 W6, decisión de César) Borrador grupal compartido en Firestore para que los integrantes vean las respuestas antes del envío (hoy solo en localStorage del capitán, D196/D249).
+- (tanda 11-06 W1, baja) `sincronizarClaims` (`lib/firebase/equipos.ts`) mezcla claims viejas con las del perfil: una marca quitada solo del perfil seguiría en las claims.
+- (tanda 11-06 W1, baja) `CedulaInput` fija `autoComplete="username"`: en «Nuevo profesor» el navegador puede sugerir la cédula del admin.

@@ -13,7 +13,7 @@ Fases 01–09 cerradas · **Track:** Product · main @ 8f818b8 · versión 1 ent
 
 | Unit | Branch | Status |
 |---|---|---|
-| W1 profes admin (1, 2, 4) | `feat/profes-admin` | PR #85 (wt1) · test:rules pendiente |
+| W1 profes admin (1, 2, 4) | `feat/profes-admin` | PR #85 (wt1) · emuladores huérfanos PID 20056/5024 |
 | W2 contraste y foco (21–23, 29) | `fix/contraste-y-foco` | PR #82 (wt2) · píldora (22): decide César |
 | W3 textos y layout (24, 26, 34, 35, 38) | `fix/textos-y-layout` | PR #78 (wt3) |
 | W4 eliminar tareas (6, 30, 32, 33, 44) | `feat/tareas-eliminar` | PR #84 (wt4) |
