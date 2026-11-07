@@ -6,6 +6,7 @@ import { UserCard } from "@/components/layout/user-card";
 import { Badge } from "@/components/ui/badge";
 import type { Rol } from "@/lib/layout";
 import { counterLabel, navItems } from "@/lib/nav";
+import { tiposTransicion } from "@/lib/transicion";
 
 /**
  * Contenido de la barra lateral (≥ lg; HANDOFF §2.7): logo, ítems del rol y tarjeta de usuario.
@@ -29,6 +30,7 @@ export function SideNav({
     <div className="flex min-h-full flex-col gap-1">
       <Link
         href={inicio}
+        transitionTypes={tiposTransicion(rol, pathname, inicio)}
         className="mb-6 block w-fit rounded-nav px-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
       >
         <Logo size="lateral" />
@@ -38,6 +40,7 @@ export function SideNav({
           <li key={item.id}>
             <NavItemLink
               item={item}
+              rol={rol}
               pathname={pathname}
               size="side"
               trailing={
