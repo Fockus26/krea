@@ -11,6 +11,8 @@ import {
 } from "@/lib/equipos-profe";
 import { zIdDocumento } from "@/lib/evaluar-datos";
 import {
+  type Ajuste,
+  type Entrega,
   type Equipo,
   type RankingSeccion,
   type SeccionId,
@@ -191,7 +193,8 @@ export function conCambios<
 /**
  * Tablero de una sección con los documentos reales: equipos en el orden del ranking (puntos de
  * `ranking/{seccion}`; sin documento, 0 y empate), integrantes con su avatar y el estado inicial.
- * `logos`: equipo → URL firmada (solo la de los que tienen logo).
+ * `logos`: equipo → URL firmada (solo la de los que tienen logo). Con `entregas` y `ajustes`,
+ * cada equipo lleva cuántos tiene (`conDatos`: con alguno no se elimina, D271).
  */
 export function equiposProfeDatos(
   seccion: SeccionId,
@@ -200,8 +203,23 @@ export function equiposProfeDatos(
     equipos: ReadonlyArray<ConId<Equipo>>;
     ranking: RankingSeccion | null;
     logos?: ReadonlyMap<string, string>;
+    entregas?: ReadonlyArray<Pick<Entrega, "tipo" | "titularId">>;
+    ajustes?: ReadonlyArray<Pick<Ajuste, "destino" | "destinoId">>;
   },
 ): DatosEquiposProfe {
+  const contar = (id: string) =>
+    datos.entregas && datos.ajustes
+      ? {
+          conDatos: {
+            entregas: datos.entregas.filter(
+              (x) => x.tipo === "grupal" && x.titularId === id,
+            ).length,
+            ajustes: datos.ajustes.filter(
+              (a) => a.destino === "equipo" && a.destinoId === id,
+            ).length,
+          },
+        }
+      : {};
   const propios = datos.equipos.filter((e) => e.seccion === seccion);
   const alumnos = alumnosDe(datos.usuarios, seccion);
   const filas = rankCompetition(
@@ -221,6 +239,7 @@ export function equiposProfeDatos(
       puntos: e.puntos,
       empate: e.empate,
       logo: (e.logoPath && datos.logos?.get(e.logoPath)) || null,
+      ...contar(e.id),
     })),
     alumnos: Object.fromEntries(
       alumnos.map((u) => [

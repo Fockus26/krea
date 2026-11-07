@@ -1,7 +1,7 @@
 "use client";
 
 import { CircleAlert, Pencil, Upload } from "lucide-react";
-import { useId, useRef, useState } from "react";
+import { type ReactNode, useId, useRef, useState } from "react";
 import { CaptainBadge } from "@/components/krea/status-badge";
 import { TeamLogo } from "@/components/krea/team-logo";
 import { UserAvatar } from "@/components/krea/user-avatar";
@@ -69,6 +69,7 @@ export function TeamCard({
   onCapitan,
   onMover,
   capitanFemenino = false,
+  acciones,
 }: {
   equipo: DatosTarjeta;
   miembros: readonly MiembroTarjeta[];
@@ -83,6 +84,8 @@ export function TeamCard({
   onMover: (cedula: string, destino: string | null) => void;
   /** Género del capitán (D075): por defecto «Capitán», no se infiere del nombre. */
   capitanFemenino?: boolean;
+  /** «Editar» y «Eliminar» del equipo (W12, D270): al pie de la tarjeta. */
+  acciones?: ReactNode;
 }) {
   const inputId = useId();
   const errorId = `${inputId}-error`;
@@ -260,6 +263,12 @@ export function TeamCard({
           ))}
         </ul>
       )}
+
+      {acciones ? (
+        <div className="flex flex-wrap justify-end gap-1 border-t border-divider pt-3">
+          {acciones}
+        </div>
+      ) : null}
     </Card>
   );
 }
