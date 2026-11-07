@@ -8,7 +8,7 @@ import {
   infoEquipos,
   rankingDeSeccion,
 } from "@/lib/datos/estudiante";
-import type { Vista } from "@/lib/ranking-vista";
+import type { SeccionRanking, Vista } from "@/lib/ranking-vista";
 
 // Las pestañas Estudiantes | Equipos son enlaces entre rutas (D095): `/ranking` y `/ranking/equipos`.
 const ENLACES = { estudiantes: "/ranking", equipos: "/ranking/equipos" };
@@ -43,7 +43,8 @@ export async function RankingEstudiante({ vista }: { vista: Vista }) {
   return (
     <RankingEnVivo
       uid={usuario.cedula}
-      seccion={seccion}
+      // La vista aún lista 5A/5C (las secciones del catálogo llegan con X5b, D317)
+      seccion={seccion as SeccionRanking}
       vista={vista}
       inicial={ranking}
       tu={{ cedula: usuario.cedula, equipoId: usuario.equipoId }}

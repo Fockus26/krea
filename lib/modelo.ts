@@ -41,7 +41,12 @@ export const COL = {
    * que un reintento devuelva el mismo resultado sin duplicar (D293). Solo servidor; vence a los 30 días.
    */
   operaciones: "operaciones",
+  /** `config/{doc}`: configuración de la escuela; hoy solo `config/secciones` (D317). */
+  config: "config",
 } as const;
+
+/** Id del catálogo de años y secciones en `config/` (D317). */
+export const DOC_SECCIONES = "secciones";
 
 /** Subcolección de `presencia/{cedulaAlumno}` (una entrada por profe). */
 export const SUBCOL_EDITORES = "editores";
@@ -52,9 +57,19 @@ export function idEntrega(tareaId: string, titularId: string): string {
 
 /* ---------- Primitivas ---------- */
 
+/**
+ * @deprecated Las secciones salen del catálogo `config/secciones` (D317): `catalogoSecciones()`
+ * en el servidor y `seccionesDe(...)` de `lib/secciones.ts`. Queda con los valores de siempre
+ * mientras las pantallas que listan 5A/5C pasan a leer el catálogo.
+ */
 export const SECCIONES = ["5A", "5C"] as const;
-export type SeccionId = (typeof SECCIONES)[number];
-export const zSeccion = z.enum(SECCIONES);
+/** Código de sección = número de año + letra: «5A» (D317). Texto validado, no unión fija. */
+export type SeccionId = string;
+export const zSeccion = z.string().regex(/^[1-9][A-Z]$/, "Sección inválida");
+/** Letra de una sección dentro de su año (D317). */
+export const zLetra = z.string().regex(/^[A-Z]$/, "Letra inválida");
+/** Número de año: 1.º a 9.º (D317). */
+export const zNumeroAnio = z.number().int().min(1).max(9);
 
 export const ROLES = ["estudiante", "profesor"] as const;
 export type RolUsuario = (typeof ROLES)[number];
@@ -214,11 +229,11 @@ export const zClaveFotoPremio = z
     "Clave de foto inválida",
   );
 
-/** Por sección: el premio se disputa entre los equipos de cada sección (D201). */
-export const zDecisionesPremio = z.object({
-  "5A": zDecisionPremio.optional(),
-  "5C": zDecisionPremio.optional(),
-});
+/**
+ * Por sección: el premio se disputa entre los equipos de cada sección (D201). Registro por
+ * código (D320): vale para cualquier sección del catálogo y lee igual los `{ "5A": … }` guardados.
+ */
+export const zDecisionesPremio = z.record(zSeccion, zDecisionPremio);
 export type DecisionesPremio = z.infer<typeof zDecisionesPremio>;
 
 /** Sin premio no hay foto del premio (D265). */
@@ -428,6 +443,29 @@ export const zRankingSeccion = z.object({
   actualizadoEn: zInstante,
 });
 export type RankingSeccion = z.infer<typeof zRankingSeccion>;
+
+/* ---------- config/secciones: catálogo de años y secciones (D317) ---------- */
+
+const sinRepetir = <T>(xs: readonly T[]) => new Set(xs).size === xs.length;
+
+/** Un año y las letras de sus secciones (puede no tener ninguna todavía). */
+export const zAnio = z.object({
+  numero: zNumeroAnio,
+  letras: z.array(zLetra).min(0).max(26).refine(sinRepetir, "Letra repetida"),
+});
+
+/**
+ * `config/secciones`. Se guarda ordenado (años y letras). Ausente = `CATALOGO_INICIAL`
+ * (`lib/secciones.ts`); presente con `anios: []` = la escuela sin secciones.
+ */
+export const zCatalogoSecciones = z.object({
+  anios: z
+    .array(zAnio)
+    .max(9)
+    .refine((a) => sinRepetir(a.map((x) => x.numero)), "Año repetido"),
+  actualizadoEn: zInstante,
+});
+export type CatalogoSeccionesDoc = z.infer<typeof zCatalogoSecciones>;
 
 /* ---------- Custom claims de Auth (D174) ---------- */
 
