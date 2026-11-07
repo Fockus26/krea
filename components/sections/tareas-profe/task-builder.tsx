@@ -163,6 +163,7 @@ export function TaskBuilder({
       : SIN_ERRORES;
   const lleno = tarea.preguntas.length >= MAX_PREGUNTAS;
   const textoPublicar = esBorrador ? "Publicar tarea" : "Guardar cambios";
+  const textoPublicando = esBorrador ? "Publicando…" : "Guardando…";
   const IconoPublicar = esBorrador ? Send : Save;
   const ids = {
     tipo: React.useId(),
@@ -373,11 +374,11 @@ export function TaskBuilder({
           </DialogClose>
           <Button
             onClick={cerrarTarea}
-            disabled={pendiente}
-            aria-busy={pendiente || undefined}
+            loading={pendiente}
+            loadingLabel="Cerrando…"
           >
             <Lock aria-hidden="true" />
-            {pendiente ? "Cerrando…" : "Cerrar tarea"}
+            Cerrar tarea
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -600,8 +601,9 @@ export function TaskBuilder({
                 type="button"
                 size="lg"
                 block
-                disabled={motivo !== null || pendiente}
-                aria-busy={pendiente || undefined}
+                disabled={motivo !== null}
+                loading={pendiente}
+                loadingLabel={textoPublicando}
                 aria-describedby={motivo ? ids.motivo : undefined}
                 onClick={publicar}
               >
@@ -641,8 +643,9 @@ export function TaskBuilder({
           </p>
           <Button
             type="button"
-            disabled={motivo !== null || pendiente}
-            aria-busy={pendiente || undefined}
+            disabled={motivo !== null}
+            loading={pendiente}
+            loadingLabel={textoPublicando}
             aria-describedby={motivo ? ids.motivoMovil : undefined}
             onClick={publicar}
           >

@@ -317,8 +317,8 @@ function EditForm({
             Cancelar
           </Button>
         </DialogClose>
-        <Button type="submit" aria-disabled={guardando || undefined}>
-          {guardando ? "Guardando…" : "Guardar cambios"}
+        <Button type="submit" loading={guardando} loadingLabel="Guardando…">
+          Guardar cambios
         </Button>
       </DialogFooter>
     </form>

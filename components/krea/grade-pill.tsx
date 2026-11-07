@@ -10,7 +10,12 @@ import {
   gradePillState,
   showsBase,
 } from "@/lib/grade-pill";
-import { formatNota, gradeColor } from "@/lib/grades";
+import {
+  formatNota,
+  GRADE_INK_CLASS,
+  gradeColor,
+  gradeInk,
+} from "@/lib/grades";
 import { cn } from "@/lib/utils";
 
 type GradePillProps = {
@@ -31,7 +36,8 @@ type GradePillProps = {
 
 /*
  * Píldora de nota — HANDOFF §2.3. Fondo `gradeColor(n)` (único valor dinámico, viene de la
- * función) y número en `--grade-ink` (#111111): nunca texto de color ni sin número (D004).
+ * función) y número en `--grade-ink` (#111111) o `--grade-ink-on-dark` (#FFFFFF) según
+ * `gradeInk(n)` (D236): nunca texto de color ni sin número (D004).
  * Pendiente se pinta aparte, sin color de escala y nunca como "0".
  */
 export function GradePill({
@@ -71,7 +77,8 @@ export function GradePill({
           data-state={state}
           style={{ backgroundColor: gradeColor(nota) }}
           className={cn(
-            "relative inline-flex items-center justify-center gap-1 rounded-pill whitespace-nowrap text-grade-ink",
+            "relative inline-flex items-center justify-center gap-1 rounded-pill whitespace-nowrap",
+            GRADE_INK_CLASS[gradeInk(nota)],
             GRADE_PILL_SIZE_CLASSES[size],
           )}
         >

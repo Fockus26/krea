@@ -61,8 +61,9 @@ Degradado continuo, no por rangos. `gradeColor(n)` en HSL:
 - 1 → 10: tono 0° → 52°, saturación 100 %, luminosidad 52 % → 48 % (rojo intenso → amarillo intenso).
 - 10 → 20: tono 52° → 140°, saturación 100 % → 70 %, luminosidad 48 % → 34 % (amarillo → verde intenso).
 - Puntos de control: 1 #FF0A0A · 5 #F55E00 · 8 #F5A500 · 10 #F5D400 · 12 #BDE007 · 15 #57C110 · 18 #17A51C · 20 #1A9342.
-- **El color es el fondo de la píldora, nunca el color del texto.** Texto encima: #111111 en
-  negrita ≥ 14 px (peor caso: 20 → 4.76:1).
+- **El color es el fondo de la píldora, nunca el color del texto.** Texto encima: `gradeInk(n)` elige
+  #111111 (`--grade-ink`) o #FFFFFF (`--grade-ink-on-dark`), la de más contraste, en negrita ≥ 14 px
+  (hoy siempre #111111: peor caso 20 → 4.76:1; D236).
 - Nunca solo color: el número siempre visible y, si < 10, la etiqueta "Raspado".
 - Sin nota (no entregado): píldora neutra con borde punteado y el texto "Pendiente".
 
@@ -70,8 +71,8 @@ Degradado continuo, no por rangos. `gradeColor(n)` en HSL:
 
 - D001: #EE0400 como texto sobre #F6F4FA da 4.13:1 → el texto rojo usa `accent-ink` #C80300.
 - Las gotas (`splash`) son decorativas y no tienen requisito de contraste (el logo tiene `<title>`).
-- **Texto normal sobre `accent-soft-2` va en `--text`**, no en el acento (`accent-ink` ahí da 4,09:1 en rojo claro y 3,77:1 en morado oscuro: solo íconos o texto ≥ 19 px en negrita). Sobre `accent-soft` sí vale `accent-ink` (≥ 4,74:1).
-- `--grade-ink` es #111111 en claro y oscuro (no se invierte). El toast sí invierte (`--toast-bg`/`--toast-text`).
+- **Texto normal sobre `accent-soft-2` va en `--text`**, no en el acento (con los tintes de antes `accent-ink` ahí daba 4,09:1 en rojo claro y 3,77:1 en morado oscuro; desde D236 con 16/18 % llega a 4,5:1 en los 4 acentos y lo vigila `tests/unit/contraste-tokens.test.ts`). Sobre `accent-soft` sí vale `accent-ink` (≥ 4,74:1).
+- `--grade-ink` es #111111 y `--grade-ink-on-dark` #FFFFFF en claro y oscuro (no se invierten). `::selection` = acento al 22 % (claro) / 40 % (oscuro) sobre `--bg`, texto `--text` (D236). El toast sí invierte (`--toast-bg`/`--toast-text`).
 
 ## Implementación (`app/globals.css`, D015–D016)
 
@@ -86,7 +87,7 @@ clases `bg-bg`, `bg-surface`, `bg-surface-2/3`, `text-text`, `text-text-2`, `tex
 - Tema: `<html data-theme="light|dark">`; sin atributo = sistema (`prefers-color-scheme`).
   Acento: `<html data-accent="rojo|verde|morado">` (azul = sin atributo o `azul`). Se guardan
   en `localStorage` (`krea-theme`, `krea-accent`) y un script inline los aplica antes de pintar.
-- Tintes: `color-mix(in srgb, <color> N%, var(--surface))` con N en `--tint-*` (acento 12/22 %
-  claro y 16/28 % oscuro; chips ok/warn 10 % claro y 14 % oscuro; err 12 %; premio 30/18 %;
+- Tintes: `color-mix(in srgb, <color> N%, var(--surface))` con N en `--tint-*` (acento 10/16 %
+  claro y 12/18 % oscuro; card de premio 22/28 %; chips ok/warn 10 % claro y 14 % oscuro; err 12 %; premio 30/18 %;
   avisos 10/26/12 %, en oscuro sin medir todavía).
 - Referencia visual: ruta `/tokens` (no indexada).

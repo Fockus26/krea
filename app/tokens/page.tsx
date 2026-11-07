@@ -25,7 +25,7 @@ const NEUTRALS = [
   "secondary",
   "on-secondary",
   "grade-ink",
-  "sel-bg",
+  "grade-ink-on-dark",
   "sel-text",
   "scroll-thumb",
   "scroll-track",
@@ -40,6 +40,7 @@ const ACCENT_TOKENS = [
   "accent-soft",
   "accent-soft-2",
   "accent-hover",
+  "sel-bg",
   "splash",
 ] as const;
 

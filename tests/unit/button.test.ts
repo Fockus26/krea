@@ -46,8 +46,8 @@ describe("buttonVariants (HANDOFF §2.1)", () => {
   test("secondary: borde interior y deshabilitado con borde --divider", () => {
     const c = classes({ variant: "secondary" });
     expect(c).toContain("shadow-btn-outline");
-    expect(c).toContain("disabled:shadow-btn-outline-dis");
-    expect(c).toContain("disabled:bg-transparent");
+    expect(c).toContain("not-aria-busy:disabled:shadow-btn-outline-dis");
+    expect(c).toContain("not-aria-busy:disabled:bg-transparent");
     // cn deja un solo fondo deshabilitado: el de secondary
     expect(c).not.toContain("disabled:bg-surface-3");
     expect(c).toContain("active:not-disabled:not-aria-disabled:translate-y-px");
@@ -71,7 +71,7 @@ describe("buttonVariants (HANDOFF §2.1)", () => {
 
   test("ghost deshabilitado sin fondo", () => {
     const c = classes({ variant: "ghost" });
-    expect(c).toContain("disabled:bg-transparent");
+    expect(c).toContain("not-aria-busy:disabled:bg-transparent");
     expect(c).not.toContain("disabled:bg-surface-3");
   });
 

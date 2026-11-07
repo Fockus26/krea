@@ -390,11 +390,11 @@ export function TaskAnswerForm({
                     </DialogClose>
                     <Button
                       onClick={entregar}
-                      disabled={enviando}
-                      aria-busy={enviando || undefined}
+                      loading={enviando}
+                      loadingLabel="Entregando…"
                     >
                       <Send aria-hidden="true" />
-                      {enviando ? "Entregando…" : "Entregar"}
+                      Entregar
                     </Button>
                   </DialogFooter>
                 </DialogContent>

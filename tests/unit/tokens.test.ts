@@ -44,7 +44,7 @@ const THEME_TOKENS = [
   "secondary",
   "on-secondary",
   "grade-ink",
-  "sel-bg",
+  "grade-ink-on-dark",
   "sel-text",
   "scroll-thumb",
   "scroll-track",
@@ -65,7 +65,13 @@ describe("tokens de globals.css", () => {
   });
 
   test("oscuro redefine lo que cambia con el tema", () => {
-    const sameInBoth = ["secondary", "on-secondary", "grade-ink", "splash"];
+    const sameInBoth = [
+      "secondary",
+      "on-secondary",
+      "grade-ink",
+      "grade-ink-on-dark",
+      "splash",
+    ];
     for (const t of THEME_TOKENS.filter((x) => !sameInBoth.includes(x))) {
       expect(dark[`--${t}`]).toBeDefined();
     }
@@ -80,8 +86,8 @@ describe("tokens de globals.css", () => {
     expect(dark["--grade-ink"]).toBeUndefined(); // no se invierte
     expect(light["--tint-ok"]).toBe("10%"); // §8: no 14 % en claro
     expect(dark["--tint-ok"]).toBe("14%");
-    expect(light["--tint-1"]).toBe("12%");
-    expect(dark["--tint-2"]).toBe("28%");
+    expect(light["--tint-1"]).toBe("10%"); // D236: 4,5:1 del texto de acento en pulsado
+    expect(dark["--tint-2"]).toBe("18%");
     // §2.1 danger: blanco en claro, #14121A en oscuro (6,64:1), no --on-accent
     expect(light["--on-error"]).toBe("#ffffff");
     expect(dark["--on-error"]).toBe("#14121a");

@@ -16,8 +16,9 @@ const buttonCva = cva(
     "transition-[translate,background-color,box-shadow,color] duration-fast ease-krea",
     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
     "[&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0",
-    "disabled:cursor-not-allowed disabled:bg-surface-3 disabled:text-text-dis disabled:shadow-none",
-    "aria-disabled:cursor-not-allowed aria-disabled:bg-surface-3 aria-disabled:text-text-dis aria-disabled:shadow-none",
+    // Un botón ocupado (aria-busy) no es un botón deshabilitado: conserva los colores de su variante (D285)
+    "not-aria-busy:disabled:cursor-not-allowed not-aria-busy:disabled:bg-surface-3 not-aria-busy:disabled:text-text-dis not-aria-busy:disabled:shadow-none",
+    "not-aria-busy:aria-disabled:cursor-not-allowed not-aria-busy:aria-disabled:bg-surface-3 not-aria-busy:aria-disabled:text-text-dis not-aria-busy:aria-disabled:shadow-none",
     "aria-busy:cursor-progress",
   ],
   {
@@ -32,13 +33,13 @@ const buttonCva = cva(
           "bg-surface text-accent-ink shadow-btn-outline",
           "hover:not-disabled:not-aria-disabled:bg-accent-soft",
           "active:not-disabled:not-aria-disabled:translate-y-px active:not-disabled:not-aria-disabled:bg-accent-soft-2",
-          "disabled:bg-transparent disabled:shadow-btn-outline-dis aria-disabled:bg-transparent aria-disabled:shadow-btn-outline-dis",
+          "not-aria-busy:disabled:bg-transparent not-aria-busy:disabled:shadow-btn-outline-dis not-aria-busy:aria-disabled:bg-transparent not-aria-busy:aria-disabled:shadow-btn-outline-dis",
         ],
         ghost: [
           "bg-transparent text-accent-ink",
           "hover:not-disabled:not-aria-disabled:bg-accent-soft",
           // Lámina de componentes: deshabilitado sin fondo, solo texto --text-dis
-          "disabled:bg-transparent aria-disabled:bg-transparent",
+          "not-aria-busy:disabled:bg-transparent not-aria-busy:aria-disabled:bg-transparent",
         ],
         // Hover y activo de danger salen de la lámina (Componentes.dc.html), no de §2.1
         danger: [
@@ -145,6 +146,7 @@ function Button(props: ButtonProps) {
       type={loading ? "button" : (type ?? "button")}
       className={classes}
       disabled={disabled}
+      aria-disabled={loading || undefined}
       aria-busy={loading || undefined}
       data-loading={loading || undefined}
       onClick={loading ? undefined : onClick}
