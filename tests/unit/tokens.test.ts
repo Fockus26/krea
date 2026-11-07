@@ -81,7 +81,9 @@ describe("tokens de globals.css", () => {
     expect(light["--bg"]).toBe("#f6f4fa");
     expect(dark["--bg"]).toBe("#14121a");
     expect(light["--accent"]).toBe("#295ac3");
-    expect(dark["--accent"]).toBe("#7aa2f7");
+    // Relleno oscurecido para texto blanco (D301); el tono claro del handoff vive en --accent-ink
+    expect(dark["--accent"]).toBe("#5773af");
+    expect(dark["--accent-ink"]).toBe("#7aa2f7");
     expect(light["--grade-ink"]).toBe("#111111");
     expect(dark["--grade-ink"]).toBeUndefined(); // no se invierte
     expect(light["--tint-ok"]).toBe("10%"); // §8: no 14 % en claro
@@ -133,17 +135,19 @@ describe("tokens de globals.css", () => {
 
   test("los 4 acentos, en claro y en oscuro, con los hex del handoff", () => {
     const expected = {
-      rojo: ["#ee0400", "#c80300", "#ff6b5e"],
-      verde: ["#115445", "#115445", "#4fc4a6"],
-      morado: ["#734ad1", "#734ad1", "#a98bf0"],
+      rojo: ["#ee0400", "#c80300", "#bf5046", "#ff6b5e"],
+      verde: ["#115445", "#115445", "#34816e", "#4fc4a6"],
+      morado: ["#734ad1", "#734ad1", "#7d67b2", "#a98bf0"],
     } as const;
-    for (const [name, [acc, ink, darkAcc]] of Object.entries(expected)) {
+    for (const [name, [acc, ink, darkAcc, darkInk]] of Object.entries(
+      expected,
+    )) {
       const l = vars(block(css, `[data-accent="${name}"]`));
       expect(l["--accent"]).toBe(acc);
       expect(l["--accent-ink"]).toBe(ink);
       const d = vars(block(css, `[data-theme="dark"][data-accent="${name}"]`));
       expect(d["--accent"]).toBe(darkAcc);
-      expect(d["--accent-ink"]).toBe(darkAcc);
+      expect(d["--accent-ink"]).toBe(darkInk);
       const s = vars(
         block(media, `:root:not([data-theme="light"])[data-accent="${name}"]`),
       );

@@ -41,7 +41,8 @@ const ORDEN_VISUAL = ["order-2", "order-1", "order-3"] as const;
 
 // Escalón por puesto (tope 3): color, número y alto (120/144, 88/104, 64/76)
 const ESCALON: Record<1 | 2 | 3, string> = {
-  1: "bg-accent text-on-accent text-pod-step-1 h-30 md:h-36",
+  // El destello del 1.º es una sombra suave (D303): uno claro borraría el número blanco
+  1: "bg-accent text-on-accent text-pod-step-1 h-30 md:h-36 [--brillo-mezcla:var(--brillo-1-mezcla)] [--brillo-tinta:var(--brillo-1-tinta)]",
   2: "bg-accent-soft-2 text-accent-ink text-pod-step h-22 md:h-26",
   3: "bg-accent-soft text-accent-ink text-pod-step h-16 md:h-19",
 };
