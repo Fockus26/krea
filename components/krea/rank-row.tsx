@@ -33,7 +33,7 @@ export type RankRowProps = RankingPuesto & {
    */
   href?: string;
   onAbrir?: () => void;
-  /** Duelo VS (D256): hay un empatado justo debajo; el conector se pinta en el hueco de abajo. */
+  /** Duelo VS (D288): hay un empatado justo debajo; el conector se pinta en el hueco de abajo. */
   vsDespues?: boolean;
   /** Al `<li>`: es el elemento que el FLIP traslada (`useFlip().registrar(id)`). */
   ref?: React.Ref<HTMLLIElement>;

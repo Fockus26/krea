@@ -91,15 +91,32 @@ export function splitRiesgo<T extends { enRiesgo: boolean }>(
 }
 
 /**
- * Duelo VS (D256): dentro de la zona de riesgo, `true` en la posición `i` cuando la fila `i` y la
- * siguiente comparten puesto (empate). El conector «VS» se pinta entre las dos; fuera de la zona
- * los empates siguen como siempre. Misma longitud que `filas`; la última siempre `false`.
+ * Duelo VS (D288): en cualquier lista del ranking, `true` en la posición `i` cuando la fila `i` y la
+ * siguiente comparten puesto (empate). El conector «VS» se pinta entre las dos; con tres empatados
+ * salen dos. Misma longitud que `filas`; la última siempre `false`. `splitRiesgo` corta la lista
+ * en dos: un empate justo en el corte no tiene «VS» entre listas.
  */
 export function conectoresVs(
   filas: ReadonlyArray<Pick<RankingPuesto, "puesto">>,
 ): boolean[] {
   return filas.map(
     (f, i) => i < filas.length - 1 && filas[i + 1].puesto === f.puesto,
+  );
+}
+
+/**
+ * «VS» del podio (D289). Las columnas se ven en orden 2-1-3 (índices 1, 0, 2 de la lista), así que
+ * el conector solo cabe entre columnas visualmente vecinas. Devuelve, por índice de la lista, si
+ * hay un «VS» en el hueco a la derecha de su columna: el índice 1 (izquierda) con el 0 (centro) y
+ * el 0 (centro) con el 2 (derecha). Dos 2.º (puestos 1, 2, 2) quedan separados por el 1.º: sin «VS».
+ */
+export function conectoresVsPodio(puestos: readonly number[]): boolean[] {
+  const igual = (a: number, b: number) =>
+    puestos[a] !== undefined &&
+    puestos[b] !== undefined &&
+    puestos[a] === puestos[b];
+  return puestos.map((_, i) =>
+    i === 1 ? igual(1, 0) : i === 0 ? igual(0, 2) : false,
   );
 }
 

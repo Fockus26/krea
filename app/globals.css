@@ -62,6 +62,7 @@
   --success: #157a3b;
   --warning: #9a5b00;
   --error: #c80300;
+  --cinta-tinte: 20%; /* % de --error en la raya suave de la cinta de riesgo (D290); igual en oscuro */
   --on-error: #ffffff; /* texto de botón danger (HANDOFF §2.1) */
   --secondary: #ffc23d;
   --on-secondary: #221d2b;
@@ -1287,7 +1288,7 @@
     animation: none;
   }
 }
-/* Cinta de precaución (D257): franja de rayas --error/--warning; el desplazamiento es un
+/* Cinta de precaución (D257, D290): franja de rayas --error y un tinte del mismo rojo; el desplazamiento es un
    translateX del ::before (nunca background-position). Su periodo horizontal a 45° es 1,4142 rem.
    Con reduced motion las rayas quedan quietas. */
 @utility cinta-riesgo {
@@ -1304,7 +1305,7 @@
     background: repeating-linear-gradient(
       -45deg,
       var(--error) 0 0.5rem,
-      var(--warning) 0.5rem 1rem
+      color-mix(in srgb, var(--error) var(--cinta-tinte), var(--bg)) 0.5rem 1rem
     );
     animation: k-cinta var(--d-cinta) linear infinite;
     @media (prefers-reduced-motion: reduce) {

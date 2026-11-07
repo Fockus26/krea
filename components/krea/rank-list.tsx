@@ -28,16 +28,16 @@ type RankListProps = {
  * Dos `<ol>` (principal y zona de riesgo) con el separador entre ambos como un `<p>` que da el
  * nombre a la segunda lista (`aria-labelledby`): el lector cuenta bien las filas de cada una y el
  * separador no es un `<li>` de más. Reordena con FLIP (`useFlip`) al cambiar el orden de `filas`.
- * El separador es una cinta de precaución (D257) y los empatados dentro de la zona salen como
- * duelo con un «VS» entre ambos (D256).
+ * El separador es una cinta de precaución roja (D257, D290) y los empatados de cualquiera de las
+ * dos listas salen como duelo con un «VS» entre cada par (D288).
  */
 export function RankList({ filas, label, className }: RankListProps) {
   const riesgoId = useId();
   const { registrar } = useFlip<HTMLLIElement>();
   const { principal, riesgo } = splitRiesgo(filas);
 
-  const pintar = (lista: readonly RankListFila[], duelos = false) => {
-    const vs = duelos ? conectoresVs(lista) : [];
+  const pintar = (lista: readonly RankListFila[]) => {
+    const vs = conectoresVs(lista);
     return lista.map(({ id, ...fila }, i) => (
       <RankRow
         key={id}
@@ -72,7 +72,7 @@ export function RankList({ filas, label, className }: RankListProps) {
             <span aria-hidden="true" className="cinta-riesgo min-w-0 flex-1" />
           </p>
           <ol aria-labelledby={riesgoId} className="flex flex-col gap-1">
-            {pintar(riesgo, true)}
+            {pintar(riesgo)}
           </ol>
         </>
       ) : null}

@@ -110,6 +110,20 @@ for (const tema of ["claro", "oscuro"] as const) {
   });
 }
 
+describe("cinta de la zona de riesgo (D290): gráfico ≥ 3:1", () => {
+  test("la raya fuerte (--error) y la suave (tinte) se distinguen del fondo y entre sí", () => {
+    const tinte = pct(claro["--cinta-tinte"]);
+    for (const tema of ["claro", "oscuro"] as const) {
+      for (const nombre of ACENTOS) {
+        const t = acento(tema, nombre);
+        const suave = mezcla(t["--error"], tinte, t["--bg"]);
+        expect(contraste(t["--error"], t["--bg"])).toBeGreaterThanOrEqual(3);
+        expect(contraste(t["--error"], suave)).toBeGreaterThanOrEqual(3);
+      }
+    }
+  });
+});
+
 describe("el tema del sistema repite los valores del oscuro (D238)", () => {
   test("tintes y selección", () => {
     for (const k of [

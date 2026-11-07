@@ -4,7 +4,7 @@ import type * as React from "react";
 import { TeamLogo } from "@/components/krea/team-logo";
 import { UserAvatar } from "@/components/krea/user-avatar";
 import type { DicebearEstilo } from "@/lib/dicebear";
-import { podiumLabel } from "@/lib/rank-row";
+import { conectoresVsPodio, podiumLabel } from "@/lib/rank-row";
 import { formatDecimal } from "@/lib/stepper";
 import { cn } from "@/lib/utils";
 
@@ -58,6 +58,7 @@ const ESCALON: Record<1 | 2 | 3, string> = {
  */
 export function Podium({ entradas, label, className }: PodiumProps) {
   const lista = entradas.slice(0, 3);
+  const vs = conectoresVsPodio(lista.map((e) => e.puesto));
   return (
     <ol
       aria-label={label}
@@ -151,6 +152,17 @@ export function Podium({ entradas, label, className }: PodiumProps) {
             ) : (
               columna
             )}
+            {vs[i] ? (
+              // Decorativo (D289): el empate ya lo dice el nombre accesible de cada columna
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute top-10 right-0 z-10 translate-x-1/2"
+              >
+                <span className="animate-vs text-small-b grid h-5.5 min-w-9 place-items-center rounded-pill bg-error px-2 text-on-error">
+                  VS
+                </span>
+              </span>
+            ) : null}
           </li>
         );
       })}

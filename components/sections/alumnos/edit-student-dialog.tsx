@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil } from "lucide-react";
+import { Pencil, UserPen } from "lucide-react";
 import { type ReactNode, useId, useRef, useState } from "react";
 import { ErrorEnPantalla } from "@/components/estados/errores";
 import { NumberStepper } from "@/components/krea/number-stepper";
@@ -29,12 +29,17 @@ import {
   validarEdicion,
 } from "@/lib/alumnos";
 import {
+  conflictoDetalle,
   type EditarAlumno,
   errorAlumnoTexto,
   type ResultadoAlumno,
+  type VersionAlumno,
+  versionDe,
 } from "@/lib/alumnos-datos";
 import { BASE_MAX, BASE_MIN } from "@/lib/grades";
 import { partirNombre } from "@/lib/perfil";
+import { avisoPresencia, presenciaTexto } from "@/lib/presencia";
+import { type Presencia, useMarcarPresencia } from "./use-presencia";
 
 /** Lo que cambia en la fila al guardar. */
 export type CambiosAlumno = Pick<
@@ -53,6 +58,9 @@ export type GuardarAlumno = (entrada: EditarAlumno) => Promise<ResultadoAlumno>;
  * monta abierto, así que el formulario siempre parte de los datos vigentes. Con `guardar` escribe
  * en Firestore (D209): si falla, el diálogo sigue abierto con lo escrito y el error (D171); sin
  * `guardar` (vista previa) solo `onGuardado`. `eliminar` (W12) va a la izquierda del pie.
+ * Con `presencia` (W14, D275–D277): mientras está abierto marca «estoy editando» y avisa si otro
+ * profe edita al mismo alumno; si otro guardó en medio, el servidor responde `conflicto` y el
+ * diálogo muestra lo vigente sin borrar lo escrito (el siguiente «Guardar» gana).
  */
 export function EditStudentDialog({
   alumno,
@@ -61,6 +69,7 @@ export function EditStudentDialog({
   guardar,
   onGuardado,
   eliminar,
+  presencia,
 }: {
   alumno: FilaAlumno;
   /**
@@ -74,6 +83,8 @@ export function EditStudentDialog({
   onGuardado: (cedula: string, cambios: CambiosAlumno) => void;
   /** «Eliminar alumno» (D268); sin él, la ficha no lo ofrece (vista previa). */
   eliminar?: ReactNode;
+  /** Presencia en vivo (D277); sin ella (vista previa), ni marca ni avisa. */
+  presencia?: Presencia | null;
 }) {
   const [abierto, setAbierto] = useState(abiertoInicial);
   const [pedidoAntes, setPedidoAntes] = useState(abiertoInicial);
@@ -105,10 +116,12 @@ export function EditStudentDialog({
           alumno={alumno}
           guardar={guardar}
           eliminar={eliminar}
+          presencia={presencia}
           onListo={(cambios) => {
             onGuardado(alumno.cedula, cambios);
             setAbierto(false);
           }}
+          onVigente={(actual) => onGuardado(alumno.cedula, actual)}
         />
       </DialogContent>
     </Dialog>
@@ -119,14 +132,22 @@ function EditForm({
   alumno,
   guardar,
   eliminar,
+  presencia,
   onListo,
+  onVigente,
 }: {
   alumno: FilaAlumno;
   guardar?: GuardarAlumno;
   eliminar?: ReactNode;
+  presencia?: Presencia | null;
   onListo: (cambios: CambiosAlumno) => void;
+  /** Conflicto (D276): la fila pasa a lo que otro profe guardó; el diálogo sigue abierto. */
+  onVigente: (actual: CambiosAlumno) => void;
 }) {
   const uid = useId();
+  // Mientras el formulario está montado (= el diálogo abierto), «estoy editando» (D275)
+  useMarcarPresencia(presencia, alumno.cedula);
+  const otros = presenciaTexto(presencia?.editoresDe(alumno.cedula) ?? []);
   const [nom1, nom2] = partirNombre(alumno.nombres);
   const [ape1, ape2] = partirNombre(alumno.apellidos);
   const [nombre1, setNombre1] = useState(nom1);
@@ -141,6 +162,10 @@ function EditForm({
   const [intentado, setIntentado] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [errorServidor, setErrorServidor] = useState<string | null>(null);
+  // Lo que había al abrir (D276); tras un conflicto, lo que el servidor dijo que hay ahora
+  const [version, setVersion] = useState<VersionAlumno>(() =>
+    versionDe(alumno, conEmail ? (alumno.email ?? null) : undefined),
+  );
   const enviando = useRef(false);
 
   const ids = {
@@ -208,11 +233,19 @@ function EditForm({
       base,
       motivo: cambioBase ? motivo.trim() : "",
       ...(conEmail ? { email: emailLimpio } : {}),
+      version,
     }).catch((): ResultadoAlumno => ({ ok: false, error: "red" }));
     enviando.current = false;
     setGuardando(false);
     if (r.ok) onListo(cambios);
-    else setErrorServidor(errorAlumnoTexto(r.error));
+    else if (r.error === "conflicto") {
+      // Lo escrito se queda en los campos; el próximo «Guardar» parte de lo vigente y gana
+      setVersion(r.actual);
+      onVigente(r.actual);
+      setErrorServidor(
+        `${errorAlumnoTexto("conflicto")} ${conflictoDetalle(r.actual)}`,
+      );
+    } else setErrorServidor(errorAlumnoTexto(r.error));
   };
 
   return (
@@ -222,6 +255,22 @@ function EditForm({
       onSubmit={enviar}
       className="flex flex-col gap-4"
     >
+      {/* Se anuncia una vez por cambio de quién edita (no con cada latido): el texto no cambia */}
+      <output className="sr-only" aria-live="polite">
+        {otros ? avisoPresencia(otros) : ""}
+      </output>
+      {otros ? (
+        <p
+          aria-hidden="true"
+          className="flex items-start gap-2 rounded-sm bg-accent-soft-2 px-3 py-2 text-small text-text"
+        >
+          <UserPen
+            aria-hidden="true"
+            className="mt-0.5 size-4 shrink-0 text-accent-ink"
+          />
+          <span>{avisoPresencia(otros)}</span>
+        </p>
+      ) : null}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field
           label="Primer nombre"

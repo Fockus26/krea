@@ -39,6 +39,7 @@ import {
 } from "./delete-student-dialog";
 import { StudentFilters } from "./student-filters";
 import { StudentsTable } from "./students-table";
+import { usePresenciaAlumnos, type YoPresencia } from "./use-presencia";
 
 /** Agregar y eliminar alumnos (W12, D267, D268): las Server Actions y los equipos para el alta. */
 export type AltaAlumnos = AccionesBorrarAlumno & {
@@ -56,6 +57,7 @@ export type AltaAlumnos = AccionesBorrarAlumno & {
  * Con `encabezado` pinta también el `PageHeader`, y con `alta` su «Agregar alumno»: tras crear,
  * la contraseña temporal (una sola vez, D232) y luego la ficha del alumno nuevo (D267). Cada acción
  * termina con `refresh()`: cuando llega la lista nueva del servidor, reemplaza a la local.
+ * Con `yo`, una sola suscripción a la presencia (D277) para todas las filas y fichas.
  */
 export function StudentsDirectory({
   alumnos,
@@ -65,6 +67,7 @@ export function StudentsDirectory({
   tarea,
   encabezado,
   alta,
+  yo,
 }: {
   alumnos: readonly FilaAlumno[];
   seccionInicial?: SeccionAlumnos;
@@ -75,7 +78,10 @@ export function StudentsDirectory({
   tarea?: { id: string; titulo: string };
   encabezado?: { eyebrow: string };
   alta?: AltaAlumnos;
+  /** El profe que mira: con él, presencia en vivo al editar (W14, D275–D277). */
+  yo?: YoPresencia;
 }) {
+  const presencia = usePresenciaAlumnos(yo);
   const [filas, setFilas] = useState<readonly FilaAlumno[]>(alumnos);
   // La lista del servidor manda cuando cambia (tras crear, eliminar o editar: `refresh()`)
   const [alumnosAntes, setAlumnosAntes] = useState(alumnos);
@@ -251,6 +257,7 @@ export function StudentsDirectory({
           abierto={alumnoAbierto}
           onAbierto={cambiarAbierto}
           guardar={guardar}
+          presencia={presencia}
           onGuardado={(cedula, cambios) =>
             setFilas((actuales) =>
               actuales.map((a) =>

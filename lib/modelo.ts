@@ -4,6 +4,7 @@
 //
 // Escrituras: SOLO el servidor (Server Actions + Admin SDK, D175). Las reglas niegan toda
 // escritura del cliente; el cliente solo lee lo que su rol le deja (firebase/firestore.rules).
+// Única excepción: la presencia efímera de `presencia/` (D275), que escribe el navegador del profe.
 import { z } from "zod";
 import { esClaveValida } from "@/lib/almacen/clave";
 import { esDiaValido } from "@/lib/fecha";
@@ -30,7 +31,15 @@ export const COL = {
   ranking: "ranking",
   /** `recuperaciones/{cedula}`: envíos del enlace de recuperación (límite, D187). Solo servidor. */
   recuperaciones: "recuperaciones",
+  /**
+   * `presencia/{cedulaAlumno}/editores/{cedulaProfe}`: quién tiene abierto «Editar alumno»
+   * (`{ nombre, desde, latido }`). Efímera; la escribe el navegador del profe (D275).
+   */
+  presencia: "presencia",
 } as const;
+
+/** Subcolección de `presencia/{cedulaAlumno}` (una entrada por profe). */
+export const SUBCOL_EDITORES = "editores";
 
 export function idEntrega(tareaId: string, titularId: string): string {
   return `${tareaId}__${titularId}`;

@@ -4,6 +4,7 @@
 // puntaje × base / 20, D013) y por eso el ranking; nunca toca una entrega ni un ajuste (D007).
 import { z } from "zod";
 import type { FilaAlumno } from "@/lib/alumnos";
+import { formatNota } from "@/lib/grades";
 import {
   type CambioBase,
   type Entrega,
@@ -41,15 +42,90 @@ export const zEditarAlumno = z.object({
   motivo: z.string().trim().max(300),
   /** Ausente: no se toca el email (la vista previa no lo manda). */
   email: zEmailEntrada.optional(),
+  /**
+   * Los campos editables tal como estaban al abrir el diálogo (D276). Si el documento cambió
+   * desde entonces, no se guarda: `conflicto` con los valores vigentes. Ausente (vista previa,
+   * llamadas viejas): sin comprobación.
+   */
+  version: z
+    .object({
+      nombres: z.string().max(200),
+      apellidos: z.string().max(200),
+      base: z.number(),
+      /** Ausente: el diálogo no editaba el email y no se compara. */
+      email: z.string().max(254).nullable().optional(),
+    })
+    .optional(),
 });
 export type EditarAlumno = z.infer<typeof zEditarAlumno>;
+export type VersionAlumno = NonNullable<EditarAlumno["version"]>;
 
 export type ErrorAlumno = "invalida" | "no-existe" | "motivo" | "red";
-export type ResultadoAlumno = { ok: true } | { ok: false; error: ErrorAlumno };
+export type ResultadoAlumno =
+  | { ok: true }
+  | { ok: false; error: ErrorAlumno }
+  /** Otro profe guardó mientras editabas: `actual` = lo que hay ahora (D276). */
+  | { ok: false; error: "conflicto"; actual: VersionAlumno };
+
+/** La versión de los campos editables de un alumno (lo que el diálogo manda al guardar). */
+export function versionDe(
+  a: { nombres: string; apellidos: string; base: number },
+  email?: string | null,
+): VersionAlumno {
+  const v: VersionAlumno = {
+    nombres: a.nombres,
+    apellidos: a.apellidos,
+    base: a.base,
+  };
+  if (email !== undefined) v.email = email;
+  return v;
+}
+
+/**
+ * ¿Cambió el alumno desde que se abrió el diálogo? Compara solo los campos editables: un cambio
+ * de equipo o de avatar no es un conflicto. El email se compara solo si la versión lo trae.
+ */
+export function hayConflicto(
+  version: VersionAlumno | undefined,
+  actual: VersionAlumno,
+): boolean {
+  if (!version) return false;
+  if (
+    version.nombres !== actual.nombres ||
+    version.apellidos !== actual.apellidos ||
+    version.base !== actual.base
+  )
+    return true;
+  return (
+    version.email !== undefined &&
+    (version.email ?? null) !== (actual.email ?? null)
+  );
+}
+
+/**
+ * Lo que quedó guardado, para el aviso de conflicto: «Ahora está guardado: Luis Díaz · base 15 ·
+ * sin email de recuperación.» PROVISIONAL (fila 154).
+ */
+export function conflictoDetalle(actual: VersionAlumno): string {
+  const partes = [
+    `${actual.nombres} ${actual.apellidos}`.replace(/\s+/g, " ").trim(),
+    `base ${formatNota(actual.base)}`,
+  ];
+  if (actual.email !== undefined)
+    partes.push(actual.email ?? "sin email de recuperación");
+  return `Ahora está guardado: ${partes.join(" · ")}.`;
+}
+
+/** Copy provisional del conflicto (fila 154). */
+export const CONFLICTO_TEXTO =
+  "Otro profe guardó cambios de este alumno mientras editabas. Revisa y vuelve a guardar.";
 
 /** Mensaje bajo el formulario cuando el servidor no guardó (copy provisional, fila 135). */
-export function errorAlumnoTexto(e: ErrorAlumno): string {
+export function errorAlumnoTexto(e: ErrorAlumno | "conflicto"): string {
   switch (e) {
+    case "conflicto":
+      // PROVISIONAL (fila 154)
+      return CONFLICTO_TEXTO;
     case "no-existe":
       return "Este alumno ya no está en la lista. Recarga la página.";
     case "motivo":

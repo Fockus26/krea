@@ -1,5 +1,6 @@
 "use client";
 
+import { UserPen } from "lucide-react";
 import type { ReactNode } from "react";
 import { GradePill } from "@/components/krea/grade-pill";
 import { useFlip } from "@/components/krea/use-flip";
@@ -23,14 +24,27 @@ import {
   tablaLabel,
 } from "@/lib/alumnos";
 import { formatNota } from "@/lib/grades";
+import { presenciaTexto } from "@/lib/presencia";
 import { formatDecimal } from "@/lib/stepper";
 import {
   type CambiosAlumno,
   EditStudentDialog,
   type GuardarAlumno,
 } from "./edit-student-dialog";
+import type { Presencia } from "./use-presencia";
 
 const COLUMNAS = 7;
+
+/** «Ana Pérez está editando» bajo el nombre (texto vacío: nada). */
+function EditandoChip({ texto }: { texto: string }) {
+  if (!texto) return null;
+  return (
+    <Badge variant="acc">
+      <UserPen aria-hidden="true" />
+      {texto}
+    </Badge>
+  );
+}
 
 /**
  * Tabla de alumnos (HANDOFF §2.15, §3 Alumnos): Alumno · Cédula · Equipo · Base · Nota
@@ -51,6 +65,7 @@ export function StudentsTable({
   guardar,
   onGuardado,
   eliminar,
+  presencia,
 }: {
   seccion: SeccionAlumnos;
   filas: readonly FilaAlumno[];
@@ -66,11 +81,14 @@ export function StudentsTable({
   onGuardado: (cedula: string, cambios: CambiosAlumno) => void;
   /** «Eliminar alumno» de la ficha de cada fila (D268). */
   eliminar?: (a: FilaAlumno) => ReactNode;
+  /** Quién edita a cada alumno (W14, D277); sin ella (vista previa), nada. */
+  presencia?: Presencia | null;
 }) {
   const { registrar } = useFlip<HTMLTableRowElement>({
     duracion: "--d-normal",
     entrada: true,
   });
+  const editores = (cedula: string) => presencia?.editoresDe(cedula) ?? [];
   return (
     <Table label={tablaLabel(seccion)}>
       <TableHeader>
@@ -113,8 +131,12 @@ export function StudentsTable({
                     nombre={nombreAlumno(a)}
                     size={36}
                   />
-                  <span className="text-label text-text">
-                    {nombreAlumno(a)}
+                  <span className="flex flex-col items-start gap-1">
+                    <span className="text-label text-text">
+                      {nombreAlumno(a)}
+                    </span>
+                    {/* Otro profe con su ficha abierta (D277): ícono + texto, nunca solo color */}
+                    <EditandoChip texto={presenciaTexto(editores(a.cedula))} />
                   </span>
                 </span>
               </TableCell>
@@ -149,6 +171,7 @@ export function StudentsTable({
                   guardar={guardar}
                   onGuardado={onGuardado}
                   eliminar={eliminar?.(a)}
+                  presencia={presencia}
                 />
               </TableCell>
             </TableRow>

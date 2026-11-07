@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Calendar,
   Gift,
   Lock,
   Plus,
@@ -13,6 +12,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import { DatePicker } from "@/components/krea/date-picker";
 import { SumMeter } from "@/components/krea/sum-meter";
 import { TopBarAccion } from "@/components/layout/top-bar-accion";
 import { ActionBar } from "@/components/sections/shared/action-bar";
@@ -545,17 +545,14 @@ export function TaskBuilder({
                   error={errores.fecha}
                   announce={false}
                 >
-                  {/* Sin calendario emergente (D116): el ícono es decorativo */}
-                  <Input
-                    inputMode="numeric"
-                    autoComplete="off"
-                    placeholder="dd/mm/aaaa"
-                    maxLength={10}
+                  {/* Campo escribible + calendario propio (D283, reemplaza en parte D116) */}
+                  <DatePicker
                     readOnly={cerrada}
-                    leading={<Calendar aria-hidden="true" />}
+                    hoy={hoy}
+                    fechaGuardada={fechaGuardada}
                     value={tarea.fecha}
-                    onChange={(e) =>
-                      dispatch({ tipo: "fecha", valor: e.currentTarget.value })
+                    onValueChange={(valor) =>
+                      dispatch({ tipo: "fecha", valor })
                     }
                   />
                 </Field>
