@@ -307,7 +307,13 @@
   --d-shake: 400ms; /* §6: temblor al caer a zona de riesgo */
   --d-spin: 800ms; /* §2.1: spinner, una vuelta (lineal) */
   --d-skeleton: 1400ms; /* §6: pulso del skeleton */
-  --d-live: 1600ms; /* §6: onda del punto "En vivo" */
+  /* Ranking que celebra y avisa (D257–D259): bucles lentos y una lluvia corta */
+  --d-cinta: 2400ms; /* cinta de precaución: un paso de raya */
+  --d-alerta: 2000ms; /* temblor del ícono de la zona de riesgo (con pausa) */
+  --d-vs: 1200ms; /* latido del «VS» */
+  --d-brillo: 4200ms; /* destello que recorre las medallas del podio */
+  --d-balanceo: 2400ms; /* corona del 1.º */
+  --d-confeti: 2200ms; /* caída de una pieza de confeti */
   /* Medidas finas de botón y spinner (HANDOFF §2.1; krea.css:203-226) */
   --w-btn-border: 1.5px; /* borde interior de secondary */
   --w-spin-border: 2.5px;
@@ -1099,14 +1105,76 @@
     transform: translateY(-0.25rem);
   }
 }
-@keyframes k-live {
-  from {
-    opacity: 0.6;
+@keyframes k-cinta {
+  to {
+    transform: translateX(-1.4142rem);
+  }
+}
+@keyframes k-alerta {
+  0%,
+  60%,
+  100% {
+    transform: rotate(0);
+  }
+  66%,
+  78%,
+  90% {
+    transform: rotate(-14deg);
+  }
+  72%,
+  84%,
+  96% {
+    transform: rotate(14deg);
+  }
+}
+@keyframes k-vs {
+  0%,
+  100% {
     transform: scale(1);
+  }
+  50% {
+    transform: scale(1.18);
+  }
+}
+@keyframes k-brillo {
+  0% {
+    opacity: 0;
+    transform: translateX(-120%) skewX(-20deg);
+  }
+  8% {
+    opacity: 1;
+  }
+  30% {
+    opacity: 1;
+    transform: translateX(320%) skewX(-20deg);
+  }
+  31%,
+  100% {
+    opacity: 0;
+    transform: translateX(320%) skewX(-20deg);
+  }
+}
+@keyframes k-balanceo {
+  0%,
+  100% {
+    transform: rotate(-8deg);
+  }
+  50% {
+    transform: rotate(8deg);
+  }
+}
+@keyframes k-confeti {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotate(0);
+  }
+  80% {
+    opacity: 1;
   }
   to {
     opacity: 0;
-    transform: scale(2.6);
+    transform: translate3d(var(--confeti-deriva), var(--confeti-caida), 0)
+      rotate(var(--confeti-giro));
   }
 }
 @keyframes k-shake {
@@ -1219,9 +1287,83 @@
     animation: none;
   }
 }
-/* Onda del punto "En vivo" (va en un ::after o un span encima del punto) */
-@utility animate-live {
-  animation: k-live var(--d-live) var(--ease) infinite;
+/* Cinta de precaución (D257): franja de rayas --error/--warning; el desplazamiento es un
+   translateX del ::before (nunca background-position). Su periodo horizontal a 45° es 1,4142 rem.
+   Con reduced motion las rayas quedan quietas. */
+@utility cinta-riesgo {
+  position: relative;
+  overflow: hidden;
+  height: 0.625rem;
+  border-radius: var(--r-full);
+  &::before {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    left: 0;
+    width: calc(100% + 1.4142rem);
+    background: repeating-linear-gradient(
+      -45deg,
+      var(--error) 0 0.5rem,
+      var(--warning) 0.5rem 1rem
+    );
+    animation: k-cinta var(--d-cinta) linear infinite;
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  }
+}
+/* Ícono de alerta que tiembla un momento y descansa */
+@utility animate-alerta {
+  animation: k-alerta var(--d-alerta) var(--ease) infinite;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+/* «VS» que late entre dos empatados en riesgo */
+@utility animate-vs {
+  animation: k-vs var(--d-vs) var(--ease) infinite;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+/* Medalla del podio: destello diagonal que la recorre (opacity + translate de un ::after) */
+@utility brillo-podio {
+  position: relative;
+  overflow: hidden;
+  &::after {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    left: 0;
+    width: 35%;
+    pointer-events: none;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--surface) 55%, transparent),
+      transparent
+    );
+    opacity: 0;
+    animation: k-brillo var(--d-brillo) var(--ease) infinite;
+    animation-delay: var(--brillo-retardo, 0ms);
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  }
+}
+/* Corona del 1.º: balanceo suave */
+@utility animate-balanceo {
+  transform-origin: 50% 100%;
+  animation: k-balanceo var(--d-balanceo) ease-in-out infinite;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+/* Pieza de confeti: las variables por pieza las pone el componente */
+@utility animate-confeti {
+  animation: k-confeti var(--d-confeti) var(--ease) var(--confeti-retardo, 0ms)
+    1 both;
+  /* El componente ni se monta con reduced motion; por si acaso, sin movimiento y sin verse */
   @media (prefers-reduced-motion: reduce) {
     animation: none;
     opacity: 0;

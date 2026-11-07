@@ -5,7 +5,6 @@ import { Logo } from "@/components/krea/logo";
 import { UserAvatar } from "@/components/krea/user-avatar";
 import { MenuSheet } from "@/components/layout/menu-sheet";
 import type { NavRoute, NavUsuario } from "@/components/layout/nav-types";
-import { LiveChip } from "@/components/sections/ranking/ranking-header";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Rol } from "@/lib/layout";
@@ -15,7 +14,7 @@ import { PERFIL_HREF } from "@/lib/nav";
  * Contenido de la barra superior (< lg; HANDOFF §2.7). El `<header>` sticky, el alto 56/64 y el
  * borde los pone `AppShell` (slot `topbar`). Izquierda: logo 88 px, o botón volver 44 + título h4
  * en pantallas de detalle (`volverHref` + `title`; `volverIcono="cerrar"` pinta la X de Evaluar).
- * Derecha: chip «En vivo» (`enVivo`, Ranking), la acción de la página (`accion`, D130) y avatar 36
+ * Derecha: la acción de la página (`accion`, D130) y avatar 36
  * que enlaza a Perfil (estudiante) o botón "Menú" con la hoja (profesor); `soloAccion` quita el
  * avatar/Menú (constructor). La variante por ruta la elige `topbarDe` (lib/topbar.ts, D128).
  */
@@ -27,7 +26,6 @@ export function TopBar({
   volverHref,
   volverLabel = "Volver",
   volverIcono = "atras",
-  enVivo = false,
   accion,
   soloAccion = false,
   onSignOut,
@@ -43,8 +41,6 @@ export function TopBar({
   volverLabel?: string;
   /** Flecha (detalle) o X (salir de Evaluar). */
   volverIcono?: "atras" | "cerrar";
-  /** Chip «En vivo» (Ranking en < lg). */
-  enVivo?: boolean;
   /** Destino de la acción de la página (`TopBarAccionDestino`, D130). */
   accion?: ReactNode;
   /** Sin avatar ni Menú: a la derecha solo `accion`. */
@@ -86,15 +82,12 @@ export function TopBar({
           <span className="flex-1" />
         </>
       )}
-      {enVivo ? <LiveChip className="shrink-0" /> : null}
       {accion}
       {soloAccion ? null : rol === "profesor" ? (
-        // Con el chip, el Menú va solo con su ícono: a 320 no caben logo, chip y "Menú" (D128)
         <MenuSheet
           pathname={pathname}
           onSignOut={onSignOut}
           salirHref={salirHref}
-          compacto={enVivo}
           admin={usuario?.admin}
         />
       ) : (

@@ -25,30 +25,26 @@ const SALIR_CLASE =
  * secciones que no caben en la barra (Tareas, Equipos, Premios) y Perfil (D132), divisor y
  * "Cerrar sesión" en --error. Patrón dialog de Radix: foco dentro, Esc cierra y el foco vuelve
  * al botón Menú. Cada enlace envuelve un `SheetClose` para que la hoja se cierre al navegar.
- * `compacto`: solo el ícono (44 × 44, "Menú" queda como nombre accesible), como el botón de los
- * lienzos; lo usa la topbar con el chip «En vivo», que a 320 no cabe con el texto (D128).
  * `salirHref` lleva a /salir, que cierra la sesión real (D182); `onSignOut` queda para acciones extra.
  */
 export function MenuSheet({
   pathname,
   onSignOut,
   salirHref,
-  compacto = false,
   admin = false,
 }: NavRoute & {
   onSignOut?: () => void;
   /** Destino de "Cerrar sesión" mientras no hay sesión real. */
   salirHref?: string;
-  compacto?: boolean;
   /** Profesor admin (D231): suma «Profesores». */
   admin?: boolean;
 }) {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="ghost" icon={compacto}>
+        <Button variant="ghost">
           <Menu aria-hidden="true" />
-          <span className={compacto ? "sr-only" : "ml-2"}>Menú</span>
+          <span className="ml-2">Menú</span>
         </Button>
       </SheetTrigger>
       <SheetContent>

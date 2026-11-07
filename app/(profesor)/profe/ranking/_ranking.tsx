@@ -23,8 +23,7 @@ const SIN_TU = { cedula: null, equipoId: null };
 /**
  * Ranking del profesor (HANDOFF §3; W8): `ranking/{seccion}` en vivo como el del estudiante
  * (D190), sin fila «tú» y con el segmentado 5A | 5C. Las pestañas y la sección son enlaces entre
- * rutas (D095, D157). Los logos se firman solo en la vista de equipos (D212). El chip «En vivo»
- * móvil lo pone la topbar (D128).
+ * rutas (D095, D157). Los logos se firman solo en la vista de equipos (D212).
  */
 export async function RankingProfe({
   seccion,

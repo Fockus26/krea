@@ -2,8 +2,10 @@
 
 import { puntosRanking } from "./grades";
 
-/** Cuántos puestos finales forman la zona de riesgo. */
+/** Cuántos puestos finales forman la zona de riesgo entre estudiantes. */
 export const ZONA_RIESGO = 5;
+/** Entre equipos solo el último puesto (con sus empatados) está en riesgo (D255). */
+export const ZONA_RIESGO_EQUIPOS = 1;
 /** Hasta qué puesto se muestra el chip "Empate" (lógica de UI, ver `mostrarChipEmpate`). */
 export const TOP_CHIP_EMPATE = 10;
 
@@ -19,7 +21,7 @@ export interface RankingPuesto {
   puesto: number;
   /** Comparte puesto con otra fila. */
   empate: boolean;
-  /** Dentro de los 5 últimos puestos, incluyendo empatados en el borde. */
+  /** Dentro de los últimos `zona` puestos, incluyendo empatados en el borde. */
   enRiesgo: boolean;
 }
 
@@ -34,12 +36,13 @@ const comparaApellido = new Intl.Collator("es", { sensitivity: "base" });
  * Ordena por puntos (desc) y asigna puestos de competencia. Dentro de un empate,
  * orden alfabético por primer apellido (español: la tilde no altera el orden).
  * Devuelve las filas ordenadas, cada una con sus datos originales + `RankingPuesto`.
- * Zona de riesgo = puestos >= al de la fila que ocupa el 5.º lugar desde el final,
- * así los empatados en el borde entran también (puede haber más de 5 filas).
- * Con 5 filas o menos, todas quedan en riesgo.
+ * Zona de riesgo = puestos >= al de la fila que ocupa el lugar `zona` desde el final
+ * (5 en estudiantes, 1 en equipos), así los empatados en el borde entran también (puede haber
+ * más filas que `zona`). Con `zona` filas o menos, todas quedan en riesgo.
  */
 export function rankCompetition<T extends RankingEntrada>(
   lista: readonly T[],
+  zona: number = ZONA_RIESGO,
 ): Array<T & RankingPuesto> {
   const ordenada = [...lista].sort(
     (a, b) =>
@@ -51,7 +54,7 @@ export function rankCompetition<T extends RankingEntrada>(
     while (puesto > 1 && ordenada[puesto - 2].puntos === fila.puntos) puesto--;
     return puesto;
   });
-  const puestoBorde = puestos[Math.max(0, ordenada.length - ZONA_RIESGO)];
+  const puestoBorde = puestos[Math.max(0, ordenada.length - zona)];
   return ordenada.map((fila, i) => {
     const puesto = puestos[i];
     return {

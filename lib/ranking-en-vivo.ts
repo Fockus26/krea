@@ -3,7 +3,11 @@
 // usa el componente cliente que escucha con `onSnapshot` y lo prueban los tests.
 import type { RankingSeccion } from "@/lib/modelo";
 import type { RankEvento } from "@/lib/rank-row";
-import { primerApellido, rankCompetition } from "@/lib/ranking";
+import {
+  primerApellido,
+  rankCompetition,
+  ZONA_RIESGO_EQUIPOS,
+} from "@/lib/ranking";
 import {
   type ItemRanking,
   type Movimiento,
@@ -111,6 +115,7 @@ export function itemsDeRanking(
       id,
       primerApellido: e.nombre,
     })),
+    ZONA_RIESGO_EQUIPOS,
   );
   return filas.map((e) => {
     const capId = info[e.id]?.capitan ?? null;

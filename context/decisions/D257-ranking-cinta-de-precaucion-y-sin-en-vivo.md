@@ -1,0 +1,4 @@
+# D257 · Ranking · Cinta de precaución animada en la zona de riesgo; se quita el rótulo «En vivo» · Implemented
+
+**Decision:** el separador lleva una franja de rayas `--error`/`--warning` (`cinta-riesgo`, `repeating-linear-gradient` en un `::before` que se mueve con `translateX`, nunca `background-position`), un ícono de alerta que tiembla (`animate-alerta`) y el «VS» que late (`animate-vs`). Tokens nuevos en `globals.css`: `--d-cinta`, `--d-alerta`, `--d-vs`. Con reduced motion todo queda quieto. Se quita el chip «En vivo» (`LiveChip`, prop `enVivo` de la topbar y de `lib/topbar.ts`, `--d-live` y `animate-live`); el Menú del profe vuelve a mostrar siempre su texto. El ranking sigue en vivo (D190): solo se quitó el rótulo.
+**Why:** pedidos de César 16 y 20. Reemplaza la parte del chip «En vivo» de D128.

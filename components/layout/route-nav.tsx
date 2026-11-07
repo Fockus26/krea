@@ -30,7 +30,6 @@ type TopBarRutaProps = Omit<
   | "volverHref"
   | "volverLabel"
   | "volverIcono"
-  | "enVivo"
   | "accion"
   | "soloAccion"
 > & {
@@ -49,7 +48,6 @@ export function RouteTopBar({ titulos, ...props }: TopBarRutaProps) {
       volverHref={t.volver?.href}
       volverLabel={t.volver?.label}
       volverIcono={t.variante === "evaluar" ? "cerrar" : "atras"}
-      enVivo={t.enVivo}
       soloAccion={t.soloAccion}
       accion={<TopBarAccionDestino />}
     />

@@ -10,6 +10,7 @@ import {
   primerApellido,
   type RankingPuesto,
   rankCompetition,
+  ZONA_RIESGO_EQUIPOS,
 } from "@/lib/ranking";
 
 export type Seccion = "5A" | "5C";
@@ -194,6 +195,7 @@ export function rankingEquipos(sec: Seccion): FilaRankingEquipo[] {
       puntos: puntosDeEquipo(e),
       primerApellido: e.nombre,
     })),
+    ZONA_RIESGO_EQUIPOS,
   );
 }
 

@@ -50,7 +50,7 @@ export function Ranking({
       />
       <RankingHowTo className="lg:hidden" />
       <div className="g-side max-lg:gap-6">
-        <RankingBoard vista={vista} items={items} />
+        <RankingBoard vista={vista} items={items} rol={rol} seccion={seccion} />
         <aside
           aria-label="Reglas y movimientos"
           className="flex flex-col gap-6 max-lg:hidden"

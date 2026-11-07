@@ -7,6 +7,8 @@ import {
   primerApellido,
   puntosEquipo,
   rankCompetition,
+  ZONA_RIESGO,
+  ZONA_RIESGO_EQUIPOS,
 } from "@/lib/ranking";
 
 const e = (id: string, puntos: number, apellido = id) => ({
@@ -87,6 +89,38 @@ describe("rankCompetition", () => {
       "h",
     ]);
     expect(r.find((x) => x.id === "b")?.enRiesgo).toBe(false);
+  });
+
+  test("zona por vista: estudiantes 5, equipos 1 (D255)", () => {
+    expect(ZONA_RIESGO).toBe(5);
+    expect(ZONA_RIESGO_EQUIPOS).toBe(1);
+    const lista = [20, 19, 18, 17, 16, 15].map((p) => e(`p${p}`, p));
+    expect(
+      rankCompetition(lista, ZONA_RIESGO_EQUIPOS)
+        .filter((x) => x.enRiesgo)
+        .map((x) => x.puntos),
+    ).toEqual([15]);
+    expect(rankCompetition(lista).filter((x) => x.enRiesgo).length).toBe(5);
+  });
+
+  test("equipos: el último con sus empatados en el borde", () => {
+    const r = rankCompetition(
+      [e("a", 30), e("b", 22), e("c", 10), e("d", 10), e("f", 10)],
+      ZONA_RIESGO_EQUIPOS,
+    );
+    expect(r.filter((x) => x.enRiesgo).map((x) => x.id)).toEqual([
+      "c",
+      "d",
+      "f",
+    ]);
+    expect(r.filter((x) => x.enRiesgo).every((x) => x.puesto === 3)).toBe(true);
+  });
+
+  test("equipos: un solo equipo está en riesgo; lista vacía no falla", () => {
+    expect(rankCompetition([e("a", 3)], ZONA_RIESGO_EQUIPOS)[0].enRiesgo).toBe(
+      true,
+    );
+    expect(rankCompetition([], ZONA_RIESGO_EQUIPOS)).toEqual([]);
   });
 
   test("5 filas o menos: todas en riesgo; lista vacía no falla", () => {

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 /**
  * Encabezado de pantalla (HANDOFF §3): eyebrow, el único `<h1>` de la página, ayuda opcional y,
  * a la derecha, acciones o segmentados que envuelven debajo cuando no caben. Gap 8.
- * `adornment` va pegado al título (p. ej. el chip "En vivo" del ranking).
+ * `adornment` va pegado al título (p. ej. un chip de estado).
  */
 export function PageHeader({
   eyebrow,
