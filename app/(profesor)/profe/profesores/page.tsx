@@ -4,6 +4,7 @@ import {
   crearProfesor,
   editarProfesor,
   eliminarProfesor,
+  eliminarProfesores,
 } from "@/lib/acciones/profesores";
 import { profesoresTodos } from "@/lib/datos/profesores";
 
@@ -23,6 +24,7 @@ export default async function ProfesoresPage() {
         crear: crearProfesor,
         editar: editarProfesor,
         eliminar: eliminarProfesor,
+        eliminarVarios: eliminarProfesores,
       }}
     />
   );

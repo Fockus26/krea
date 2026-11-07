@@ -27,6 +27,7 @@ import {
 } from "@/lib/alumnos";
 import { ALTA_SIN_EQUIPO, type OpcionEquipo } from "@/lib/alumnos-alta";
 import type { EditarAlumno, ResultadoAlumno } from "@/lib/alumnos-datos";
+import { alternarTodos, alternarUno, podarSeleccion } from "@/lib/lote";
 import {
   AddStudentDialog,
   AGREGAR_ALUMNO_ID,
@@ -37,6 +38,7 @@ import {
   type AccionesBorrarAlumno,
   DeleteStudentDialog,
 } from "./delete-student-dialog";
+import { DeleteStudentsBatch } from "./delete-students-batch";
 import { StudentFilters } from "./student-filters";
 import { StudentsTable } from "./students-table";
 import { usePresenciaAlumnos, type YoPresencia } from "./use-presencia";
@@ -85,9 +87,19 @@ export function StudentsDirectory({
   const [filas, setFilas] = useState<readonly FilaAlumno[]>(alumnos);
   // La lista del servidor manda cuando cambia (tras crear, eliminar o editar: `refresh()`)
   const [alumnosAntes, setAlumnosAntes] = useState(alumnos);
+  // Casillas del lote (D298): solo de lo visible; se vacían al cambiar de sección o de filtro
+  const [marcadas, setMarcadas] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
   if (alumnos !== alumnosAntes) {
     setAlumnosAntes(alumnos);
     setFilas(alumnos);
+    setMarcadas((m) =>
+      podarSeleccion(
+        m,
+        alumnos.map((a) => a.cedula),
+      ),
+    );
   }
   // Con `alumno`, la lista se abre en la sección de ese alumno para que su fila sea visible.
   const seccionDelAlumno = alumnos.find(
@@ -122,14 +134,21 @@ export function StudentsDirectory({
     tarea: tareaId,
     alumno: alumnoAbierto,
   });
+  const limpiarSeleccion = () => setMarcadas(new Set());
   function cambiarSeccion(s: SeccionAlumnos) {
     setSeccion(s);
+    limpiarSeleccion();
     sincronizar({ ...actuales(), seccion: s });
   }
   function quitarFiltro() {
     setEstado(undefined);
     setTareaId(undefined);
+    limpiarSeleccion();
     sincronizar({ seccion, alumno: alumnoAbierto });
+  }
+  function cambiarConsulta(q: string) {
+    setConsulta(q);
+    limpiarSeleccion();
   }
   function cambiarAbierto(cedula: string, abierto: boolean) {
     const alumno = abierto ? cedula : undefined;
@@ -140,6 +159,7 @@ export function StudentsDirectory({
     // Su fila tiene que verse al abrir la ficha: su sección y sin búsqueda
     setConsulta("");
     setSeccion(a.seccion);
+    limpiarSeleccion();
     sincronizar({ ...actuales(), seccion: a.seccion });
     setCreado({
       cedula: a.cedula,
@@ -154,12 +174,23 @@ export function StudentsDirectory({
     // Después de la contraseña, la ficha del alumno nuevo (D267)
     if (cedula) cambiarAbierto(cedula, true);
   }
-  function alEliminar(cedula: string) {
+  /** Quita filas de la lista local y de la selección (la del servidor llega con `refresh()`). */
+  function quitarFilas(cedulas: readonly string[]) {
+    const fuera = new Set(cedulas);
+    setFilas((actuales) => actuales.filter((a) => !fuera.has(a.cedula)));
+    setMarcadas((m) => new Set([...m].filter((c) => !fuera.has(c))));
+    if (alumnoAbierto && fuera.has(alumnoAbierto)) {
+      setAlumnoAbierto(undefined);
+      sincronizar({ ...actuales(), alumno: undefined });
+    }
+  }
+  function alEliminar(cedula: string, aviso?: (nombre: string) => string) {
     const fila = filas.find((a) => a.cedula === cedula);
-    setFilas((actuales) => actuales.filter((a) => a.cedula !== cedula));
-    setAlumnoAbierto(undefined);
-    sincronizar({ ...actuales(), alumno: undefined });
-    if (fila) toast(`Eliminaste a ${nombreAlumno(fila)}`);
+    quitarFilas([cedula]);
+    if (fila) {
+      const nombre = nombreAlumno(fila);
+      toast(aviso ? aviso(nombre) : `Eliminaste a ${nombre}`);
+    }
     // Su fila (y el botón que abrió la ficha) ya no existe: el foco va a «Agregar alumno»
     requestAnimationFrame(() =>
       document.getElementById(AGREGAR_ALUMNO_ID)?.focus(),
@@ -178,6 +209,10 @@ export function StudentsDirectory({
     "5C": porEstado("5C").length,
   };
   const visibles = filtrarAlumnos(porEstado(seccion), consulta);
+  const lote =
+    alta?.resumirVarios && alta.eliminarVarios
+      ? { resumir: alta.resumirVarios, eliminar: alta.eliminarVarios }
+      : null;
   const contador =
     estado && consulta.trim() === ""
       ? contadorEstadoTexto(visibles.length, estado, seccion, tarea?.titulo)
@@ -214,7 +249,7 @@ export function StudentsDirectory({
         onSeccion={cambiarSeccion}
         conteos={conteos}
         consulta={consulta}
-        onConsulta={setConsulta}
+        onConsulta={cambiarConsulta}
         contador={contador}
         filtroActivo={
           estado || tareaId
@@ -222,6 +257,18 @@ export function StudentsDirectory({
             : undefined
         }
       />
+      {lote && !vacia ? (
+        <DeleteStudentsBatch
+          seleccionados={visibles
+            .filter((a) => marcadas.has(a.cedula))
+            .map((a) => ({ cedula: a.cedula, nombre: nombreAlumno(a) }))}
+          onLimpiar={limpiarSeleccion}
+          resumir={lote.resumir}
+          eliminar={lote.eliminar}
+          onEliminados={quitarFilas}
+          focoAlTerminar={AGREGAR_ALUMNO_ID}
+        />
+      ) : null}
       {vacia ? (
         <Card>
           <EmptyState
@@ -264,6 +311,37 @@ export function StudentsDirectory({
                 a.cedula === cedula ? { ...a, ...cambios } : a,
               ),
             )
+          }
+          onYaNoExiste={(cedula) =>
+            alEliminar(cedula, (nombre) => `${nombre} ya no está en la lista`)
+          }
+          seleccion={
+            lote
+              ? {
+                  marcadas,
+                  onUno: (cedula, v) =>
+                    setMarcadas((m) => alternarUno(m, cedula, v)),
+                  onTodos: () =>
+                    setMarcadas((m) =>
+                      alternarTodos(
+                        visibles.map((a) => a.cedula),
+                        m,
+                      ),
+                    ),
+                }
+              : undefined
+          }
+          eliminarFila={
+            alta
+              ? (a) => (
+                  <DeleteStudentDialog
+                    alumno={a}
+                    acciones={alta}
+                    onEliminado={alEliminar}
+                    compacto
+                  />
+                )
+              : undefined
           }
           eliminar={
             alta

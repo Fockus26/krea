@@ -5,6 +5,7 @@
 import { refresh } from "next/cache";
 import { crearCuenta, ErrorCuenta, eliminarCuenta } from "@/lib/cuentas";
 import {
+  type ErrorProfesor,
   type ResultadoCrearProfesor,
   type ResultadoProfesor,
   zCrearProfesor,
@@ -13,6 +14,7 @@ import {
 import { exigirAdmin } from "@/lib/dal";
 import { firebaseAdmin } from "@/lib/firebase/admin";
 import { editarProfesorEnTransaccion } from "@/lib/firebase/cuentas";
+import { borrarEnLote, type ResultadoLote, zCedulasLote } from "@/lib/lote";
 import { COL, zCedula, zUsuario } from "@/lib/modelo";
 
 const log = (donde: string, e: unknown) =>
@@ -71,16 +73,48 @@ export async function eliminarProfesor(
   if (!admin) return { ok: false, error: "red" };
   const c = zCedula.safeParse(cedula);
   if (!c.success) return { ok: false, error: "invalida" };
-  if (c.data === sesion.uid) return { ok: false, error: "tu-cuenta" };
+  const r = await borrarUnProfesor(admin, sesion.uid, c.data);
+  if (r.ok) refresh();
+  return r;
+}
+
+/**
+ * Lo mismo para varios (W22, D298): hasta TOPE_LOTE cédulas, una tras otra, con el resultado de
+ * cada una. El admin no se borra a sí mismo aunque su cédula llegue en el body (`tu-cuenta`).
+ * Idempotente como el de uno: el que ya no está cuenta como borrado.
+ */
+export async function eliminarProfesores(
+  cedulas: unknown,
+): Promise<ResultadoLote<ErrorProfesor>> {
+  const sesion = await exigirAdmin();
+  const admin = firebaseAdmin();
+  if (!admin) return { ok: false, error: "red" };
+  const d = zCedulasLote.safeParse(cedulas);
+  if (!d.success) return { ok: false, error: "invalida" };
+  const resultados = await borrarEnLote<ErrorProfesor>(
+    d.data,
+    (cedula) => borrarUnProfesor(admin, sesion.uid, cedula),
+    "red",
+  );
+  refresh();
+  return { ok: true, resultados };
+}
+
+/** El borrado de uno, sin sesión ni `refresh()`. No lanza: cualquier fallo vuelve como error. */
+async function borrarUnProfesor(
+  admin: NonNullable<ReturnType<typeof firebaseAdmin>>,
+  yo: string,
+  cedula: string,
+): Promise<ResultadoProfesor> {
+  if (cedula === yo) return { ok: false, error: "tu-cuenta" };
   try {
-    const snap = await admin.db.collection(COL.usuarios).doc(c.data).get();
+    const snap = await admin.db.collection(COL.usuarios).doc(cedula).get();
     // Sin perfil no hay qué comprobar ni borrar (eliminarCuenta borra Auth antes que el perfil)
     if (!snap.exists) return { ok: true };
     const u = zUsuario.safeParse(snap.data());
     if (!u.success || u.data.rol !== "profesor")
       return { ok: false, error: "no-profesor" };
-    await eliminarCuenta(c.data);
-    refresh();
+    await eliminarCuenta(cedula);
     return { ok: true };
   } catch (e) {
     log("[eliminarProfesor]", e);

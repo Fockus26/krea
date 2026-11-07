@@ -41,6 +41,13 @@ const buttonCva = cva(
           // Lámina de componentes: deshabilitado sin fondo, solo texto --text-dis
           "not-aria-busy:disabled:bg-transparent not-aria-busy:aria-disabled:bg-transparent",
         ],
+        // Eliminar sin fondo (D297): el rojo de error es suyo, no del acento; hover con el tinte de los avisos y activo con el del chip
+        "ghost-danger": [
+          "bg-transparent text-error",
+          "hover:not-disabled:not-aria-disabled:bg-alert-err",
+          "active:not-disabled:not-aria-disabled:translate-y-px active:not-disabled:not-aria-disabled:bg-chip-err",
+          "not-aria-busy:disabled:bg-transparent not-aria-busy:aria-disabled:bg-transparent",
+        ],
         // Hover y activo de danger salen de la lámina (Componentes.dc.html), no de §2.1
         danger: [
           "bg-error text-on-error",
@@ -59,7 +66,12 @@ const buttonCva = cva(
     },
     compoundVariants: [
       // ghost: padding 0 12 solo en md (sm y lg conservan el suyo, como el lienzo)
-      { variant: "ghost", size: "md", icon: false, className: "px-3" },
+      {
+        variant: ["ghost", "ghost-danger"],
+        size: "md",
+        icon: false,
+        className: "px-3",
+      },
       { icon: true, size: "sm", className: "w-9 max-lg:w-11" },
       { icon: true, size: "md", className: "w-11" },
       { icon: true, size: "lg", className: "w-13" },

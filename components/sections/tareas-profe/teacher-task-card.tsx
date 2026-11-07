@@ -151,13 +151,12 @@ export function TeacherTaskCard({
         {onEliminar ? (
           <Button
             type="button"
-            variant="ghost"
+            variant="ghost-danger"
             size="sm"
             icon
             aria-haspopup="dialog"
             aria-label={eliminarTareaLabel(tarea.titulo)}
             onClick={(e) => onEliminar(e.currentTarget)}
-            className="text-error"
           >
             <Trash2 aria-hidden="true" />
           </Button>

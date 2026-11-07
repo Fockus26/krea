@@ -82,14 +82,14 @@ export function QuestionEditor({
         {bloqueada ? null : (
           <Button
             type="button"
-            variant="ghost"
+            variant="ghost-danger"
             size="sm"
             icon
             disabled={!puedeEliminar}
             aria-label={`Eliminar la pregunta ${numero}`}
             onClick={onEliminar}
             // 36 (44 < lg) centrado en la línea de 32 sin estirar la fila
-            className="-my-0.5 text-error max-lg:-my-1.5"
+            className="-my-0.5 max-lg:-my-1.5"
           >
             <Trash2 aria-hidden="true" />
           </Button>

@@ -25,6 +25,7 @@ import { Separator } from "@/components/ui/separator";
 import { unirNombre } from "@/lib/alumnos";
 import {
   type CrearProfesor,
+  type ErrorProfesor,
   errorProfesorTexto,
   type FilaProfesor,
   nombreProfesor,
@@ -32,12 +33,15 @@ import {
   type ResultadoProfesor,
   validarProfesor,
 } from "@/lib/cuentas-datos";
+import type { ResultadoLote } from "@/lib/lote";
 import { cedulaTexto, partirNombre } from "@/lib/perfil";
 
 export type AccionesProfesores = {
   crear: (entrada: CrearProfesor) => Promise<ResultadoCrearProfesor>;
   editar: (entrada: CrearProfesor) => Promise<ResultadoProfesor>;
   eliminar: (cedula: string) => Promise<ResultadoProfesor>;
+  /** En lote (W22, D298); sin ella, la lista no ofrece casillas. */
+  eliminarVarios?: (cedulas: string[]) => Promise<ResultadoLote<ErrorProfesor>>;
 };
 
 // PROVISIONAL (CONTENT_CHECKLIST fila 137): la pantalla no está en el lienzo
@@ -47,6 +51,9 @@ const AYUDA_CEDULA_CREAR =
   "Será su usuario para entrar. Después no se puede cambiar.";
 const AYUDA_EMAIL =
   "Para «Olvidé mi contraseña». Déjalo vacío si no lo tienes.";
+
+/** «Nuevo profesor»: recibe el foco cuando la fila (o la barra del lote) que lo tenía desaparece. */
+export const NUEVO_PROFESOR_ID = "nuevo-profesor";
 
 /* ---------- Crear / editar ---------- */
 
@@ -62,7 +69,7 @@ export function CrearProfesorDialog({
   return (
     <Dialog open={abierto} onOpenChange={setAbierto}>
       <DialogTrigger asChild>
-        <Button>
+        <Button id={NUEVO_PROFESOR_ID}>
           <UserPlus aria-hidden="true" />
           Nuevo profesor
         </Button>
@@ -325,6 +332,7 @@ export function EliminarProfesorDialog({
   const [borrando, setBorrando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const enviando = useRef(false);
+  const eliminado = useRef(false);
   const nombre = nombreProfesor(profesor);
 
   async function confirmar() {
@@ -341,6 +349,7 @@ export function EliminarProfesorDialog({
       setError(errorProfesorTexto(r.error));
       return;
     }
+    eliminado.current = true;
     setAbierto(false);
     toast(`Eliminaste a ${nombre}`);
   }
@@ -354,13 +363,21 @@ export function EliminarProfesorDialog({
       }}
     >
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="text-error">
+        <Button variant="ghost-danger" size="sm">
           <Trash2 aria-hidden="true" />
           <span aria-hidden="true">Eliminar</span>
           <span className="sr-only">Eliminar a {nombre}</span>
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent
+        onCloseAutoFocus={(e) => {
+          // Borrado: su fila (y este botón) se va con el refresh; el foco, a «Nuevo profesor»
+          if (eliminado.current) {
+            e.preventDefault();
+            document.getElementById(NUEVO_PROFESOR_ID)?.focus();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle>¿Eliminar a {nombre}?</DialogTitle>
           <DialogDescription>

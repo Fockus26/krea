@@ -18,6 +18,8 @@ const SIN_INVALIDAR: Record<string, string> = {
     "sube a B2; la respuesta no existe hasta enviarEntrega, que sí invalida",
   resumenEliminarAlumno:
     "solo cuenta lo que se borraría; eliminarAlumno sí invalida",
+  resumenEliminarAlumnos:
+    "solo suma lo que se borraría; eliminarAlumnos sí invalida",
 };
 
 const INVALIDA =

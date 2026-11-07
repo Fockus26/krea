@@ -32,8 +32,15 @@ const VARIANTS = [
     loading: "Saliendo…",
     icon: <LogOut aria-hidden="true" />,
   },
+  {
+    variant: "ghost-danger",
+    title: "Fantasma de peligro",
+    label: "Eliminar",
+    loading: "Eliminando…",
+    icon: <Trash2 aria-hidden="true" />,
+  },
 ] as const satisfies readonly {
-  variant: "primary" | "secondary" | "ghost" | "danger";
+  variant: "primary" | "secondary" | "ghost" | "danger" | "ghost-danger";
   title: string;
   label: string;
   loading: string;
@@ -93,7 +100,12 @@ export function Botones() {
           >
             <Copy aria-hidden="true" />
           </Button>
-          <Button variant="ghost" size="sm" icon aria-label="Eliminar pregunta">
+          <Button
+            variant="ghost-danger"
+            size="sm"
+            icon
+            aria-label="Eliminar pregunta"
+          >
             <Trash2 aria-hidden="true" />
           </Button>
           <Button

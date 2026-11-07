@@ -281,7 +281,7 @@ export function EliminarEquipoDialog({
       }}
     >
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="text-error">
+        <Button variant="ghost-danger" size="sm">
           <Trash2 aria-hidden="true" />
           <span aria-hidden="true">Eliminar</span>
           <span className="sr-only">Eliminar el equipo {equipo.nombre}</span>

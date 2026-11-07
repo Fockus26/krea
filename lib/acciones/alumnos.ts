@@ -9,9 +9,13 @@
 import { refresh } from "next/cache";
 import { almacenB2 } from "@/lib/almacen/b2";
 import {
+  type ErrorBorrarAlumno,
   type ResultadoBorrarAlumno,
   type ResultadoCrearAlumno,
   type ResultadoResumenBorrado,
+  type ResultadoResumenLote,
+  type ResumenBorrado,
+  sumarResumenes,
   zCrearAlumno,
 } from "@/lib/alumnos-alta";
 import { type ResultadoAlumno, zEditarAlumno } from "@/lib/alumnos-datos";
@@ -28,6 +32,7 @@ import {
 } from "@/lib/firebase/alumnos-alta";
 import { sincronizarClaims } from "@/lib/firebase/equipos";
 import { borrarPresenciaAlumno } from "@/lib/firebase/presencia";
+import { borrarEnLote, type ResultadoLote, zCedulasLote } from "@/lib/lote";
 import { zCedula } from "@/lib/modelo";
 
 export type {
@@ -35,6 +40,7 @@ export type {
   ResultadoBorrarAlumno,
   ResultadoCrearAlumno,
   ResultadoResumenBorrado,
+  ResultadoResumenLote,
 };
 
 const registrar = (accion: string, e: unknown) =>
@@ -157,31 +163,97 @@ export async function eliminarAlumno(
   if (!admin) return { ok: false, error: "red" };
   const c = zCedula.safeParse(cedula);
   if (!c.success) return { ok: false, error: "invalida" };
+  const r = await borrarUnAlumno(admin, c.data);
+  // `a-medias`: Auth ya no está, la lista tiene que dejar de ofrecerle entrar
+  if (r.ok || r.error === "a-medias") refresh();
+  return r;
+}
+
+/**
+ * Lo mismo para varios (W22, D298): hasta TOPE_LOTE cédulas por llamada, una tras otra (cada una
+ * es su propia transacción con el ranking), con el resultado de cada cédula. Idempotente: un
+ * alumno que ya no existe cuenta como borrado, así que repetir el lote (o dos profes a la vez) no
+ * falla. Un fallo no corta el lote: los demás se borran y la UI dice cuáles no.
+ */
+export async function eliminarAlumnos(
+  cedulas: unknown,
+): Promise<ResultadoLote<ErrorBorrarAlumno>> {
+  await exigirSesion("profesor");
+  const admin = firebaseAdmin();
+  if (!admin) return { ok: false, error: "red" };
+  const d = zCedulasLote.safeParse(cedulas);
+  if (!d.success) return { ok: false, error: "invalida" };
+  const resultados = await borrarEnLote<ErrorBorrarAlumno>(
+    d.data,
+    async (cedula) => {
+      const r = await borrarUnAlumno(admin, cedula);
+      return !r.ok && r.error === "no-existe" ? { ok: true } : r;
+    },
+    "red",
+  );
+  refresh();
+  return { ok: true, resultados };
+}
+
+/**
+ * Suma de lo que se perdería al eliminar a varios (solo lee, como `resumenEliminarAlumno`). Los
+ * que ya no existen o no se pueden borrar no suman: el lote los reporta al confirmar.
+ */
+export async function resumenEliminarAlumnos(
+  cedulas: unknown,
+): Promise<ResultadoResumenLote> {
+  await exigirSesion("profesor");
+  const admin = firebaseAdmin();
+  if (!admin) return { ok: false, error: "red" };
+  const d = zCedulasLote.safeParse(cedulas);
+  if (!d.success) return { ok: false, error: "invalida" };
+  try {
+    const resumenes: ResumenBorrado[] = [];
+    for (const c of d.data) {
+      // Un fallo de red lanza (y cae en el catch); los demás errores no suman
+      const r = await resumenBorradoCon(admin.db, c);
+      if (r.ok) resumenes.push(r.resumen);
+    }
+    return { ok: true, resumen: sumarResumenes(resumenes) };
+  } catch (e) {
+    registrar("resumenEliminarAlumnos", e);
+    return { ok: false, error: "red" };
+  }
+}
+
+/**
+ * El borrado de uno, sin sesión ni `refresh()` (lo ponen `eliminarAlumno` y `eliminarAlumnos`).
+ * No lanza: cualquier fallo vuelve como error.
+ */
+async function borrarUnAlumno(
+  admin: NonNullable<ReturnType<typeof firebaseAdmin>>,
+  cedula: string,
+): Promise<ResultadoBorrarAlumno> {
   // Antes de tocar Auth: que exista, que sea un alumno y que quepa en una transacción
   try {
-    const previo = await resumenBorradoCon(admin.db, c.data);
+    const previo = await resumenBorradoCon(admin.db, cedula);
     if (!previo.ok) return previo;
-    await borrarAuthAlumno(admin.auth, c.data);
+    await borrarAuthAlumno(admin.auth, cedula);
   } catch (e) {
     registrar("eliminarAlumno", e);
     return { ok: false, error: "red" };
   }
   let imagenes: string[];
   try {
-    const r = await eliminarAlumnoEnTransaccion(admin.db, c.data, Date.now());
+    const r = await eliminarAlumnoEnTransaccion(admin.db, cedula, Date.now());
     if (!r.ok) return r;
     imagenes = r.imagenes;
   } catch (e) {
     registrar("eliminarAlumno", e);
-    refresh();
     return { ok: false, error: "a-medias" };
   }
-  await borrarImagenes(imagenes);
+  await borrarImagenes(imagenes).catch((e) =>
+    registrar("eliminarAlumno:imagenes", e),
+  );
   // Su presencia (D275): si falla, queda huérfana e inofensiva (nadie edita a un alumno que no está)
-  await borrarPresenciaAlumno(admin.db, c.data).catch((e) =>
+  await borrarPresenciaAlumno(admin.db, cedula).catch((e) =>
     registrar("eliminarAlumno:presencia", e),
   );
-  refresh();
   return { ok: true };
 }
 

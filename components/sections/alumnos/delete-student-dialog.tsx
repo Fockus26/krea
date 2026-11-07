@@ -24,16 +24,24 @@ import {
   BORRADO_GRUPALES,
   borradoTexto,
   capitaniaTexto,
+  type ErrorBorrarAlumno,
   errorBorrarAlumnoTexto,
   type ResultadoBorrarAlumno,
   type ResultadoResumenBorrado,
+  type ResultadoResumenLote,
   type ResumenBorrado,
   sinNotaTexto,
 } from "@/lib/alumnos-alta";
+import type { ResultadoLote } from "@/lib/lote";
 
 export type AccionesBorrarAlumno = {
   resumir: (cedula: string) => Promise<ResultadoResumenBorrado>;
   eliminar: (cedula: string) => Promise<ResultadoBorrarAlumno>;
+  /** En lote (W22, D298); sin ellas, la tabla no ofrece casillas. */
+  resumirVarios?: (cedulas: string[]) => Promise<ResultadoResumenLote>;
+  eliminarVarios?: (
+    cedulas: string[],
+  ) => Promise<ResultadoLote<ErrorBorrarAlumno>>;
 };
 
 type Resumen =
@@ -45,10 +53,13 @@ export function DeleteStudentDialog({
   alumno,
   acciones,
   onEliminado,
+  compacto = false,
 }: {
   alumno: Pick<FilaAlumno, "cedula" | "nombres" | "apellidos">;
   acciones: AccionesBorrarAlumno;
   onEliminado: (cedula: string) => void;
+  /** Disparador de solo ícono (la fila de la tabla); sin él, «Eliminar alumno» (la ficha). */
+  compacto?: boolean;
 }) {
   const [abierto, setAbierto] = useState(false);
   const [resumen, setResumen] = useState<Resumen>({ estado: "contando" });
@@ -99,10 +110,23 @@ export function DeleteStudentDialog({
   return (
     <Dialog open={abierto} onOpenChange={abrir}>
       <DialogTrigger asChild>
-        <Button type="button" variant="ghost" className="text-error">
-          <Trash2 aria-hidden="true" />
-          Eliminar alumno
-        </Button>
+        {compacto ? (
+          // En la fila, junto a «Editar» (D298): solo ícono, con el nombre para el lector
+          <Button
+            type="button"
+            variant="ghost-danger"
+            size="sm"
+            icon
+            aria-label={`Eliminar a ${nombre}`}
+          >
+            <Trash2 aria-hidden="true" />
+          </Button>
+        ) : (
+          <Button type="button" variant="ghost-danger">
+            <Trash2 aria-hidden="true" />
+            Eliminar alumno
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

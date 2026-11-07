@@ -206,6 +206,53 @@ export function capitaniaTexto(c: ResumenBorrado["capitania"]): string | null {
     : `Es el único integrante de ${c.equipo}: el equipo queda vacío y sin capitán.`;
 }
 
+/* Eliminar en lote (W22, D300) */
+
+/** Lo que se pierde al eliminar a varios: la suma de sus resúmenes y cuántos eran capitanes. */
+export type ResumenBorradoLote = Pick<
+  ResumenBorrado,
+  "notas" | "sinNota" | "ajustes"
+> & { capitanes: number };
+
+export function sumarResumenes(
+  rs: readonly ResumenBorrado[],
+): ResumenBorradoLote {
+  return rs.reduce<ResumenBorradoLote>(
+    (t, r) => ({
+      notas: t.notas + r.notas,
+      sinNota: t.sinNota + r.sinNota,
+      ajustes: t.ajustes + r.ajustes,
+      capitanes: t.capitanes + (r.capitania ? 1 : 0),
+    }),
+    { notas: 0, sinNota: 0, ajustes: 0, capitanes: 0 },
+  );
+}
+
+export type ResultadoResumenLote =
+  | { ok: true; resumen: ResumenBorradoLote }
+  | { ok: false; error: "invalida" | "red" };
+
+/** PROVISIONAL (fila 160). Como `borradoTexto`, pero de varios. */
+export function borradoLoteTexto(
+  r: Pick<ResumenBorrado, "notas" | "ajustes">,
+): string {
+  if (r.notas === 0 && r.ajustes === 0)
+    return "No tienen notas individuales ni ajustes de puntos.";
+  return borradoTexto(r);
+}
+
+/** PROVISIONAL (fila 160). «Entre ellos hay 2 capitanes: …» */
+export function capitanesTexto(n: number): string | null {
+  if (n === 0) return null;
+  return n === 1
+    ? "Entre ellos hay 1 capitán: el cargo pasa a otro integrante de su equipo, o el equipo queda sin capitán si se vacía."
+    : `Entre ellos hay ${n} capitanes: el cargo pasa a otro integrante de cada equipo, o el equipo queda sin capitán si se vacía.`;
+}
+
+/** PROVISIONAL (fila 160). Lo que se borra de cada uno, en plural. */
+export const BORRADO_CUENTAS_LOTE =
+  "Se borran sus cuentas, sus perfiles y sus datos: ya no podrán entrar. No se puede deshacer.";
+
 export const BORRADO_GRUPALES =
   "Sus notas en tareas grupales se quedan con su equipo. El ranking se recalcula.";
 export const BORRADO_CUENTA =

@@ -77,7 +77,7 @@ export function SecuritySettings({
         </Dialog>
         <Dialog>
           <DialogTrigger asChild>
-            <Button variant="ghost" className="text-error">
+            <Button variant="ghost-danger">
               <LogOut aria-hidden="true" />
               Cerrar sesión
             </Button>
