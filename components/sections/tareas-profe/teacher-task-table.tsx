@@ -100,7 +100,7 @@ export function TeacherTaskTable({
               <Link
                 id={tituloTareaId(t.id)}
                 href={rutaTarea(t.id)}
-                className="text-label break-words text-text underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                className="text-label break-words text-text underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
               >
                 {t.titulo}
               </Link>
