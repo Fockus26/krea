@@ -1,6 +1,6 @@
 // Lógica y textos de Ajustes de puntos (fase 04, D118–D121). Funciones puras, sin React ni reloj:
 // la fecha de un ajuste nuevo llega por argumento. Un ajuste mueve puntos del ranking, nunca la nota (D007).
-import { normalizar } from "@/lib/alumnos";
+import { normalizar, rutaAlumnos } from "@/lib/alumnos";
 import type { DicebearEstilo } from "@/lib/dicebear";
 import { chipAjuste, fechaAjusteTexto } from "@/lib/panel";
 import { rankCompetition } from "@/lib/ranking";
@@ -293,6 +293,8 @@ export type FilaHistorial = {
   profe: string;
   /** `id` del ajuste que anula (solo en «Anulación»). */
   anulaA?: string;
+  /** `motivoId` guardado; `importado` = ajuste del Excel (D260). */
+  motivoId?: string;
   /** Ya tiene su ajuste inverso: se marca, no se borra. */
   anulado: boolean;
   /** Creado en esta sesión (aplicado o anulación): cuenta en los puntos de la vista previa. */
@@ -481,12 +483,41 @@ export const MOTIVOS_FILTRO: readonly string[] = [
   MOTIVO_ANULACION,
 ];
 
+/** `motivoId` de los ajustes que trajo la importación del Excel. */
+export const MOTIVO_ID_IMPORTADO = "importado";
+
+/** D260: «Ajuste del Excel» no se muestra en el Historial (sigue contando en los puntos). */
+export function esAjusteImportado(f: Pick<FilaHistorial, "motivoId">): boolean {
+  return f.motivoId === MOTIVO_ID_IMPORTADO;
+}
+
+/** Filas que el Historial muestra: todas menos las importadas del Excel. */
+export function historialMostrable(
+  filas: readonly FilaHistorial[],
+): FilaHistorial[] {
+  return filas.filter((x) => !esAjusteImportado(x));
+}
+
+/**
+ * Enlace del nombre de una fila (D261): alumno → su ficha en Alumnos; equipo → los equipos de su
+ * sección. `null` si no hay a dónde llevar.
+ */
+export function rutaDestinoHistorial(
+  f: Pick<FilaHistorial, "tipo" | "destinoId" | "seccion">,
+): string | null {
+  if (f.destinoId === "") return null;
+  if (f.tipo === "alumno")
+    return rutaAlumnos({ alumno: f.destinoId, seccion: f.seccion });
+  return `/profe/equipos/${f.seccion.toLowerCase()}`;
+}
+
 export function filtrarHistorial(
   filas: readonly FilaHistorial[],
   f: FiltroHistorial,
 ): FilaHistorial[] {
   return filas.filter(
     (x) =>
+      !esAjusteImportado(x) &&
       (f.seccion === "todas" || x.seccion === f.seccion) &&
       (f.tipo === "todos" || x.tipo === f.tipo) &&
       (f.motivo === "todos" || x.motivo === f.motivo),

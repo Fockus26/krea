@@ -8,6 +8,7 @@ import {
   Scale,
   Undo2,
 } from "lucide-react";
+import Link from "next/link";
 import { useId } from "react";
 import { EmptyState } from "@/components/krea/empty-state";
 import { Badge } from "@/components/ui/badge";
@@ -33,10 +34,12 @@ import {
   filtroHistorialTexto,
   filtrosActivos,
   historialMetaTexto,
+  historialMostrable,
   MOTIVOS_FILTRO,
   motivoNoAnulable,
   motivoTexto,
   opcionesAjusteLabel,
+  rutaDestinoHistorial,
 } from "@/lib/puntos";
 
 const SECCIONES: ReadonlyArray<readonly [FiltroHistorial["seccion"], string]> =
@@ -72,7 +75,9 @@ export function AdjustmentHistory({
   onAnular: (id: string) => void;
 }) {
   const tituloId = useId();
-  const visibles = filtrarHistorial(filas, filtro);
+  // D260: los ajustes del Excel no se listan ni cuentan en el filtro (sí en los puntos)
+  const mostrables = historialMostrable(filas);
+  const visibles = filtrarHistorial(mostrables, filtro);
   const activos = filtrosActivos(filtro);
 
   return (
@@ -172,19 +177,19 @@ export function AdjustmentHistory({
           aria-atomic="true"
           className="mb-2 block text-small text-text-2"
         >
-          {filtroHistorialTexto(filtro, visibles.length, filas.length)}
+          {filtroHistorialTexto(filtro, visibles.length, mostrables.length)}
         </output>
 
         {visibles.length === 0 ? (
           <EmptyState
             icon={Scale}
             title={
-              filas.length === 0
+              mostrables.length === 0
                 ? "Sin ajustes todavía"
                 : "Sin ajustes con estos filtros"
             }
             description={
-              filas.length === 0
+              mostrables.length === 0
                 ? "Los puntos que sumes o restes por conducta aparecen aquí, con su motivo."
                 : "Cambia o quita los filtros para ver el resto del historial."
             }
@@ -195,6 +200,7 @@ export function AdjustmentHistory({
               const chip = chipAjuste(f.valor);
               const Signo = chip.signo === "mas" ? Plus : Minus;
               const bloqueo = motivoNoAnulable(f);
+              const destino = rutaDestinoHistorial(f);
               return (
                 <CardListItem key={f.id} className="items-start">
                   <Badge
@@ -208,7 +214,16 @@ export function AdjustmentHistory({
                   <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                       <h3 className="text-h4 break-words text-text">
-                        {f.nombre}
+                        {destino ? (
+                          <Link
+                            href={destino}
+                            className="rounded-sm text-text no-underline hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                          >
+                            {f.nombre}
+                          </Link>
+                        ) : (
+                          f.nombre
+                        )}
                       </h3>
                       {f.anulado ? (
                         <Badge variant="neutral">Anulado</Badge>
