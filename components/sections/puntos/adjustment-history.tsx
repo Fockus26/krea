@@ -25,6 +25,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { SeccionId } from "@/lib/modelo";
 import { chipAjuste } from "@/lib/panel";
 import {
   FILTRO_VACIO,
@@ -42,13 +43,23 @@ import {
   opcionesAjusteLabel,
   rutaDestinoHistorial,
 } from "@/lib/puntos";
+import { ordenarSecciones } from "@/lib/secciones";
 
-const SECCIONES: ReadonlyArray<readonly [FiltroHistorial["seccion"], string]> =
-  [
-    ["todas", "Ambas secciones"],
-    ["5A", "5A"],
-    ["5C", "5C"],
+/**
+ * Opciones de sección del filtro: «Todas las secciones» y las del catálogo, más la de cualquier
+ * ajuste del historial que ya no esté en él (D322). PROVISIONAL (CONTENT_CHECKLIST fila 168).
+ */
+function opcionesSeccion(
+  secciones: readonly SeccionId[],
+  filas: readonly FilaHistorial[],
+): ReadonlyArray<readonly [FiltroHistorial["seccion"], string]> {
+  return [
+    ["todas", "Todas las secciones"],
+    ...ordenarSecciones([...secciones, ...filas.map((f) => f.seccion)]).map(
+      (s) => [s, s] as const,
+    ),
   ];
+}
 const TIPOS: ReadonlyArray<readonly [FiltroHistorial["tipo"], string]> = [
   ["todos", "Alumnos y equipos"],
   ["alumno", "Solo alumnos"],
@@ -66,11 +77,14 @@ const quedarseAbierto = (e: Event) => e.preventDefault();
  */
 export function AdjustmentHistory({
   filas,
+  secciones,
   filtro,
   onFiltro,
   onAnular,
 }: {
   filas: readonly FilaHistorial[];
+  /** Secciones del catálogo, ordenadas. */
+  secciones: readonly SeccionId[];
   filtro: FiltroHistorial;
   onFiltro: (f: FiltroHistorial) => void;
   onAnular: (id: string) => void;
@@ -120,7 +134,7 @@ export function AdjustmentHistory({
                   })
                 }
               >
-                {SECCIONES.map(([v, t]) => (
+                {opcionesSeccion(secciones, filas).map(([v, t]) => (
                   <DropdownMenuRadioItem
                     key={v}
                     value={v}

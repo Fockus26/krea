@@ -21,6 +21,7 @@ import {
 import { type ResultadoAlumno, zEditarAlumno } from "@/lib/alumnos-datos";
 import { crearCuenta, ErrorCuenta } from "@/lib/cuentas";
 import { exigirSesion } from "@/lib/dal";
+import { catalogoSecciones } from "@/lib/datos/secciones";
 import { firebaseAdmin } from "@/lib/firebase/admin";
 import { editarAlumnoEnTransaccion } from "@/lib/firebase/alumnos";
 import {
@@ -34,6 +35,7 @@ import { sincronizarClaims } from "@/lib/firebase/equipos";
 import { borrarPresenciaAlumno } from "@/lib/firebase/presencia";
 import { borrarEnLote, type ResultadoLote, zCedulasLote } from "@/lib/lote";
 import { zCedula } from "@/lib/modelo";
+import { seccionEnCatalogo } from "@/lib/secciones";
 
 export type {
   ResultadoAlumno,
@@ -84,6 +86,9 @@ export async function crearAlumno(
   const { equipoId, ...cuenta } = d.data;
   let passwordTemporal: string;
   try {
+    // `zSeccion` valida la forma; la sección además tiene que existir en el catálogo (D323)
+    if (!seccionEnCatalogo(cuenta.seccion, await catalogoSecciones()))
+      return { ok: false, error: "seccion" };
     if (
       equipoId !== null &&
       !(await equipoValidoPara(admin.db, equipoId, cuenta.seccion))

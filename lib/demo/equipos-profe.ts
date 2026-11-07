@@ -9,12 +9,12 @@ import {
   integrantes,
   nombreCompleto,
   rankingEquipos,
+  type Seccion,
 } from "@/lib/demo/seed";
 import type {
   AlumnoEquipo,
   DatosEquiposProfe,
   EquipoVista,
-  SeccionEquipos,
 } from "@/lib/equipos-profe";
 
 export type { AlumnoEquipo, DatosEquiposProfe, EquipoVista };
@@ -23,7 +23,7 @@ function alumnoVista(a: DemoAlumno): AlumnoEquipo {
   return { cedula: a.cedula, nombre: nombreCompleto(a), seed: a.cedula };
 }
 
-export function equiposProfeVista(seccion: SeccionEquipos): DatosEquiposProfe {
+export function equiposProfeVista(seccion: Seccion): DatosEquiposProfe {
   const ranking = rankingEquipos(seccion);
   const delSeccion = alumnosDeSeccion(seccion);
   const equipos: EquipoVista[] = ranking.map((e) => ({

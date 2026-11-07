@@ -10,11 +10,12 @@ import {
   CardListItem,
   CardTitle,
 } from "@/components/ui/card";
-import { ajusteMetaTexto, chipAjuste, type SeccionPanel } from "@/lib/panel";
+import type { SeccionId } from "@/lib/modelo";
+import { ajusteMetaTexto, chipAjuste } from "@/lib/panel";
 
 export type FilaAjuste = {
   id: string;
-  seccion: SeccionPanel;
+  seccion: SeccionId;
   /** "Jorge Quintero" o "Equipo 5A-G3 Ropa". */
   nombre: string;
   valor: number;

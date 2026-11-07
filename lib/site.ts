@@ -3,8 +3,9 @@
 
 export const SITE_NAME = "KREA";
 export const SITE_TITLE = "KREA — Escuela Creativa";
-// Bajada de la plantilla Open Graph (HANDOFF §5).
-export const SITE_DESCRIPTION = "Portal de la Escuela Creativa · 5.º año";
+// Bajada de la plantilla Open Graph (HANDOFF §5). Sin año fijo: la escuela puede tener varios
+// (D326; PROVISIONAL, CONTENT_CHECKLIST fila 170).
+export const SITE_DESCRIPTION = "Portal de la Escuela Creativa del liceo";
 
 /**
  * Campos de Open Graph y Twitter que toda página comparte. La fusión de metadata de Next es

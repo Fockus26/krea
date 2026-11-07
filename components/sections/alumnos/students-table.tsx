@@ -22,9 +22,9 @@ import {
   type FilaAlumno,
   nombreAlumno,
   notaParaFiltro,
-  type SeccionAlumnos,
   tablaLabel,
 } from "@/lib/alumnos";
+import type { SeccionId } from "@/lib/modelo";
 import { formatNota } from "@/lib/grades";
 import {
   estadoTodos,
@@ -78,7 +78,7 @@ export function StudentsTable({
   seleccion,
   onYaNoExiste,
 }: {
-  seccion: SeccionAlumnos;
+  seccion: SeccionId;
   filas: readonly FilaAlumno[];
   consulta: string;
   /** Frase del vacío cuando lo causa el filtro de estado (en vez de la de la búsqueda). */

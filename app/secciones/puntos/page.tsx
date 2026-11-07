@@ -25,6 +25,7 @@ export default function PuntosVista() {
       />
       <PuntosView
         candidatos={candidatosPuntos()}
+        secciones={["5A", "5C"]}
         historial={historialPuntos()}
         inicial={AJUSTE_INICIAL}
         profe={USUARIO_PROFESOR.nombre}

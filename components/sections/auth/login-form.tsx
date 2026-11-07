@@ -50,7 +50,8 @@ export function LoginForm({
 
   return (
     <div className="flex flex-col gap-6">
-      <AuthHeading eyebrow="Escuela Creativa · 5.º año" title="¡Hola de nuevo!">
+      {/* Sin año fijo (D326). PROVISIONAL (CONTENT_CHECKLIST fila 170) */}
+      <AuthHeading eyebrow="Escuela Creativa del liceo" title="¡Hola de nuevo!">
         Entra con tu cédula y la contraseña que te dio tu profe.
       </AuthHeading>
       {aviso}

@@ -21,10 +21,12 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import type { CandidatosPuntos, InicialAjuste } from "@/lib/demo/puntos";
+import type { InicialAjuste } from "@/lib/demo/puntos";
+import type { SeccionId } from "@/lib/modelo";
 import { chipAjuste } from "@/lib/panel";
 import {
   ajusteAplicadoTexto,
+  type CandidatosPuntos,
   chipMotivo,
   conDeltas,
   type FilaHistorial,
@@ -35,7 +37,6 @@ import {
   PUNTOS_MAX,
   PUNTOS_MIN,
   PUNTOS_PASO,
-  type SeccionPuntos,
   sinErrores,
   type TipoDestino,
   validarAjuste,
@@ -43,25 +44,27 @@ import {
   vistaPrevia,
 } from "@/lib/puntos";
 import { cn } from "@/lib/utils";
+import { SelectorSeccion } from "@/components/sections/shared/selector-seccion";
 import { RecipientCombobox } from "./recipient-combobox";
-
-const SECCIONES: readonly SeccionPuntos[] = ["5A", "5C"];
 
 /**
  * «Nuevo ajuste» (HANDOFF §3 Ajustes de puntos; D118–D120). Formulario cliente que valida al enviar
- * (D071: foco al primer inválido, `Field announce={false}`). Destino (Alumno/Equipo + 5A/5C, radiogroups;
- * cambiarlos limpia «¿A quién?»), combobox, Motivo con 8 radios reales, Puntos con signo (texto + ícono,
+ * (D071: foco al primer inválido, `Field announce={false}`). Destino (Alumno/Equipo radiogroup + el
+ * selector de sección del catálogo, D322; cambiarlos limpia «¿A quién?»), combobox, Motivo con 8 radios reales, Puntos con signo (texto + ícono,
  * el color solo refuerza), Detalle (obligatorio en «Otro») y la vista previa: una sola región `role="status"`.
  * Un ajuste mueve puntos del ranking, nunca la nota (D007).
  */
 export function AdjustmentForm({
   candidatos,
+  secciones,
   deltas,
   inicial,
   profe,
   onAplicar,
 }: {
   candidatos: CandidatosPuntos;
+  /** Secciones del catálogo, ordenadas (al menos una: sin ninguna, la página muestra el vacío). */
+  secciones: readonly SeccionId[];
   /** Puntos movidos en esta sesión por destino (`deltasSesion`): la vista previa parte del estado local. */
   deltas: Readonly<Record<string, number>>;
   inicial?: InicialAjuste;
@@ -90,8 +93,8 @@ export function AdjustmentForm({
   const [tipo, setTipo] = React.useState<TipoDestino>(
     inicial?.tipo ?? "alumno",
   );
-  const [seccion, setSeccion] = React.useState<SeccionPuntos>(
-    inicial?.seccion ?? "5A",
+  const [seccion, setSeccion] = React.useState<SeccionId>(
+    inicial?.seccion ?? secciones[0] ?? "",
   );
   const [destinoId, setDestinoId] = React.useState<string | null>(
     inicial?.destinoId ?? null,
@@ -110,7 +113,7 @@ export function AdjustmentForm({
   // Un envío a la vez (doble clic mientras se guarda)
   const enviando = React.useRef(false);
 
-  const opciones = conDeltas(candidatos[tipo][seccion], deltas);
+  const opciones = conDeltas(candidatos[tipo][seccion] ?? [], deltas);
   const destino = opciones.find((o) => o.id === destinoId) ?? null;
   const borrador = { tipo, destinoId, motivo, valor, detalle };
   const errores = intentado ? validarAjuste(borrador) : {};
@@ -120,7 +123,7 @@ export function AdjustmentForm({
       : null;
   const chipValor = valor !== null && valor !== 0 ? chipAjuste(valor) : null;
 
-  const cambiarDestino = (t: TipoDestino, s: SeccionPuntos) => {
+  const cambiarDestino = (t: TipoDestino, s: SeccionId) => {
     setTipo(t);
     setSeccion(s);
     setDestinoId(null);
@@ -195,17 +198,12 @@ export function AdjustmentForm({
             <span id={lSeccion} className="text-label text-text">
               Sección
             </span>
-            <ToggleGroup
-              aria-labelledby={lSeccion}
-              value={seccion}
-              onValueChange={(v) => cambiarDestino(tipo, v as SeccionPuntos)}
-            >
-              {SECCIONES.map((s) => (
-                <ToggleGroupItem key={s} value={s}>
-                  {s}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
+            <SelectorSeccion
+              labelledBy={lSeccion}
+              secciones={secciones}
+              valor={seccion}
+              onCambio={(s) => cambiarDestino(tipo, s)}
+            />
           </div>
         </div>
 

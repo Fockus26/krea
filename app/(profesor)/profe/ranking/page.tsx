@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import { RankingProfe } from "./_ranking";
 
 export const metadata: Metadata = {
-  title: "Ranking de 5A",
+  title: "Ranking",
   robots: { index: false },
 };
 
+// La primera sección del catálogo; las demás en /profe/ranking/[seccion] (D323).
 export default function RankingPage() {
-  return <RankingProfe seccion="5A" vista="estudiantes" />;
+  return <RankingProfe vista="estudiantes" />;
 }

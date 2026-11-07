@@ -18,7 +18,9 @@ import {
   tareaProfe,
   tieneEntregas,
 } from "@/lib/datos/profesor";
+import { catalogoSecciones } from "@/lib/datos/secciones";
 import { diaDeInstante } from "@/lib/fecha";
+import { seccionesDe } from "@/lib/secciones";
 import { TAREA_GRUPAL_SEED } from "@/lib/seed-firestore";
 import { RUTA_TAREAS } from "@/lib/tareas-profe";
 import {
@@ -59,9 +61,10 @@ export default async function TareaProfePage({ params }: Props) {
   const { id } = await params;
   const t = await tareaProfe(id);
   if (!t) notFound();
-  const [conEntregas, entregas] = await Promise.all([
+  const [conEntregas, entregas, catalogo] = await Promise.all([
     tieneEntregas(id),
     entregasDeTarea(id),
+    catalogoSecciones(),
   ]);
   const modo = modoConstructor(t, conEntregas);
   const sinPreguntas = t.preguntas.length === 0;
@@ -89,6 +92,7 @@ export default async function TareaProfePage({ params }: Props) {
       ) : (
         <TaskBuilder
           inicial={datosBorradorDe(t)}
+          secciones={seccionesDe(catalogo)}
           hoy={diaDeInstante(Date.now())}
           listaHref={RUTA_TAREAS}
           guardarEnTopbar

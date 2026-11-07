@@ -44,9 +44,8 @@ function BrandPanel() {
           <GradePill nota={10} size="lg" />
         </div>
       </div>
-      <p className="text-small relative">
-        Escuela Creativa del liceo · 5.º año, secciones A y C
-      </p>
+      {/* Sin año ni secciones fijos: los crea el admin (D326). PROVISIONAL (CONTENT_CHECKLIST fila 170) */}
+      <p className="text-small relative">Escuela Creativa del liceo</p>
     </aside>
   );
 }

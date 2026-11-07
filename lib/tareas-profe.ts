@@ -126,9 +126,19 @@ export function ordenarTareas(tareas: readonly TareaProfe[]): TareaProfe[] {
   });
 }
 
-/** Eyebrow de la lista: "5 tareas · 5A y 5C". */
+/** Eyebrow de la lista: "5 tareas · 4B y 5A". */
 export function eyebrowTareas(n: number, secciones: string): string {
-  return `${n} ${n === 1 ? "tarea" : "tareas"} · ${secciones}`;
+  const tareas = `${n} ${n === 1 ? "tarea" : "tareas"}`;
+  return secciones ? `${tareas} · ${secciones}` : tareas;
+}
+
+/** Con más de esto, el eyebrow dice cuántas secciones son en vez de nombrarlas. */
+const SECCIONES_EN_EYEBROW = 3;
+
+/** Secciones del eyebrow: «4B y 5A» o, si son muchas, «6 secciones» (no desborda a 320 px). */
+export function seccionesResumen(secciones: readonly SeccionId[]): string {
+  if (secciones.length <= SECCIONES_EN_EYEBROW) return listaSecciones(secciones);
+  return `${secciones.length} secciones`;
 }
 
 export function preguntasTexto(n: number): string {

@@ -8,6 +8,7 @@ import {
   BORRADOR_ID,
   HOY_DEMO,
   NUEVA_DEMO,
+  SECCIONES_DEMO,
 } from "@/lib/demo/tareas-profe";
 import { RUTA_TAREAS } from "@/lib/tareas-profe";
 import { Estados } from "../../_vista/estados";
@@ -63,6 +64,7 @@ export default async function ConstructorVista({
         <TaskBuilder
           key={estado}
           inicial={estado === "nueva" ? NUEVA_DEMO : BORRADOR_DEMO}
+          secciones={SECCIONES_DEMO}
           hoy={HOY_DEMO}
           listaHref={BASE}
         />

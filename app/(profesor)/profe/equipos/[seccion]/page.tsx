@@ -1,27 +1,30 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import type { SeccionEquipos } from "@/lib/equipos-profe";
+import {
+  CATALOGO_INICIAL,
+  esCodigoSeccion,
+  seccionesDe,
+  slugSeccion,
+} from "@/lib/secciones";
 import { EquiposProfe } from "../_equipos";
 
 type Props = PageProps<"/profe/equipos/[seccion]">;
 
-const SECCIONES: Record<string, SeccionEquipos> = { "5a": "5A", "5c": "5C" };
-
-// Una página por sección: el segmentado del encabezado navega entre ellas (D110, D156)
+// Una página por sección del catálogo: el selector del encabezado navega entre ellas (D110, D156,
+// D323). Con `cacheComponents` hace falta al menos un valor: el catálogo inicial; las demás
+// («4b») se pintan en el request y la que no existe da 404 (lo decide `EquiposProfe`).
 export function generateStaticParams() {
-  return Object.keys(SECCIONES).map((seccion) => ({ seccion }));
+  return seccionesDe(CATALOGO_INICIAL).map((s) => ({ seccion: slugSeccion(s) }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const seccion = SECCIONES[(await params).seccion];
+  // Sin leer el catálogo: el título sale del segmento si tiene forma de sección
+  const codigo = (await params).seccion.toUpperCase();
   return {
-    title: seccion ? `Equipos de ${seccion}` : "Equipos",
+    title: esCodigoSeccion(codigo) ? `Equipos de ${codigo}` : "Equipos",
     robots: { index: false },
   };
 }
 
 export default async function EquiposSeccionPage({ params }: Props) {
-  const seccion = SECCIONES[(await params).seccion];
-  if (!seccion) notFound();
-  return <EquiposProfe seccion={seccion} />;
+  return <EquiposProfe slug={(await params).seccion} />;
 }

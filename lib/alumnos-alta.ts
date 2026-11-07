@@ -14,6 +14,7 @@ import {
   zSeccion,
   zUsuario,
 } from "@/lib/modelo";
+import { SECCION_NO_EXISTE } from "@/lib/secciones";
 import { MAX_ESCRITURAS_TX } from "@/lib/tareas-profe-datos";
 
 /* ---------- Agregar alumno ---------- */
@@ -31,7 +32,13 @@ export const zCrearAlumno = z.object({
 });
 export type CrearAlumno = z.input<typeof zCrearAlumno>;
 
-export type ErrorCrearAlumno = "invalida" | "existe" | "equipo" | "red";
+/** `seccion`: la sección ya no está en el catálogo (D323). */
+export type ErrorCrearAlumno =
+  | "invalida"
+  | "existe"
+  | "equipo"
+  | "seccion"
+  | "red";
 
 export type ResultadoCrearAlumno =
   | {
@@ -61,6 +68,8 @@ export function errorCrearAlumnoTexto(e: ErrorCrearAlumno): string {
       return "Ya existe una cuenta con esa cédula.";
     case "equipo":
       return "Ese equipo ya no está en la sección. Elige otro o déjalo sin equipo.";
+    case "seccion":
+      return SECCION_NO_EXISTE;
     case "invalida":
       return "Revisa los datos: algo no se pudo guardar así.";
     case "red":

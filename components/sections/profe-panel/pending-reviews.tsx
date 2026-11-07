@@ -12,16 +12,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { DicebearEstilo } from "@/lib/dicebear";
+import type { SeccionId } from "@/lib/modelo";
 import {
   ENTREGAS_VISIBLES,
   evaluarAriaLabel,
-  type SeccionPanel,
   verTodasTexto,
 } from "@/lib/panel";
 
 export type FilaEvaluar = {
   id: string;
-  seccion: SeccionPanel;
+  seccion: SeccionId;
   tipo: "individual" | "grupal";
   /** Lo que se lee en la fila: "5A-G2 Repostería" o "Jorge Quintero · 5A". */
   nombre: string;

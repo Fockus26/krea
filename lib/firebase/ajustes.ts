@@ -20,12 +20,17 @@ import {
 } from "@/lib/firebase/ranking";
 import { COL, type SeccionId, zAjuste, zEquipo, zUsuario } from "@/lib/modelo";
 
-/** Aplica un ajuste a un alumno o a un equipo y recalcula el ranking de su sección. */
+/**
+ * Aplica un ajuste a un alumno o a un equipo y recalcula el ranking de su sección. Con
+ * `secciones` (las del catálogo), un destino cuya sección no está en la lista da `seccion` sin
+ * escribir nada (D323).
+ */
 export async function aplicarAjusteEnTransaccion(
   db: Firestore,
   autorId: string,
   entrada: AplicarAjuste,
   ahora: number,
+  secciones?: readonly SeccionId[],
 ): Promise<ResultadoAjuste> {
   const destinoRef =
     entrada.destino === "alumno"
@@ -46,6 +51,8 @@ export async function aplicarAjusteEnTransaccion(
       if (!e.success) return { ok: false, error: "invalida" };
       seccion = e.data.seccion;
     }
+    if (secciones && !secciones.includes(seccion))
+      return { ok: false, error: "seccion" };
     const datos = await leerSeccionEnTx(tx, db, seccion);
     const r = armarAjuste({ entrada, seccion, autorId, ahora });
     if (!r.ok) return r;

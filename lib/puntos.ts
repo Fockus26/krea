@@ -124,6 +124,14 @@ export function sinResultadosTexto(consulta: string): string {
   return `Sin resultados para «${consulta.trim()}»`;
 }
 
+/**
+ * Candidatos del combobox por tipo y sección del catálogo, ordenados por nombre. Una sección sin
+ * nadie trae `[]`; una que falte se lee como vacía (`?? []`, D323).
+ */
+export type CandidatosPuntos = Readonly<
+  Record<TipoDestino, Readonly<Record<SeccionId, readonly Candidato[]>>>
+>;
+
 /** Clave de un destino en los mapas de puntos: "alumno:32828381" / "equipo:5a-g3". */
 export function claveDestino(tipo: TipoDestino, id: string): string {
   return `${tipo}:${id}`;

@@ -24,12 +24,14 @@ import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { type SeccionAlumnos, unirNombre } from "@/lib/alumnos";
+import { unirNombre } from "@/lib/alumnos";
 import {
   type CrearAlumno,
   equiposDeSeccion,
@@ -38,7 +40,8 @@ import {
   type ResultadoCrearAlumno,
   validarAlumnoNuevo,
 } from "@/lib/alumnos-alta";
-import { SECCIONES } from "@/lib/modelo";
+import type { SeccionId } from "@/lib/modelo";
+import { agruparPorAnio } from "@/lib/secciones";
 
 export type CrearAlumnoAccion = (
   entrada: CrearAlumno,
@@ -46,7 +49,7 @@ export type CrearAlumnoAccion = (
 
 export type AlumnoCreado = {
   cedula: string;
-  seccion: SeccionAlumnos;
+  seccion: SeccionId;
   nombre: string;
   passwordTemporal: string;
   sinEquipo: boolean;
@@ -68,13 +71,16 @@ const AYUDA_EMAIL =
 
 export function AddStudentDialog({
   equipos,
+  secciones,
   seccionInicial,
   crear,
   onCreado,
 }: {
   equipos: readonly OpcionEquipo[];
+  /** Secciones del catálogo (D323). */
+  secciones: readonly SeccionId[];
   /** La sección que se ve en la lista. */
-  seccionInicial: SeccionAlumnos;
+  seccionInicial: SeccionId;
   crear: CrearAlumnoAccion;
   onCreado: (a: AlumnoCreado) => void;
 }) {
@@ -97,6 +103,7 @@ export function AddStudentDialog({
         </DialogHeader>
         <AddForm
           equipos={equipos}
+          secciones={secciones}
           seccionInicial={seccionInicial}
           crear={crear}
           onCreado={(a) => {
@@ -111,12 +118,14 @@ export function AddStudentDialog({
 
 function AddForm({
   equipos,
+  secciones,
   seccionInicial,
   crear,
   onCreado,
 }: {
   equipos: readonly OpcionEquipo[];
-  seccionInicial: SeccionAlumnos;
+  secciones: readonly SeccionId[];
+  seccionInicial: SeccionId;
   crear: CrearAlumnoAccion;
   onCreado: (a: AlumnoCreado) => void;
 }) {
@@ -126,7 +135,7 @@ function AddForm({
   const [nombre2, setNombre2] = useState("");
   const [apellido1, setApellido1] = useState("");
   const [apellido2, setApellido2] = useState("");
-  const [seccion, setSeccion] = useState<SeccionAlumnos>(seccionInicial);
+  const [seccion, setSeccion] = useState<SeccionId>(seccionInicial);
   const [equipo, setEquipo] = useState(SIN_EQUIPO);
   const [email, setEmail] = useState("");
   const [intentado, setIntentado] = useState(false);
@@ -261,7 +270,7 @@ function AddForm({
           <Select
             value={seccion}
             onValueChange={(v) => {
-              setSeccion(v as SeccionAlumnos);
+              setSeccion(v);
               // Los equipos son de una sección: al cambiarla, el elegido ya no vale
               setEquipo(SIN_EQUIPO);
             }}
@@ -270,10 +279,16 @@ function AddForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {SECCIONES.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {s}
-                </SelectItem>
+              {/* Agrupadas por año, como el selector de sección (D322) */}
+              {agruparPorAnio(secciones).map((g) => (
+                <SelectGroup key={g.numero}>
+                  <SelectLabel>{g.nombre}</SelectLabel>
+                  {g.secciones.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
               ))}
             </SelectContent>
           </Select>

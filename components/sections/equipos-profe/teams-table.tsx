@@ -13,11 +13,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  chipPuestoTexto,
-  type EquipoVista,
-  type SeccionEquipos,
-} from "@/lib/equipos-profe";
+import { chipPuestoTexto, type EquipoVista } from "@/lib/equipos-profe";
+import type { SeccionId } from "@/lib/modelo";
 import {
   EQUIPOS,
   estadoTodos,
@@ -35,7 +32,7 @@ export type FilaEquipo = {
 };
 
 /* PROVISIONAL (CONTENT_CHECKLIST fila 164) */
-export const tablaEquiposLabel = (seccion: SeccionEquipos) =>
+export const tablaEquiposLabel = (seccion: SeccionId) =>
   `Lista de equipos de ${seccion}`;
 
 /**
@@ -51,7 +48,7 @@ export function TeamsTable({
   seleccion,
   acciones,
 }: {
-  seccion: SeccionEquipos;
+  seccion: SeccionId;
   filas: readonly FilaEquipo[];
   seleccion?: {
     marcadas: ReadonlySet<string>;

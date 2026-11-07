@@ -30,17 +30,11 @@ import {
 } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "@/components/ui/sonner";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { DESHACER_MS } from "@/lib/evaluar";
 import { METER_TEXT_CLASSES, SUM_STATE_TONE, sumMeterInfo } from "@/lib/meters";
+import type { SeccionId } from "@/lib/modelo";
 import {
   claveTarea,
   PENDIENTE_TAREA,
@@ -68,7 +62,6 @@ import {
   type ErroresTarea,
   eliminarTareaDescripcion,
   eliminarTareaTitulo,
-  esSeccionTarea,
   MAX_PREGUNTAS,
   MAX_PREGUNTAS_TEXTO,
   MIN_PREGUNTAS,
@@ -79,7 +72,6 @@ import {
   type PerdidaEliminar,
   preguntasTitulo,
   rutaTarea,
-  SECCIONES_TAREA,
   sumaValores,
   TOAST_BORRADOR,
   TOAST_CERRADA,
@@ -95,6 +87,7 @@ import {
 import type { ResultadoTarea } from "@/lib/tareas-profe-datos";
 import { cn } from "@/lib/utils";
 import { preguntaDomId, QuestionEditor } from "./question-editor";
+import { TaskSections } from "./task-sections";
 
 const SIN_ERRORES: ErroresTarea = { preguntas: {} };
 const AGREGAR_ID = "agregar-pregunta";
@@ -130,6 +123,7 @@ export type AccionesTarea = {
  */
 export function TaskBuilder({
   inicial,
+  secciones,
   hoy,
   listaHref,
   guardarEnTopbar = false,
@@ -140,6 +134,8 @@ export function TaskBuilder({
   perdida,
 }: {
   inicial: DatosBorrador;
+  /** Secciones del catálogo para las casillas (D324); las de `inicial.secciones` salen marcadas. */
+  secciones: readonly SeccionId[];
   /** Día civil ISO: una fecha de entrega anterior no se puede publicar. */
   hoy: string;
   /** A dónde vuelve al publicar. */
@@ -641,26 +637,16 @@ export function TaskBuilder({
                 </Field>
               </div>
               <div className="g2 gap-4">
-                <Field label="Sección">
-                  <Select
-                    value={tarea.seccion}
-                    onValueChange={(v) => {
-                      if (esSeccionTarea(v))
-                        dispatch({ tipo: "seccion", valor: v });
-                    }}
-                  >
-                    <SelectTrigger disabled={estructuraFija}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SECCIONES_TAREA.map((s) => (
-                        <SelectItem key={s} value={s}>
-                          {s}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
+                {/* Casillas por sección del catálogo, agrupadas por año (D324) */}
+                <TaskSections
+                  secciones={secciones}
+                  elegidas={tarea.secciones}
+                  disabled={estructuraFija}
+                  error={errores.secciones}
+                  onCambio={(codigo, marcada) =>
+                    dispatch({ tipo: "seccion", codigo, marcada })
+                  }
+                />
                 {/* Grupal o individual (D263): lo gana la mejor nota de cada sección */}
                 <Field
                   label={

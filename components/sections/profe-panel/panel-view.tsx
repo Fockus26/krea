@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { rutaAlumnos } from "@/lib/alumnos";
+import type { SeccionId } from "@/lib/modelo";
 import {
   detallePorEvaluar,
   detalleRaspados,
@@ -11,7 +12,8 @@ import {
   filtroTexto,
   porcentajeEvaluados,
   type Raspado,
-  type SeccionPanel,
+  seccionesDelFiltro,
+  TODAS_SECCIONES,
 } from "@/lib/panel";
 import { PanelHeader } from "./panel-header";
 import { type DatosMetricas, PanelMetrics } from "./panel-metrics";
@@ -25,19 +27,22 @@ export type DatosPanel = {
   tareaEvaluada: string;
   /** Id de esa tarea; sin él (vista previa) los enlaces van a Alumnos sin tarea (D252). */
   tareaId?: string | null;
-  avance: Readonly<Record<SeccionPanel, { evaluados: number; total: number }>>;
-  raspados: ReadonlyArray<Raspado & { seccion: SeccionPanel }>;
+  /** Secciones del catálogo: las opciones del filtro, tras «Todas» (D322). */
+  secciones: readonly SeccionId[];
+  /** Avance por sección; una sección sin entrada cuenta 0. */
+  avance: Readonly<Record<SeccionId, { evaluados: number; total: number }>>;
+  raspados: ReadonlyArray<Raspado & { seccion: SeccionId }>;
 };
 
 /**
- * Panel del profesor (HANDOFF §3 Panel). Cliente solo por el filtro de sección: el segmentado filtra en el
- * navegador sobre los datos completos que llegan por props (el filtro puro vive en `lib/panel.ts`).
- * La hora no se lee aquí: el saludo llega armado (la fase 05 decide el reloj del cliente).
+ * Panel del profesor (HANDOFF §3 Panel). Cliente solo por el filtro de sección: «Todas» + cada
+ * sección del catálogo (D322) filtra en el navegador sobre los datos completos que llegan por
+ * props (el filtro puro vive en `lib/panel.ts`). La hora no se lee aquí: el saludo llega armado.
  */
 export function PanelView({
   saludo,
   datos,
-  filtroInicial = "ambas",
+  filtroInicial = TODAS_SECCIONES,
 }: {
   saludo: string;
   datos: DatosPanel;
@@ -48,17 +53,20 @@ export function PanelView({
   const entregas = filtrarPorSeccion(datos.entregas, filtro);
   const ajustes = filtrarPorSeccion(datos.ajustes, filtro);
   const raspados = filtrarPorSeccion(datos.raspados, filtro);
-  const secciones: SeccionPanel[] =
-    filtro === "ambas" ? ["5A", "5C"] : [filtro];
+  // «Todas» suma todo el avance, también el de una sección que ya no esté en el catálogo
+  const secciones = seccionesDelFiltro(filtro, Object.keys(datos.avance));
   const evaluados = secciones.reduce(
-    (n, s) => n + datos.avance[s].evaluados,
+    (n, s) => n + (datos.avance[s]?.evaluados ?? 0),
     0,
   );
-  const total = secciones.reduce((n, s) => n + datos.avance[s].total, 0);
+  const total = secciones.reduce(
+    (n, s) => n + (datos.avance[s]?.total ?? 0),
+    0,
+  );
 
-  // La sección elegida en el Panel (D099) viaja a Alumnos; «ambas» no filtra.
+  // La sección elegida en el Panel (D099) viaja a Alumnos; «todas» no filtra.
   const base = {
-    ...(filtro === "ambas" ? {} : { seccion: filtro }),
+    ...(filtro === TODAS_SECCIONES ? {} : { seccion: filtro }),
     ...(datos.tareaId ? { tarea: datos.tareaId } : {}),
   };
 
@@ -83,7 +91,12 @@ export function PanelView({
 
   return (
     <>
-      <PanelHeader saludo={saludo} filtro={filtro} onFiltro={setFiltro} />
+      <PanelHeader
+        saludo={saludo}
+        secciones={datos.secciones}
+        filtro={filtro}
+        onFiltro={setFiltro}
+      />
       {/* Única región viva del panel: frase estable, sin cifras sueltas */}
       <output className="sr-only">{filtroTexto(filtro)}</output>
       <PanelMetrics datos={metricas} />
