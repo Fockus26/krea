@@ -73,7 +73,7 @@ export function LiveTotal({
         <p
           aria-hidden="true"
           className={cn(
-            "flex items-center gap-2 text-small-b",
+            "flex icono-linea gap-2 text-small-b",
             METER_TEXT_CLASSES[tone],
           )}
         >

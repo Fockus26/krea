@@ -8,12 +8,12 @@ describe("Toaster (HANDOFF §2.14 y §6)", () => {
     expect(TOAST_DURATION).toBe(4000);
   });
 
-  test("medidas del toast: mín. 52, padding 12 16, radio 16, máx. 420, --shadow-3", () => {
+  test("medidas del toast: mín. 52 (por relleno calculado, D305), padding 12 16, radio 16, máx. 420, --shadow-3", () => {
     expect(classes(toastClassNames.toast)).toEqual(
       expect.arrayContaining([
-        "min-h-13",
+        "icono-linea",
         "px-4",
-        "py-3",
+        "py-[max(--spacing(3),calc((--spacing(13)-1lh)/2))]",
         "rounded-md",
         "max-w-105",
         "shadow-3",

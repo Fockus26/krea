@@ -29,7 +29,7 @@ const offsetClasses =
 const toastClassNames = {
   toast: [
     // mín. 52 alto · padding 12 16 · radio 16 · máx. 420 · --shadow-3 · 600 15/20
-    "flex w-full max-w-105 min-h-13 items-center gap-3 rounded-md px-4 py-3",
+    "flex w-full max-w-105 icono-linea gap-3 rounded-md px-4 py-[max(--spacing(3),calc((--spacing(13)-1lh)/2))]",
     "bg-toast-bg text-nav text-toast-text shadow-3",
     // §6: entra translateY(16 → 0) + opacidad 250; sale solo con opacidad 150.
     // Con reduced motion las duraciones valen 0 (D017): aparece y desaparece sin movimiento.
@@ -43,10 +43,10 @@ const toastClassNames = {
   content: "flex min-w-0 flex-1 flex-col gap-0.5",
   title: "min-w-0",
   description: "text-small",
-  icon: "flex shrink-0 [&_svg]:size-5",
+  icon: "icono-linea-caja [&_svg]:size-5",
   // Botón fantasma sm con el color del toast (el lienzo pone `color: inherit`)
   actionButton: [
-    "inline-flex h-9 shrink-0 cursor-pointer items-center rounded-nav px-3.5 text-button-sm text-current max-lg:h-11",
+    "inline-flex h-9 shrink-0 cursor-pointer items-center self-center -my-3 rounded-nav px-3.5 text-button-sm text-current max-lg:h-11",
     "transition-colors duration-fast ease-krea hover:bg-current/10",
     "focus-visible:outline-2! focus-visible:outline-offset-2 focus-visible:outline-current!",
   ].join(" "),

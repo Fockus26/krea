@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
  * El significado nunca va solo en el color: el llamador pone ícono + palabra.
  */
 const chip =
-  "inline-flex h-7 w-fit shrink-0 items-center gap-1.5 rounded-sm px-2.5 text-small-b whitespace-nowrap";
+  "icono-linea inline-flex h-7 w-fit shrink-0 gap-1.5 rounded-sm px-2.5 py-[calc((--spacing(7)-1lh)/2)] text-small-b whitespace-nowrap";
 
 const badgeVariants = cva(
   [
@@ -31,7 +31,7 @@ const badgeVariants = cva(
         err: `${chip} bg-chip-err text-error`,
         prize: `${chip} bg-chip-prize text-text [&_svg]:text-warning dark:[&_svg]:text-secondary`,
         // "tú": 22 de alto, radio 999, 12 px
-        tu: "inline-flex h-5.5 w-fit shrink-0 items-center gap-1.5 rounded-pill bg-accent px-2 font-body text-xs font-bold whitespace-nowrap text-on-accent",
+        tu: "icono-linea inline-flex h-5.5 w-fit shrink-0 gap-1.5 rounded-pill bg-accent px-2 py-[calc((--spacing(5.5)-1lh)/2)] font-body text-xs font-bold whitespace-nowrap text-on-accent",
       },
     },
     defaultVariants: {

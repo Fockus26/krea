@@ -202,14 +202,14 @@ export function PantallaSinConexion({
       linea="Revisa esto y vuelve a intentar:"
       extra={
         <ul className="flex flex-col gap-2 text-small text-text">
-          <li className="flex items-center gap-2">
+          <li className="flex icono-linea gap-2">
             <Check
               aria-hidden="true"
               className="size-4 shrink-0 text-accent-ink"
             />
             Activa los datos o conéctate a un wifi.
           </li>
-          <li className="flex items-center gap-2">
+          <li className="flex icono-linea gap-2">
             <Check
               aria-hidden="true"
               className="size-4 shrink-0 text-accent-ink"
@@ -217,7 +217,7 @@ export function PantallaSinConexion({
             Si te queda poco saldo, prueba más tarde.
           </li>
           {ultimaActualizacion ? (
-            <li className="flex items-center gap-2">
+            <li className="flex icono-linea gap-2">
               <Clock
                 aria-hidden="true"
                 className="size-4 shrink-0 text-accent-ink"

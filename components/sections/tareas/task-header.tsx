@@ -26,7 +26,7 @@ export function TaskHeader({
   const Icon = tipo === "grupal" ? Users : User;
   return (
     <header className="flex flex-col gap-2">
-      <p className="text-eyebrow flex items-center gap-1.5 text-text-2">
+      <p className="text-eyebrow flex icono-linea gap-1.5 text-text-2">
         <Icon aria-hidden="true" className="size-4 shrink-0" />
         {eyebrow}
       </p>

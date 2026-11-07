@@ -33,11 +33,13 @@ export function OfflineBannerVista({
         className,
       )}
     >
-      <WifiOff
-        aria-hidden="true"
-        className="size-5 shrink-0 text-offline-icon"
-      />
-      <p className="min-w-0 flex-1">{mensaje}</p>
+      <div className="icono-linea flex min-w-0 flex-1 gap-3">
+        <WifiOff
+          aria-hidden="true"
+          className="size-5 shrink-0 text-offline-icon"
+        />
+        <p className="min-w-0 flex-1">{mensaje}</p>
+      </div>
       <button
         type="button"
         onClick={onRetry}

@@ -17,7 +17,7 @@ export function ProfileData({
     <Card className="flex flex-col gap-4">
       <CardHeader className="mb-0">
         <h2 className="text-h3 text-text">Tus datos</h2>
-        <p className="text-small flex items-center gap-1.5 text-text-2">
+        <p className="text-small flex icono-linea gap-1.5 text-text-2">
           <Lock aria-hidden="true" className="size-4 shrink-0" />
           Solo tu profe puede cambiarlos
         </p>

@@ -43,7 +43,7 @@ export function GradeRow({
       <Link href={href} className="flex-wrap">
         <span className="flex min-w-0 flex-1 basis-48 flex-col gap-1">
           <Heading className="text-h4 text-text">{titulo}</Heading>
-          <span className="text-small flex flex-wrap items-center gap-x-1.5 text-text-2">
+          <span className="text-small flex flex-wrap icono-linea gap-x-1.5 text-text-2">
             <Icon aria-hidden="true" className="size-4 shrink-0" />
             <span>
               {[tipoTareaTexto(tipo), detalle, fecha]

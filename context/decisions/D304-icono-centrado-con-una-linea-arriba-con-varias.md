@@ -1,0 +1,5 @@
+# D304 · Design · Ícono + texto: centrado con una línea y arriba con varias · Implemented
+
+**Decision:** una utilidad única, `icono-linea` (en `app/globals.css`): el contenedor alinea `flex-start` y cada `svg` hijo directo mide al menos `1lh` de alto (el viewBox centra el dibujo en esa caja). Con una línea el ícono queda al centro; con varias, junto a la primera. `icono-linea-caja` es lo mismo para un ícono envuelto (insignia, `Spinner`). Aplicada a `Alert`, `Badge`, la capa de contenido del `Button`, mensajes de `Field`, toasts (Sonner), ítems de menú, banner offline, avisos de pantalla, filas de tarea, métricas del Panel y similares. Donde había un `mt-px`/`mt-0.5` a mano para imitarlo, se quitó.
+**Why:** pedido de César (48). Un `items-center` con texto de varias líneas deja el ícono flotando a media altura; un `mt-*` fijo solo acierta con un tamaño de letra.
+**Discarded alternative:** `items-center` en todo y `self-start` solo en los casos multilínea (exige saber de antemano cuántas líneas hay, y a 200 % de zoom cualquier texto se parte).

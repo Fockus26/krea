@@ -59,20 +59,20 @@ export function RecoverSent({
         vez.
       </AuthHeading>
       <ul className="text-body flex flex-col gap-2 text-text">
-        <li className="flex items-start gap-2">
+        <li className="flex icono-linea gap-2">
           <Info
             aria-hidden="true"
-            className="mt-0.5 size-5 shrink-0 text-accent-ink"
+            className="size-5 shrink-0 text-accent-ink"
           />
           <span>
             ¿No llega en 5 minutos? Revisa <strong>Spam</strong> o{" "}
             <strong>Promociones</strong>.
           </span>
         </li>
-        <li className="flex items-start gap-2">
+        <li className="flex icono-linea gap-2">
           <Lock
             aria-hidden="true"
-            className="mt-0.5 size-5 shrink-0 text-accent-ink"
+            className="size-5 shrink-0 text-accent-ink"
           />
           <span>
             ¿Ya no usas ese correo? Pídele a tu profe que te asigne una

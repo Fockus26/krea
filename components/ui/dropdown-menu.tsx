@@ -17,7 +17,7 @@ const panelClasses =
   "z-popover overflow-x-hidden overflow-y-auto rounded-md border border-divider bg-surface p-1.5 text-text shadow-3 origin-trigger data-[state=open]:animate-pop-in data-[state=closed]:animate-pop-out";
 
 const itemClasses = [
-  "relative flex min-h-10 cursor-pointer items-center gap-2 rounded-nav px-2.5 text-sm font-semibold outline-none select-none",
+  "icono-linea relative flex cursor-pointer gap-2 rounded-nav px-2.5 py-[calc((--spacing(10)-1lh)/2)] text-sm font-semibold outline-none select-none",
   "data-highlighted:bg-surface-2",
   "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus",
   "data-disabled:cursor-not-allowed data-disabled:text-text-dis",

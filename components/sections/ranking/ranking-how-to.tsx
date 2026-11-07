@@ -50,7 +50,7 @@ export function RankingHowTo({ className }: { className?: string }) {
             // sin almacenamiento: el cambio vale solo para esta visita
           }
         }}
-        className="text-small-b flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus [&::-webkit-details-marker]:hidden"
+        className="text-small-b icono-linea flex cursor-pointer list-none gap-2 rounded-sm py-[calc((--spacing(11)-1lh)/2)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus [&::-webkit-details-marker]:hidden"
       >
         <Info aria-hidden="true" className="size-5 shrink-0 text-accent-ink" />
         {REGLAS_TITULO_MOVIL}

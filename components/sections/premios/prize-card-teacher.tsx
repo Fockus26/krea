@@ -175,10 +175,7 @@ export function PrizeCardTeacher({
 
         {estado.tipo === "ganado" ? (
           <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
-            <Badge
-              variant="cap"
-              className="h-auto min-h-7 py-1 whitespace-normal"
-            >
+            <Badge variant="cap" className="h-auto whitespace-normal">
               <Crown aria-hidden="true" />
               {ganoTexto(nombre(estado.titularId))}
             </Badge>
@@ -190,10 +187,7 @@ export function PrizeCardTeacher({
 
         {estado.tipo === "compartido" ? (
           <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
-            <Badge
-              variant="cap"
-              className="h-auto min-h-7 py-1 whitespace-normal"
-            >
+            <Badge variant="cap" className="h-auto whitespace-normal">
               <Users aria-hidden="true" />
               {compartidoChipTexto(cortos(estado.titularIds))}
             </Badge>
@@ -205,10 +199,7 @@ export function PrizeCardTeacher({
 
         {estado.tipo === "empate" ? (
           <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
-            <Badge
-              variant="warn"
-              className="h-auto min-h-7 py-1 whitespace-normal"
-            >
+            <Badge variant="warn" className="h-auto whitespace-normal">
               <Scale aria-hidden="true" />
               {empateChipTexto(cortos(estado.titularIds))}
             </Badge>
@@ -220,10 +211,7 @@ export function PrizeCardTeacher({
 
         {estado.tipo === "en-juego" ? (
           <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
-            <Badge
-              variant="ok"
-              className="h-auto min-h-7 py-1 whitespace-normal"
-            >
+            <Badge variant="ok" className="h-auto whitespace-normal">
               <Clock aria-hidden="true" />
               En juego
             </Badge>

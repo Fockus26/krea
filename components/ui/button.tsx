@@ -168,7 +168,7 @@ function Button(props: ButtonProps) {
       <span className="grid">
         <span
           className={cn(
-            "col-start-1 row-start-1 inline-flex items-center justify-center gap-2",
+            "col-start-1 row-start-1 icono-linea inline-flex justify-center gap-2",
             loading && "invisible",
           )}
         >
