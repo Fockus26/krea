@@ -1,19 +1,32 @@
 "use server";
-// Server Actions de Perfil (D175, D191, D192): avatar y apariencia al perfil, y cambio de
-// contraseña. La cédula sale SIEMPRE de la sesión, nunca del body; todo se valida con zod.
+// Server Actions de Perfil (D175, D191, D192, D232, D234): avatar, apariencia y datos del profe
+// al perfil, cambio de contraseña y «Crea tu contraseña». La cédula sale SIEMPRE de la sesión,
+// nunca del body (ningún profe edita a otro); todo se valida con zod.
+import type { Auth } from "firebase-admin/auth";
 import { FieldPath } from "firebase-admin/firestore";
 import { refresh } from "next/cache";
 import { cookies } from "next/headers";
+import { zMisDatos } from "@/lib/cuentas-datos";
 import { verificarSesion } from "@/lib/dal";
 import { firebaseAdmin } from "@/lib/firebase/admin";
+import {
+  crearPasswordPropia,
+  guardarMisDatosCon,
+} from "@/lib/firebase/cuentas";
 import { destinoPassword, verificarPassword } from "@/lib/firebase/password";
 import { COL, emailInterno, zApariencia } from "@/lib/modelo";
 import {
   type ErrorCambioPassword,
   zAvatarElegido,
   zCambioPassword,
+  zCrearPassword,
 } from "@/lib/perfil";
-import { COOKIE_SESION, SESION_MS } from "@/lib/sesion";
+import {
+  COOKIE_SESION,
+  inicioDe,
+  RUTA_INGRESAR,
+  SESION_MS,
+} from "@/lib/sesion";
 
 export type ResultadoPerfil = { ok: true } | { ok: false };
 
@@ -26,7 +39,8 @@ export async function guardarAvatar(
 ): Promise<ResultadoPerfil> {
   const sesion = await verificarSesion();
   const admin = firebaseAdmin();
-  if (!sesion || !admin) return { ok: false };
+  // Con contraseña temporal solo puede crear la suya (D232)
+  if (!sesion || sesion.debeCambiarPassword || !admin) return { ok: false };
   const avatar = zAvatarElegido(sesion.uid).safeParse(entrada);
   if (!avatar.success) return { ok: false };
   const { estilo, semilla } = avatar.data;
@@ -71,7 +85,8 @@ export async function guardarApariencia(
 ): Promise<ResultadoPerfil> {
   const sesion = await verificarSesion();
   const admin = firebaseAdmin();
-  if (!sesion || !admin) return { ok: false };
+  // Con contraseña temporal solo puede crear la suya (D232)
+  if (!sesion || sesion.debeCambiarPassword || !admin) return { ok: false };
   const apariencia = zApariencia.safeParse(entrada);
   if (!apariencia.success) return { ok: false };
   try {
@@ -131,11 +146,34 @@ export async function cambiarPassword(
     return { ok: false, error: "red" };
   }
 
+  const sesionRenovada = await reabrirSesion(
+    admin.auth,
+    email,
+    datos.data.nueva,
+    destino,
+    "[cambiarPassword]",
+  );
+  // La cookie nueva ya vacía la caché del router; esto lo deja explícito (D250)
+  refresh();
+  return { ok: true, sesionRenovada };
+}
+
+/**
+ * Vuelve a entrar con la contraseña nueva y deja solo esta sesión abierta (cookie nueva). Si no
+ * se puede, borra la cookie: la página manda a Ingresar.
+ */
+async function reabrirSesion(
+  auth: Auth,
+  email: string,
+  password: string,
+  destino: { apiKey: string; emuladorHost?: string },
+  donde: string,
+): Promise<boolean> {
   const jar = await cookies();
   try {
-    const nueva = await verificarPassword(email, datos.data.nueva, destino);
+    const nueva = await verificarPassword(email, password, destino);
     if (!nueva.ok) throw new Error(nueva.error);
-    const cookie = await admin.auth.createSessionCookie(nueva.idToken, {
+    const cookie = await auth.createSessionCookie(nueva.idToken, {
       expiresIn: SESION_MS,
     });
     jar.set(COOKIE_SESION, cookie, {
@@ -145,10 +183,89 @@ export async function cambiarPassword(
       path: "/",
       maxAge: SESION_MS / 1000,
     });
-    return { ok: true, sesionRenovada: true };
+    return true;
   } catch (e) {
-    console.error("[cambiarPassword] reabrir", (e as Error).message);
+    console.error(`${donde} reabrir`, (e as Error).message);
     jar.delete(COOKIE_SESION);
-    return { ok: true, sesionRenovada: false };
+    return false;
+  }
+}
+
+export type ResultadoCrearPassword =
+  | { ok: true; destino: string }
+  | { ok: false; error: Exclude<ErrorCambioPassword, "actual" | "bloqueado"> };
+
+/**
+ * «Crea tu contraseña» (D232): solo una sesión abierta con la contraseña temporal. No pide la
+ * actual (acaba de entrar con ella); cambia en Auth, quita la marca del perfil y de las claims,
+ * revoca las sesiones y reabre esta con la nueva. Devuelve a dónde ir: su inicio, o Ingresar si
+ * la sesión no se pudo reabrir.
+ */
+export async function crearPassword(
+  entrada: unknown,
+): Promise<ResultadoCrearPassword> {
+  const sesion = await verificarSesion();
+  const admin = firebaseAdmin();
+  const destino = destinoPassword(process.env);
+  if (!sesion?.debeCambiarPassword) return { ok: false, error: "sesion" };
+  if (!admin || !destino) return { ok: false, error: "red" };
+  const datos = zCrearPassword.safeParse(entrada);
+  if (!datos.success) return { ok: false, error: "invalida" };
+  try {
+    await crearPasswordPropia(
+      admin.auth,
+      admin.db,
+      sesion.uid,
+      datos.data.nueva,
+      Date.now(),
+    );
+  } catch (e) {
+    console.error("[crearPassword]", (e as { code?: string }).code ?? "error");
+    return { ok: false, error: "red" };
+  }
+  const renovada = await reabrirSesion(
+    admin.auth,
+    emailInterno(sesion.uid),
+    datos.data.nueva,
+    destino,
+    "[crearPassword]",
+  );
+  // Ninguna ruta en caché de la sesión con la temporal (D250)
+  refresh();
+  return {
+    ok: true,
+    destino: renovada ? inicioDe(sesion.rol) : RUTA_INGRESAR,
+  };
+}
+
+/**
+ * El profesor cambia SUS nombres y apellidos (D234; pedido 4 de César): la cédula sale de la
+ * sesión, nunca del body. El alumno no puede: sus datos los edita el profe (CLAUDE.md).
+ */
+export async function guardarMisDatos(
+  entrada: unknown,
+): Promise<ResultadoPerfil> {
+  const sesion = await verificarSesion();
+  const admin = firebaseAdmin();
+  if (!sesion || sesion.debeCambiarPassword || !admin) return { ok: false };
+  if (sesion.rol !== "profesor") return { ok: false };
+  const datos = zMisDatos.safeParse(entrada);
+  if (!datos.success) return { ok: false };
+  try {
+    const r = await guardarMisDatosCon(
+      admin.db,
+      sesion.uid,
+      datos.data,
+      Date.now(),
+    );
+    if (!r.ok) return { ok: false };
+    refresh();
+    return { ok: true };
+  } catch (e) {
+    console.error(
+      "[guardarMisDatos]",
+      (e as { code?: string }).code ?? "error",
+    );
+    return { ok: false };
   }
 }

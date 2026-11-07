@@ -11,7 +11,7 @@ import { sesionDeCookie } from "@/lib/firebase/sesion-servidor";
 import { COL, type RolUsuario, zUsuario } from "@/lib/modelo";
 import {
   COOKIE_SESION,
-  inicioDe,
+  destinoDe,
   loginReciente,
   SESION_MS,
   sesionDeClaims,
@@ -52,7 +52,8 @@ export async function iniciarSesion(
       path: "/",
       maxAge: SESION_MS / 1000,
     });
-    return { ok: true, destino: inicioDe(sesion.rol) };
+    // Con contraseña temporal, a «Crea tu contraseña» (D232)
+    return { ok: true, destino: destinoDe(sesion) };
   } catch (e) {
     console.error("[iniciarSesion]", (e as { code?: string }).code ?? "error");
     return { ok: false, error: "credenciales" };

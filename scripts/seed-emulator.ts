@@ -60,6 +60,8 @@ const PROFE_DEMO: Usuario = {
   equipoId: null,
   base: 20,
   avatar: { estilo: ESTILO_AVATAR_DEFECTO, semilla: "10000000" },
+  // Admin (D231): el QA prueba la pantalla Profesores con esta cuenta
+  admin: true,
   actualizadoEn: 0,
 };
 

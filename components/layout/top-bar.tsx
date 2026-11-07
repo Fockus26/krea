@@ -95,6 +95,7 @@ export function TopBar({
           onSignOut={onSignOut}
           salirHref={salirHref}
           compacto={enVivo}
+          admin={usuario?.admin}
         />
       ) : (
         <Link

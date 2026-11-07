@@ -85,6 +85,9 @@ export const zCambioPassword = z.object({
     .refine((pw) => validarPassword(pw).estado === "ok", "Contraseña corta"),
 });
 
+/** «Crea tu contraseña» tras entrar con la temporal (D232): solo la nueva, con el mínimo. */
+export const zCrearPassword = zCambioPassword.pick({ nueva: true });
+
 export type ErrorCambioPassword =
   | "actual"
   | "invalida"

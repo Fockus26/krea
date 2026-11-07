@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, type ReactNode, useState } from "react";
 import { PasswordInput } from "@/components/krea/password-input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import { focusPrimerInvalido } from "./focus-invalid";
  * mientras se escribe); al enviar con errores el foco va al primer campo inválido.
  * `vencido`: el enlace ya no sirve → "Este enlace ya venció" + "Pedir otro enlace".
  * `error`: respuesta del servidor al guardar (alerta sobre el botón).
+ * `titulo` / `descripcion`: los cambia «Crea tu contraseña» tras la temporal (D232).
  */
 export function NewPasswordForm({
   vencido = false,
@@ -31,12 +32,16 @@ export function NewPasswordForm({
   pending = false,
   error,
   onSubmit,
+  titulo = "Crea tu nueva contraseña",
+  descripcion,
 }: {
   vencido?: boolean;
   pedirOtroHref: string;
   pending?: boolean;
   error?: string | null;
   onSubmit?: (password: string) => void;
+  titulo?: string;
+  descripcion?: ReactNode;
 }) {
   const [pw, setPw] = useState("");
   const [repetida, setRepetida] = useState("");
@@ -79,9 +84,13 @@ export function NewPasswordForm({
 
   return (
     <div className="flex flex-col gap-6">
-      <AuthHeading title="Crea tu nueva contraseña">
-        Mínimo {PASSWORD_MIN} caracteres. Algo que recuerdes y que nadie
-        adivine.
+      <AuthHeading title={titulo}>
+        {descripcion ?? (
+          <>
+            Mínimo {PASSWORD_MIN} caracteres. Algo que recuerdes y que nadie
+            adivine.
+          </>
+        )}
       </AuthHeading>
       <form
         method="post"

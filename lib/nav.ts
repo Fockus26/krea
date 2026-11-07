@@ -17,7 +17,8 @@ export type NavIconKey =
   | "alumnos"
   | "equipos"
   | "puntos"
-  | "premios";
+  | "premios"
+  | "profesores";
 
 export type NavSurface = "lateral" | "inferior" | "menu";
 
@@ -30,7 +31,12 @@ export type NavItem = {
   match: "exact" | "prefix";
   /** Superficies donde aparece. */
   on: readonly NavSurface[];
+  /** Solo para el profesor admin (D231). */
+  soloAdmin?: true;
 };
+
+/** Pantalla Profesores del admin (D233). */
+export const PROFESORES_HREF = "/profe/profesores";
 
 /** Perfil del estudiante (avatar de la topbar y tarjeta de usuario). */
 export const PERFIL_HREF = "/perfil";
@@ -155,6 +161,17 @@ const PROFESOR: readonly NavItem[] = [
     on: ["lateral", "menu"],
   },
   {
+    // Solo el admin (D231, D233): tras Premios, como las secciones que no caben en la barra
+    // inferior (D132). PROVISIONAL: no está en el handoff (CONTENT_CHECKLIST fila 137)
+    id: "profesores",
+    label: "Profesores",
+    href: PROFESORES_HREF,
+    icon: "profesores",
+    match: "prefix",
+    on: ["lateral", "menu"],
+    soloAdmin: true,
+  },
+  {
     // En la lateral, Perfil es la tarjeta de usuario; en < lg, la hoja Menú (D132). PROVISIONAL:
     // el handoff no pone Perfil en el Menú (CONTENT_CHECKLIST fila 97)
     id: "perfil",
@@ -166,10 +183,19 @@ const PROFESOR: readonly NavItem[] = [
   },
 ];
 
-/** Ítems de un rol para una superficie, en el orden del handoff. */
-export function navItems(rol: Rol, surface: NavSurface): readonly NavItem[] {
+/**
+ * Ítems de un rol para una superficie, en el orden del handoff. Los `soloAdmin` solo con
+ * `admin` (el profesor admin de la sesión, D231).
+ */
+export function navItems(
+  rol: Rol,
+  surface: NavSurface,
+  { admin = false }: { admin?: boolean } = {},
+): readonly NavItem[] {
   const items = rol === "profesor" ? PROFESOR : ESTUDIANTE;
-  return items.filter((item) => item.on.includes(surface));
+  return items.filter(
+    (item) => item.on.includes(surface) && (!item.soloAdmin || admin),
+  );
 }
 
 /** Perfil por rol (tarjeta de usuario, avatar de la topbar y hoja Menú del profe; D132). */

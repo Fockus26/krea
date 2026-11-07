@@ -1,0 +1,5 @@
+# D234 · Auth · Ningún profe edita los datos de otro profe; cada uno edita los suyos (nombres, apellidos, avatar) en su Perfil · Implemented
+
+**Decision:** reemplaza a D158. Las acciones de Perfil (`guardarAvatar`, `guardarApariencia`, `guardarMisDatos`, `cambiarPassword`, `crearPassword`) usan solo la cédula de la sesión. `guardarMisDatos` (nombres y apellidos) solo para el rol profesor; el alumno sigue en solo lectura (CLAUDE.md). `editarAlumno` (y ya lo hacían mover de equipo y ajustes) rechaza un destino que no sea `rol: "estudiante"`. Solo el admin cambia datos de otro profe, en Profesores (D233). `/profe/perfil` pasa a: «Tus datos» editable (4 campos + cédula de solo lectura con «Es tu usuario para entrar: no se cambia»), el selector de avatar, Apariencia y Seguridad, conectados a las Server Actions (antes Apariencia y Seguridad del profe no guardaban: «Cambiar contraseña» no hacía nada).
+**Why:** pedido 4 de César: «los suyos propios sí» (avatar, nombres). El avatar del profe ya se pinta en la tarjeta lateral.
+**Discarded alternative:** dejar el Perfil del profe sin avatar ni datos (D158) — contradice el pedido 4.

@@ -25,7 +25,7 @@ type ConId<T> = { id: string } & T;
 /* ---------- Entrada de la Server Action ---------- */
 
 /** Email vacío = quitarlo (`null`); si no, un email válido (se guarda en minúsculas). */
-const zEmailEntrada = z
+export const zEmailEntrada = z
   .string()
   .trim()
   .toLowerCase()

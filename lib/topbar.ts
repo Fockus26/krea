@@ -102,6 +102,8 @@ const PROFESOR: readonly Regla[] = [
   { ruta: "/profe/premios" },
   { ruta: "/profe/ranking", enVivo: true, subrutas: true },
   { ruta: "/profe/perfil" },
+  // Solo el admin (D233)
+  { ruta: "/profe/profesores" },
 ];
 
 /** Patrones de la tabla por rol (las pruebas comprueban que cubren las rutas finales). */
