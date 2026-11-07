@@ -6,6 +6,10 @@
 // ranking (D007) y un premio no da puntos. Eliminar sí (se van sus notas): recalcula en la
 // misma transacción (D206, D242).
 import { FieldPath, type Firestore } from "firebase-admin/firestore";
+import {
+  leerOperacionEnTx,
+  registrarOperacionEnTx,
+} from "@/lib/firebase/operaciones";
 import { escribirRankingEnTx, leerSeccionEnTx } from "@/lib/firebase/ranking";
 import {
   COL,
@@ -44,6 +48,12 @@ export async function guardarTareaEnTransaccion(
   const tareas = db.collection(COL.tareas);
   return db.runTransaction(
     async (tx): Promise<ResultadoTarea & { fotoSuelta?: string }> => {
+      // Reintento de un guardado que ya entró (D293): el mismo id, sin crear otra tarea
+      const op = await leerOperacionEnTx(db, tx, envio.opId, autorId, "tarea");
+      if (op?.previa.tipo === "repetida" && op.previa.id)
+        return { ok: true, id: op.previa.id };
+      if (op && op.previa.tipo !== "nueva")
+        return { ok: false, error: "invalida" };
       const ref = envio.id ? tareas.doc(envio.id) : tareas.doc();
       let previa = null;
       let conEntregas = false;
@@ -70,6 +80,7 @@ export async function guardarTareaEnTransaccion(
       });
       if (!r.ok) return r;
       tx.set(ref, r.tarea);
+      registrarOperacionEnTx(tx, op, autorId, "tarea", ref.id, ahora);
       // Se quitó el premio: su foto ya no la usa nadie (se borra tras el commit, D265)
       return r.fotoSuelta
         ? { ok: true, id: ref.id, fotoSuelta: r.fotoSuelta }

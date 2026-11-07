@@ -36,6 +36,21 @@ export async function exigirSesion(rol: RolUsuario): Promise<Sesion> {
 }
 
 /**
+ * La sesión de ESTA persona con este rol, o `null` sin redirigir. Para las acciones que drena la
+ * cola sin conexión en segundo plano (D294): un `redirect` ahí sacaría al usuario de la pantalla
+ * en la que está; con `null` la operación queda pendiente y se le pide entrar de nuevo.
+ */
+export async function sesionDeCola(
+  rol: RolUsuario,
+  uid: string,
+): Promise<Sesion | null> {
+  const s = await verificarSesion();
+  if (!s || s.debeCambiarPassword || s.rol !== rol || s.uid !== uid)
+    return null;
+  return s;
+}
+
+/**
  * Exige el profesor admin (D231): la pantalla Profesores y sus Server Actions. Un profesor que no
  * es admin vuelve al Panel; otro rol, a su inicio (lo hace `exigirSesion`).
  */

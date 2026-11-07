@@ -18,6 +18,10 @@ import {
   yaEnviada,
 } from "@/lib/entregas";
 import {
+  leerOperacionEnTx,
+  registrarOperacionEnTx,
+} from "@/lib/firebase/operaciones";
+import {
   COL,
   type Entrega,
   type Equipo,
@@ -105,6 +109,10 @@ export async function enviarEnTransaccion(
 ): Promise<ResultadoEnvio> {
   const { tareaId, respuestas } = envio;
   return db.runTransaction(async (tx): Promise<ResultadoEnvio> => {
+    // Reintento de un envío que ya entró (D293): el mismo resultado, sin volver a escribir
+    const op = await leerOperacionEnTx(db, tx, envio.opId, uid, "entrega");
+    if (op?.previa.tipo === "repetida") return { ok: true };
+    if (op?.previa.tipo === "ajena") return { ok: false, error: "incompleta" };
     const c = await contexto(db, tx, uid, tareaId);
     if (!c) return { ok: false, error: "no-existe" };
     const p = permisoEntrega(c.usuario, c.tarea, tareaId, c.equipo);
@@ -157,6 +165,7 @@ export async function enviarEnTransaccion(
     if (!armada.ok) return armada;
     const doc: Entrega = zEntrega.parse(armada.entrega);
     tx.set(ref, doc);
+    registrarOperacionEnTx(tx, op, uid, "entrega", null, ahora);
     return { ok: true };
   });
 }

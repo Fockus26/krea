@@ -30,6 +30,7 @@ import {
   zTareaBorrador,
   zTareaDoc,
 } from "@/lib/modelo";
+import { zOpId } from "@/lib/offline/operacion";
 import {
   type EstadoPremio,
   estadoPremio,
@@ -86,6 +87,8 @@ export const zGuardarTarea = z.object({
   id: zIdTareaProfe.nullable(),
   accion: z.enum(["borrador", "publicar", "guardar"]),
   tarea: zEntradaTarea,
+  /** Id del intento (D293): si la cola lo reintenta, la tarea no se crea dos veces. */
+  opId: zOpId.optional(),
 });
 export type GuardarTarea = z.infer<typeof zGuardarTarea>;
 

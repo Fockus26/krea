@@ -6,7 +6,7 @@
 import { refresh } from "next/cache";
 import { almacenB2 } from "@/lib/almacen/b2";
 import { claveFotoPremio, validarFotoPremio } from "@/lib/almacen/imagen";
-import { exigirSesion } from "@/lib/dal";
+import { exigirSesion, sesionDeCola } from "@/lib/dal";
 import { diaDeInstante } from "@/lib/fecha";
 import { firebaseAdmin } from "@/lib/firebase/admin";
 import {
@@ -16,6 +16,7 @@ import {
   guardarPremioEnTransaccion,
   guardarTareaEnTransaccion,
 } from "@/lib/firebase/tareas";
+import { zQuien } from "@/lib/offline/operacion";
 import type { ResultadoPremio } from "@/lib/premios";
 import {
   type CambioFoto,
@@ -28,6 +29,11 @@ import {
 
 export type { ResultadoPremio, ResultadoTarea };
 
+/** Desde la cola: además, `sesion` (no es la de quien la encoló o venció, D294). */
+export type ResultadoTareaCola =
+  | ResultadoTarea
+  | { ok: false; error: "sesion" };
+
 function registrar(accion: string, e: unknown) {
   console.error(`[${accion}]`, (e as { code?: string }).code ?? "error");
 }
@@ -35,6 +41,28 @@ function registrar(accion: string, e: unknown) {
 /** Guarda un borrador, publica o guarda cambios de una tarea publicada (`accion`). */
 export async function guardarTarea(entrada: unknown): Promise<ResultadoTarea> {
   const sesion = await exigirSesion("profesor");
+  const r = await guardar(sesion.uid, entrada);
+  if (r.ok) refresh();
+  return r;
+}
+
+/**
+ * El mismo guardado desde la cola sin conexión (D292–D294): `entrada` lleva `usuario` (el profe
+ * que lo encoló) y `opId`. Sin la sesión de ese profe devuelve `sesion` y queda pendiente.
+ */
+export async function guardarTareaPendiente(
+  entrada: unknown,
+): Promise<ResultadoTareaCola> {
+  const quien = zQuien.safeParse(entrada);
+  if (!quien.success) return { ok: false, error: "invalida" };
+  const sesion = await sesionDeCola("profesor", quien.data.usuario);
+  if (!sesion) return { ok: false, error: "sesion" };
+  const r = await guardar(sesion.uid, entrada);
+  if (r.ok) refresh();
+  return r;
+}
+
+async function guardar(uid: string, entrada: unknown): Promise<ResultadoTarea> {
   const admin = firebaseAdmin();
   if (!admin) return { ok: false, error: "red" };
   const envio = zGuardarTarea.safeParse(entrada);
@@ -43,13 +71,12 @@ export async function guardarTarea(entrada: unknown): Promise<ResultadoTarea> {
   try {
     const { fotoSuelta, ...r } = await guardarTareaEnTransaccion(
       admin.db,
-      sesion.uid,
+      uid,
       envio.data,
       diaDeInstante(ahora),
       ahora,
     );
     if (fotoSuelta) await borrarFoto(fotoSuelta, "guardarTarea");
-    if (r.ok) refresh();
     return r;
   } catch (e) {
     registrar("guardarTarea", e);
