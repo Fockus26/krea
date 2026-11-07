@@ -2,7 +2,6 @@
 // Ingresar conectado a Firebase Auth (fase 07, D008, D180): login en el navegador con el email
 // interno, y el idToken se cambia en el servidor por la cookie de sesión httpOnly.
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { useRouter } from "next/navigation";
 import { Suspense, useState, useTransition } from "react";
 import { iniciarSesion } from "@/lib/acciones/sesion";
 import { type ErrorIngreso, errorIngresoDeCodigo } from "@/lib/auth";
@@ -12,7 +11,6 @@ import { AvisoIngreso } from "./aviso-ingreso";
 import { LoginForm } from "./login-form";
 
 export function Ingresar({ recuperarHref }: { recuperarHref: string }) {
-  const router = useRouter();
   const [error, setError] = useState<ErrorIngreso | undefined>();
   const [pending, startTransition] = useTransition();
 
@@ -36,7 +34,9 @@ export function Ingresar({ recuperarHref }: { recuperarHref: string }) {
           setError(r.error);
           return;
         }
-        router.replace(r.destino);
+        // Carga completa, no el router (D251): si se llegó aquí sin pasar por /salir (sesión
+        // vencida), no queda en memoria nada de la cuenta anterior para la nueva.
+        window.location.replace(r.destino);
       } catch (e) {
         setError(errorIngresoDeCodigo((e as { code?: string }).code));
       }
