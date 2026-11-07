@@ -149,6 +149,8 @@ export async function cambiarPassword(
     destino,
     "[cambiarPassword]",
   );
+  // La cookie nueva ya vacía la caché del router; esto lo deja explícito (D250)
+  refresh();
   return { ok: true, sesionRenovada };
 }
 
@@ -224,6 +226,8 @@ export async function crearPassword(
     destino,
     "[crearPassword]",
   );
+  // Ninguna ruta en caché de la sesión con la temporal (D250)
+  refresh();
   return {
     ok: true,
     destino: renovada ? inicioDe(sesion.rol) : RUTA_INGRESAR,

@@ -39,6 +39,19 @@ const usuario = async (cedula: string) =>
     (await db().collection(COL.usuarios).doc(cedula).get()).data(),
   );
 
+/**
+ * El error con el que rechaza `p`. `expect(p).rejects` se queda colgado en bun 1.4.4 con estas
+ * promesas del Admin SDK (visto en W1): se captura a mano.
+ */
+async function rechazo(p: Promise<unknown>): Promise<unknown> {
+  try {
+    await p;
+  } catch (e) {
+    return e;
+  }
+  throw new Error("se esperaba un rechazo");
+}
+
 async function limpiar(cedula: string) {
   await auth()
     .deleteUser(cedula)
@@ -113,8 +126,9 @@ describe("crearCuentaCon (D232, D233)", () => {
       },
       AHORA + 1,
     );
-    await expect(intento).rejects.toBeInstanceOf(ErrorCuenta);
-    await expect(intento).rejects.toMatchObject({ codigo: "existe" });
+    const error = await rechazo(intento);
+    expect(error).toBeInstanceOf(ErrorCuenta);
+    expect(error).toMatchObject({ codigo: "existe" });
     expect(await usuario(NUEVO)).toEqual(antes);
     // La contraseña temporal sigue siendo la primera
     expect(
@@ -124,20 +138,22 @@ describe("crearCuentaCon (D232, D233)", () => {
 
   test("cuenta de Auth sin perfil → «existe» y no deja perfil a medias", async () => {
     await auth().createUser({ uid: ADMIN, email: emailInterno(ADMIN) });
-    await expect(
-      crearCuentaCon(
-        auth(),
-        db(),
-        {
-          rol: "profesor",
-          cedula: ADMIN,
-          nombres: "César",
-          apellidos: "Admin",
-          email: null,
-        },
-        AHORA,
+    expect(
+      await rechazo(
+        crearCuentaCon(
+          auth(),
+          db(),
+          {
+            rol: "profesor",
+            cedula: ADMIN,
+            nombres: "César",
+            apellidos: "Admin",
+            email: null,
+          },
+          AHORA,
+        ),
       ),
-    ).rejects.toMatchObject({ codigo: "existe" });
+    ).toMatchObject({ codigo: "existe" });
     expect((await db().collection(COL.usuarios).doc(ADMIN).get()).exists).toBe(
       false,
     );
@@ -290,7 +306,7 @@ describe("admin y edición de profesores (D231, D233, D234)", () => {
 describe("eliminarCuentaCon (D233)", () => {
   test("borra Auth, perfil y privado; repetir no falla", async () => {
     await eliminarCuentaCon(auth(), db(), NUEVO);
-    await expect(auth().getUser(NUEVO)).rejects.toMatchObject({
+    expect(await rechazo(auth().getUser(NUEVO))).toMatchObject({
       code: "auth/user-not-found",
     });
     expect((await db().collection(COL.usuarios).doc(NUEVO).get()).exists).toBe(
