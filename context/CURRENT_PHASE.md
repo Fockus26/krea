@@ -11,7 +11,7 @@ Fases 01–09 cerradas · **Track:** Product · main @ 8f818b8 · versión 1 ent
 
 **Tanda 2026-11-06** cerrada (olas 1–5, #78–#101, main @ 0f74ca4).
 
-**Tanda 2026-11-07** (pedidos 54–58, 3 olas): `plans/batch-2026-11-07.md` · **ola 1 de 3** lanzada: X1 `fix/eliminar-equipo-con-entregas` wt1 → #104 (abierto) · X2 `feat/lote-rango-shift` wt2 → #103 (abierto) · X3 `fix/ranking-vacio` wt3 → #102 (abierto) · sigue ola 2 (X4 vista lista) y ola 3 (X5 años › secciones).
+**Tanda 2026-11-07** (pedidos 54–58, 3 olas): `plans/batch-2026-11-07.md` · ola 1 **cerrada** (#102 ranking vacío, #103 Shift, #104 eliminar equipo; sin QA por memoria) · **sigue ola 2 de 3**: X4 vista lista Tareas/Equipos (+ «3 de 2 evaluadas» heredado de #104) · luego ola 3: X5 años › secciones.
 
 ## Blocked (actions for César or external)
 
