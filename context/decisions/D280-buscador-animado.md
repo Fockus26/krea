@@ -1,0 +1,5 @@
+# D280 · Movimiento · Buscador de Alumnos: «Borrar la búsqueda» aparece con opacidad y escala; resultados que entran · Implemented
+
+**Decision:** en `StudentFilters` el campo de búsqueda lleva un botón de ícono «Borrar la búsqueda» (ghost sm, X) como elemento final del `Input`. Sin texto está `inert` (ni se ve ni se alcanza con Tab ni lo lee el lector) con `opacity-0 scale-75`; con texto pasa a `opacity-100 scale-100` con `transition-[opacity,scale]` `--d-fast`. Al pulsarlo vacía la búsqueda y devuelve el foco al campo. La X nativa de `type="search"` se oculta para que no haya dos. Las filas que aparecen al borrar o cambiar la búsqueda entran con opacidad y las que quedan viajan (D281); el mensaje «Sin resultados» de la tabla entra con `animate-fade-in`. Copy «Borrar la búsqueda» PROVISIONAL (W15 no tiene filas de checklist: va en el PR). Reduced motion: `--d-fast` 0, cambio directo.
+**Why:** pedido 41. Animar el ancho del campo al enfocarlo está prohibido (solo transform/opacity) y movería el segmentado y el contador de la misma fila.
+**Discarded alternative:** dejar la X nativa — no anima, cambia entre navegadores y en Firefox no existe.
