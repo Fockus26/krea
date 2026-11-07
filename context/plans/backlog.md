@@ -24,3 +24,6 @@
 - (F05 ola 2, media) `/tareas/[tarea]` evaluadas: sin respuestas ni fecha de entrega reales (fila 103); el «no capitán» solo se ve en `/secciones/tareas` hasta la fase 07.
 - (F05 ola 2, baja) Detalle de nota: solo «Identidad de marca» tiene detalle (D136, fila 100).
 - (F07 W2, **alta**) Galerías `/secciones`, `/componentes`, `/estados` públicas con nombres y notas reales del seed (D181). Bloquearlas (proxy) o pasarlas a datos ficticios antes de dar la URL a nadie.
+- (tanda 11-06 W6, media) Grupal enviada por alguien que ya no está en el equipo: `entregaVista` deja `quien = null` y sale el texto del Excel «se cargó con la nota, sin el registro del envío» (engañoso).
+- (tanda 11-06 W6, baja) Integrante que entró al equipo tras la entrega: ve «las respuestas aparecen cuando él las envíe» aunque ya se envió.
+- (tanda 11-06 W6, decisión de César) Borrador grupal compartido en Firestore para que los integrantes vean las respuestas antes del envío (hoy solo en localStorage del capitán, D196/D249).

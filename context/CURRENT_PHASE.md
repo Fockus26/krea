@@ -9,9 +9,18 @@
 Fases 01–09 cerradas · **Track:** Product · main @ 8f818b8 · versión 1 entregada. Próximo QA de versión: `git diff --name-only d50568b..origin/main` (`plans/qa-version-1.md`).
 **Build local suprimido** (César, 2026-11-05): lo corren CI y Vercel. **QA con sesión:** `qa:local` y `.env.test.local`; nunca pedirle a César que inicie sesión.
 
+**Tanda 2026-11-06** (44 pedidos, 3 olas): `plans/batch-2026-11-06.md` · ola 1 de 3: 8 PRs abiertos (#78–#85), esperan revisión y merge de César. Orden: #81 antes o junto con #84 y #85; #82 y #84 chocan poco en task-builder; #78 y #81 en salir/ingresar.
+
 | Unit | Branch | Status |
 |---|---|---|
-| Fase 09 · QA + arreglos | #62–#76 | merged (8f818b8) |
+| W1 profes admin (1, 2, 4) | `feat/profes-admin` | PR #85 (wt1) · test:rules pendiente |
+| W2 contraste y foco (21–23, 29) | `fix/contraste-y-foco` | PR #82 (wt2) · píldora (22): decide César |
+| W3 textos y layout (24, 26, 34, 35, 38) | `fix/textos-y-layout` | PR #78 (wt3) |
+| W4 eliminar tareas (6, 30, 32, 33, 44) | `feat/tareas-eliminar` | PR #84 (wt4) |
+| W5 imagen pegar/arrastrar (28) | `feat/imagen-pegar-arrastrar` | PR #79 (wt5) |
+| W6 grupal integrantes (9) | `feat/grupal-integrantes` | PR #80 (wt6) |
+| W7 caché entre rutas (14) | `perf/cache-rutas` | PR #81 (wt7) — mergear antes que W1/W4 o junto |
+| W8 Alumnos por URL (12, 13) | `feat/alumnos-filtros` | PR #83 (wt8) |
 
 ## Blocked (actions for César or external)
 
