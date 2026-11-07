@@ -9,7 +9,9 @@
 Fases 01–09 cerradas · **Track:** Product · main @ 8f818b8 · versión 1 entregada. Próximo QA de versión: `git diff --name-only d50568b..origin/main` (`plans/qa-version-1.md`).
 **Build local suprimido** (César, 2026-11-05): lo corren CI y Vercel. **QA con sesión:** `qa:local` y `.env.test.local`; nunca pedirle a César que inicie sesión.
 
-**Tanda 2026-11-06** (53 pedidos, 5 olas): `plans/batch-2026-11-06.md` · olas 1–3 **cerradas** (#78–#95, main @ 761805f; sin QA por memoria) · ola 4 **cerrada** (#96–#99 mergeados, main @ 1605d0a) · TTL de `operaciones` descartado (Firebase de pago; se migra al VPS) · **ola 5 de 5**: #100 W23 `fix/icono-texto` wt1 (terminando tras corte de red) · #101 `fix/podio-numero` wt2 (D306: `cn` borraba el color del número del podio) · luego ola 5: W23 `fix/icono-texto` (pedido 48).
+**Tanda 2026-11-06** cerrada (olas 1–5, #78–#101, main @ 0f74ca4).
+
+**Tanda 2026-11-07** (pedidos 54–58, 3 olas): `plans/batch-2026-11-07.md` · **ola 1 de 3** lanzada: X1 `fix/eliminar-equipo-con-entregas` wt1 → #104 (abierto) · X2 `feat/lote-rango-shift` wt2 → #103 (abierto) · X3 `fix/ranking-vacio` wt3 → #102 (abierto) · sigue ola 2 (X4 vista lista) y ola 3 (X5 años › secciones).
 
 ## Blocked (actions for César or external)
 

@@ -39,3 +39,4 @@
 - (tanda 11-06, W16) Con la hoja del calendario abierta el botón «Elegir fecha» dice `aria-expanded=false`; D116 y el docblock de `TaskBuilder` aún dicen «sin calendario».
 - (tanda 11-06, W15) Sin FLIP en «Sin equipo» ni tableros de equipos/premios (cuadrículas; `useFlip` solo mide en vertical); alumno eliminado sin salida animada.
 - **Offline: deshabilitar sin red las acciones que no se encolan** (evaluar, puntos, alumnos, profes…), con «Sin conexión» en el botón. Hoy las cubre el banner global y el error «No se pudo conectar». Propuesta de W18 (#99), después de que #98 esté en main (toca sus archivos). Decisión de César 2026-11-07: «el resto muestra Sin conexión y no deja enviar».
+- **`image-upload.tsx` zona de arrastre** (`ZONE`, ~líneas 112 y 243): ícono + texto de dos líneas con `items-center`; debería usar `icono-linea` (D304). Visto de paso por W23 (#100). Baja.
