@@ -194,6 +194,7 @@ export function historialDe(
         nombre: nombreDe(a, n),
         valor: a.valor,
         motivo: a.motivo,
+        motivoId: a.motivoId,
         fecha: isoLocalDeInstante(a.en),
         profe: autor ? nombreCorto(autor) : SIN_NOMBRE,
         anulado: anulados.has(a.id),

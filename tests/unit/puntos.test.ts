@@ -14,6 +14,7 @@ import {
   conDeltas,
   DETALLE_VACIO,
   deltasSesion,
+  esAjusteImportado,
   FILTRO_VACIO,
   type FilaHistorial,
   filtrarCandidatos,
@@ -21,6 +22,7 @@ import {
   filtrarLabel,
   filtroHistorialTexto,
   historialMetaTexto,
+  historialMostrable,
   isoLocal,
   MOTIVO_VACIO,
   MOTIVOS,
@@ -31,6 +33,7 @@ import {
   opcionesAjusteLabel,
   puedeAnular,
   puntosTexto,
+  rutaDestinoHistorial,
   separarMotivo,
   sinErrores,
   sinResultadosTexto,
@@ -347,5 +350,40 @@ describe("historial", () => {
     expect(opcionesAjusteLabel("Jorge Quintero")).toBe(
       "Opciones del ajuste de Jorge Quintero",
     );
+  });
+});
+
+describe("D260–D261: Historial sin ajustes del Excel y con enlace al destino", () => {
+  const importado = fila({
+    id: "x",
+    motivo: "Ajuste del Excel",
+    motivoId: "importado",
+  });
+  const normal = fila({ id: "y" });
+
+  test("el ajuste importado no se muestra, ni con el filtro vacío", () => {
+    expect(filtrarHistorial([importado, normal], FILTRO_VACIO)).toEqual([
+      normal,
+    ]);
+    expect(historialMostrable([importado, normal])).toEqual([normal]);
+    expect(esAjusteImportado(importado)).toBe(true);
+    expect(esAjusteImportado(normal)).toBe(false);
+  });
+
+  test("no se borra: deltasSesion sigue sumándolo si es nuevo", () => {
+    const d = deltasSesion([{ ...importado, nuevo: true, valor: 2 }]);
+    expect(Object.values(d)).toEqual([2]);
+  });
+
+  test("alumno → ficha en Alumnos; equipo → equipos de su sección", () => {
+    expect(
+      rutaDestinoHistorial({ tipo: "alumno", destinoId: "123", seccion: "5A" }),
+    ).toBe("/profe/alumnos?seccion=5A&alumno=123");
+    expect(
+      rutaDestinoHistorial({ tipo: "equipo", destinoId: "g1", seccion: "5C" }),
+    ).toBe("/profe/equipos/5c");
+    expect(
+      rutaDestinoHistorial({ tipo: "alumno", destinoId: "", seccion: "5C" }),
+    ).toBeNull();
   });
 });

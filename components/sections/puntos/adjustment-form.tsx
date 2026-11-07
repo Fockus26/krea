@@ -292,7 +292,8 @@ export function AdjustmentForm({
           ) : null}
         </fieldset>
 
-        <div className="flex flex-wrap items-start gap-4">
+        {/* D262: una columna en todos los anchos: Motivo → Puntos → Detalle */}
+        <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-1.5">
             <Label id={lPuntos} htmlFor={idPuntos}>
               Puntos
@@ -380,7 +381,7 @@ export function AdjustmentForm({
           </div>
 
           <Field
-            className="min-w-[min(--spacing(60),100%)] flex-1"
+            className="w-full"
             label={
               <>
                 Detalle{" "}
@@ -395,6 +396,7 @@ export function AdjustmentForm({
             <Textarea
               rows={2}
               compact
+              autoGrow
               value={detalle}
               required={motivo === "otro"}
               onChange={(e) => setDetalle(e.currentTarget.value)}
