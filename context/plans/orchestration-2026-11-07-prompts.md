@@ -117,3 +117,110 @@ feed `ranking-feed.tsx:41` ya tiene su vacío: no lo dupliques. Vista previa: si
 `app/secciones/ranking/[estado]/page.tsx` tiene estados, añade «vacio» (D072).
 
 **Verificar:** test puro de la función que decide vacío/no vacío; typecheck, lint, a11y por código.
+
+---
+
+## X4 — Tareas y Equipos en dos vistas (tarjetas / lista) con eliminar en lote
+
+**Rama** `feat/vista-lista-tareas-equipos` · **Decisiones** D313–D316 · **Filas** 164–165 · opus · medium · Docker: no
+**Base:** `main` @ b617c92 (X1 #104, X2 #103 y X3 #102 ya mergeados; D307–D312 en `context/decisions/`).
+
+**César (pedido 56):** Tareas y Equipos del profesor en dos vistas: la actual y una lista como la
+de Alumnos/Profesores, con eliminar en lote.
+
+**Decidido con César:** interruptor **Tarjetas / Lista** en Tareas (`/profe/tareas`) y en Equipos
+(`/profe/equipos`, `/profe/equipos/[seccion]`). Arranca en la vista actual (Tarjetas) y recuerda la
+última elegida en `localStorage` (este navegador; una clave por pantalla). La vista Lista es una
+tabla como Alumnos/Profesores con casillas, Shift+clic por rango y la barra «N seleccionados ·
+Eliminar» con su confirmación.
+
+**Dónde:**
+- **Selección:** `components/sections/shared/use-seleccion-lote.ts` (hook `useSeleccionLote(ids)`,
+  D311: `casilla(id)`, `alternarTodos`, `limpiar`, `quitar`, `podar`). Úsalo tal cual; `ids` = las
+  filas visibles **en el orden de la tabla y ya filtradas**. Patrón de uso:
+  `components/sections/alumnos/students-directory.tsx:199`, `students-table.tsx:105,167`,
+  `components/sections/profesores/profesores-directory.tsx:55,93,117`.
+- **Barra y diálogo del lote:** `components/sections/shared/eliminar-en-lote.tsx` (`EliminarEnLote`,
+  D298–D300). Hoy habla de `cedula` (`ItemLote = { cedula, nombre }`, `onAbrir(cedulas)`,
+  `eliminar(cedulas)`, `onEliminados(cedulas)`). Generalízalo a `id` (`ItemLote = { id, nombre }`)
+  y actualiza sus dos usos (`alumnos/delete-students-batch.tsx:87`, `profesores-directory.tsx:93`)
+  sin cambiar su comportamiento. Textos por `Sustantivo` en `lib/lote.ts:164-210`: añade
+  `TAREAS = { uno: "tarea", varios: "tareas" }` y `EQUIPOS`; revisa que `seleccionadosTexto` y
+  compañía concuerden en género («1 tarea seleccionada», «Ninguna tarea seleccionada»); si el
+  helper asume masculino, añade el género al `Sustantivo`, con tests.
+  Etiquetas de casilla: `seleccionarLabel` y `SELECCIONAR_TODOS_*` (`lib/lote.ts:206-210`).
+- **Acciones de servidor en lote** (nuevas, junto a las de uno): `eliminarTareas(ids)` en
+  `lib/acciones/tareas.ts` (reutiliza el cuerpo de `eliminarTarea`, `:113-135`, sin duplicar: extrae
+  el «uno sin sesión ni refresh» como hace `lib/acciones/alumnos.ts:178-195` con `borrarUnAlumno`) y
+  `eliminarEquipos(ids)` en `lib/acciones/equipos.ts` (igual con `eliminarEquipo`, `:186-216`: la
+  regla de #104/D307 — integrantes a «Sin equipo», entregas con `titularNombre`, ajustes borrados,
+  claims y logo después — sale entera de `eliminarEquipoEnTransaccion`; una transacción **por
+  equipo**, no una para todos). Con `borrarEnLote` (`lib/lote.ts:32`), `exigirSesion("profesor")`,
+  un `refresh()` al final y una validación nueva `zIdsLote` (ids de documento sin repetir,
+  1..`TOPE_LOTE`; con `zIdDocumento`/`zIdTareaProfe` según el caso; `zCedulasLote` es solo de
+  cédulas). Lo que ya no existe cuenta como borrado (idempotente, como `eliminarAlumnos`). El error
+  `sesiones` de un equipo es un fallo de ese ítem con su texto (`errorGestionEquipoTexto`).
+- **Qué se pierde, en el diálogo** (`descripcion`/`detalle`): Tareas — suma de lo que hoy dice el
+  diálogo de una (`eliminarTareaDescripcion`, `lib/tareas-profe.ts`; las pérdidas ya vienen por
+  tarea en `TareaProfe.perdida`, así que se suma en el cliente, sin ir al servidor). Equipos — suma
+  de `consecuenciasEliminar` (`lib/equipos-gestion.ts:77`, texto `:141`) de cada equipo marcado,
+  también en el cliente con lo que ya tiene el tablero. Función pura de suma + texto, con tests.
+- **Tareas:** página `app/(profesor)/profe/tareas/page.tsx`; lista
+  `components/sections/tareas-profe/teacher-task-list.tsx` (filtro por estado `TaskStatusFilter`,
+  borrar uno con FLIP y foco, D243) y tarjeta `teacher-task-card.tsx`. La vista Lista comparte el
+  filtro de estado (vale para las dos vistas) y la tabla muestra lo de la tarjeta en columnas:
+  título (enlace a `/profe/tareas/[id]`), tipo, secciones, estado, fecha/plazo y avance
+  («n de N evaluadas»); cada fila conserva «Eliminar» de una (el mismo diálogo de D243).
+- **Equipos:** `app/(profesor)/profe/equipos/_equipos.tsx` y
+  `components/sections/equipos-profe/teams-board.tsx` (tarjetas en `<ul>` `:238`, vacío `:229`,
+  estado `EstadoEquipos`). La vista Lista: nombre (con logo/tema), integrantes (n), capitán, y
+  puntos o posición solo si ya están en los datos del tablero; acciones de fila (editar,
+  eliminar, con los diálogos existentes de `team-dialogs.tsx`). Mover integrantes y cambiar
+  capitán siguen solo en Tarjetas. «Sin equipo» (`unassigned-card.tsx`) no es fila seleccionable.
+- **Interruptor:** `ToggleGroup` de `components/ui/toggle-group.tsx` (radiogroup; mira cómo lo usa
+  `components/sections/alumnos/student-filters.tsx`), ícono + texto «Tarjetas» / «Lista», en la
+  cabecera de cada pantalla (`tasks-header.tsx`, `teams-header.tsx`). Recordar en `localStorage`
+  como `components/sections/ranking/ranking-how-to.tsx:16-48`: helper puro que valida el valor
+  (`vistaDe(valor): "tarjetas" | "lista"`, inválido o null → `"tarjetas"`), leído en un efecto tras
+  montar (el server pinta Tarjetas; sin hidratación rota), `try/catch` en lectura y escritura.
+  Claves: `krea.vista.tareas` y `krea.vista.equipos`.
+- **Arreglo heredado de X1 — «3 de 2 evaluadas»:** `totalTitulares` (`lib/tareas-profe-datos.ts:301`)
+  suma `conteos().equipos` (`lib/datos/profesor.ts:96`), que solo cuenta equipos vivos; tras
+  eliminar un equipo con entregas, sus entregas siguen contando en `hechas`. El total pasa a ser
+  **titulares con entrega existente (no borrador) + titulares vivos sin entrega** en las secciones
+  de la tarea. Para la grupal hace falta saber qué `titularId` siguen vivos: la página ya trae
+  `entregasTodas()`; añade `equiposTodos()` (o amplía `Conteos` con los ids de equipo por
+  sección) y que `resumenEntregas` devuelva también los titulares con entrega. La individual con
+  la misma fórmula. Invariante con test: `hechas <= total` siempre. Tests en
+  `tests/unit/tareas-profe-datos.test.ts` (`:412-482`): equipo eliminado con 1 entrega evaluada +
+  2 equipos vivos sin entrega → «1 de 3», no «1 de 2».
+
+**Trampas:**
+- `EliminarEnLote` ya resuelve trozos, reintentos y foco: no reimplementes nada de eso.
+- La selección se poda tras `refresh()` (`podar(existentes)`); al cambiar de vista o de filtro, lo
+  oculto sale de la selección (lo visible manda, como en Alumnos).
+- Tareas: el borrado en lote no necesita el FLIP de una; con `refresh()` las filas desaparecen.
+  Foco al terminar si no queda nada: el interruptor o el `<h1>` (`focoAlTerminar`).
+- Equipos: el tablero tiene estado optimista propio; tras borrar en lote manda el `inicial` del
+  servidor (ya lo hace, `teams-board.tsx:~95`). No borres en el cliente antes de la respuesta.
+- Vista previa / galería sin acciones (`TeacherTaskList` sin `eliminar`, `TeamsBoard` sin
+  `acciones`): la Lista se ve sin casillas ni barra.
+- 320 px sin scroll horizontal de página: haz lo que ya hace Profesores/Alumnos con su tabla.
+- Tokens: nada de valores sueltos; el estado activo del interruptor no solo por color.
+
+**Copy provisional** (filas 164–165): 164 = textos del interruptor y su `aria-label` («Vista»),
+165 = textos del diálogo de lote de Tareas y Equipos (título, descripción, pérdidas). Descríbelos
+en el informe; no edites el checklist.
+
+**Decisiones** (D313–D316, propuesta): D313 interruptor Tarjetas/Lista con memoria en
+`localStorage`; D314 eliminar tareas en lote; D315 eliminar equipos en lote (regla de D307 por
+equipo); D316 total de titulares con entregas de equipos eliminados. Usa menos si sobran.
+
+**Verificar:** tests puros (`vistaDe`, suma de pérdidas y su texto, `Sustantivo` con género,
+`zIdsLote`, `totalTitulares`/`tareaProfeDe` con equipo eliminado); las acciones en lote como estén
+probadas las de alumnos (`grep -rn "eliminarAlumnos\|borrarEnLote" tests`); `bun run test:rules`
+solo si tocas reglas o la transacción. typecheck, lint, suite entera, `a11y` por código
+(interruptor con teclado y nombre, tabla con nombre, casillas etiquetadas, 320 px, 4 acentos ×
+claro/oscuro). Sin servidor ni capturas. «Cómo probar» del PR: rol profesor, ambas pantallas,
+ambas vistas, borrar 2 en lote, recargar y ver que recuerda la vista, y el avance de una grupal
+tras eliminar un equipo con entrega.
