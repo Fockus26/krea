@@ -14,6 +14,11 @@ import {
   zCambiarCapitan,
   zMoverAlumno,
 } from "@/lib/equipos-datos";
+import {
+  type ResultadoGestionEquipo,
+  zCrearEquipo,
+  zEditarEquipo,
+} from "@/lib/equipos-gestion";
 import { zIdDocumento } from "@/lib/evaluar-datos";
 import { firebaseAdmin } from "@/lib/firebase/admin";
 import {
@@ -22,8 +27,13 @@ import {
   moverAlumnoEnTransaccion,
   sincronizarClaims,
 } from "@/lib/firebase/equipos";
+import {
+  crearEquipoEnTransaccion,
+  editarEquipoEnTransaccion,
+  eliminarEquipoEnTransaccion,
+} from "@/lib/firebase/equipos-gestion";
 
-export type { ResultadoEquipos, ResultadoLogo };
+export type { ResultadoEquipos, ResultadoGestionEquipo, ResultadoLogo };
 
 function registrar(accion: string, e: unknown) {
   console.error(`[${accion}]`, (e as { code?: string }).code ?? "error");
@@ -131,6 +141,77 @@ export async function subirLogoEquipo(form: FormData): Promise<ResultadoLogo> {
     registrar("subirLogoEquipo", e);
     // Solo si el equipo no llegó a apuntar al objeto nuevo
     if (clave && !guardado) await almacen.borrar(clave).catch(() => null);
+    return { ok: false, error: "red" };
+  }
+}
+
+/** Crea un equipo en la sección de la página (D270). Nombre repetido en la sección: `repetido`. */
+export async function crearEquipo(
+  entrada: unknown,
+): Promise<ResultadoGestionEquipo> {
+  await exigirSesion("profesor");
+  const admin = firebaseAdmin();
+  if (!admin) return { ok: false, error: "red" };
+  const d = zCrearEquipo.safeParse(entrada);
+  if (!d.success) return { ok: false, error: "invalida" };
+  try {
+    const r = await crearEquipoEnTransaccion(admin.db, d.data, Date.now());
+    if (r.ok) refresh();
+    return r;
+  } catch (e) {
+    registrar("crearEquipo", e);
+    return { ok: false, error: "red" };
+  }
+}
+
+/** Cambia el nombre y el tema de un equipo (D270). */
+export async function editarEquipo(
+  entrada: unknown,
+): Promise<ResultadoGestionEquipo> {
+  await exigirSesion("profesor");
+  const admin = firebaseAdmin();
+  if (!admin) return { ok: false, error: "red" };
+  const d = zEditarEquipo.safeParse(entrada);
+  if (!d.success) return { ok: false, error: "invalida" };
+  try {
+    const r = await editarEquipoEnTransaccion(admin.db, d.data, Date.now());
+    if (r.ok) refresh();
+    return r;
+  } catch (e) {
+    registrar("editarEquipo", e);
+    return { ok: false, error: "red" };
+  }
+}
+
+/**
+ * Elimina un equipo vacío, sin entregas grupales ni ajustes (D271), y su logo de B2 después del
+ * commit (si B2 falla, se registra: queda huérfano, sin dueño).
+ */
+export async function eliminarEquipo(
+  equipoId: unknown,
+): Promise<ResultadoGestionEquipo> {
+  await exigirSesion("profesor");
+  const admin = firebaseAdmin();
+  if (!admin) return { ok: false, error: "red" };
+  const id = zIdDocumento.safeParse(equipoId);
+  if (!id.success) return { ok: false, error: "invalida" };
+  try {
+    const { resultado, logo } = await eliminarEquipoEnTransaccion(
+      admin.db,
+      id.data,
+      Date.now(),
+    );
+    if (!resultado.ok) return resultado;
+    refresh();
+    if (logo) {
+      const b = await almacenB2()
+        ?.borrar(logo)
+        .catch(() => null);
+      if (!b?.ok) console.error("[eliminarEquipo] no se borró el logo");
+    }
+    return resultado;
+  } catch (e) {
+    registrar("eliminarEquipo", e);
     return { ok: false, error: "red" };
   }
 }

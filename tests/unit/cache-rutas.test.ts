@@ -16,6 +16,8 @@ const SIN_INVALIDAR: Record<string, string> = {
   comprobarCodigo: "solo valida el código del enlace",
   subirImagenRespuesta:
     "sube a B2; la respuesta no existe hasta enviarEntrega, que sí invalida",
+  resumenEliminarAlumno:
+    "solo cuenta lo que se borraría; eliminarAlumno sí invalida",
 };
 
 const INVALIDA =
