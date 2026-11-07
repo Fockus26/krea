@@ -1,0 +1,5 @@
+# D297 · Components · Variante `ghost-danger` de Button: eliminar sin fondo en rojo, hover y activo con tinte rojo · Implemented
+
+**Decision:** `variant="ghost-danger"`: texto `--error`, fondo transparente, hover `--alert-err-bg` (error al 10 % sobre la superficie), activo `--chip-err-bg` (12 %) + baja 1 px, foco y deshabilitado como `ghost`, padding 12 en md como `ghost`. La usan todos los botones de eliminar sin fondo (pregunta, tarea en lista y constructor, equipo, profesor, alumno en ficha y fila, barra del lote) y «Cerrar sesión» del Perfil, que tenía la misma forma (`ghost` + `text-error`). No `image-upload.tsx` (W20). El `danger` lleno se queda para confirmar.
+**Why:** pedido de César (49): el hover salía del acento (`--accent-soft`) sobre un botón rojo. Con tintes que ya existían no hay tokens nuevos; contraste de `--error` ≥ 4,5:1 en reposo, hover y activo, claro y oscuro (`tests/unit/ghost-danger-contraste.test.ts`; el rojo no depende del acento).
+**Discarded alternative:** seguir con `ghost` + `className="text-error"` y pisar el hover en cada sitio: se repite en 8 lugares y el siguiente se olvida.
