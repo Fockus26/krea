@@ -3,7 +3,8 @@
 import { type RankingPuesto, TOP_CHIP_EMPATE } from "./ranking";
 import { formatDecimal } from "./stepper";
 
-export const RIESGO_SEPARADOR = "Zona de riesgo · 5 últimos";
+/** Rótulo del separador (D256): sin el «· 5 últimos», que no valía para equipos (D255). */
+export const RIESGO_SEPARADOR = "Zona de riesgo";
 
 export type RankRowKind = "top" | "normal" | "riesgo";
 
@@ -87,6 +88,19 @@ export function splitRiesgo<T extends { enRiesgo: boolean }>(
   const corte = filas.findIndex((f) => f.enRiesgo);
   if (corte === -1) return { principal: [...filas], riesgo: [] };
   return { principal: filas.slice(0, corte), riesgo: filas.slice(corte) };
+}
+
+/**
+ * Duelo VS (D256): dentro de la zona de riesgo, `true` en la posición `i` cuando la fila `i` y la
+ * siguiente comparten puesto (empate). El conector «VS» se pinta entre las dos; fuera de la zona
+ * los empates siguen como siempre. Misma longitud que `filas`; la última siempre `false`.
+ */
+export function conectoresVs(
+  filas: ReadonlyArray<Pick<RankingPuesto, "puesto">>,
+): boolean[] {
+  return filas.map(
+    (f, i) => i < filas.length - 1 && filas[i + 1].puesto === f.puesto,
+  );
 }
 
 // ---- Anuncios de texto (HANDOFF §6): región viva única por página ----

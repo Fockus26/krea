@@ -3,7 +3,11 @@ import type { RankListFila } from "@/components/krea/rank-list";
 import { TeamLogo } from "@/components/krea/team-logo";
 import { UserAvatar } from "@/components/krea/user-avatar";
 import { DICEBEAR_ESTILOS } from "@/lib/dicebear";
-import { primerApellido, rankCompetition } from "@/lib/ranking";
+import {
+  primerApellido,
+  rankCompetition,
+  ZONA_RIESGO_EQUIPOS,
+} from "@/lib/ranking";
 
 // Datos de ejemplo del ranking. Nombres, puntos y capitanes son provisionales (CONTENT_CHECKLIST 41–43).
 // Los puntos están pensados para ver: empate en el top 10 (3.º), 11–30 y zona de riesgo de 6 filas
@@ -212,6 +216,7 @@ const EQUIPOS = [
 export function equiposOrdenados() {
   return rankCompetition(
     EQUIPOS.map((e) => ({ ...e, primerApellido: e.tema })),
+    ZONA_RIESGO_EQUIPOS,
   );
 }
 

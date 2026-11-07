@@ -15,8 +15,8 @@ const ENLACES = { estudiantes: "/ranking", equipos: "/ranking/equipos" };
 
 /**
  * Ranking del estudiante (HANDOFF §3): su sección, «tú» = la sesión. El servidor pinta la primera
- * instantánea y el cliente la mantiene en vivo (D190). El chip «En vivo» móvil lo pone la topbar
- * de la ruta (D128). Compartido por las dos rutas.
+ * instantánea y el cliente la mantiene en vivo (D190), sin rótulo «En vivo» (D257). Compartido
+ * por las dos rutas.
  */
 export async function RankingEstudiante({ vista }: { vista: Vista }) {
   const { usuario, seccion } = await alumnoActual();

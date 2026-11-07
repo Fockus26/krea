@@ -6,32 +6,7 @@ import {
   type SeccionRanking,
   type Vista,
 } from "@/lib/ranking-vista";
-import { cn } from "@/lib/utils";
 import { SegmentedLinks } from "./segmented-links";
-
-/*
- * Chip «En vivo» (HANDOFF §3): visible desde 1024; en móvil vive en la topbar. El texto lo dice
- * (el punto es decorativo y la onda, `animate-live`, se apaga con reduced motion).
- */
-export function LiveChip({ className }: { className?: string }) {
-  return (
-    <span
-      data-slot="live-chip"
-      className={cn(
-        "text-small-b inline-flex h-7 items-center gap-2 rounded-pill bg-chip-ok pr-2.5 pl-2 text-success",
-        className,
-      )}
-    >
-      <span
-        aria-hidden="true"
-        className="relative size-2.5 rounded-pill bg-success"
-      >
-        <span className="animate-live absolute inset-0 rounded-pill bg-success" />
-      </span>
-      En vivo
-    </span>
-  );
-}
 
 type Enlaces = {
   /** Ruta de cada pestaña (mismos filtros de sección/rol que la actual). */
@@ -42,7 +17,7 @@ type Enlaces = {
 
 /**
  * Encabezado del Ranking (HANDOFF §3 Ranking §1): eyebrow «Sección 5A · 35 estudiantes», h1
- * «Ranking» con el chip «En vivo», segmentado Estudiantes/Equipos a la derecha (envuelve) y, con
+ * «Ranking» (sin chip «En vivo», D257: el ranking sigue en vivo, solo se quitó el rótulo), segmentado Estudiantes/Equipos a la derecha (envuelve) y, con
  * `rol="profesor"`, el segmentado 5A/5C antes de las pestañas. Los segmentados son enlaces (D095).
  */
 export function RankingHeader({
@@ -63,7 +38,6 @@ export function RankingHeader({
     <PageHeader
       eyebrow={eyebrowRanking(seccion, cantidad, vista)}
       title="Ranking"
-      adornment={<LiveChip className="max-lg:hidden" />}
       actions={
         <>
           {rol === "profesor" && enlaces.seccion ? (

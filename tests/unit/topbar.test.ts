@@ -47,20 +47,19 @@ describe("topbarDe · estudiante", () => {
     "/tareas",
     "/equipo",
     "/perfil",
-  ])("%s: logo, sin En vivo, con barra inferior", (ruta) => {
+  ])("%s: logo, con barra inferior", (ruta) => {
     expect(topbarDe("estudiante", ruta)).toEqual({
       variante: "logo",
-      enVivo: false,
       barraInferior: true,
       soloAccion: false,
     });
   });
 
-  test("/ranking: logo con el chip En vivo (también en sus subrutas)", () => {
+  test("/ranking: logo con barra inferior (también en sus subrutas; sin chip En vivo, D257)", () => {
     for (const ruta of ["/ranking", "/ranking/equipos"]) {
       const t = topbarDe("estudiante", ruta);
       expect(t.variante).toBe("logo");
-      expect(t.enVivo).toBe(true);
+      expect(t).not.toHaveProperty("enVivo");
       expect(t.barraInferior).toBe(true);
     }
   });
@@ -73,7 +72,6 @@ describe("topbarDe · estudiante", () => {
       variante: "detalle",
       titulo: "Identidad de marca",
       volver: { href: "/notas", label: "Volver a Mis notas" },
-      enVivo: false,
       barraInferior: true,
       soloAccion: false,
     });
@@ -115,20 +113,21 @@ describe("topbarDe · profesor", () => {
     "/profe/premios",
     "/profe/perfil",
     "/profe/profesores",
-  ])("%s: logo, sin En vivo, con barra inferior", (ruta) => {
+  ])("%s: logo, con barra inferior", (ruta) => {
     expect(topbarDe("profesor", ruta)).toEqual({
       variante: "logo",
-      enVivo: false,
       barraInferior: true,
       soloAccion: false,
     });
   });
 
-  test("/profe/ranking: chip En vivo", () => {
-    expect(topbarDe("profesor", "/profe/ranking").enVivo).toBe(true);
-    expect(topbarDe("profesor", "/profe/ranking/5c").enVivo).toBe(true);
-    // /ranking es del estudiante
-    expect(topbarDe("profesor", "/ranking").enVivo).toBe(false);
+  test("/profe/ranking y sus subrutas: logo con barra inferior, sin chip", () => {
+    for (const ruta of ["/profe/ranking", "/profe/ranking/5c"]) {
+      const t = topbarDe("profesor", ruta);
+      expect(t.variante).toBe("logo");
+      expect(t.barraInferior).toBe(true);
+      expect(t).not.toHaveProperty("enVivo");
+    }
   });
 
   test("/profe/evaluar/[entrega]: X «Salir de la evaluación» → /profe, «Entrega n de m», con barra inferior", () => {
@@ -139,7 +138,6 @@ describe("topbarDe · profesor", () => {
       variante: "evaluar",
       titulo: "Entrega 1 de 7",
       volver: { href: "/profe", label: "Salir de la evaluación" },
-      enVivo: false,
       barraInferior: true,
       soloAccion: false,
     });
@@ -154,7 +152,6 @@ describe("topbarDe · profesor", () => {
         variante: "detalle",
         titulo: "Nueva tarea",
         volver: { href: "/profe/tareas", label: "Volver a Tareas" },
-        enVivo: false,
         barraInferior: false,
         soloAccion: true,
       });

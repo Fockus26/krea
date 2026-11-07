@@ -10,8 +10,7 @@ import type { Rol } from "@/lib/layout";
  *   logo     logo 88 + avatar (estudiante) o Menú (profesor); listas y raíces.
  *   detalle  volver 44 + título h4; pantallas de detalle (Detalle de nota, Tarea, constructor).
  *   evaluar  X «Salir de la evaluación» + «Entrega n de m» + Menú (Evaluar entrega).
- * `enVivo` añade el chip «En vivo» (Ranking: en móvil vive en la topbar). `barraInferior: false`
- * esconde la barra inferior (constructor: «es una tarea en curso», §3). `soloAccion` deja a la
+ * `barraInferior: false` esconde la barra inferior (constructor: «es una tarea en curso», §3). `soloAccion` deja a la
  * derecha solo la acción de la página (constructor: «Guardar borrador», sin Menú, lienzo
  * Constructor.dc.html).
  */
@@ -24,7 +23,6 @@ export type Topbar = {
   titulo?: string;
   /** Destino y nombre accesible del botón de la izquierda (detalle y evaluar). */
   volver?: { href: string; label: string };
-  enVivo: boolean;
   barraInferior: boolean;
   soloAccion: boolean;
 };
@@ -43,7 +41,6 @@ type Regla = {
   /** Título fijo, o de reserva si la ruta está en `TitulosTopbar`. */
   titulo?: string;
   volver?: { href: string; label: string };
-  enVivo?: boolean;
   sinBarraInferior?: boolean;
   soloAccion?: boolean;
   /** También sus subrutas (p. ej. pestañas del ranking como rutas, D095). */
@@ -71,7 +68,7 @@ const ESTUDIANTE: readonly Regla[] = [
     volver: { href: "/tareas", label: "Volver a Tareas" },
   },
   { ruta: "/equipo" },
-  { ruta: "/ranking", enVivo: true, subrutas: true },
+  { ruta: "/ranking", subrutas: true },
   { ruta: "/perfil" },
 ];
 
@@ -100,7 +97,7 @@ const PROFESOR: readonly Regla[] = [
   { ruta: "/profe/equipos" },
   { ruta: "/profe/puntos" },
   { ruta: "/profe/premios" },
-  { ruta: "/profe/ranking", enVivo: true, subrutas: true },
+  { ruta: "/profe/ranking", subrutas: true },
   { ruta: "/profe/perfil" },
   // Solo el admin (D233)
   { ruta: "/profe/profesores" },
@@ -113,7 +110,6 @@ export function rutasTopbar(rol: Rol): readonly string[] {
 
 const LOGO: Topbar = {
   variante: "logo",
-  enVivo: false,
   barraInferior: true,
   soloAccion: false,
 };
@@ -138,7 +134,6 @@ export function topbarDe(
     ...(variante === "logo"
       ? {}
       : { titulo: titulos[path] ?? regla.titulo, volver: regla.volver }),
-    enVivo: regla.enVivo ?? false,
     barraInferior: !regla.sinBarraInferior,
     soloAccion: regla.soloAccion ?? false,
   };

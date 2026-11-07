@@ -2,11 +2,13 @@ import { describe, expect, test } from "bun:test";
 import {
   agruparAnuncios,
   anuncioTexto,
+  conectoresVs,
   deltaDir,
   deltaTexto,
   deltaVisible,
   podiumLabel,
   puntosTexto,
+  RIESGO_SEPARADOR,
   rankRowKind,
   rankRowLabel,
   splitRiesgo,
@@ -128,6 +130,41 @@ describe("splitRiesgo", () => {
     expect(splitRiesgo([{ enRiesgo: false }]).riesgo).toEqual([]);
     expect(splitRiesgo([{ enRiesgo: true }]).principal).toEqual([]);
     expect(splitRiesgo([])).toEqual({ principal: [], riesgo: [] });
+  });
+});
+
+describe("separador y duelo VS (D256)", () => {
+  test("el separador dice solo «Zona de riesgo»", () => {
+    expect(RIESGO_SEPARADOR).toBe("Zona de riesgo");
+  });
+
+  test("VS entre filas consecutivas con el mismo puesto", () => {
+    const l = rankCompetition([
+      ...Array.from({ length: 6 }, (_, i) => e(`t${i}`, 100 - i)),
+      e("b1", 20),
+      e("b2", 20),
+      e("c", 15),
+      e("d", 14),
+      e("f", 13),
+    ]);
+    const { riesgo } = splitRiesgo(l);
+    expect(conectoresVs(riesgo)).toEqual([true, false, false, false, false]);
+  });
+
+  test("tres empatados: dos conectores; sin empates, ninguno", () => {
+    expect(
+      conectoresVs([
+        { puesto: 7 },
+        { puesto: 7 },
+        { puesto: 7 },
+        { puesto: 10 },
+      ]),
+    ).toEqual([true, true, false, false]);
+    expect(conectoresVs([{ puesto: 1 }, { puesto: 2 }])).toEqual([
+      false,
+      false,
+    ]);
+    expect(conectoresVs([])).toEqual([]);
   });
 });
 

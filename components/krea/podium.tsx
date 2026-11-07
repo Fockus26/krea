@@ -1,4 +1,6 @@
 import { Crown } from "lucide-react";
+import Link from "next/link";
+import type * as React from "react";
 import { TeamLogo } from "@/components/krea/team-logo";
 import { UserAvatar } from "@/components/krea/user-avatar";
 import type { DicebearEstilo } from "@/lib/dicebear";
@@ -12,6 +14,12 @@ type PodiumBase = {
   puesto: number;
   nombre: string;
   puntos: number;
+  /**
+   * Columna interactiva (D259, solo estudiantes): `href` → enlace (profe), `onAbrir` → botón que
+   * abre la tarjeta del compañero. El nombre accesible pasa del `<li>` al enlace/botón.
+   */
+  href?: string;
+  onAbrir?: () => void;
 };
 
 export type PodiumEntrada = PodiumBase &
@@ -44,6 +52,9 @@ const ESCALON: Record<1 | 2 | 3, string> = {
  * la posición en la lista. Con menos de 3 entradas quedan huecos a los lados, sin inventar filas.
  * Cada `<li>` lleva el nombre accesible y su contenido visual va `aria-hidden` (igual que RankRow).
  * La corona (Crown 32) va solo sobre los 1.º: `--warning` en claro, `--secondary` en oscuro.
+ * Celebra (D258): la corona se balancea, un destello recorre cada escalón y los avatares rebotan
+ * al montar (`animate-pop` corre una vez al insertarse, no en cada `onSnapshot`). Con reduced
+ * motion todo queda quieto.
  */
 export function Podium({ entradas, label, className }: PodiumProps) {
   const lista = entradas.slice(0, 3);
@@ -60,24 +71,22 @@ export function Podium({ entradas, label, className }: PodiumProps) {
         const nivel = Math.min(e.puesto, 3) as 1 | 2 | 3;
         const primero = nivel === 1;
         const size = primero ? 80 : 64;
-        return (
-          <li
-            key={e.id}
-            aria-label={podiumLabel(e)}
-            data-puesto={e.puesto}
-            className={cn("relative list-none min-w-0", ORDEN_VISUAL[i])}
+        const interactiva = e.href !== undefined || e.onAbrir !== undefined;
+        const claseToque =
+          "block w-full rounded-pod-step outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
+        const columna = (
+          <div
+            aria-hidden="true"
+            className="flex min-w-0 flex-col items-center gap-2 text-center"
           >
-            <div
-              aria-hidden="true"
-              className="flex min-w-0 flex-col items-center gap-2 text-center"
-            >
-              {primero ? (
-                <Crown
-                  aria-hidden="true"
-                  strokeWidth={2}
-                  className="absolute -top-8 left-1/2 size-8 -translate-x-1/2 text-warning dark:text-secondary"
-                />
-              ) : null}
+            {primero ? (
+              <Crown
+                aria-hidden="true"
+                strokeWidth={2}
+                className="animate-balanceo absolute -top-8 left-1/2 size-8 -translate-x-1/2 text-warning dark:text-secondary"
+              />
+            ) : null}
+            <span className="animate-pop flex">
               {e.tipo === "estudiante" ? (
                 <UserAvatar
                   estilo={e.estilo}
@@ -94,19 +103,54 @@ export function Podium({ entradas, label, className }: PodiumProps) {
                   size={size}
                 />
               )}
-              <span className="text-pod-name max-w-full truncate">
-                {e.nombre}
-              </span>
-              <span className="text-pod-pts">{formatDecimal(e.puntos)}</span>
-              <span
-                className={cn(
-                  "flex w-full justify-center rounded-pod-step pt-2.5",
-                  ESCALON[nivel],
-                )}
+            </span>
+            <span className="text-pod-name max-w-full truncate">
+              {e.nombre}
+            </span>
+            <span className="text-pod-pts">{formatDecimal(e.puntos)}</span>
+            <span
+              style={
+                {
+                  "--brillo-retardo": `${i * 700}ms`,
+                } as React.CSSProperties
+              }
+              className={cn(
+                "brillo-podio flex w-full justify-center rounded-pod-step pt-2.5",
+                ESCALON[nivel],
+              )}
+            >
+              {e.puesto}
+            </span>
+          </div>
+        );
+        return (
+          <li
+            key={e.id}
+            aria-label={interactiva ? undefined : podiumLabel(e)}
+            data-puesto={e.puesto}
+            className={cn("relative list-none min-w-0", ORDEN_VISUAL[i])}
+          >
+            {e.href !== undefined ? (
+              <Link
+                href={e.href}
+                aria-label={podiumLabel(e)}
+                className={claseToque}
               >
-                {e.puesto}
-              </span>
-            </div>
+                {columna}
+              </Link>
+            ) : e.onAbrir !== undefined ? (
+              <button
+                type="button"
+                aria-label={podiumLabel(e)}
+                aria-haspopup="dialog"
+                onClick={e.onAbrir}
+                className={cn(claseToque, "cursor-pointer")}
+              >
+                {columna}
+              </button>
+            ) : (
+              columna
+            )}
           </li>
         );
       })}

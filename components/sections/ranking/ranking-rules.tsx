@@ -44,7 +44,7 @@ export function RankingRules({ className }: { className?: string }) {
         </CardTitle>
         <ul className="text-small m-0 flex list-none flex-col gap-2 p-0">
           {REGLAS.map((r) => (
-            <li key={r.clave} className="flex items-start gap-2">
+            <li key={r.clave} className="flex items-center gap-2">
               <span className="sr-only">Ejemplo: </span>
               {r.ejemplo.tipo === "nota" ? (
                 <EjemploNota valor={r.ejemplo.valor} />

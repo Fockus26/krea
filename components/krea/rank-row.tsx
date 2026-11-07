@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type * as React from "react";
 import { RankDelta } from "@/components/krea/rank-delta";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +26,15 @@ export type RankRowProps = RankingPuesto & {
   /** Efecto de una sola vez: `sube` = brillo de acento, `riesgo` = temblor. */
   efecto?: "sube" | "riesgo";
   className?: string;
+  /**
+   * Fila interactiva (D259): `href` la vuelve un enlace (profe → ficha del alumno) y `onAbrir` un
+   * botón que abre un diálogo (estudiante → tarjeta del compañero). Sin ninguno, es solo texto.
+   * El nombre accesible pasa del `<li>` al enlace/botón: no se lee dos veces.
+   */
+  href?: string;
+  onAbrir?: () => void;
+  /** Duelo VS (D256): hay un empatado justo debajo; el conector se pinta en el hueco de abajo. */
+  vsDespues?: boolean;
   /** Al `<li>`: es el elemento que el FLIP traslada (`useFlip().registrar(id)`). */
   ref?: React.Ref<HTMLLIElement>;
 };
@@ -52,6 +62,9 @@ export function RankRow({
   esTu = false,
   moving = false,
   efecto,
+  href,
+  onAbrir,
+  vsDespues = false,
   className,
   ref,
 }: RankRowProps) {
@@ -76,78 +89,117 @@ export function RankRow({
     <RankDelta delta={delta} />
   ) : null;
 
+  const interactiva = href !== undefined || onAbrir !== undefined;
+  const claseToque =
+    "block w-full rounded-rank text-left outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
+
+  const caja = (
+    <div
+      aria-hidden="true"
+      data-slot="rank-row"
+      data-kind={kind}
+      data-me={esTu ? "true" : undefined}
+      data-moving={moving ? "true" : undefined}
+      className={cn(
+        "grid min-h-15 grid-cols-[2.25rem_2.5rem_minmax(0,1fr)_auto_auto] items-center @max-fila:grid-cols-[2.25rem_2.5rem_minmax(0,1fr)_auto] gap-3 rounded-rank border border-transparent px-3 py-2",
+        kind === "top" &&
+          "bg-surface shadow-1 dark:border-divider dark:shadow-none",
+        kind === "riesgo" && "bg-surface-2",
+        esTu && "bg-accent-soft outline-2 -outline-offset-2 outline-accent",
+        efecto === "sube" && "animate-glow",
+        efecto === "riesgo" && "animate-shake",
+      )}
+    >
+      <span
+        className={cn(
+          "text-grade-md text-center text-text-2",
+          kind === "top" &&
+            "mx-auto grid size-8 place-items-center rounded-pill bg-accent-soft-2 text-text",
+        )}
+      >
+        {puesto}
+      </span>
+
+      <span
+        className={cn(
+          "flex",
+          kind === "riesgo" && "[&_img]:opacity-75 [&_img]:grayscale",
+        )}
+      >
+        {media}
+      </span>
+
+      <span className="min-w-0">
+        <span className="flex items-center gap-1.5">
+          <span className="text-button min-w-0 truncate">{nombre}</span>
+          {esTu ? <Badge variant="tu">tú</Badge> : null}
+        </span>
+        {subtitulo || marca ? (
+          <span className="flex min-w-0 items-center gap-1.5">
+            {subtitulo ? (
+              <span className="text-small min-w-0 truncate text-text-2">
+                {subtitulo}
+              </span>
+            ) : null}
+            {/* Fila estrecha (< 320 px, D226): el chip baja aquí y el nombre recupera el ancho */}
+            {marca ? (
+              <span className="hidden shrink-0 @max-fila:flex">{marca}</span>
+            ) : null}
+          </span>
+        ) : null}
+      </span>
+
+      <span className="@max-fila:hidden">{marca}</span>
+
+      <span
+        className={cn(
+          "text-grade-md min-w-13 text-right",
+          kind === "riesgo" ? "text-text-2" : "text-text",
+        )}
+      >
+        {formatDecimal(puntos)}
+      </span>
+    </div>
+  );
+
   return (
     <li
       ref={ref}
-      aria-label={label}
-      className={cn("@container list-none", className)}
+      aria-label={interactiva ? undefined : label}
+      className={cn(
+        "@container list-none relative",
+        vsDespues && "pb-6",
+        className,
+      )}
     >
-      <div
-        aria-hidden="true"
-        data-slot="rank-row"
-        data-kind={kind}
-        data-me={esTu ? "true" : undefined}
-        data-moving={moving ? "true" : undefined}
-        className={cn(
-          "grid min-h-15 grid-cols-[2.25rem_2.5rem_minmax(0,1fr)_auto_auto] items-center @max-fila:grid-cols-[2.25rem_2.5rem_minmax(0,1fr)_auto] gap-3 rounded-rank border border-transparent px-3 py-2",
-          kind === "top" &&
-            "bg-surface shadow-1 dark:border-divider dark:shadow-none",
-          kind === "riesgo" && "bg-surface-2",
-          esTu && "bg-accent-soft outline-2 -outline-offset-2 outline-accent",
-          efecto === "sube" && "animate-glow",
-          efecto === "riesgo" && "animate-shake",
-        )}
-      >
-        <span
-          className={cn(
-            "text-grade-md text-center text-text-2",
-            kind === "top" &&
-              "mx-auto grid size-8 place-items-center rounded-pill bg-accent-soft-2 text-text",
-          )}
+      {href !== undefined ? (
+        <Link href={href} aria-label={label} className={claseToque}>
+          {caja}
+        </Link>
+      ) : onAbrir !== undefined ? (
+        <button
+          type="button"
+          aria-label={label}
+          aria-haspopup="dialog"
+          onClick={onAbrir}
+          className={cn(claseToque, "cursor-pointer")}
         >
-          {puesto}
-        </span>
-
+          {caja}
+        </button>
+      ) : (
+        caja
+      )}
+      {vsDespues ? (
+        // Decorativo: el empate ya lo dice el nombre accesible de cada fila
         <span
-          className={cn(
-            "flex",
-            kind === "riesgo" && "[&_img]:opacity-75 [&_img]:grayscale",
-          )}
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 flex h-6 items-center justify-center"
         >
-          {media}
-        </span>
-
-        <span className="min-w-0">
-          <span className="flex items-center gap-1.5">
-            <span className="text-button min-w-0 truncate">{nombre}</span>
-            {esTu ? <Badge variant="tu">tú</Badge> : null}
+          <span className="animate-vs text-small-b grid h-5.5 min-w-9 place-items-center rounded-pill bg-error px-2 text-on-error">
+            VS
           </span>
-          {subtitulo || marca ? (
-            <span className="flex min-w-0 items-center gap-1.5">
-              {subtitulo ? (
-                <span className="text-small min-w-0 truncate text-text-2">
-                  {subtitulo}
-                </span>
-              ) : null}
-              {/* Fila estrecha (< 320 px, D226): el chip baja aquí y el nombre recupera el ancho */}
-              {marca ? (
-                <span className="hidden shrink-0 @max-fila:flex">{marca}</span>
-              ) : null}
-            </span>
-          ) : null}
         </span>
-
-        <span className="@max-fila:hidden">{marca}</span>
-
-        <span
-          className={cn(
-            "text-grade-md min-w-13 text-right",
-            kind === "riesgo" ? "text-text-2" : "text-text",
-          )}
-        >
-          {formatDecimal(puntos)}
-        </span>
-      </div>
+      ) : null}
     </li>
   );
 }
