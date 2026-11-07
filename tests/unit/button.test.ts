@@ -69,6 +69,26 @@ describe("buttonVariants (HANDOFF §2.1)", () => {
     expect(c).toContain("hover:not-disabled:not-aria-disabled:brightness-92");
   });
 
+  test("ghost-danger: texto --error y tintes rojos, nunca el acento (D297)", () => {
+    const c = classes({ variant: "ghost-danger" });
+    expect(c).toContain("text-error");
+    expect(c).toContain("bg-transparent");
+    expect(c).toContain("hover:not-disabled:not-aria-disabled:bg-alert-err");
+    expect(c).toContain("active:not-disabled:not-aria-disabled:bg-chip-err");
+    expect(c.some((x) => x.includes("accent"))).toBe(false);
+    expect(c).toContain("not-aria-busy:disabled:bg-transparent");
+    expect(c).not.toContain("disabled:bg-surface-3");
+    expect(c).toEqual(
+      expect.arrayContaining([
+        "focus-visible:outline-2",
+        "focus-visible:outline-offset-2",
+        "focus-visible:outline-focus",
+      ]),
+    );
+    expect(c).toContain("px-3");
+    expect(classes({ variant: "ghost-danger", icon: true })).toContain("px-0");
+  });
+
   test("ghost deshabilitado sin fondo", () => {
     const c = classes({ variant: "ghost" });
     expect(c).toContain("not-aria-busy:disabled:bg-transparent");

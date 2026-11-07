@@ -421,11 +421,10 @@ export function TaskBuilder({
     eliminarTarea && id !== null ? (
       <Button
         type="button"
-        variant="ghost"
+        variant="ghost-danger"
         block
         disabled={pendiente}
         aria-haspopup="dialog"
-        className="text-error"
         onClick={(e) => {
           abrioEliminar.current = e.currentTarget;
           setConfirmarEliminar(true);
