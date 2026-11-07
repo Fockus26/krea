@@ -16,11 +16,13 @@ import { getFirestore } from "firebase-admin/firestore";
 import {
   COL,
   claimsDe,
+  DOC_SECCIONES,
   emailInterno,
   SECCIONES,
   type Usuario,
 } from "@/lib/modelo";
 import { calcularRanking } from "@/lib/ranking-datos";
+import { anioDoc, CATALOGO_INICIAL } from "@/lib/secciones";
 import {
   type AlumnoSeed,
   docsDesdeSeed,
@@ -107,6 +109,11 @@ const datos = {
 };
 for (const s of SECCIONES)
   await poner(COL.ranking, s, calcularRanking(s, datos, ahora));
+// Catálogo de años y secciones (D317): el de producción, explícito
+await poner(COL.config, DOC_SECCIONES, {
+  anios: anioDoc(CATALOGO_INICIAL),
+  actualizadoEn: ahora,
+});
 await lote.commit();
 
 let creadas = 0;

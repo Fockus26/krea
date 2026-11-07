@@ -66,7 +66,7 @@ describe("navItems (HANDOFF §2.7)", () => {
     expect(navItems("estudiante", "menu")).toHaveLength(0);
   });
 
-  test("Profesores solo para el admin, tras Premios en la lateral y el Menú (D231, D233)", () => {
+  test("Profesores y Años y secciones solo para el admin, tras Premios en la lateral y el Menú (D231, D233, D319)", () => {
     const admin = { admin: true };
     expect(navItems("profesor", "lateral", admin).map((i) => i.label)).toEqual([
       "Panel",
@@ -78,20 +78,25 @@ describe("navItems (HANDOFF §2.7)", () => {
       "Ranking",
       "Premios",
       "Profesores",
+      "Años y secciones",
     ]);
     expect(navItems("profesor", "menu", admin).map((i) => i.label)).toEqual([
       "Tareas",
       "Equipos",
       "Premios",
       "Profesores",
+      "Años y secciones",
       "Perfil",
     ]);
-    expect(
-      navItems("profesor", "inferior", admin).map((i) => i.id),
-    ).not.toContain("profesores");
-    expect(navItems("profesor", "menu").map((i) => i.id)).not.toContain(
-      "profesores",
-    );
+    for (const id of ["profesores", "secciones"]) {
+      expect(
+        navItems("profesor", "inferior", admin).map((i) => i.id),
+      ).not.toContain(id);
+      expect(navItems("profesor", "menu").map((i) => i.id)).not.toContain(id);
+      expect(navItems("profesor", "lateral").map((i) => i.id)).not.toContain(
+        id,
+      );
+    }
   });
 
   test("el profesor alcanza cada ítem del lateral en inferior o Menú (y Perfil, que en la lateral es la tarjeta)", () => {

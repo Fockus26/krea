@@ -1,5 +1,6 @@
 // Sesión y acceso por rol (fase 07, D180–D182). Puro: lo usan el proxy, el DAL y las pruebas.
 import type { RolUsuario, SeccionId } from "@/lib/modelo";
+import { esCodigoSeccion } from "@/lib/secciones";
 
 /** Cookie de sesión de Firebase (httpOnly, la crea el Admin SDK). */
 export const COOKIE_SESION = "__session";
@@ -94,7 +95,8 @@ export function sesionDeClaims(
   const { rol, seccion, equipoId, admin, debeCambiarPassword } = claims;
   if (rol !== "estudiante" && rol !== "profesor") return null;
   if (!/^\d{7,9}$/.test(uid)) return null;
-  const sec = seccion === "5A" || seccion === "5C" ? seccion : null;
+  // Cualquier código «año + letra» (D317): el catálogo no se lee en el proxy
+  const sec = esCodigoSeccion(seccion) ? seccion : null;
   if (rol === "estudiante" && sec === null) return null;
   return {
     uid,

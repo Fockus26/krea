@@ -278,7 +278,8 @@ export function filasAlumnos(datos: {
     .map(
       (u): FilaAlumno => ({
         cedula: u.cedula,
-        seccion: u.seccion,
+        // La vista aún lista 5A/5C (las secciones del catálogo llegan con X5b, D317)
+        seccion: u.seccion as FilaAlumno["seccion"],
         nombres: u.nombres,
         apellidos: u.apellidos,
         equipo: (u.equipoId && equipos.get(u.equipoId)) || null,

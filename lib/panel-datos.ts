@@ -35,12 +35,14 @@ function filaEvaluar(e: ConId<Entrega>, m: MapasEvaluar): FilaEvaluar {
   const fecha =
     e.enviadaEn === null ? "" : formatFecha(diaDeInstante(e.enviadaEn));
   const nombre = nombreTitular(e, m);
+  // La vista aún lista 5A/5C (las secciones del catálogo llegan con X5b, D317)
+  const seccion = e.seccion as FilaEvaluar["seccion"];
   if (e.tipo === "grupal") {
     const eq = m.equipos.get(e.titularId);
     const autor = e.enviadaPor ? m.usuarios.get(e.enviadaPor) : undefined;
     return {
       id: e.id,
-      seccion: e.seccion,
+      seccion,
       tipo: "grupal",
       nombre,
       nombreCorto: nombre,
@@ -60,7 +62,7 @@ function filaEvaluar(e: ConId<Entrega>, m: MapasEvaluar): FilaEvaluar {
   const u = m.usuarios.get(e.titularId);
   return {
     id: e.id,
-    seccion: e.seccion,
+    seccion,
     tipo: "individual",
     nombre: `${nombre} · ${e.seccion}`,
     nombreCorto: nombre,
@@ -85,7 +87,7 @@ function filaAjuste(a: ConId<Ajuste>, m: MapasEvaluar): FilaAjuste {
         : TITULAR_DESCONOCIDO;
   return {
     id: a.id,
-    seccion: a.seccion,
+    seccion: a.seccion as FilaAjuste["seccion"],
     nombre,
     valor: a.valor,
     motivo: motivoTexto({ motivo: a.motivo, detalle: a.nota ?? undefined }),
@@ -133,7 +135,10 @@ export function panelDatosDe({
       u.rol === "estudiante" && u.seccion !== null,
   );
 
-  const avance: Record<SeccionId, { evaluados: number; total: number }> = {
+  const avance: Record<
+    (typeof SECCIONES)[number],
+    { evaluados: number; total: number }
+  > = {
     "5A": { evaluados: 0, total: 0 },
     "5C": { evaluados: 0, total: 0 },
   };

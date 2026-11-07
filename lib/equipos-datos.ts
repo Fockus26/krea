@@ -230,7 +230,8 @@ export function equiposProfeDatos(
     })),
   );
   return {
-    seccion,
+    // La vista aún lista 5A/5C (las secciones del catálogo llegan con X5b, D317)
+    seccion: seccion as DatosEquiposProfe["seccion"],
     equipos: filas.map((e) => ({
       id: e.id,
       nombre: e.nombre,

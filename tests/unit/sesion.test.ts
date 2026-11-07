@@ -154,6 +154,22 @@ describe("sesionDeClaims", () => {
     expect(sesionDeClaims("33272397", { rol: "estudiante" })).toBeNull();
     expect(sesionDeClaims("abc", { rol: "profesor" })).toBeNull();
   });
+  test("la sección es cualquier código año + letra del catálogo (D317); lo demás no", () => {
+    expect(
+      sesionDeClaims("33272397", { rol: "estudiante", seccion: "4B" })?.seccion,
+    ).toBe("4B");
+    expect(
+      sesionDeClaims("10000000", { rol: "profesor", seccion: "1A" })?.seccion,
+    ).toBe("1A");
+    for (const mala of ["5a", "0A", "AA", "5", 5]) {
+      expect(
+        sesionDeClaims("33272397", { rol: "estudiante", seccion: mala }),
+      ).toBeNull();
+      expect(
+        sesionDeClaims("10000000", { rol: "profesor", seccion: mala })?.seccion,
+      ).toBeNull();
+    }
+  });
   test("equipoId vacío o raro → null", () => {
     expect(
       sesionDeClaims("33272397", {

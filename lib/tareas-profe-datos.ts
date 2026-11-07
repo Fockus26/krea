@@ -110,8 +110,9 @@ export function seccionesDe(s: SeccionTarea): SeccionId[] {
 }
 
 export function seccionTareaDe(secciones: readonly SeccionId[]): SeccionTarea {
+  // La vista aún lista 5A/5C (las secciones del catálogo llegan con X5b, D317)
   const unica = secciones.length === 1 ? secciones[0] : undefined;
-  return unica ?? "5A y 5C";
+  return (unica as SeccionTarea | undefined) ?? "5A y 5C";
 }
 
 /* ---------- Armar el documento ---------- */

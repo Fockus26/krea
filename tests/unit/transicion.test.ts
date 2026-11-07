@@ -30,7 +30,8 @@ describe("indicePestana", () => {
     expect(indicePestana("profesor", "/profe/ranking/5c")).toBe(6);
     expect(indicePestana("profesor", "/profe/premios")).toBe(7);
     expect(indicePestana("profesor", "/profe/profesores")).toBe(8);
-    expect(indicePestana("profesor", "/profe/perfil")).toBe(9);
+    expect(indicePestana("profesor", "/profe/secciones")).toBe(9);
+    expect(indicePestana("profesor", "/profe/perfil")).toBe(10);
   });
 
   test("rutas que no son de ninguna pestaña → −1", () => {

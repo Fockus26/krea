@@ -18,7 +18,8 @@ export type NavIconKey =
   | "equipos"
   | "puntos"
   | "premios"
-  | "profesores";
+  | "profesores"
+  | "secciones";
 
 export type NavSurface = "lateral" | "inferior" | "menu";
 
@@ -37,6 +38,8 @@ export type NavItem = {
 
 /** Pantalla Profesores del admin (D233). */
 export const PROFESORES_HREF = "/profe/profesores";
+/** Pantalla Años y secciones del admin (D319). */
+export const SECCIONES_HREF = "/profe/secciones";
 
 /** Perfil del estudiante (avatar de la topbar y tarjeta de usuario). */
 export const PERFIL_HREF = "/perfil";
@@ -167,6 +170,17 @@ const PROFESOR: readonly NavItem[] = [
     label: "Profesores",
     href: PROFESORES_HREF,
     icon: "profesores",
+    match: "prefix",
+    on: ["lateral", "menu"],
+    soloAdmin: true,
+  },
+  {
+    // Solo el admin (D319): la estructura de toda la escuela, junto a Profesores. PROVISIONAL: no
+    // está en el handoff (CONTENT_CHECKLIST fila 166)
+    id: "secciones",
+    label: "Años y secciones",
+    href: SECCIONES_HREF,
+    icon: "secciones",
     match: "prefix",
     on: ["lateral", "menu"],
     soloAdmin: true,

@@ -190,7 +190,8 @@ export function historialDe(
         id: a.id,
         tipo: a.destino,
         destinoId: a.destinoId,
-        seccion: a.seccion,
+        // La vista aún lista 5A/5C (las secciones del catálogo llegan con X5b, D317)
+        seccion: a.seccion as FilaHistorial["seccion"],
         nombre: nombreDe(a, n),
         valor: a.valor,
         motivo: a.motivo,
@@ -235,7 +236,8 @@ export function candidatosDe({
     c.alumno[u.seccion].push({
       id: u.cedula,
       tipo: "alumno",
-      seccion: u.seccion,
+      // La vista aún lista 5A/5C (las secciones del catálogo llegan con X5b, D317)
+      seccion: u.seccion as Candidato["seccion"],
       nombre,
       puntos: rankings[u.seccion]?.alumnos[u.cedula]?.puntos ?? 0,
       primerApellido: primerApellido(u.apellidos),
@@ -250,7 +252,7 @@ export function candidatosDe({
     c.equipo[e.seccion].push({
       id: e.id,
       tipo: "equipo",
-      seccion: e.seccion,
+      seccion: e.seccion as Candidato["seccion"],
       nombre: e.nombre,
       puntos: rankings[e.seccion]?.equipos[e.id]?.puntos ?? 0,
       primerApellido: e.nombre,

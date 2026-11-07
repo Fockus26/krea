@@ -86,6 +86,10 @@ beforeAll(async () => {
     await setDoc(doc(db, "historialBase", "h-otro"), { alumnoId: OTRO_5A });
     await setDoc(doc(db, "ranking", "5A"), { alumnos: {} });
     await setDoc(doc(db, "ranking", "5C"), { alumnos: {} });
+    await setDoc(doc(db, "config", "secciones"), {
+      anios: [{ numero: 5, letras: ["A", "C"] }],
+      actualizadoEn: 1,
+    });
     await setDoc(doc(db, "otra", "x"), { a: 1 });
   });
 }, 30_000);
@@ -132,6 +136,13 @@ describe("estudiante", () => {
     await assertFails(getDoc(doc(db(), "historialBase", "h-otro")));
   });
 
+  test("no lee el catálogo de secciones (D317) ni lo escribe", async () => {
+    await assertFails(getDoc(doc(db(), "config", "secciones")));
+    await assertFails(
+      setDoc(doc(db(), "config", "secciones"), { anios: [], actualizadoEn: 2 }),
+    );
+  });
+
   test("sin equipo no ve ajustes de equipo", async () => {
     const sinEquipo = estudiante(OTRO_5A, "5A", null);
     await assertFails(getDoc(doc(sinEquipo, "ajustes", "a-eq")));
@@ -167,6 +178,7 @@ describe("profesor", () => {
       ["ajustes", "a-otro"],
       ["historialBase", "h-otro"],
       ["ranking", "5C"],
+      ["config", "secciones"],
     ] as const) {
       await assertSucceeds(getDoc(doc(db, c, id)));
     }
@@ -176,6 +188,12 @@ describe("profesor", () => {
       setDoc(doc(profe(), "tareas", "nueva"), { estado: "abierta" }),
     );
     await assertFails(updateDoc(doc(profe(), "usuarios", YO), { base: 10 }));
+    await assertFails(
+      setDoc(doc(profe(), "config", "secciones"), {
+        anios: [],
+        actualizadoEn: 2,
+      }),
+    );
   });
 });
 
