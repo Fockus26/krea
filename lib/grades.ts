@@ -38,10 +38,32 @@ export function gradeColor(n: number): string {
   const v = clamp(n, NOTA_MIN, NOTA_MAX);
   if (v <= 10) {
     const t = (v - 1) / 9;
-    return hslToHex(52 * t, 100, 52 - 4 * t);
+    const u = (EXTREMO_BAJO - v) / (EXTREMO_BAJO - NOTA_MIN);
+    return hslToHex(52 * t, 100, 52 - 4 * t - oscurecer(u));
   }
   const t = (v - 10) / 10;
-  return hslToHex(52 + 88 * t, 100 - 30 * t, 48 - 14 * t);
+  const u = (v - EXTREMO_ALTO) / (NOTA_MAX - EXTREMO_ALTO);
+  return hslToHex(52 + 88 * t, 100 - 30 * t, 48 - 14 * t - oscurecer(u));
+}
+
+/** Los extremos se oscurecen para que el número blanco llegue a 4,5:1 (D286): hasta 3 y desde 17. */
+const EXTREMO_BAJO = 3;
+const EXTREMO_ALTO = 17;
+const OSCURECER_CURVA = 4; // puntos de luminosidad HSL al llegar a la nota 1 / 20, en curva cuadrática
+const OSCURECER_SALTO_EN = 0.7; // avance en el tramo donde se aplica el salto
+const OSCURECER_SALTO = 4; // puntos de luminosidad
+
+/**
+ * Puntos de luminosidad HSL que se restan en un tramo extremo; `u` es el avance (0 en el
+ * borde del tramo, 1 en la nota 1 o 20). Con #111111 y #FFFFFF como únicas tintas hay una
+ * franja de luminancia (0,183–0,200) donde ninguna llega a 4,5:1: el salto la cruza de una
+ * vez, de modo que ninguna nota (a ninguna décima) cae dentro (D286).
+ */
+function oscurecer(u: number): number {
+  if (u <= 0) return 0;
+  return (
+    OSCURECER_CURVA * u * u + (u >= OSCURECER_SALTO_EN ? OSCURECER_SALTO : 0)
+  );
 }
 
 /** Luminancia relativa WCAG de un hex `#RRGGBB`. */

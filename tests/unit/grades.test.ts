@@ -3,7 +3,9 @@ import { formatNota, gradeColor, notaFinal, puntosRanking } from "@/lib/grades";
 
 describe("gradeColor", () => {
   const tabla: Array<[number, string]> = [
-    [1, "#FF0A0A"],
+    [1, "#E00000"],
+    [2, "#FF1B03"],
+    [3, "#FF3606"],
     [5, "#FF6301"],
     [8, "#F9A800"],
     [9, "#F7BE00"],
@@ -16,10 +18,11 @@ describe("gradeColor", () => {
     [14, "#75CB0D"],
     [15, "#57C110"],
     [17, "#25AE14"],
-    [18, "#17A51C"],
-    [18.5, "#17A127"],
-    [19, "#189C31"],
-    [20, "#1A9342"],
+    [18, "#16A31C"],
+    [18.5, "#179C26"],
+    [19, "#17942F"],
+    [19.5, "#147A2F"],
+    [20, "#147133"],
   ];
   for (const [n, hex] of tabla) {
     test(`${n} → ${hex}`, () => {

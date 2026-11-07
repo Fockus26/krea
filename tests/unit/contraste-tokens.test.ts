@@ -138,6 +138,20 @@ describe("tintas de la píldora de nota (D236)", () => {
     }
   });
 
+  test("a cada décima de la escala (1–20) la tinta elegida alcanza 4,5:1 (D286)", () => {
+    for (let d = 10; d <= 200; d++) {
+      const n = d / 10;
+      const tinta =
+        gradeInk(n) === "clara" ? GRADE_INK_CLARA : GRADE_INK_OSCURA;
+      expect(contraste(tinta, gradeColor(n))).toBeGreaterThanOrEqual(MIN);
+    }
+  });
+
+  test("en los extremos de la escala la tinta es la clara, en el medio la oscura (D286)", () => {
+    for (const n of [1, 1.5, 19.5, 20]) expect(gradeInk(n)).toBe("clara");
+    for (let n = 2; n <= 19; n += 0.5) expect(gradeInk(n)).toBe("oscura");
+  });
+
   test("elige la tinta de mayor contraste", () => {
     for (let n = 1; n <= 20; n += 0.5) {
       const fondo = gradeColor(n);
