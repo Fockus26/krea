@@ -19,6 +19,7 @@ import {
   tiempoRelativo,
   tituloLista,
   ultimosMovimientos,
+  vacioRanking,
 } from "@/lib/ranking-vista";
 
 function items(puntos: number[]): ItemRanking[] {
@@ -189,5 +190,19 @@ describe("ayuda móvil", () => {
   });
   test("clave de localStorage", () => {
     expect(AYUDA_CLAVE).toBe("krea-ranking-ayuda");
+  });
+});
+
+describe("vacioRanking (D312)", () => {
+  test("sin filas devuelve el texto de la vista y la sección", () => {
+    expect(vacioRanking("estudiantes", "5C", 0)?.titulo).toBe(
+      "Todavía no hay alumnos en 5C",
+    );
+    expect(vacioRanking("equipos", "5A", 0)?.titulo).toBe(
+      "Todavía no hay equipos en 5A",
+    );
+  });
+  test("con filas no hay vacío", () => {
+    expect(vacioRanking("estudiantes", "5A", 1)).toBeNull();
   });
 });

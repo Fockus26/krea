@@ -90,6 +90,25 @@ export function tituloLista(total: number): string {
   return `Puestos ${PUESTOS_PODIO + 1} a ${total}`;
 }
 
+/** Texto del estado vacío (D312); `null` si hay filas y se pintan podio y lista. */
+export function vacioRanking(
+  vista: Vista,
+  seccion: SeccionRanking,
+  total: number,
+): { titulo: string; descripcion: string } | null {
+  if (total > 0) return null;
+  return vista === "estudiantes"
+    ? {
+        titulo: `Todavía no hay alumnos en ${seccion}`,
+        descripcion:
+          "Cuando haya alumnos y notas, aquí verás quién va adelante.",
+      }
+    : {
+        titulo: `Todavía no hay equipos en ${seccion}`,
+        descripcion: "Cuando se armen los equipos, aquí verás su posición.",
+      };
+}
+
 // ---- Rutas de los estados de la vista previa (D072, D094) ----
 
 export type EstadoRanking = {

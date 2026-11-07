@@ -1,10 +1,12 @@
 "use client";
 
+import { Trophy } from "lucide-react";
 import { useState } from "react";
 import {
   type Companero,
   CompaneroCard,
 } from "@/components/krea/companero-card";
+import { EmptyState } from "@/components/krea/empty-state";
 import { PodioConfeti } from "@/components/krea/podio-confeti";
 import { Podium, type PodiumEntrada } from "@/components/krea/podium";
 import { RankList, type RankListFila } from "@/components/krea/rank-list";
@@ -20,6 +22,7 @@ import {
   type SeccionRanking,
   tituloLista,
   type Vista,
+  vacioRanking,
 } from "@/lib/ranking-vista";
 
 /** Cómo se abre un alumno (D259): el profe va a su ficha, el estudiante ve su tarjeta. */
@@ -112,6 +115,20 @@ export function RankingBoard({
           seed: abierto.seed,
         }
       : null;
+
+  const vacio = vacioRanking(vista, seccion, items.length);
+  if (vacio) {
+    return (
+      <Card>
+        <EmptyState
+          icon={Trophy}
+          headingLevel={2}
+          title={vacio.titulo}
+          description={vacio.descripcion}
+        />
+      </Card>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6">
