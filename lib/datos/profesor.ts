@@ -92,28 +92,32 @@ export const equiposTodos = cache(async (): Promise<Array<ConId<Equipo>>> => {
   return lista(db().collection(COL.equipos), zEquipo, COL.equipos);
 });
 
-/** Alumnos y equipos por sección (solo cuenta: no trae perfiles). */
+/**
+ * Alumnos por sección (solo cuenta: no trae perfiles) y los ids de los equipos vivos por sección
+ * (D316: el total de una grupal descuenta los equipos que ya entregaron, vivos o eliminados).
+ */
 export const conteos = cache(async (): Promise<Conteos> => {
   await exigirSesion("profesor");
   const base = db();
-  const contar = async (
-    coleccion: string,
-    seccion: SeccionId,
-    alumnos: boolean,
-  ) => {
-    let q = base.collection(coleccion).where("seccion", "==", seccion);
-    if (alumnos) q = q.where("rol", "==", "estudiante");
-    return (await q.count().get()).data().count;
-  };
-  const [a5A, a5C, e5A, e5C] = await Promise.all([
-    contar(COL.usuarios, "5A", true),
-    contar(COL.usuarios, "5C", true),
-    contar(COL.equipos, "5A", false),
-    contar(COL.equipos, "5C", false),
+  const contar = async (seccion: SeccionId) =>
+    (
+      await base
+        .collection(COL.usuarios)
+        .where("seccion", "==", seccion)
+        .where("rol", "==", "estudiante")
+        .count()
+        .get()
+    ).data().count;
+  const [a5A, a5C, equipos] = await Promise.all([
+    contar("5A"),
+    contar("5C"),
+    equiposTodos(),
   ]);
+  const de = (s: SeccionId) =>
+    equipos.filter((e) => e.seccion === s).map((e) => e.id);
   return {
     alumnos: { "5A": a5A, "5C": a5C },
-    equipos: { "5A": e5A, "5C": e5C },
+    equipos: { "5A": de("5A"), "5C": de("5C") },
   };
 });
 

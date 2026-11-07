@@ -1,0 +1,5 @@
+# D316 · Data · Total del avance = titulares con entrega + titulares vivos sin entrega (arregla «3 de 2 evaluadas») · Implemented
+
+**Decision:** `totalTitulares(t, conteos, resumen)` (`lib/tareas-profe-datos.ts`) ya no es solo «equipos vivos de las secciones»: es las entregas enviadas o evaluadas de la tarea (aunque su equipo se haya eliminado, D307) + los titulares vivos de sus secciones que no entregaron. `resumenEntregas` devuelve también los `titulares` con entrega (los borradores no cuentan) y `conteos()` trae los ids de los equipos vivos por sección (de `equiposTodos()`, ya cacheado). En la individual los alumnos siguen contados (no por id): un alumno eliminado se lleva sus entregas individuales (D268), así que el total es `max(vivos, con entrega)`. Invariante con test: `hechas <= total`.
+**Why:** tras eliminar un equipo con entregas (X1, #104), sus entregas seguían en `hechas` pero el equipo ya no sumaba en el total: «3 de 2 evaluadas».
+**Discarded alternative:** descontar las entregas de equipos eliminados de `hechas`: esas notas siguen siendo de cada alumno (D012) y la tarea sí se evaluó.

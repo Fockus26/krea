@@ -255,7 +255,7 @@ export function StudentsDirectory({
         <DeleteStudentsBatch
           seleccionados={visibles
             .filter((a) => marcadas.has(a.cedula))
-            .map((a) => ({ cedula: a.cedula, nombre: nombreAlumno(a) }))}
+            .map((a) => ({ id: a.cedula, nombre: nombreAlumno(a) }))}
           onLimpiar={limpiarSeleccion}
           resumir={lote.resumir}
           eliminar={lote.eliminar}

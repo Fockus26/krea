@@ -64,7 +64,7 @@ export function ProfesoresDirectory({
   const conLote = eliminarVarios !== undefined && seleccionables.length > 0;
   const seleccionados = profesores
     .filter((p) => !p.tu && marcadas.has(p.cedula))
-    .map((p) => ({ cedula: p.cedula, nombre: nombreProfesor(p) }));
+    .map((p) => ({ id: p.cedula, nombre: nombreProfesor(p) }));
 
   return (
     <>

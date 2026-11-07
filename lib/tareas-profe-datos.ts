@@ -275,35 +275,72 @@ export function puedeCerrar(t: TareaDoc): boolean {
 
 /* ---------- Lista y constructor ---------- */
 
-export type ResumenEntregas = { entregadas: number; evaluadas: number };
+export type ResumenEntregas = {
+  entregadas: number;
+  evaluadas: number;
+  /** Titulares (cédula o equipo) con entrega enviada o evaluada: cuentan en el total (D316). */
+  titulares: ReadonlySet<string>;
+};
 
-/** Entregas por tarea: enviadas sin evaluar («Por evaluar») y evaluadas. */
+const SIN_ENTREGAS: ResumenEntregas = {
+  entregadas: 0,
+  evaluadas: 0,
+  titulares: new Set(),
+};
+
+/** Entregas por tarea: enviadas sin evaluar («Por evaluar»), evaluadas y de quién son. */
 export function resumenEntregas(
-  entregas: ReadonlyArray<Pick<Entrega, "tareaId" | "estado">>,
+  entregas: ReadonlyArray<Pick<Entrega, "tareaId" | "estado" | "titularId">>,
 ): Map<string, ResumenEntregas> {
-  const m = new Map<string, ResumenEntregas>();
+  const m = new Map<
+    string,
+    { entregadas: number; evaluadas: number; titulares: Set<string> }
+  >();
   for (const e of entregas) {
     if (e.estado === "borrador") continue;
-    const r = m.get(e.tareaId) ?? { entregadas: 0, evaluadas: 0 };
+    const r = m.get(e.tareaId) ?? {
+      entregadas: 0,
+      evaluadas: 0,
+      titulares: new Set<string>(),
+    };
     if (e.estado === "evaluada") r.evaluadas += 1;
     else r.entregadas += 1;
+    r.titulares.add(e.titularId);
     m.set(e.tareaId, r);
   }
   return m;
 }
 
-/** Alumnos y equipos por sección: el total del avance («12 de 69 evaluadas»). */
+/**
+ * Titulares vivos por sección, para el total del avance («12 de 69 evaluadas»): cuántos alumnos
+ * y qué equipos (sus ids: un equipo eliminado deja entregas cuyo titular ya no está, D316).
+ */
 export type Conteos = {
   alumnos: Readonly<Record<SeccionId, number>>;
-  equipos: Readonly<Record<SeccionId, number>>;
+  equipos: Readonly<Record<SeccionId, readonly string[]>>;
 };
 
+/**
+ * Total del avance (D316): titulares con entrega (enviada o evaluada, aunque su equipo ya no
+ * exista) + titulares vivos de las secciones de la tarea sin entrega. Así `hechas <= total`
+ * siempre. En la individual los alumnos llegan contados, no por id: un alumno eliminado se lleva
+ * sus entregas individuales (D268), así que los que entregaron están vivos y el total es el mayor
+ * de los dos.
+ */
 export function totalTitulares(
   t: Pick<TareaDoc, "tipo" | "secciones">,
   c: Conteos,
+  resumen: ResumenEntregas = SIN_ENTREGAS,
 ): number {
-  const de = t.tipo === "grupal" ? c.equipos : c.alumnos;
-  return t.secciones.reduce((s, sec) => s + (de[sec] ?? 0), 0);
+  const conEntrega = resumen.entregadas + resumen.evaluadas;
+  if (t.tipo === "grupal") {
+    const sinEntrega = t.secciones
+      .flatMap((sec) => c.equipos[sec] ?? [])
+      .filter((id) => !resumen.titulares.has(id)).length;
+    return conEntrega + sinEntrega;
+  }
+  const vivos = t.secciones.reduce((s, sec) => s + (c.alumnos[sec] ?? 0), 0);
+  return Math.max(vivos, conEntrega);
 }
 
 /**
@@ -316,8 +353,8 @@ export function tareaProfeDe(
   conteos: Conteos,
   perdida: PerdidaEliminar = SIN_PERDIDA,
 ): TareaProfe {
-  const r = resumen ?? { entregadas: 0, evaluadas: 0 };
-  const total = totalTitulares(t, conteos);
+  const r = resumen ?? SIN_ENTREGAS;
+  const total = totalTitulares(t, conteos, r);
   let avance: AvanceTarea | null = null;
   if (t.estado !== "borrador") {
     avance =
@@ -331,6 +368,7 @@ export function tareaProfeDe(
     tipo: t.tipo,
     estado: t.estado,
     fecha: t.fechaEntrega,
+    secciones: seccionTareaDe(t.secciones),
     premio: t.premio,
     preguntas: t.preguntas.length,
     suma: sumaModelo(t.preguntas.map((p) => ({ valor: p.valor ?? 0 }))),

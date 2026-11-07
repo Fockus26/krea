@@ -36,6 +36,8 @@ export type TareaProfe = {
   estado: EstadoTareaProfe;
   /** Día civil ISO de entrega; `null` = sin fecha (borrador). */
   fecha: string | null;
+  /** «5A», «5C» o «5A y 5C» (columna de la vista Lista, D313); ausente en la vista previa. */
+  secciones?: SeccionTarea;
   /** Grupal o individual (D263); `null` = sin premio (en una grupal, por definir). */
   premio: string | null;
   preguntas: number;
@@ -159,6 +161,16 @@ export function metaTarea(t: TareaProfe, hoy: string): string {
     partes.push("premio por definir");
   }
   return partes.join(" · ");
+}
+
+/* Vista Lista (D313). PROVISIONAL (CONTENT_CHECKLIST fila 164) */
+export const TABLA_TAREAS_LABEL = "Lista de tareas";
+
+/** Columna «Fecha» de la vista Lista: «Vence 30/10/2026», «Venció …», «30/10/2026» o «Sin fecha». */
+export function fechaTareaTexto(t: TareaProfe, hoy: string): string {
+  if (t.fecha === null) return "Sin fecha";
+  if (t.estado !== "abierta") return formatFecha(t.fecha);
+  return `${comparaFecha(t.fecha, hoy) < 0 ? "Venció" : "Vence"} ${formatFecha(t.fecha)}`;
 }
 
 /** Barra de evaluadas (máx. 320): solo en abiertas con avance de evaluación (lienzo). */
@@ -561,10 +573,38 @@ export const TOAST_TAREA_ELIMINADA = "Tarea eliminada";
 export const ELIMINAR_TAREA_BOTON = "Eliminar tarea";
 
 /**
- * «Se borrarán 23 notas de 5A y 5C. Los puntos del ranking se recalculan.» Sin `perdida` (la
- * vista previa no la conoce) dice lo mismo sin cifras.
+ * Lo que pierden varias tareas juntas (lote, D314): suma de notas y entregas sin evaluar, y la
+ * unión de secciones. Si alguna no trae su pérdida (vista previa), `undefined`: el texto va sin
+ * cifras en vez de contar de menos.
  */
-export function eliminarTareaDescripcion(perdida?: PerdidaEliminar): string {
+export function sumarPerdidas(
+  perdidas: ReadonlyArray<PerdidaEliminar | undefined>,
+): PerdidaEliminar | undefined {
+  let notas = 0;
+  let sinEvaluar = 0;
+  const secciones = new Set<string>();
+  for (const p of perdidas) {
+    if (!p) return undefined;
+    notas += p.notas;
+    sinEvaluar += p.sinEvaluar;
+    for (const s of p.secciones) secciones.add(s);
+  }
+  return {
+    notas,
+    sinEvaluar,
+    secciones: (["5A", "5C"] as const).filter((s) => secciones.has(s)),
+  };
+}
+
+/**
+ * «Se borrarán 23 notas de 5A y 5C. Los puntos del ranking se recalculan.» Sin `perdida` (la
+ * vista previa no la conoce) dice lo mismo sin cifras. `varias`: la del lote (D314; solo cambia
+ * «Todavía no tiene entregas» por «tienen»). PROVISIONAL (lote: CONTENT_CHECKLIST fila 165).
+ */
+export function eliminarTareaDescripcion(
+  perdida?: PerdidaEliminar,
+  varias = false,
+): string {
   const fin = "Esto no se puede deshacer.";
   if (!perdida) {
     return `Se borrarán sus entregas y sus notas, y los puntos del ranking se recalculan. ${fin}`;
@@ -584,7 +624,7 @@ export function eliminarTareaDescripcion(perdida?: PerdidaEliminar): string {
   if (sinEvaluar > 0) {
     return `${verbo(sinEvaluar === 1)} ${pendientes}. Nadie pierde notas ni puntos. ${fin}`;
   }
-  return `Todavía no tiene entregas: nadie pierde notas ni puntos. ${fin}`;
+  return `Todavía no ${varias ? "tienen" : "tiene"} entregas: nadie pierde notas ni puntos. ${fin}`;
 }
 
 export const CERRAR_TITULO = "¿Cerrar la tarea?";

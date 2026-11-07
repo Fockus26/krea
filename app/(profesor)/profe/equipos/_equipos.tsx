@@ -7,6 +7,7 @@ import {
   crearEquipo,
   editarEquipo,
   eliminarEquipo,
+  eliminarEquipos,
   moverAlumnoDeEquipo,
   subirLogoEquipo,
 } from "@/lib/acciones/equipos";
@@ -32,6 +33,7 @@ const ACCIONES: AccionesEquipos = {
     crear: crearEquipo,
     editar: editarEquipo,
     eliminar: eliminarEquipo,
+    eliminarVarios: eliminarEquipos,
   },
 };
 

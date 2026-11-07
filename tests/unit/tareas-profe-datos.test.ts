@@ -9,6 +9,7 @@ import {
   zTareaDoc,
 } from "@/lib/modelo";
 import {
+  avanceTexto,
   borradorReducer,
   crearBorrador,
   eliminarTareaDescripcion,
@@ -20,6 +21,7 @@ import {
 } from "@/lib/tareas-profe";
 import {
   armarTarea,
+  type Conteos,
   datosBorradorDe,
   type EntradaTarea,
   estadoPremioSeccion,
@@ -29,11 +31,13 @@ import {
   perdidasPorTarea,
   planEliminar,
   puedeCerrar,
+  type ResumenEntregas,
   resumenEntregas,
   seccionesDe,
   seccionTareaDe,
   tareaProfeDe,
   tarjetasPremios,
+  totalTitulares,
   zGuardarTarea,
 } from "@/lib/tareas-profe-datos";
 
@@ -402,34 +406,49 @@ const entrega = (
   ...o,
 });
 
-const CONTEOS = {
+const ids = (s: string, n: number) =>
+  Array.from({ length: n }, (_, i) => `${s}${i + 1}`);
+const CONTEOS: Conteos = {
   alumnos: { "5A": 35, "5C": 34 },
-  equipos: { "5A": 6, "5C": 6 },
-} as const;
+  equipos: { "5A": ids("g", 6), "5C": ids("h", 6) },
+};
+const resumen = (
+  entregadas: number,
+  evaluadas: number,
+  titulares: readonly string[],
+): ResumenEntregas => ({
+  entregadas,
+  evaluadas,
+  titulares: new Set(titulares),
+});
 
 describe("lista del profe", () => {
-  test("resumen por tarea: por evaluar y evaluadas", () => {
+  test("resumen por tarea: por evaluar, evaluadas y titulares", () => {
     const r = resumenEntregas([
       entrega({ tareaId: "a", titularId: "g1" }),
       entrega({ tareaId: "a", titularId: "g2" }, 18),
       entrega({ tareaId: "b", titularId: "g1" }),
+      { ...entrega({ tareaId: "b", titularId: "g3" }), estado: "borrador" },
     ]);
-    expect(r.get("a")).toEqual({ entregadas: 1, evaluadas: 1 });
-    expect(r.get("b")).toEqual({ entregadas: 1, evaluadas: 0 });
+    expect(r.get("a")).toEqual(resumen(1, 1, ["g1", "g2"]));
+    // El borrador de g3 no cuenta ni como titular con entrega
+    expect(r.get("b")).toEqual(resumen(1, 0, ["g1"]));
   });
 
   test("avance: entregas, luego evaluadas; borrador sin avance", () => {
     const t = { id: "a", ...publicada({ secciones: ["5A", "5C"] }) };
     expect(
-      tareaProfeDe(t, { entregadas: 3, evaluadas: 0 }, CONTEOS),
+      tareaProfeDe(t, resumen(3, 0, ["g1", "g2", "h1"]), CONTEOS),
     ).toMatchObject({
       avance: { tipo: "entregas", hechas: 3, total: 12 },
       porEvaluar: 3,
       preguntas: 2,
       suma: 20,
+      secciones: "5A y 5C",
     });
     expect(
-      tareaProfeDe(t, { entregadas: 3, evaluadas: 2 }, CONTEOS).avance,
+      tareaProfeDe(t, resumen(3, 2, ["g1", "g2", "g3", "h1", "h2"]), CONTEOS)
+        .avance,
     ).toEqual({ tipo: "evaluadas", hechas: 2, total: 12 });
     const ind = { id: "b", ...publicada({ tipo: "individual", premio: null }) };
     expect(tareaProfeDe(ind, undefined, CONTEOS).avance).toEqual({
@@ -439,6 +458,67 @@ describe("lista del profe", () => {
     });
     const borr = { id: "c", ...publicada(), estado: "borrador" as const };
     expect(tareaProfeDe(borr, undefined, CONTEOS).avance).toBeNull();
+  });
+
+  describe("total con equipos eliminados (D316)", () => {
+    const grupal5A = { id: "a", ...publicada({ secciones: ["5A"] }) };
+    const vivos2: Conteos = {
+      ...CONTEOS,
+      equipos: { "5A": ["g1", "g2"], "5C": [] },
+    };
+
+    test("1 evaluada de un equipo eliminado + 2 vivos sin entrega → «1 de 3»", () => {
+      const r = resumenEntregas([
+        entrega({ tareaId: "a", titularId: "borrado" }, 17),
+      ]).get("a");
+      expect(tareaProfeDe(grupal5A, r, vivos2).avance).toEqual({
+        tipo: "evaluadas",
+        hechas: 1,
+        total: 3,
+      });
+      expect(
+        avanceTexto({ tipo: "evaluadas", hechas: 1, total: 3 }, "grupal"),
+      ).toBe("1 de 3 equipos evaluados");
+    });
+
+    test("un vivo con entrega no se cuenta dos veces", () => {
+      const r = resumen(1, 1, ["g1", "borrado"]);
+      expect(totalTitulares(grupal5A, vivos2, r)).toBe(3);
+      expect(totalTitulares(grupal5A, vivos2)).toBe(2);
+    });
+
+    test("individual: el mayor entre los vivos y los que entregaron", () => {
+      const ind = {
+        id: "b",
+        ...publicada({ tipo: "individual", premio: null, secciones: ["5C"] }),
+      };
+      expect(totalTitulares(ind, CONTEOS, resumen(2, 3, []))).toBe(34);
+      const pocos: Conteos = { ...CONTEOS, alumnos: { "5A": 0, "5C": 2 } };
+      expect(totalTitulares(ind, pocos, resumen(2, 1, []))).toBe(3);
+    });
+
+    test("invariante: hechas <= total siempre", () => {
+      const casos: Array<[number, number, string[], Conteos]> = [
+        [0, 4, ["x1", "x2", "x3", "x4"], vivos2],
+        [3, 0, ["x1", "x2", "g1"], vivos2],
+        [5, 5, ids("x", 10), { ...CONTEOS, equipos: { "5A": [], "5C": [] } }],
+        [0, 0, [], vivos2],
+      ];
+      for (const [entregadas, evaluadas, tit, c] of casos) {
+        for (const t of [
+          grupal5A,
+          { ...grupal5A, estado: "evaluada" as const },
+          { id: "i", ...publicada({ tipo: "individual", premio: null }) },
+        ]) {
+          const av = tareaProfeDe(t, resumen(entregadas, evaluadas, tit), {
+            ...c,
+            alumnos: { "5A": 1, "5C": 0 },
+          }).avance;
+          expect(av).not.toBeNull();
+          if (av) expect(av.hechas).toBeLessThanOrEqual(av.total);
+        }
+      }
+    });
   });
 });
 

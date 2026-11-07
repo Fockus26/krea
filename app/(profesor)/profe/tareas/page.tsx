@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { TasksHeader } from "@/components/sections/tareas-profe/tasks-header";
 import { TeacherTaskList } from "@/components/sections/tareas-profe/teacher-task-list";
-import { eliminarTarea } from "@/lib/acciones/tareas";
+import { eliminarTarea, eliminarTareas } from "@/lib/acciones/tareas";
 import {
   conteos,
   entregasTodas,
@@ -54,6 +54,7 @@ export default async function TareasProfePage() {
         tareas={vista}
         hoy={diaDeInstante(Date.now())}
         eliminar={eliminarTarea}
+        eliminarVarias={eliminarTareas}
       />
     </>
   );

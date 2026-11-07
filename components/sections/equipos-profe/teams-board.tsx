@@ -12,7 +12,14 @@ import {
   NUEVO_EQUIPO_ID,
 } from "@/components/sections/equipos-profe/team-dialogs";
 import { TeamsHeader } from "@/components/sections/equipos-profe/teams-header";
+import {
+  type FilaEquipo,
+  TeamsTable,
+} from "@/components/sections/equipos-profe/teams-table";
 import { UnassignedCard } from "@/components/sections/equipos-profe/unassigned-card";
+import { EliminarEnLote } from "@/components/sections/shared/eliminar-en-lote";
+import { useSeleccionLote } from "@/components/sections/shared/use-seleccion-lote";
+import { useVista } from "@/components/sections/shared/use-vista";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/components/ui/sonner";
 import {
@@ -24,7 +31,11 @@ import {
 } from "@/lib/equipos-datos";
 import {
   consecuenciasEliminar,
+  consecuenciasTexto,
+  type ErrorGestionEquipo,
   eliminadoEquipoTexto,
+  errorGestionEquipoTexto,
+  sumarConsecuencias,
 } from "@/lib/equipos-gestion";
 import {
   type AlumnoEquipo,
@@ -43,6 +54,8 @@ import {
   type SeccionEquipos,
   validarLogo,
 } from "@/lib/equipos-profe";
+import { EQUIPOS } from "@/lib/lote";
+import { CLAVE_VISTA_EQUIPOS } from "@/lib/vista";
 import { estiloDe } from "@/lib/vistas-estudiante";
 
 /**
@@ -69,6 +82,9 @@ const tituloDe = (id: string) => `titulo-${id}`;
  * Foco tras mover (D111): el botón de la fila ya no existe, así que el foco va al título de la
  * tarjeta destino; al quitar del equipo, al de la tarjeta de origen. Cada acción lo dice con un
  * toast (región viva de Sonner): no hay otro `role="status"`.
+ * Vista Lista (D313, el interruptor de la cabecera): una tabla de equipos con editar y eliminar;
+ * con `gestion.eliminarVarios`, casillas y la barra del lote (D315). Mover y capitán, solo en
+ * Tarjetas (la Lista no pinta «Sin equipo»).
  */
 export function TeamsBoard({
   seccion,
@@ -88,6 +104,7 @@ export function TeamsBoard({
   acciones?: AccionesEquipos;
 }) {
   const gestion = acciones?.gestion;
+  const [vista] = useVista(CLAVE_VISTA_EQUIPOS);
   const [estado, setEstado] = useState(inicial);
   // Tras `refresh()` (crear, eliminar o cualquier cambio guardado) manda el estado del servidor:
   // así aparece la tarjeta de un equipo nuevo y desaparece la del eliminado
@@ -206,6 +223,72 @@ export function TeamsBoard({
     );
   }
 
+  /** Qué arrastra eliminar `eq` (integrantes del tablero, entregas y ajustes del servidor), D307. */
+  const consecuenciasDe = ({ equipo: eq, integrantes }: FilaEquipo) =>
+    consecuenciasEliminar({
+      integrantes,
+      entregas: eq.conDatos?.entregas ?? 0,
+      ajustes: eq.conDatos?.ajustes ?? 0,
+    });
+
+  // Vista Lista (D313): una fila por equipo vivo en el estado; «Sin equipo» no es fila
+  const filas: FilaEquipo[] = equipos.flatMap((eq) => {
+    const e = estado.equipos[eq.id];
+    if (!e) return [];
+    return [
+      {
+        equipo: eq,
+        integrantes: e.miembros.length,
+        capitan: e.capitan ? nombreAlumno(e.capitan) : null,
+        logoSrc: logos[eq.id],
+      },
+    ];
+  });
+
+  // Lote (D315): solo en Lista. Tras `refresh()` manda el `inicial` del servidor: lo borrado deja
+  // de ser fila y sale de la selección (no se borra nada en el cliente antes de la respuesta)
+  const eliminarVarios = gestion?.eliminarVarios;
+  const conLote = vista === "lista" && eliminarVarios !== undefined;
+  const idsLote = conLote ? filas.map((f) => f.equipo.id) : [];
+  const seleccion = useSeleccionLote(idsLote);
+  const claveLote = idsLote.join("\n");
+  const [claveAntes, setClaveAntes] = useState(claveLote);
+  if (claveLote !== claveAntes) {
+    setClaveAntes(claveLote);
+    seleccion.podar(idsLote);
+  }
+  const marcados = filas.filter((f) => seleccion.marcadas.has(f.equipo.id));
+
+  function accionesDe(eq: EquipoVista) {
+    if (!gestion) return undefined;
+    const e = estado.equipos[eq.id];
+    return (
+      <>
+        <EditarEquipoDialog
+          equipo={eq}
+          seccion={seccion}
+          editar={gestion.editar}
+        />
+        <EliminarEquipoDialog
+          equipo={eq}
+          consecuencias={consecuenciasDe({
+            equipo: eq,
+            integrantes: e?.miembros.length ?? 0,
+            capitan: null,
+          })}
+          eliminar={gestion.eliminar}
+          onEliminado={() => {
+            toast(eliminadoEquipoTexto(eq.nombre));
+            // Su tarjeta o su fila (y el botón que abrió el diálogo) ya no existe
+            requestAnimationFrame(() =>
+              document.getElementById(NUEVO_EQUIPO_ID)?.focus(),
+            );
+          }}
+        />
+      </>
+    );
+  }
+
   return (
     <>
       <TeamsHeader
@@ -224,6 +307,43 @@ export function TeamsBoard({
         }
       />
       <h2 className="sr-only">Equipos de {seccion}</h2>
+      {equipos.length > 0 && vista === "lista" ? (
+        <div className="flex flex-col gap-3">
+          {conLote && eliminarVarios ? (
+            <EliminarEnLote<ErrorGestionEquipo>
+              seleccionados={marcados.map((f) => ({
+                id: f.equipo.id,
+                nombre: f.equipo.nombre,
+              }))}
+              sustantivo={EQUIPOS}
+              onLimpiar={seleccion.limpiar}
+              descripcion={consecuenciasTexto(
+                sumarConsecuencias(marcados.map(consecuenciasDe)),
+                true,
+              )}
+              eliminar={eliminarVarios}
+              errorTexto={(e) => errorGestionEquipoTexto(e, seccion)}
+              errorRed="red"
+              onEliminados={seleccion.quitar}
+              focoAlTerminar={NUEVO_EQUIPO_ID}
+            />
+          ) : null}
+          <TeamsTable
+            seccion={seccion}
+            filas={filas}
+            seleccion={
+              conLote
+                ? {
+                    marcadas: seleccion.marcadas,
+                    casilla: seleccion.casilla,
+                    onTodos: seleccion.alternarTodos,
+                  }
+                : undefined
+            }
+            acciones={gestion ? accionesDe : undefined}
+          />
+        </div>
+      ) : null}
       {equipos.length === 0 ? (
         <Card>
           <EmptyState
@@ -234,71 +354,49 @@ export function TeamsBoard({
           />
         </Card>
       ) : null}
-      {/* Tres columnas solo desde 1440: con la barra lateral, antes la tarjeta no cabe (D216) */}
-      <ul className="g2 m-0 list-none items-start p-0 xl:grid-cols-3">
-        {equipos.map((eq) => {
-          const e = estado.equipos[eq.id];
-          if (!e) return null;
-          return (
-            <li key={eq.id} className="min-w-0">
-              <TeamCard
-                equipo={eq}
-                tituloId={tituloDe(eq.id)}
-                miembros={miembrosOrdenados(e).map(miembro)}
-                capitan={e.capitan}
-                equipos={destinos}
-                logoSrc={logos[eq.id]}
-                logoError={errores[eq.id]}
-                onLogo={(f) => cambiarLogo(eq.id, f)}
-                onCapitan={(c) => {
-                  const siguiente = cambiarCapitan(estado, eq.id, c);
-                  if (siguiente === estado) return;
-                  setEstado(siguiente);
-                  guardar(
-                    estado,
-                    acciones?.capitan({ equipoId: eq.id, cedula: c }),
-                  );
-                  toast(capitanTexto(nombreAlumno(c), eq.nombre));
-                }}
-                onMover={mover}
-                acciones={
-                  gestion ? (
-                    <>
-                      <EditarEquipoDialog
-                        equipo={eq}
-                        seccion={seccion}
-                        editar={gestion.editar}
-                      />
-                      <EliminarEquipoDialog
-                        equipo={eq}
-                        consecuencias={consecuenciasEliminar({
-                          integrantes: e.miembros.length,
-                          entregas: eq.conDatos?.entregas ?? 0,
-                          ajustes: eq.conDatos?.ajustes ?? 0,
-                        })}
-                        eliminar={gestion.eliminar}
-                        onEliminado={() => {
-                          toast(eliminadoEquipoTexto(eq.nombre));
-                          // Su tarjeta (y el botón que abrió el diálogo) ya no existe
-                          requestAnimationFrame(() =>
-                            document.getElementById(NUEVO_EQUIPO_ID)?.focus(),
-                          );
-                        }}
-                      />
-                    </>
-                  ) : undefined
-                }
-              />
-            </li>
-          );
-        })}
-      </ul>
-      <UnassignedCard
-        tituloId={SIN_EQUIPO_ID}
-        alumnos={estado.sinEquipo.map(miembro)}
-        equipos={destinos}
-        onMover={mover}
-      />
+      {vista === "lista" ? null : (
+        <>
+          {/* Tres columnas solo desde 1440: con la barra lateral, antes la tarjeta no cabe (D216) */}
+          <ul className="g2 m-0 list-none items-start p-0 xl:grid-cols-3">
+            {equipos.map((eq) => {
+              const e = estado.equipos[eq.id];
+              if (!e) return null;
+              return (
+                <li key={eq.id} className="min-w-0">
+                  <TeamCard
+                    equipo={eq}
+                    tituloId={tituloDe(eq.id)}
+                    miembros={miembrosOrdenados(e).map(miembro)}
+                    capitan={e.capitan}
+                    equipos={destinos}
+                    logoSrc={logos[eq.id]}
+                    logoError={errores[eq.id]}
+                    onLogo={(f) => cambiarLogo(eq.id, f)}
+                    onCapitan={(c) => {
+                      const siguiente = cambiarCapitan(estado, eq.id, c);
+                      if (siguiente === estado) return;
+                      setEstado(siguiente);
+                      guardar(
+                        estado,
+                        acciones?.capitan({ equipoId: eq.id, cedula: c }),
+                      );
+                      toast(capitanTexto(nombreAlumno(c), eq.nombre));
+                    }}
+                    onMover={mover}
+                    acciones={accionesDe(eq)}
+                  />
+                </li>
+              );
+            })}
+          </ul>
+          <UnassignedCard
+            tituloId={SIN_EQUIPO_ID}
+            alumnos={estado.sinEquipo.map(miembro)}
+            equipos={destinos}
+            onMover={mover}
+          />
+        </>
+      )}
     </>
   );
 }

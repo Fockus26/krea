@@ -1,47 +1,50 @@
-// Eliminar en lote (W22, D298–D300). Puro (sin Firebase): la forma de la entrada, el recorrido
-// uno a uno con resultado por cédula, el troceo del cliente y los textos. Lo usan Alumnos y
-// Profesores; cada pantalla pone su borrado de uno (el mismo que el de su diálogo individual).
+// Eliminar en lote (W22, D298–D300; X4, D314–D315). Puro (sin Firebase): la forma de la entrada,
+// el recorrido uno a uno con resultado por id (cédula, tarea o equipo), el troceo del cliente y
+// los textos. Lo usan Alumnos, Profesores, Tareas y Equipos; cada pantalla pone su borrado de uno
+// (el mismo que el de su diálogo individual).
 import { z } from "zod";
 import { zCedula } from "@/lib/modelo";
 
 /**
- * Cédulas por llamada (D299): cada borrado es una transacción con el ranking de la sección, así
- * que van una tras otra; el cliente parte la selección en trozos de este tamaño.
+ * Ids por llamada (D299): cada borrado es una transacción con el ranking de la sección, así que
+ * van uno tras otro; el cliente parte la selección en trozos de este tamaño.
  */
 export const TOPE_LOTE = 25;
 
+/** Lista de ids de `item` sin repetir, 1..TOPE_LOTE. */
+export const zIdsLote = (item: z.ZodType<string>) =>
+  z
+    .array(item)
+    .min(1)
+    .max(TOPE_LOTE)
+    .transform((ids) => [...new Set(ids)]);
+
 /** Lista de cédulas sin repetir, 1..TOPE_LOTE. */
-export const zCedulasLote = z
-  .array(zCedula)
-  .min(1)
-  .max(TOPE_LOTE)
-  .transform((cs) => [...new Set(cs)]);
+export const zCedulasLote = zIdsLote(zCedula);
 
 export type ResultadoUno<E> = { ok: true } | { ok: false; error: E };
 export type ResultadoItem<E> =
-  | { cedula: string; ok: true }
-  | { cedula: string; ok: false; error: E };
+  | { id: string; ok: true }
+  | { id: string; ok: false; error: E };
 export type ResultadoLote<E> =
   | { ok: true; resultados: ResultadoItem<E>[] }
   | { ok: false; error: "invalida" | "red" };
 
 /**
- * Borra una por una (en orden) y devuelve el resultado de cada cédula. Un borrado que lanza no
- * corta el lote: esa cédula queda con `errorRed` y se sigue con la siguiente.
+ * Borra uno por uno (en orden) y devuelve el resultado de cada id. Un borrado que lanza no corta
+ * el lote: ese id queda con `errorRed` y se sigue con el siguiente.
  */
 export async function borrarEnLote<E>(
-  cedulas: readonly string[],
-  borrarUno: (cedula: string) => Promise<ResultadoUno<E>>,
+  ids: readonly string[],
+  borrarUno: (id: string) => Promise<ResultadoUno<E>>,
   errorRed: E,
 ): Promise<ResultadoItem<E>[]> {
   const out: ResultadoItem<E>[] = [];
-  for (const cedula of cedulas) {
-    const r = await borrarUno(cedula).catch(
+  for (const id of ids) {
+    const r = await borrarUno(id).catch(
       (): ResultadoUno<E> => ({ ok: false, error: errorRed }),
     );
-    out.push(
-      r.ok ? { cedula, ok: true } : { cedula, ok: false, error: r.error },
-    );
+    out.push(r.ok ? { id, ok: true } : { id, ok: false, error: r.error });
   }
   return out;
 }
@@ -55,38 +58,34 @@ export function partirEnLotes<T>(xs: readonly T[], n = TOPE_LOTE): T[][] {
 
 /**
  * Llama a `eliminar` trozo a trozo y junta los resultados. Si un trozo entero falla (red,
- * entrada inválida), sus cédulas quedan con `errorRed` y se sigue con el siguiente.
+ * entrada inválida), sus ids quedan con `errorRed` y se sigue con el siguiente.
  */
 export async function eliminarPorTrozos<E>(
-  cedulas: readonly string[],
+  ids: readonly string[],
   eliminar: (trozo: string[]) => Promise<ResultadoLote<E>>,
   errorRed: E,
 ): Promise<ResultadoItem<E>[]> {
   const out: ResultadoItem<E>[] = [];
-  for (const trozo of partirEnLotes(cedulas)) {
+  for (const trozo of partirEnLotes(ids)) {
     const r = await eliminar(trozo).catch(
       (): ResultadoLote<E> => ({ ok: false, error: "red" }),
     );
     if (r.ok) out.push(...r.resultados);
     else
       out.push(
-        ...trozo.map((cedula) => ({
-          cedula,
-          ok: false as const,
-          error: errorRed,
-        })),
+        ...trozo.map((id) => ({ id, ok: false as const, error: errorRed })),
       );
   }
   return out;
 }
 
-/** Las cédulas que se borraron y las que no (con su error). */
+/** Los ids que se borraron y los que no (con su error). */
 export function separarResultados<E>(resultados: readonly ResultadoItem<E>[]) {
   const ok: string[] = [];
-  const fallidos: { cedula: string; error: E }[] = [];
+  const fallidos: { id: string; error: E }[] = [];
   for (const r of resultados) {
-    if (r.ok) ok.push(r.cedula);
-    else fallidos.push({ cedula: r.cedula, error: r.error });
+    if (r.ok) ok.push(r.id);
+    else fallidos.push({ id: r.id, error: r.error });
   }
   return { ok, fallidos };
 }
@@ -161,22 +160,47 @@ export function podarSeleccion(
 
 /* Textos. PROVISIONAL (CONTENT_CHECKLIST fila 159): no están en el lienzo */
 
-export type Sustantivo = { uno: string; varios: string };
+/**
+ * El nombre de lo que se borra y cómo concuerda (D314): `femenino` cambia «Ningún … seleccionado»
+ * por «Ninguna … seleccionada»; `cosa` quita la «a» de persona («¿Eliminar 3 tareas?», no «a 3»).
+ * Sin ellos, masculino y de persona (alumnos, profesores).
+ */
+export type Sustantivo = {
+  uno: string;
+  varios: string;
+  femenino?: boolean;
+  cosa?: boolean;
+};
 export const ALUMNOS: Sustantivo = { uno: "alumno", varios: "alumnos" };
 export const PROFESORES: Sustantivo = { uno: "profesor", varios: "profesores" };
+/* PROVISIONAL (CONTENT_CHECKLIST fila 165) */
+export const TAREAS: Sustantivo = {
+  uno: "tarea",
+  varios: "tareas",
+  femenino: true,
+  cosa: true,
+};
+export const EQUIPOS: Sustantivo = {
+  uno: "equipo",
+  varios: "equipos",
+  cosa: true,
+};
 
 const cuantos = (n: number, s: Sustantivo) =>
   `${n} ${n === 1 ? s.uno : s.varios}`;
+/** «a » ante personas; nada ante cosas. */
+const a = (s: Sustantivo) => (s.cosa ? "" : "a ");
 
-/** «3 alumnos seleccionados» / «1 profesor seleccionado» / «Ningún alumno seleccionado». */
+/** «3 alumnos seleccionados» / «1 tarea seleccionada» / «Ningún alumno seleccionado». */
 export function seleccionadosTexto(n: number, s: Sustantivo): string {
-  if (n === 0) return `Ningún ${s.uno} seleccionado`;
-  return `${cuantos(n, s)} ${n === 1 ? "seleccionado" : "seleccionados"}`;
+  const sel = s.femenino ? "seleccionada" : "seleccionado";
+  if (n === 0) return `${s.femenino ? "Ninguna" : "Ningún"} ${s.uno} ${sel}`;
+  return `${cuantos(n, s)} ${n === 1 ? sel : `${sel}s`}`;
 }
 
-/** Título del diálogo: «¿Eliminar a 3 alumnos?». */
+/** Título del diálogo: «¿Eliminar a 3 alumnos?» / «¿Eliminar 3 tareas?». */
 export function eliminarLoteTitulo(n: number, s: Sustantivo): string {
-  return `¿Eliminar a ${cuantos(n, s)}?`;
+  return `¿Eliminar ${a(s)}${cuantos(n, s)}?`;
 }
 
 /** Botón que confirma: «Eliminar 3». */
@@ -184,9 +208,9 @@ export function eliminarLoteBoton(n: number): string {
   return `Eliminar ${n}`;
 }
 
-/** Toast al terminar sin fallos: «Eliminaste a 3 alumnos». */
+/** Toast al terminar sin fallos: «Eliminaste a 3 alumnos» / «Eliminaste 3 equipos». */
 export function eliminadosTexto(n: number, s: Sustantivo): string {
-  return `Eliminaste a ${cuantos(n, s)}`;
+  return `Eliminaste ${a(s)}${cuantos(n, s)}`;
 }
 
 /** Cabecera del error parcial: «Se eliminaron 2. No se pudo eliminar a 1 alumno:». */
@@ -195,19 +219,30 @@ export function fallidosTitulo(
   fallidos: number,
   s: Sustantivo,
 ): string {
+  const nadie = s.cosa
+    ? `No se eliminó ${s.femenino ? "ninguna" : "ninguno"}.`
+    : "No se eliminó a nadie.";
   const parte =
     hechos === 0
-      ? "No se eliminó a nadie."
+      ? nadie
       : `${hechos === 1 ? "Se eliminó 1" : `Se eliminaron ${hechos}`}.`;
-  return `${parte} No se pudo eliminar a ${cuantos(fallidos, s)}:`;
+  return `${parte} No se pudo eliminar ${a(s)}${cuantos(fallidos, s)}:`;
 }
 
-/** Nombre de la casilla de una fila: «Seleccionar a Ana Pérez». */
-export const seleccionarLabel = (nombre: string) => `Seleccionar a ${nombre}`;
+/**
+ * Nombre de la casilla de una fila: «Seleccionar a Ana Pérez»; ante cosas, sin «a»
+ * («Seleccionar «Fotosíntesis»», «Seleccionar el equipo Los Rayos»).
+ */
+export const seleccionarLabel = (nombre: string, s: Sustantivo = ALUMNOS) =>
+  `Seleccionar ${a(s)}${nombre}`;
 export const SELECCIONAR_TODOS_ALUMNOS =
   "Seleccionar a todos los alumnos visibles";
 export const SELECCIONAR_TODOS_PROFESORES =
   "Seleccionar a todos los profesores (menos tú)";
+/* PROVISIONAL (CONTENT_CHECKLIST fila 165) */
+export const SELECCIONAR_TODAS_TAREAS = "Seleccionar todas las tareas visibles";
+export const SELECCIONAR_TODOS_EQUIPOS =
+  "Seleccionar todos los equipos de la sección";
 
 export const REINTENTAR_LOTE =
   "Siguen seleccionados: vuelve a intentarlo con «Eliminar».";

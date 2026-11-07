@@ -15,6 +15,7 @@ import {
   zMoverAlumno,
 } from "@/lib/equipos-datos";
 import {
+  type ErrorGestionEquipo,
   type ResultadoGestionEquipo,
   zCrearEquipo,
   zEditarEquipo,
@@ -32,6 +33,7 @@ import {
   editarEquipoEnTransaccion,
   eliminarEquipoEnTransaccion,
 } from "@/lib/firebase/equipos-gestion";
+import { borrarEnLote, type ResultadoLote, zIdsLote } from "@/lib/lote";
 
 export type { ResultadoEquipos, ResultadoGestionEquipo, ResultadoLogo };
 
@@ -197,25 +199,71 @@ export async function eliminarEquipo(
   if (!admin) return { ok: false, error: "red" };
   const id = zIdDocumento.safeParse(equipoId);
   if (!id.success) return { ok: false, error: "invalida" };
+  const r = await borrarUnEquipo(admin, id.data);
+  // `sesiones`: el equipo ya no existe, el tablero tiene que dejar de pintarlo
+  if (r.ok || r.error === "sesiones") refresh();
+  return r;
+}
+
+/**
+ * Lo mismo para varios (X4, D315): hasta TOPE_LOTE ids por llamada, uno tras otro, cada uno en SU
+ * transacción con la regla de D307 (no una para todos: un equipo con demasiados datos no frena a
+ * los demás). Idempotente: uno que ya no existe cuenta como borrado. `sesiones` es un fallo de ese
+ * equipo (se eliminó, pero quedó alguna sesión abierta) y la UI lo dice con su texto.
+ */
+export async function eliminarEquipos(
+  ids: unknown,
+): Promise<ResultadoLote<ErrorGestionEquipo>> {
+  await exigirSesion("profesor");
+  const admin = firebaseAdmin();
+  if (!admin) return { ok: false, error: "red" };
+  const d = zIdsLote(zIdDocumento).safeParse(ids);
+  if (!d.success) return { ok: false, error: "invalida" };
+  const resultados = await borrarEnLote<ErrorGestionEquipo>(
+    d.data,
+    async (id) => {
+      const r = await borrarUnEquipo(admin, id);
+      return !r.ok && r.error === "no-existe" ? { ok: true } : r;
+    },
+    "red",
+  );
+  refresh();
+  return { ok: true, resultados };
+}
+
+/**
+ * El borrado de uno, sin sesión ni `refresh()` (lo ponen `eliminarEquipo` y `eliminarEquipos`):
+ * la transacción de D307 y, después del commit, su logo de B2 y los claims de sus integrantes.
+ * No lanza: cualquier fallo vuelve como error.
+ */
+async function borrarUnEquipo(
+  admin: NonNullable<ReturnType<typeof firebaseAdmin>>,
+  id: string,
+): Promise<ResultadoGestionEquipo> {
+  let tx: Awaited<ReturnType<typeof eliminarEquipoEnTransaccion>>;
   try {
-    const { resultado, logo, afectados } = await eliminarEquipoEnTransaccion(
-      admin.db,
-      id.data,
-      Date.now(),
-    );
-    if (!resultado.ok) return resultado;
-    refresh();
-    if (logo) {
-      const b = await almacenB2()
-        ?.borrar(logo)
-        .catch(() => null);
-      if (!b?.ok) console.error("[eliminarEquipo] no se borró el logo");
-    }
-    const fallidas = await sincronizarClaims(admin.auth, admin.db, afectados);
-    if (fallidas.length) return { ok: false, error: "sesiones" };
-    return resultado;
+    tx = await eliminarEquipoEnTransaccion(admin.db, id, Date.now());
   } catch (e) {
     registrar("eliminarEquipo", e);
     return { ok: false, error: "red" };
   }
+  const { resultado, logo, afectados } = tx;
+  if (!resultado.ok) return resultado;
+  if (logo) {
+    const b = await almacenB2()
+      ?.borrar(logo)
+      .catch(() => null);
+    if (!b?.ok) console.error("[eliminarEquipo] no se borró el logo");
+  }
+  // Ya se eliminó: lo que falle desde aquí es que alguna sesión quedó abierta
+  const fallidas = await sincronizarClaims(
+    admin.auth,
+    admin.db,
+    afectados,
+  ).catch((e) => {
+    registrar("eliminarEquipo", e);
+    return afectados;
+  });
+  if (fallidas.length) return { ok: false, error: "sesiones" };
+  return resultado;
 }
