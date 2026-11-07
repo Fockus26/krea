@@ -1,0 +1,93 @@
+// Presencia al editar un alumno (W14, D275–D277). Puro (sin Firebase ni reloj): qué entradas de
+// `presencia/{cedulaAlumno}/editores/{cedulaProfe}` siguen vivas y qué texto ven los demás profes.
+// La escribe el navegador del profe (única excepción a D175, D275); un latido cada LATIDO_MS y,
+// si el último tiene más de VIGENCIA_MS, la pestaña se da por muerta y la entrada se ignora.
+import { z } from "zod";
+
+/** Cada cuánto el diálogo abierto renueva su entrada. */
+export const LATIDO_MS = 20_000;
+/** Más viejo que esto, la entrada se ignora (pestaña cerrada sin `pagehide`, sin red). */
+export const VIGENCIA_MS = 45_000;
+/** Cada cuánto se vuelve a mirar la vigencia sin que llegue una instantánea nueva. */
+export const RELOJ_PRESENCIA_MS = 15_000;
+/** Tope del nombre que el profe escribe en su entrada (las reglas lo repiten). */
+export const NOMBRE_PRESENCIA_MAX = 120;
+
+/** Una entrada ya leída: los timestamps del servidor pasados a ms. */
+export const zEntradaPresencia = z.object({
+  /** Cédula del profe (el id del documento). */
+  profeId: z.string().min(1),
+  nombre: z.string().trim().min(1).max(NOMBRE_PRESENCIA_MAX),
+  desde: z.number().finite(),
+  latido: z.number().finite(),
+});
+export type EntradaPresencia = z.infer<typeof zEntradaPresencia>;
+
+/** ¿Sigue viva? Un latido «en el futuro» (reloj del navegador atrasado) cuenta como vivo. */
+export function vigente(latido: number, ahora: number): boolean {
+  return ahora - latido <= VIGENCIA_MS;
+}
+
+/**
+ * Los OTROS profes que están editando a un alumno ahora: sin la entrada propia (otra pestaña mía
+ * no es «otro profe»), sin las vencidas y en orden de llegada (el primero que abrió, primero).
+ */
+export function editoresVigentes(
+  entradas: readonly EntradaPresencia[],
+  ahora: number,
+  yo: string,
+): EntradaPresencia[] {
+  return entradas
+    .filter((e) => e.profeId !== yo && vigente(e.latido, ahora))
+    .sort((a, b) => a.desde - b.desde || a.profeId.localeCompare(b.profeId));
+}
+
+/**
+ * «Ana Pérez está editando» · «Ana Pérez y Luis Díaz están editando» · «Ana Pérez y 2 más están
+ * editando». Vacío si no hay nadie. PROVISIONAL (fila 154).
+ */
+export function presenciaTexto(
+  editores: ReadonlyArray<Pick<EntradaPresencia, "nombre">>,
+): string {
+  const [primero, segundo, ...resto] = editores;
+  if (!primero) return "";
+  if (!segundo) return `${primero.nombre} está editando`;
+  if (resto.length === 0)
+    return `${primero.nombre} y ${segundo.nombre} están editando`;
+  return `${primero.nombre} y ${resto.length + 1} más están editando`;
+}
+
+/**
+ * El aviso del diálogo: no bloquea, avisa. «Ana Pérez está editando a este alumno. Si guarda antes
+ * que tú, te avisaremos.» PROVISIONAL (fila 154).
+ */
+export function avisoPresencia(texto: string): string {
+  return texto
+    ? `${texto} a este alumno. Si guarda antes que tú, te avisaremos.`
+    : "";
+}
+
+/** Cómo se ve el profe en la presencia: primer nombre + primer apellido («Ana Pérez»). */
+export function nombrePresencia(
+  u: { nombres: string; apellidos: string } | null,
+): string {
+  const primero = (s: string) => s.trim().split(/\s+/)[0] ?? "";
+  const nombre = u
+    ? `${primero(u.nombres)} ${primero(u.apellidos)}`.trim()
+    : "";
+  // Sin perfil legible: un nombre genérico antes que una entrada inválida
+  return (nombre || "Otro profe").slice(0, NOMBRE_PRESENCIA_MAX);
+}
+
+/** Agrupa las entradas por alumno (la cédula sale de la ruta del documento). */
+export function porAlumno(
+  docs: ReadonlyArray<{ alumnoId: string; entrada: EntradaPresencia }>,
+): Map<string, EntradaPresencia[]> {
+  const m = new Map<string, EntradaPresencia[]>();
+  for (const { alumnoId, entrada } of docs) {
+    const lista = m.get(alumnoId);
+    if (lista) lista.push(entrada);
+    else m.set(alumnoId, [entrada]);
+  }
+  return m;
+}

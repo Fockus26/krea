@@ -2,7 +2,8 @@
 // Server Actions de Alumnos (fase 07 W8, D175, D209; W12, D267–D269). El autor sale SIEMPRE de la
 // sesión (`exigirSesion("profesor")`), nunca del body; la cédula del body es el DESTINO y cada
 // acción comprueba que sea un estudiante (un profe no se crea ni se borra por aquí, D234).
-// Editar: perfil, historial de base (D176), email y `ranking/{seccion}` en UNA transacción.
+// Editar: perfil, historial de base (D176), email y `ranking/{seccion}` en UNA transacción; con la
+// versión que vio el diálogo, un guardado de otro profe en medio responde `conflicto` (W14, D276).
 // Agregar: `crearCuenta` (contraseña temporal, D232) + equipo y ranking en una transacción.
 // Eliminar: Auth primero (ya no puede entrar), luego sus datos y el ranking en una transacción.
 import { refresh } from "next/cache";
@@ -26,6 +27,7 @@ import {
   resumenBorradoCon,
 } from "@/lib/firebase/alumnos-alta";
 import { sincronizarClaims } from "@/lib/firebase/equipos";
+import { borrarPresenciaAlumno } from "@/lib/firebase/presencia";
 import { zCedula } from "@/lib/modelo";
 
 export type {
@@ -175,6 +177,10 @@ export async function eliminarAlumno(
     return { ok: false, error: "a-medias" };
   }
   await borrarImagenes(imagenes);
+  // Su presencia (D275): si falla, queda huérfana e inofensiva (nadie edita a un alumno que no está)
+  await borrarPresenciaAlumno(admin.db, c.data).catch((e) =>
+    registrar("eliminarAlumno:presencia", e),
+  );
   refresh();
   return { ok: true };
 }
