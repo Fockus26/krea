@@ -7,6 +7,7 @@ import {
   Plus,
   Save,
   Send,
+  Trash2,
   User,
   Users,
 } from "lucide-react";
@@ -49,7 +50,10 @@ import {
   CERRAR_TITULO,
   crearBorrador,
   type DatosBorrador,
+  ELIMINAR_TAREA_BOTON,
   type ErroresTarea,
+  eliminarTareaDescripcion,
+  eliminarTareaTitulo,
   esSeccionTarea,
   MAX_PREGUNTAS,
   MAX_PREGUNTAS_TEXTO,
@@ -58,6 +62,7 @@ import {
   mensajeErrorTarea,
   motivoSuma,
   NOTA_PUBLICADA,
+  type PerdidaEliminar,
   preguntasTitulo,
   rutaTarea,
   SECCIONES_TAREA,
@@ -67,6 +72,7 @@ import {
   TOAST_ELIMINADA,
   TOAST_GUARDADA,
   TOAST_PUBLICADA,
+  TOAST_TAREA_ELIMINADA,
   tareaAGuardar,
   tieneErrores,
   validarBorrador,
@@ -87,6 +93,8 @@ export type AccionesTarea = {
     tarea: ReturnType<typeof tareaAGuardar>;
   }) => Promise<ResultadoTarea>;
   cerrar: (id: string) => Promise<ResultadoTarea>;
+  /** Elimina la tarea con sus entregas y notas (D242). */
+  eliminar?: (id: string) => Promise<ResultadoTarea>;
 };
 
 /*
@@ -101,6 +109,8 @@ export type AccionesTarea = {
  * Con `acciones` (página real, W6) guarda en Firestore; en la vista previa solo avisa con un toast.
  * `modo` (D200): un borrador se guarda o se publica; una publicada se guarda («Guardar cambios»)
  * y se cierra (con confirmación); con entregas solo cambian título, fecha y premio; cerrada, nada.
+ * Una tarea ya guardada se puede eliminar en cualquier modo (D243): confirmación con lo que se
+ * pierde, toast y vuelta a la lista.
  */
 export function TaskBuilder({
   inicial,
@@ -111,6 +121,7 @@ export function TaskBuilder({
   modo = "borrador",
   fechaGuardada = null,
   acciones,
+  perdida,
 }: {
   inicial: DatosBorrador;
   /** Día civil ISO: una fecha de entrega anterior no se puede publicar. */
@@ -128,6 +139,8 @@ export function TaskBuilder({
   /** Fecha ISO ya guardada de una publicada: se puede conservar aunque haya pasado (D200). */
   fechaGuardada?: string | null;
   acciones?: AccionesTarea;
+  /** Lo que se pierde al eliminarla (el texto de la confirmación, D243). */
+  perdida?: PerdidaEliminar;
 }) {
   const router = useRouter();
   const raiz = React.useRef<HTMLDivElement>(null);
@@ -141,6 +154,7 @@ export function TaskBuilder({
   const [id, setId] = React.useState(tareaId);
   const [pendiente, startTransition] = React.useTransition();
   const [confirmarCierre, setConfirmarCierre] = React.useState(false);
+  const [confirmarEliminar, setConfirmarEliminar] = React.useState(false);
   const esBorrador = modo === "borrador";
   const estructuraFija = modo === "con-entregas" || modo === "cerrada";
   const cerrada = modo === "cerrada";
@@ -385,6 +399,84 @@ export function TaskBuilder({
     </Dialog>
   );
 
+  // Eliminar (una tarea ya guardada, cualquier modo; D243): un diálogo para los dos cortes. Al
+  // cancelar, el foco vuelve al botón; al eliminar, la página cambia a la lista.
+  const eliminarTarea = acciones?.eliminar;
+  const abrioEliminar = React.useRef<HTMLButtonElement | null>(null);
+  const eliminarConfirmado = () => {
+    if (pendiente || !eliminarTarea || id === null) return;
+    const listo = () => {
+      setConfirmarEliminar(false);
+      toast.success(TOAST_TAREA_ELIMINADA);
+      router.push(listaHref);
+    };
+    enviar(async () => {
+      const r = await eliminarTarea(id);
+      // Ya no existe (otro profe la borró): para quien mira, el resultado es el mismo
+      return !r.ok && r.error === "no-existe" ? { ok: true, id } : r;
+    }, listo);
+  };
+  const botonEliminar =
+    eliminarTarea && id !== null ? (
+      <Button
+        type="button"
+        variant="ghost"
+        block
+        disabled={pendiente}
+        aria-haspopup="dialog"
+        className="text-error"
+        onClick={(e) => {
+          abrioEliminar.current = e.currentTarget;
+          setConfirmarEliminar(true);
+        }}
+      >
+        <Trash2 aria-hidden="true" />
+        {ELIMINAR_TAREA_BOTON}
+      </Button>
+    ) : null;
+  const dialogoEliminar = botonEliminar ? (
+    <Dialog
+      open={confirmarEliminar}
+      onOpenChange={(o) => {
+        if (!pendiente) setConfirmarEliminar(o);
+      }}
+    >
+      <DialogContent
+        onCloseAutoFocus={(e) => {
+          e.preventDefault();
+          if (abrioEliminar.current?.isConnected) abrioEliminar.current.focus();
+        }}
+      >
+        <DialogHeader>
+          <DialogTitle>
+            {eliminarTareaTitulo(
+              tarea.titulo.trim() || inicial.titulo || "esta tarea",
+            )}
+          </DialogTitle>
+          <DialogDescription>
+            {eliminarTareaDescripcion(perdida)}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="secondary" disabled={pendiente}>
+              Cancelar
+            </Button>
+          </DialogClose>
+          <Button
+            variant="danger"
+            onClick={eliminarConfirmado}
+            disabled={pendiente}
+            aria-busy={pendiente || undefined}
+          >
+            <Trash2 aria-hidden="true" />
+            {pendiente ? "Eliminando…" : ELIMINAR_TAREA_BOTON}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  ) : null;
+
   const aviso =
     modo === "con-entregas"
       ? AVISO_CON_ENTREGAS
@@ -393,11 +485,7 @@ export function TaskBuilder({
         : null;
 
   return (
-    <div
-      ref={raiz}
-      data-slot="task-builder"
-      className="flex flex-col gap-section"
-    >
+    <div ref={raiz} data-slot="task-builder" className="page-stack">
       {/* < 1024: medidor sticky a 64 bajo la topbar (`.sticky-top` del lienzo) */}
       <SumMeter
         sum={suma}
@@ -590,6 +678,9 @@ export function TaskBuilder({
               {notaPublicar}
             </div>
           )}
+          {botonEliminar ? (
+            <div className="lg:hidden">{botonEliminar}</div>
+          ) : null}
         </div>
 
         {/* ≥ 1024: columna de 360 sticky a 24 */}
@@ -619,6 +710,7 @@ export function TaskBuilder({
               {notaPublicar}
             </div>
           )}
+          {botonEliminar}
         </div>
       </div>
 
@@ -654,6 +746,7 @@ export function TaskBuilder({
         </ActionBar>
       )}
       {esBorrador || cerrada ? null : dialogoCerrar}
+      {dialogoEliminar}
     </div>
   );
 }

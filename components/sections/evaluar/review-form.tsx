@@ -229,7 +229,7 @@ export function ReviewForm({
     }));
 
   return (
-    <div data-slot="review-form" className="flex flex-col gap-section">
+    <div data-slot="review-form" className="page-stack">
       {/* < 1024: medidor sticky a 64 bajo la topbar (`.sticky-top` del lienzo) */}
       <LiveTotal
         scores={puntajes}

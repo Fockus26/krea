@@ -11,7 +11,9 @@ import {
 import {
   borradorReducer,
   crearBorrador,
+  eliminarTareaDescripcion,
   mensajeErrorTarea,
+  SIN_PERDIDA,
   tareaAGuardar,
   validarBorrador,
   validarTarea,
@@ -21,7 +23,11 @@ import {
   datosBorradorDe,
   type EntradaTarea,
   estadoPremioSeccion,
+  MAX_ESCRITURAS_TX,
   modoConstructor,
+  perdidaAlEliminar,
+  perdidasPorTarea,
+  planEliminar,
   puedeCerrar,
   resumenEntregas,
   seccionesDe,
@@ -433,6 +439,117 @@ describe("lista del profe", () => {
     });
     const borr = { id: "c", ...publicada(), estado: "borrador" as const };
     expect(tareaProfeDe(borr, undefined, CONTEOS).avance).toBeNull();
+  });
+});
+
+/* ---------- Eliminar (D242, D243) ---------- */
+
+describe("eliminar una tarea", () => {
+  test("pierde una nota por integrante de cada evaluada; borradores no cuentan", () => {
+    const p = perdidaAlEliminar([
+      entrega(
+        {
+          tareaId: "a",
+          titularId: "g1",
+          seccion: "5C",
+          integrantes: ["39000001", "39000002", "39000003"],
+        },
+        18,
+      ),
+      entrega({ tareaId: "a", titularId: "g2", seccion: "5A" }, 9),
+      entrega({ tareaId: "a", titularId: "g3", seccion: "5A" }),
+      { ...entrega({ tareaId: "a", titularId: "g4" }), estado: "borrador" },
+    ]);
+    // Una nota < 10 (aporta 0 puntos) también se pierde: es una nota
+    expect(p).toEqual({ notas: 4, sinEvaluar: 1, secciones: ["5A", "5C"] });
+    expect(perdidaAlEliminar([])).toEqual(SIN_PERDIDA);
+  });
+
+  test("perdidas por tarea en una pasada", () => {
+    const m = perdidasPorTarea([
+      entrega({ tareaId: "a", titularId: "g1" }, 15),
+      entrega({ tareaId: "b", titularId: "g1" }),
+    ]);
+    expect(m.get("a")).toEqual({ notas: 1, sinEvaluar: 0, secciones: ["5A"] });
+    expect(m.get("b")).toEqual({ notas: 0, sinEvaluar: 1, secciones: [] });
+    expect(m.get("c")).toBeUndefined();
+  });
+
+  test("la tarjeta lleva la pérdida (sin entregas: nada)", () => {
+    const t = { id: "a", ...publicada() };
+    expect(tareaProfeDe(t, undefined, CONTEOS).perdida).toEqual(SIN_PERDIDA);
+    const p = { notas: 3, sinEvaluar: 0, secciones: ["5C" as const] };
+    expect(tareaProfeDe(t, undefined, CONTEOS, p).perdida).toEqual(p);
+  });
+
+  test("plan: secciones de las entregas, imágenes sin repetir, escrituras", () => {
+    const plan = planEliminar([
+      entrega({
+        tareaId: "a",
+        titularId: "g1",
+        seccion: "5C",
+        respuestas: {
+          q1: { imagenPath: "respuestas/a/g1/q1.jpg" },
+          q2: { texto: "Hola" },
+        },
+      }),
+      entrega({
+        tareaId: "a",
+        titularId: "g2",
+        respuestas: { q1: { imagenPath: "respuestas/a/g1/q1.jpg" } },
+      }),
+    ]);
+    expect(plan).toEqual({
+      secciones: ["5A", "5C"],
+      imagenes: ["respuestas/a/g1/q1.jpg"],
+      escrituras: 1 + 2 + 2,
+    });
+    expect(planEliminar([])).toEqual({
+      secciones: [],
+      imagenes: [],
+      escrituras: 1,
+    });
+  });
+
+  test("una tarea individual de las dos secciones cabe en una transacción", () => {
+    const todas = Array.from({ length: 69 }, (_, i) =>
+      entrega({
+        tareaId: "a",
+        titularId: `3900${String(i).padStart(4, "0")}`,
+        seccion: i < 35 ? "5A" : "5C",
+      }),
+    );
+    expect(planEliminar(todas).escrituras).toBe(72);
+    expect(planEliminar(todas).escrituras).toBeLessThan(MAX_ESCRITURAS_TX);
+  });
+
+  test("texto de la confirmación", () => {
+    expect(
+      eliminarTareaDescripcion({
+        notas: 23,
+        sinEvaluar: 0,
+        secciones: ["5A", "5C"],
+      }),
+    ).toBe(
+      "Se borrarán 23 notas de 5A y 5C. Los puntos del ranking se recalculan. Esto no se puede deshacer.",
+    );
+    expect(
+      eliminarTareaDescripcion({ notas: 1, sinEvaluar: 1, secciones: ["5C"] }),
+    ).toBe(
+      "Se borrarán 1 nota de 5C y 1 entrega sin evaluar. Los puntos del ranking se recalculan. Esto no se puede deshacer.",
+    );
+    expect(
+      eliminarTareaDescripcion({ notas: 1, sinEvaluar: 0, secciones: ["5A"] }),
+    ).toMatch(/^Se borrará 1 nota de 5A\./);
+    expect(
+      eliminarTareaDescripcion({ notas: 0, sinEvaluar: 4, secciones: [] }),
+    ).toBe(
+      "Se borrarán 4 entregas sin evaluar. Nadie pierde notas ni puntos. Esto no se puede deshacer.",
+    );
+    expect(eliminarTareaDescripcion(SIN_PERDIDA)).toMatch(
+      /^Todavía no tiene entregas/,
+    );
+    expect(eliminarTareaDescripcion()).toMatch(/^Se borrarán sus entregas/);
   });
 });
 

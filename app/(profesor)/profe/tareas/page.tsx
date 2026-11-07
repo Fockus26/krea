@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { TasksHeader } from "@/components/sections/tareas-profe/tasks-header";
 import { TeacherTaskList } from "@/components/sections/tareas-profe/teacher-task-list";
+import { eliminarTarea } from "@/lib/acciones/tareas";
 import {
   conteos,
   entregasTodas,
@@ -15,6 +16,7 @@ import {
   RUTA_NUEVA_TAREA,
 } from "@/lib/tareas-profe";
 import {
+  perdidasPorTarea,
   resumenEntregas,
   seccionTareaDe,
   tareaProfeDe,
@@ -33,8 +35,11 @@ export default async function TareasProfePage() {
     conteos(),
   ]);
   const resumen = resumenEntregas(entregas);
+  const perdidas = perdidasPorTarea(entregas);
   const vista = ordenarTareas(
-    tareas.map((t) => tareaProfeDe(t, resumen.get(t.id), c)),
+    tareas.map((t) =>
+      tareaProfeDe(t, resumen.get(t.id), c, perdidas.get(t.id)),
+    ),
   );
   return (
     <>
@@ -45,7 +50,11 @@ export default async function TareasProfePage() {
         )}
         nuevaHref={RUTA_NUEVA_TAREA}
       />
-      <TeacherTaskList tareas={vista} hoy={diaDeInstante(Date.now())} />
+      <TeacherTaskList
+        tareas={vista}
+        hoy={diaDeInstante(Date.now())}
+        eliminar={eliminarTarea}
+      />
     </>
   );
 }
