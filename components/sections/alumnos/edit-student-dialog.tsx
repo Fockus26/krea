@@ -56,16 +56,28 @@ export type GuardarAlumno = (entrada: EditarAlumno) => Promise<ResultadoAlumno>;
  */
 export function EditStudentDialog({
   alumno,
+  abiertoInicial = false,
+  onAbierto,
   guardar,
   onGuardado,
 }: {
   alumno: FilaAlumno;
+  /** Abre la ficha al montar (viene de `?alumno=` en la URL, D252). */
+  abiertoInicial?: boolean;
+  /** Avisa de cada apertura o cierre para reflejarlo en la URL. */
+  onAbierto?: (cedula: string, abierto: boolean) => void;
   guardar?: GuardarAlumno;
   onGuardado: (cedula: string, cambios: CambiosAlumno) => void;
 }) {
-  const [abierto, setAbierto] = useState(false);
+  const [abierto, setAbierto] = useState(abiertoInicial);
   return (
-    <Dialog open={abierto} onOpenChange={setAbierto}>
+    <Dialog
+      open={abierto}
+      onOpenChange={(v) => {
+        setAbierto(v);
+        onAbierto?.(alumno.cedula, v);
+      }}
+    >
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm">
           <Pencil aria-hidden="true" />

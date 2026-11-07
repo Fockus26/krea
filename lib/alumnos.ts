@@ -2,7 +2,7 @@
 // Lógica pura, sin React. D106–D109.
 
 import type { DicebearEstilo } from "@/lib/dicebear";
-import { BASE_MAX, BASE_MIN } from "@/lib/grades";
+import { BASE_MAX, BASE_MIN, NOTA_APROBATORIA } from "@/lib/grades";
 import { cedulaTexto } from "@/lib/perfil";
 
 export type SeccionAlumnos = "5A" | "5C";
@@ -19,6 +19,8 @@ export type FilaAlumno = {
   base: number;
   /** Nota individual vigente; `null` = Pendiente (D003). */
   nota: number | null;
+  /** Nota en cada tarea evaluada (id → nota, con su base); sin entrada = Pendiente (D252). */
+  notas?: Readonly<Record<string, number>>;
   /** Puntos del ranking (D007). */
   puntos: number;
   estilo: DicebearEstilo;
@@ -209,4 +211,115 @@ export function busquedaVacia(
       : "Revisa las tildes o busca por cédula.",
     otra,
   };
+}
+
+/* ---------- Filtros por URL (D252) ---------- */
+
+export type EstadoAlumnos = "evaluados" | "raspados" | "pendientes";
+export const ESTADOS_ALUMNOS: readonly EstadoAlumnos[] = [
+  "evaluados",
+  "raspados",
+  "pendientes",
+];
+
+/** Filtros de /profe/alumnos que viajan en la URL; todos opcionales. */
+export type FiltrosAlumnos = {
+  seccion?: SeccionAlumnos;
+  estado?: EstadoAlumnos;
+  /** Id de la tarea sobre la que se miran `estado` y la columna de nota. */
+  tarea?: string;
+  /** Cédula del alumno cuya ficha se abre. */
+  alumno?: string;
+};
+
+export const RUTA_ALUMNOS = "/profe/alumnos";
+
+/** Ruta de Alumnos con los filtros dados: `rutaAlumnos({ tarea: "t1", estado: "raspados" })`. */
+export function rutaAlumnos(filtros: FiltrosAlumnos = {}): string {
+  const p = new URLSearchParams();
+  if (filtros.seccion) p.set("seccion", filtros.seccion);
+  if (filtros.estado) p.set("estado", filtros.estado);
+  if (filtros.tarea) p.set("tarea", filtros.tarea);
+  if (filtros.alumno) p.set("alumno", filtros.alumno);
+  const q = p.toString();
+  return q === "" ? RUTA_ALUMNOS : `${RUTA_ALUMNOS}?${q}`;
+}
+
+type ParamsCrudos =
+  | URLSearchParams
+  | Readonly<Record<string, string | readonly string[] | undefined>>;
+
+/** Lee los filtros de la URL; un valor inválido o repetido se ignora (nunca error). */
+export function leerFiltrosAlumnos(params: ParamsCrudos): FiltrosAlumnos {
+  const uno = (clave: string): string | undefined => {
+    const v =
+      params instanceof URLSearchParams ? params.get(clave) : params[clave];
+    const s = Array.isArray(v) ? v[0] : v;
+    return typeof s === "string" ? s.trim() : undefined;
+  };
+  const filtros: FiltrosAlumnos = {};
+  const seccion = uno("seccion");
+  if (seccion === "5A" || seccion === "5C") filtros.seccion = seccion;
+  const estado = ESTADOS_ALUMNOS.find((e) => e === uno("estado"));
+  if (estado) filtros.estado = estado;
+  const tarea = uno("tarea");
+  if (tarea && tarea.length <= 128 && !/[\s/]/.test(tarea))
+    filtros.tarea = tarea;
+  const alumno = uno("alumno");
+  if (alumno && /^\d{7,9}$/.test(alumno)) filtros.alumno = alumno;
+  return filtros;
+}
+
+/** Nota del alumno para el filtro: la de la tarea elegida o, sin tarea, la individual vigente. */
+export function notaParaFiltro(
+  a: Pick<FilaAlumno, "nota" | "notas">,
+  tarea: string | undefined,
+): number | null {
+  if (!tarea) return a.nota;
+  return a.notas?.[tarea] ?? null;
+}
+
+/**
+ * Filas que cumplen `estado` (sobre la tarea, o la nota vigente sin tarea): evaluados = con nota,
+ * raspados = nota < 10, pendientes = sin nota (D003). El alumno pedido por `alumno` se queda
+ * siempre, para que su ficha sea visible en la lista.
+ */
+export function filtrarPorEstado<
+  T extends Pick<FilaAlumno, "cedula" | "nota" | "notas">,
+>(
+  lista: readonly T[],
+  estado: EstadoAlumnos | undefined,
+  tarea: string | undefined,
+  alumno?: string,
+): T[] {
+  if (!estado) return [...lista];
+  return lista.filter((a) => {
+    if (alumno && a.cedula === alumno) return true;
+    const n = notaParaFiltro(a, tarea);
+    if (estado === "pendientes") return n === null;
+    if (estado === "evaluados") return n !== null;
+    return n !== null && n < NOTA_APROBATORIA;
+  });
+}
+
+const ESTADO_TEXTO: Record<EstadoAlumnos, [string, string]> = {
+  evaluados: ["evaluado", "evaluados"],
+  raspados: ["raspado", "raspados"],
+  pendientes: ["pendiente", "pendientes"],
+};
+
+/**
+ * Frase del contador cuando hay filtro de estado y no hay búsqueda:
+ * "12 raspados en 5A · Identidad de marca", "Nadie raspado en 5A · Identidad de marca".
+ */
+export function contadorEstadoTexto(
+  n: number,
+  estado: EstadoAlumnos,
+  seccion: SeccionAlumnos,
+  tareaTitulo?: string,
+): string {
+  const [uno, varios] = ESTADO_TEXTO[estado];
+  const cola = tareaTitulo ? ` · ${tareaTitulo}` : "";
+  if (n === 0) return `Nadie ${uno} en ${seccion}${cola}`;
+  return `${n} ${n === 1 ? uno : varios} en ${seccion}${cola}`;
 }

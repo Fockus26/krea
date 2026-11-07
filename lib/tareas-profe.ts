@@ -16,8 +16,6 @@ import { percent, sumMeterInfo } from "@/lib/meters";
 export const RUTA_TAREAS = "/profe/tareas";
 export const RUTA_NUEVA_TAREA = "/profe/tareas/nueva";
 export const RUTA_EVALUAR = "/profe/evaluar";
-/** "Ver notas" de una evaluada: el handoff no le da ruta propia; las notas viven en Alumnos (D115). */
-export const RUTA_VER_NOTAS = "/profe/alumnos";
 export const rutaTarea = (id: string) => `${RUTA_TAREAS}/${id}`;
 
 /* ---------- Lista ---------- */

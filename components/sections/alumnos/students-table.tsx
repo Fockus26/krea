@@ -14,6 +14,7 @@ import {
   contadorTexto,
   type FilaAlumno,
   nombreAlumno,
+  notaParaFiltro,
   type SeccionAlumnos,
   tablaLabel,
 } from "@/lib/alumnos";
@@ -37,12 +38,23 @@ export function StudentsTable({
   seccion,
   filas,
   consulta,
+  vacioTexto,
+  tarea,
+  abierto,
+  onAbierto,
   guardar,
   onGuardado,
 }: {
   seccion: SeccionAlumnos;
   filas: readonly FilaAlumno[];
   consulta: string;
+  /** Frase del vacío cuando lo causa el filtro de estado (en vez de la de la búsqueda). */
+  vacioTexto?: string;
+  /** Con tarea elegida, la columna de nota es la de esa tarea (D252). */
+  tarea?: { id: string; titulo: string };
+  /** Cédula del alumno cuya ficha está abierta (viene de la URL). */
+  abierto?: string;
+  onAbierto?: (cedula: string, abierto: boolean) => void;
   guardar?: GuardarAlumno;
   onGuardado: (cedula: string, cambios: CambiosAlumno) => void;
 }) {
@@ -57,7 +69,7 @@ export function StudentsTable({
             Base
           </TableHead>
           <TableHead scope="col" className="text-center">
-            Nota individual
+            {tarea ? "Nota en la tarea" : "Nota individual"}
           </TableHead>
           <TableHead scope="col" numeric>
             Puntos
@@ -72,8 +84,8 @@ export function StudentsTable({
           <TableRow className="hover:bg-transparent">
             <TableCell colSpan={COLUMNAS} className="h-auto py-8 text-center">
               <span className="text-body text-text-2">
-                {contadorTexto(0, consulta, seccion)}. Prueba con otro nombre,
-                apellido o cédula.
+                {vacioTexto ??
+                  `${contadorTexto(0, consulta, seccion)}. Prueba con otro nombre, apellido o cédula.`}
               </span>
             </TableCell>
           </TableRow>
@@ -107,7 +119,11 @@ export function StudentsTable({
                 )}
               </TableCell>
               <TableCell className="text-center">
-                <GradePill nota={a.nota} size="sm" table />
+                <GradePill
+                  nota={notaParaFiltro(a, tarea?.id)}
+                  size="sm"
+                  table
+                />
               </TableCell>
               <TableCell numeric className="text-small-b">
                 {formatDecimal(a.puntos)}
@@ -115,6 +131,8 @@ export function StudentsTable({
               <TableCell numeric>
                 <EditStudentDialog
                   alumno={a}
+                  abiertoInicial={abierto === a.cedula}
+                  onAbierto={onAbierto}
                   guardar={guardar}
                   onGuardado={onGuardado}
                 />

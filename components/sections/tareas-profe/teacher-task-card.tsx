@@ -5,13 +5,13 @@ import { StatusBadge } from "@/components/krea/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cardVariants } from "@/components/ui/card";
+import { rutaAlumnos } from "@/lib/alumnos";
 import {
   barraEvaluadas,
   evaluarLabel,
   evaluarTexto,
   metaTarea,
   RUTA_EVALUAR,
-  RUTA_VER_NOTAS,
   rutaTarea,
   sumaChip,
   type TareaProfe,
@@ -105,7 +105,7 @@ export function TeacherTaskCard({
         {tarea.estado === "evaluada" ? (
           <Button asChild variant="ghost" size="sm">
             <Link
-              href={RUTA_VER_NOTAS}
+              href={rutaAlumnos({ tarea: tarea.id })}
               aria-label={`Ver notas de ${tarea.titulo}`}
             >
               Ver notas

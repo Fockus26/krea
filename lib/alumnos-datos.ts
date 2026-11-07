@@ -162,6 +162,28 @@ export function notaIndividualVigente(
   return ultima ? notaDeIntegrante(ultima, alumno.base) : null;
 }
 
+/**
+ * Nota del alumno en cada tarea evaluada (individual o grupal: entra si es integrante), con su
+ * base vigente. Si hubiera dos entregas de una tarea para él, queda la evaluada más reciente.
+ */
+export function notasPorTarea(
+  alumno: Pick<Usuario, "cedula" | "base">,
+  entregas: readonly Entrega[],
+): Record<string, number> {
+  const notas: Record<string, number> = {};
+  const en: Record<string, number> = {};
+  for (const e of entregas) {
+    if (!e.integrantes.includes(alumno.cedula) || !e.evaluacion) continue;
+    const nota = notaDeIntegrante(e, alumno.base);
+    if (nota === null) continue;
+    if (e.evaluacion.evaluadaEn >= (en[e.tareaId] ?? -1)) {
+      en[e.tareaId] = e.evaluacion.evaluadaEn;
+      notas[e.tareaId] = nota;
+    }
+  }
+  return notas;
+}
+
 /** Filas de /profe/alumnos: los estudiantes de las dos secciones, por sección y nombre. */
 export function filasAlumnos(datos: {
   usuarios: readonly Usuario[];
@@ -186,6 +208,7 @@ export function filasAlumnos(datos: {
         equipo: (u.equipoId && equipos.get(u.equipoId)) || null,
         base: u.base,
         nota: notaIndividualVigente(u, datos.entregas),
+        notas: notasPorTarea(u, datos.entregas),
         puntos: datos.rankings[u.seccion]?.alumnos[u.cedula]?.puntos ?? 0,
         estilo: estiloDe(u.avatar.estilo),
         semilla: u.avatar.semilla,
