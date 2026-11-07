@@ -6,6 +6,7 @@ import {
   tareasProfeVista,
 } from "@/lib/demo/tareas-profe";
 import {
+  alternarSeccion,
   avanceTexto,
   barraEvaluadas,
   borradorReducer,
@@ -25,12 +26,15 @@ import {
   motivoSuma,
   ordenarTareas,
   puedePublicar,
+  seccionesResumen,
+  seccionesTareaTexto,
   sumaChip,
   sumaValores,
   type TareaBorrador,
   type TareaProfe,
   tareaAGuardar,
   tieneErrores,
+  validarBorrador,
   validarTarea,
 } from "@/lib/tareas-profe";
 
@@ -52,6 +56,7 @@ const lista: TareaBorrador = crearBorrador({
   titulo: "Plan",
   tipo: "grupal",
   fecha: "14/11/2026",
+  secciones: ["5A", "5C"],
   preguntas: [
     { enunciado: "Uno", formato: "texto", valor: 10 },
     { enunciado: "Dos", formato: "imagen", valor: 10 },
@@ -179,7 +184,12 @@ describe("constructor: reducer", () => {
     expect(t.preguntas).toEqual([
       { id: "q1", enunciado: "", formato: "texto", valor: null },
     ]);
-    expect(t.seccion).toBe("5A y 5C");
+    // Las secciones las pone quien crea el borrador (las del profe, D324)
+    expect(t.secciones).toEqual([]);
+    expect(crearBorrador({ secciones: ["5C", "4B"] }).secciones).toEqual([
+      "4B",
+      "5C",
+    ]);
     expect(t.tipo).toBe("individual");
   });
 
@@ -237,7 +247,8 @@ describe("constructor: reducer", () => {
       cambios: { enunciado: "Hola", formato: "imagen", valor: 2.5 },
     });
     t = borradorReducer(t, { tipo: "titulo", valor: "Tarea" });
-    t = borradorReducer(t, { tipo: "seccion", valor: "5C" });
+    t = borradorReducer(t, { tipo: "seccion", codigo: "5C", marcada: true });
+    t = borradorReducer(t, { tipo: "seccion", codigo: "4B", marcada: true });
     expect(t.preguntas[0]).toEqual({
       id: "q1",
       enunciado: "Hola",
@@ -245,7 +256,33 @@ describe("constructor: reducer", () => {
       valor: 2.5,
     });
     expect(t.titulo).toBe("Tarea");
-    expect(t.seccion).toBe("5C");
+    expect(t.secciones).toEqual(["4B", "5C"]);
+    t = borradorReducer(t, { tipo: "seccion", codigo: "5C", marcada: false });
+    expect(t.secciones).toEqual(["4B"]);
+    // Marcar dos veces no la repite
+    t = borradorReducer(t, { tipo: "seccion", codigo: "4B", marcada: true });
+    expect(tareaAGuardar(t).secciones).toEqual(["4B"]);
+  });
+
+  test("casillas de sección (D324): al menos una para guardar o publicar", () => {
+    const sin = crearBorrador({ titulo: "Tarea" });
+    expect(validarBorrador(sin).secciones).toBe(ERRORES.secciones);
+    expect(tieneErrores(validarBorrador(sin))).toBe(true);
+    expect(validarTarea(sin, "2026-11-05").secciones).toBe(ERRORES.secciones);
+    const con = crearBorrador({ titulo: "Tarea", secciones: ["4B"] });
+    expect(validarBorrador(con)).toEqual({ preguntas: {} });
+    expect(validarTarea(con, "2026-11-05").secciones).toBeUndefined();
+  });
+
+  test("resumen de secciones", () => {
+    expect(alternarSeccion(["5C"], "4B", true)).toEqual(["4B", "5C"]);
+    expect(seccionesTareaTexto([])).toBe("Ninguna sección");
+    expect(seccionesTareaTexto(["5C", "4B", "5A"])).toBe("4B, 5A y 5C");
+    expect(seccionesResumen(["5A"])).toBe("5A");
+    expect(seccionesResumen(["4B", "5A", "5C"])).toBe("4B, 5A y 5C");
+    expect(seccionesResumen(["4A", "4B", "5A", "5C"])).toBe("4 secciones");
+    expect(eyebrowTareas(5, "4B y 5A")).toBe("5 tareas · 4B y 5A");
+    expect(eyebrowTareas(0, "")).toBe("0 tareas");
   });
 
   test("pasar a Individual conserva el premio y se guarda (D263)", () => {

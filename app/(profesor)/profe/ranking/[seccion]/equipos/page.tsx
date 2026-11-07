@@ -11,7 +11,9 @@ type Props = PageProps<"/profe/ranking/[seccion]/equipos">;
 
 // Como `/profe/ranking/[seccion]` (D323): al menos el catálogo inicial para `cacheComponents`.
 export function generateStaticParams() {
-  return seccionesDe(CATALOGO_INICIAL).map((s) => ({ seccion: slugSeccion(s) }));
+  return seccionesDe(CATALOGO_INICIAL).map((s) => ({
+    seccion: slugSeccion(s),
+  }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

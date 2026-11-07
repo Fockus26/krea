@@ -32,8 +32,8 @@ import {
   TEMA_AYUDA,
   validarEquipo,
 } from "@/lib/equipos-gestion";
-import type { SeccionId } from "@/lib/modelo";
 import type { ResultadoLote } from "@/lib/lote";
+import type { SeccionId } from "@/lib/modelo";
 
 export type AccionesGestionEquipos = {
   crear: (entrada: CrearEquipo) => Promise<ResultadoGestionEquipo>;

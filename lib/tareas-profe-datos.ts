@@ -36,6 +36,7 @@ import {
   resolverEmpate,
   type TarjetaPremio,
 } from "@/lib/premios";
+import { listaSecciones, ordenarSecciones } from "@/lib/secciones";
 import {
   type AccionTarea,
   type AvanceTarea,
@@ -48,7 +49,6 @@ import {
   SIN_PERDIDA,
   type TareaProfe,
 } from "@/lib/tareas-profe";
-import { listaSecciones, ordenarSecciones } from "@/lib/secciones";
 
 type ConId<T> = { id: string } & T;
 
@@ -650,7 +650,7 @@ export type TareaParaPremio = {
   id: string;
   titulo: string;
   tipo: TareaDoc["tipo"];
-  /** «5A» o «4B, 5A y 5C» (`listaSecciones`). */
+  /** «5A» o «4B y 5A» (`listaSecciones`). */
   seccion: string;
   borrador: boolean;
 };

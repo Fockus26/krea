@@ -364,7 +364,7 @@ describe("tarjetas y «Crear premio» (D263, D266)", () => {
       titulo: "Ensayo",
       tipo: "individual" as const,
       fecha: "2026-11-20",
-      seccion: "5A y 5C" as const,
+      secciones: ["5A", "5C"],
       premio: "Libro de diseño",
       preguntas: [
         { id: "p1", enunciado: "Uno", formato: "texto" as const, valor: 20 },

@@ -12,6 +12,7 @@ import {
 import * as React from "react";
 import { NumberStepper } from "@/components/krea/number-stepper";
 import { focusPrimerInvalido } from "@/components/sections/auth/focus-invalid";
+import { SelectorSeccion } from "@/components/sections/shared/selector-seccion";
 import { alertVariants } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -44,7 +45,6 @@ import {
   vistaPrevia,
 } from "@/lib/puntos";
 import { cn } from "@/lib/utils";
-import { SelectorSeccion } from "@/components/sections/shared/selector-seccion";
 import { RecipientCombobox } from "./recipient-combobox";
 
 /**

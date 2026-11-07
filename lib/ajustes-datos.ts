@@ -13,7 +13,6 @@ import {
   type Usuario,
   zAjuste,
 } from "@/lib/modelo";
-import { SECCION_NO_EXISTE } from "@/lib/secciones";
 import { fechaAjusteTexto } from "@/lib/panel";
 import {
   type Candidato,
@@ -25,6 +24,7 @@ import {
   nombreDestino,
 } from "@/lib/puntos";
 import { primerApellido } from "@/lib/ranking";
+import { SECCION_NO_EXISTE } from "@/lib/secciones";
 import { estiloDe, nombreCorto } from "@/lib/vistas-estudiante";
 
 type ConId<T> = { id: string } & T;
@@ -239,10 +239,15 @@ export function candidatosDe({
     alumno: Object.fromEntries(secciones.map((s) => [s, []])),
     equipo: Object.fromEntries(secciones.map((s) => [s, []])),
   };
+  /** La lista de esa sección; si no estaba (fuera del catálogo), se crea vacía. */
+  const de = (por: Record<SeccionId, Candidato[]>, s: SeccionId) => {
+    por[s] ??= [];
+    return por[s];
+  };
   for (const u of usuarios) {
     if (u.rol !== "estudiante" || u.seccion === null) continue;
     const nombre = nombreCorto(u);
-    (c.alumno[u.seccion] ??= []).push({
+    de(c.alumno, u.seccion).push({
       id: u.cedula,
       tipo: "alumno",
       seccion: u.seccion,
@@ -257,7 +262,7 @@ export function candidatosDe({
     });
   }
   for (const e of equipos) {
-    (c.equipo[e.seccion] ??= []).push({
+    de(c.equipo, e.seccion).push({
       id: e.id,
       tipo: "equipo",
       seccion: e.seccion,

@@ -137,7 +137,8 @@ const SECCIONES_EN_EYEBROW = 3;
 
 /** Secciones del eyebrow: «4B y 5A» o, si son muchas, «6 secciones» (no desborda a 320 px). */
 export function seccionesResumen(secciones: readonly SeccionId[]): string {
-  if (secciones.length <= SECCIONES_EN_EYEBROW) return listaSecciones(secciones);
+  if (secciones.length <= SECCIONES_EN_EYEBROW)
+    return listaSecciones(secciones);
   return `${secciones.length} secciones`;
 }
 
@@ -228,9 +229,7 @@ export function alternarSeccion(
 
 /** Resumen de las secciones elegidas: «4B y 5A»; ninguna → «Ninguna sección». PROVISIONAL (fila 168). */
 export function seccionesTareaTexto(secciones: readonly SeccionId[]): string {
-  return secciones.length === 0
-    ? "Ninguna sección"
-    : listaSecciones(secciones);
+  return secciones.length === 0 ? "Ninguna sección" : listaSecciones(secciones);
 }
 
 export type FormatoPregunta = "texto" | "imagen";
@@ -650,7 +649,7 @@ export function sumarPerdidas(
 }
 
 /**
- * «Se borrarán 23 notas de 5A y 5C. Los puntos del ranking se recalculan.» Sin `perdida` (la
+ * «Se borrarán 23 notas de 4B y 5A. Los puntos del ranking se recalculan.» Sin `perdida` (la
  * vista previa no la conoce) dice lo mismo sin cifras. `varias`: la del lote (D314; solo cambia
  * «Todavía no tiene entregas» por «tienen»). PROVISIONAL (lote: CONTENT_CHECKLIST fila 165).
  */

@@ -25,8 +25,8 @@ import {
   rutaAlumnos,
 } from "@/lib/alumnos";
 import { ALTA_SIN_EQUIPO, type OpcionEquipo } from "@/lib/alumnos-alta";
-import type { SeccionId } from "@/lib/modelo";
 import type { EditarAlumno, ResultadoAlumno } from "@/lib/alumnos-datos";
+import type { SeccionId } from "@/lib/modelo";
 import {
   AddStudentDialog,
   AGREGAR_ALUMNO_ID,

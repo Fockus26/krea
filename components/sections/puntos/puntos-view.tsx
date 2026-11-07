@@ -11,8 +11,8 @@ import type { InicialAjuste } from "@/lib/demo/puntos";
 import type { SeccionId } from "@/lib/modelo";
 import {
   ajusteAnuladoTexto,
-  type CandidatosPuntos,
   anular,
+  type CandidatosPuntos,
   deltasSesion,
   FILTRO_VACIO,
   type FilaHistorial,

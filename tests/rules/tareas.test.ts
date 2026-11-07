@@ -37,7 +37,7 @@ const entrada = (o: Partial<EntradaTarea> = {}): EntradaTarea => ({
   titulo: "Prueba W6",
   tipo: "grupal",
   fecha: "2026-11-14",
-  seccion: "5C",
+  secciones: ["5C"],
   premio: "Salida al cine",
   preguntas: [
     { id: "q1", enunciado: "Uno", formato: "texto", valor: 12 },

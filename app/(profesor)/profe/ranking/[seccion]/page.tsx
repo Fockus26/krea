@@ -12,7 +12,9 @@ type Props = PageProps<"/profe/ranking/[seccion]">;
 // Una ruta por sección del catálogo (D323). Con `cacheComponents` hace falta al menos un valor:
 // el catálogo inicial; las demás («4b») se pintan en el request. La que no existe da 404.
 export function generateStaticParams() {
-  return seccionesDe(CATALOGO_INICIAL).map((s) => ({ seccion: slugSeccion(s) }));
+  return seccionesDe(CATALOGO_INICIAL).map((s) => ({
+    seccion: slugSeccion(s),
+  }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

@@ -2,13 +2,13 @@
 
 import { Search, X } from "lucide-react";
 import { useRef } from "react";
+import { SelectorSeccion } from "@/components/sections/shared/selector-seccion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { type EstadoAlumnos, seccionOpcionTexto } from "@/lib/alumnos";
 import type { SeccionId } from "@/lib/modelo";
-import { SelectorSeccion } from "@/components/sections/shared/selector-seccion";
 
 /**
  * Filtros de Alumnos (HANDOFF §3 Alumnos): selector de sección del catálogo con recuentos (D322),

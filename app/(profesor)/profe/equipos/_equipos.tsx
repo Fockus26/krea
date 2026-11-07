@@ -1,7 +1,10 @@
+import { notFound } from "next/navigation";
 import {
   type AccionesEquipos,
   TeamsBoard,
 } from "@/components/sections/equipos-profe/teams-board";
+import { PageHeader } from "@/components/sections/shared/page-header";
+import { SinSecciones } from "@/components/sections/shared/sin-secciones";
 import {
   cambiarCapitanDeEquipo,
   crearEquipo,
@@ -11,9 +14,6 @@ import {
   moverAlumnoDeEquipo,
   subirLogoEquipo,
 } from "@/lib/acciones/equipos";
-import { notFound } from "next/navigation";
-import { PageHeader } from "@/components/sections/shared/page-header";
-import { SinSecciones } from "@/components/sections/shared/sin-secciones";
 import { urlsFirmadas } from "@/lib/datos/imagenes";
 import {
   ajustesTodos,

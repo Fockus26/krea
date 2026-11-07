@@ -179,10 +179,10 @@ describe("validarEdicion", () => {
   });
 });
 
-describe("busquedaVacia (D170)", () => {
+describe("busquedaVacia (D170, D323)", () => {
   test("sugiere la otra sección si allí hay coincidencias", async () => {
     const { busquedaVacia } = await import("@/lib/alumnos");
-    expect(busquedaVacia("  Valentin   Gamez ", "5A", 1)).toEqual({
+    expect(busquedaVacia("  Valentin   Gamez ", "5A", { "5C": 1 })).toEqual({
       titulo: "Nadie con «Valentin Gamez» en 5A",
       descripcion: "Revisa las tildes o busca por cédula. ¿Quizás está en 5C?",
       otra: "5C",
@@ -190,8 +190,19 @@ describe("busquedaVacia (D170)", () => {
   });
   test("sin coincidencias en la otra, no la sugiere", async () => {
     const { busquedaVacia } = await import("@/lib/alumnos");
-    const v = busquedaVacia("zz", "5C", 0);
+    const v = busquedaVacia("zz", "5C", { "5A": 0 });
     expect(v.otra).toBeNull();
     expect(v.descripcion).toBe("Revisa las tildes o busca por cédula.");
+  });
+  test("con varias secciones, la que tiene más coincidencias", async () => {
+    const { busquedaVacia } = await import("@/lib/alumnos");
+    const v = busquedaVacia("ana", "5A", { "4B": 1, "5C": 3, "6A": 2 });
+    expect(v.otra).toBe("5C");
+  });
+  test("empate: la primera por año y letra; la actual nunca", async () => {
+    const { seccionSugerida } = await import("@/lib/alumnos");
+    expect(seccionSugerida("5A", { "5C": 2, "4B": 2 })).toBe("4B");
+    expect(seccionSugerida("5A", { "5A": 9, "5C": 1 })).toBe("5C");
+    expect(seccionSugerida("5A", {})).toBeNull();
   });
 });

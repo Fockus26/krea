@@ -24,13 +24,13 @@ import {
   notaParaFiltro,
   tablaLabel,
 } from "@/lib/alumnos";
-import type { SeccionId } from "@/lib/modelo";
 import { formatNota } from "@/lib/grades";
 import {
   estadoTodos,
   SELECCIONAR_TODOS_ALUMNOS,
   seleccionarLabel,
 } from "@/lib/lote";
+import type { SeccionId } from "@/lib/modelo";
 import { presenciaTexto } from "@/lib/presencia";
 import { formatDecimal } from "@/lib/stepper";
 import {

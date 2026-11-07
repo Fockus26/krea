@@ -13,7 +13,9 @@ type Props = PageProps<"/profe/equipos/[seccion]">;
 // D323). Con `cacheComponents` hace falta al menos un valor: el catálogo inicial; las demás
 // («4b») se pintan en el request y la que no existe da 404 (lo decide `EquiposProfe`).
 export function generateStaticParams() {
-  return seccionesDe(CATALOGO_INICIAL).map((s) => ({ seccion: slugSeccion(s) }));
+  return seccionesDe(CATALOGO_INICIAL).map((s) => ({
+    seccion: slugSeccion(s),
+  }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

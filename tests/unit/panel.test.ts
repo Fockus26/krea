@@ -8,6 +8,7 @@ import {
   detallePorEvaluar,
   detalleRaspados,
   entregaMetaTexto,
+  esFiltroSeccion,
   evaluadosTexto,
   evaluarAriaLabel,
   fechaAjusteTexto,
@@ -17,6 +18,8 @@ import {
   porcentajeEvaluados,
   saludoPorHora,
   saludoTexto,
+  seccionesDelFiltro,
+  TODAS_SECCIONES,
   verTodasTexto,
 } from "@/lib/panel";
 
@@ -59,15 +62,26 @@ describe("filtro de sección", () => {
     { id: 2, seccion: "5C" as const },
     { id: 3, seccion: "5A" as const },
   ];
-  test("5A, 5C y ambas", () => {
+  test("5A, 5C y todas (D322)", () => {
     expect(filtrarPorSeccion(items, "5A").map((i) => i.id)).toEqual([1, 3]);
     expect(filtrarPorSeccion(items, "5C").map((i) => i.id)).toEqual([2]);
-    expect(filtrarPorSeccion(items, "ambas")).toHaveLength(3);
-    expect(filtrarPorSeccion(items, "ambas")).not.toBe(items);
+    expect(filtrarPorSeccion(items, TODAS_SECCIONES)).toHaveLength(3);
+    expect(filtrarPorSeccion(items, TODAS_SECCIONES)).not.toBe(items);
+    // Una sección nueva sin nada: vacío, no error
+    expect(filtrarPorSeccion(items, "4B")).toEqual([]);
   });
   test("frase de la región viva", () => {
     expect(filtroTexto("5A")).toBe("Mostrando la sección 5A");
-    expect(filtroTexto("ambas")).toBe("Mostrando ambas secciones");
+    expect(filtroTexto(TODAS_SECCIONES)).toBe("Mostrando todas las secciones");
+  });
+  test("filtro válido y secciones que suma", () => {
+    const catalogo = ["4B", "5A", "5C"];
+    expect(esFiltroSeccion("todas", catalogo)).toBe(true);
+    expect(esFiltroSeccion("4B", catalogo)).toBe(true);
+    expect(esFiltroSeccion("6A", catalogo)).toBe(false);
+    expect(esFiltroSeccion("ambas", catalogo)).toBe(false);
+    expect(seccionesDelFiltro(TODAS_SECCIONES, catalogo)).toEqual(catalogo);
+    expect(seccionesDelFiltro("4B", catalogo)).toEqual(["4B"]);
   });
 });
 

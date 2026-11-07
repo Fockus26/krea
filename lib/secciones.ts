@@ -146,7 +146,7 @@ export function seccionesEnCatalogo(
 export type GrupoAnio = { numero: number; nombre: string; secciones: string[] };
 
 /**
- * Códigos agrupados por año, en orden: `["4B", "5A", "5C"]` → 4.º año [4B], 5.º año [5A, 5C].
+ * Códigos agrupados por año, en orden: 4B, 5A, 6A → 4.º año [4B], 5.º año [5A], 6.º año [6A].
  * Lo que no es un código va en un grupo final sin año (`numero: 0`, nombre «Otras»): una tarea
  * con una sección que el catálogo ya no tiene la sigue mostrando (D324).
  */

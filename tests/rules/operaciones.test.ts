@@ -59,7 +59,7 @@ const borrador: EntradaTarea = {
   titulo: "Tarea encolada W18",
   tipo: "individual",
   fecha: null,
-  seccion: "5A",
+  secciones: ["5A"],
   premio: null,
   preguntas: [{ id: "q1", enunciado: "", formato: "texto", valor: null }],
 };

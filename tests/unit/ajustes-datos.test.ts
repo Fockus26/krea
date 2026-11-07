@@ -229,6 +229,7 @@ describe("historial y destinatarios", () => {
           actualizadoEn: 0,
         },
       },
+      secciones: ["5A", "5C"],
     });
     expect(c.alumno["5A"]).toHaveLength(1);
     expect(c.alumno["5A"][0]).toMatchObject({
@@ -239,5 +240,34 @@ describe("historial y destinatarios", () => {
     });
     expect(c.equipo["5A"][0]).toMatchObject({ id: "5a-g3", puntos: 12 });
     expect(c.alumno["5C"]).toEqual([]);
+  });
+
+  test("una sección nueva (4B) del catálogo, o fuera de él, no rompe (D323)", () => {
+    const c = candidatosDe({
+      usuarios: [
+        ...usuarios,
+        usuario("40000001", { seccion: "4B" }),
+        usuario("40000002", { seccion: "7Z" }),
+      ],
+      equipos: [
+        ...equipos,
+        {
+          id: "4b-g1",
+          nombre: "4B-G1",
+          seccion: "4B",
+          tema: null,
+          capitanId: null,
+          logoPath: null,
+        },
+      ],
+      rankings: {},
+      secciones: ["4B", "5A", "5C", "6A"],
+    });
+    expect(c.alumno["4B"]?.map((a) => a.id)).toEqual(["40000001"]);
+    expect(c.alumno["4B"]?.[0]).toMatchObject({ seccion: "4B", puntos: 0 });
+    expect(c.equipo["4B"]?.map((e) => e.id)).toEqual(["4b-g1"]);
+    // La del catálogo sin nadie sale vacía; la de fuera se agrupa igual
+    expect(c.alumno["6A"]).toEqual([]);
+    expect(c.alumno["7Z"]?.map((a) => a.id)).toEqual(["40000002"]);
   });
 });

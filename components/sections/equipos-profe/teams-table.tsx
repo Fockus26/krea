@@ -14,13 +14,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { chipPuestoTexto, type EquipoVista } from "@/lib/equipos-profe";
-import type { SeccionId } from "@/lib/modelo";
 import {
   EQUIPOS,
   estadoTodos,
   SELECCIONAR_TODOS_EQUIPOS,
   seleccionarLabel,
 } from "@/lib/lote";
+import type { SeccionId } from "@/lib/modelo";
 
 /** Fila de la vista Lista: el equipo y lo que el tablero sabe de él ahora. */
 export type FilaEquipo = {
