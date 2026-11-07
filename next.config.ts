@@ -5,6 +5,29 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   reactCompiler: true,
+  // Service worker (D291): el navegador siempre pide la versión nueva (guía PWA de Next) y solo
+  // puede cargar scripts del mismo origen.
+  async headers() {
+    return [
+      {
+        source: "/sw.js",
+        headers: [
+          {
+            key: "Content-Type",
+            value: "application/javascript; charset=utf-8",
+          },
+          {
+            key: "Cache-Control",
+            value: "no-cache, no-store, must-revalidate",
+          },
+          {
+            key: "Content-Security-Policy",
+            value: "default-src 'self'; script-src 'self'",
+          },
+        ],
+      },
+    ];
+  },
   experimental: {
     // Una imagen de respuesta por llamada: ≤ 2,5 MB ya comprimida (lib/almacen/imagen.ts) +
     // el sobrecosto del multipart. El valor por defecto (1 MB) no alcanza para una foto (D195).

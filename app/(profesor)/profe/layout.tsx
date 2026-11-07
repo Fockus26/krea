@@ -8,6 +8,7 @@ import {
   RouteTopBar,
 } from "@/components/layout/route-nav";
 import { TopBarAccionProvider } from "@/components/layout/top-bar-accion";
+import { ColaSesion } from "@/components/offline/cola-sesion";
 import { Toaster } from "@/components/ui/sonner";
 import type { Rol } from "@/lib/layout";
 import { SideNavSesion, TopBarSesion } from "./_shell";
@@ -59,6 +60,10 @@ export default function ProfesorLayout({ children }: { children: ReactNode }) {
         {children}
       </AppShell>
       <OfflineBanner rol={ROL} />
+      {/* Cola sin conexión: drena las tareas pendientes de esta sesión (D292) */}
+      <Suspense fallback={null}>
+        <ColaSesion />
+      </Suspense>
       <Toaster />
     </TopBarAccionProvider>
   );

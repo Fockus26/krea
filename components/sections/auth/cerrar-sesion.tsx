@@ -9,6 +9,7 @@ import { useEffect, useRef } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import { cerrarSesion } from "@/lib/acciones/sesion";
 import { firebaseCliente } from "@/lib/firebase/cliente";
+import { vaciarPaginasGuardadas } from "@/lib/offline/sw-cliente";
 import { RUTA_INGRESAR } from "@/lib/sesion";
 
 export function CerrarSesion() {
@@ -23,6 +24,9 @@ export function CerrarSesion() {
         if (fb) await signOut(fb.auth);
         await cerrarSesion();
       } finally {
+        // Las páginas guardadas para leer sin conexión son de quien sale (D291). La cola de
+        // envíos no se borra: es suya y se envía cuando vuelva a entrar (D292).
+        await vaciarPaginasGuardadas();
         window.location.replace(RUTA_INGRESAR);
       }
     })();

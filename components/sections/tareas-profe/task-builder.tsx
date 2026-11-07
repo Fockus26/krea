@@ -41,6 +41,19 @@ import { toast } from "@/components/ui/sonner";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { DESHACER_MS } from "@/lib/evaluar";
 import { METER_TEXT_CLASSES, SUM_STATE_TONE, sumMeterInfo } from "@/lib/meters";
+import {
+  claveTarea,
+  PENDIENTE_TAREA,
+  PENDIENTE_TITULO,
+  SIN_ESPACIO_TAREA,
+  TOAST_ENCOLADA_TAREA,
+} from "@/lib/offline/cola";
+import {
+  alDrenar,
+  drenarCola,
+  encolarOp,
+  useOpCola,
+} from "@/lib/offline/navegador";
 import { ayudaPremio } from "@/lib/premios";
 import {
   type AccionTarea,
@@ -92,6 +105,8 @@ export type AccionesTarea = {
     id: string | null;
     accion: AccionTarea;
     tarea: ReturnType<typeof tareaAGuardar>;
+    /** Id del intento (D293): la cola sin conexión reintenta con el mismo. */
+    opId?: string;
   }) => Promise<ResultadoTarea>;
   cerrar: (id: string) => Promise<ResultadoTarea>;
   /** Elimina la tarea con sus entregas y notas (D242). */
@@ -224,21 +239,68 @@ export function TaskBuilder({
         ?.focus();
     });
 
-  /** Llama a la acción; con error, toast y (si la tarea cambió por fuera) recarga. */
+  // Cola sin conexión (D292): guardar y publicar se encolan si no hay red; cerrar, no
+  // Clave de esta tarea nueva en la cola: un uuid por constructor abierto, creado en el cliente
+  // (en el prerender no se puede, `cacheComponents`)
+  const [local, setLocal] = React.useState("");
+  React.useEffect(() => setLocal(crypto.randomUUID()), []);
+  const claveCola = claveTarea(id, local);
+  const enCola = useOpCola(claveCola);
+  const enEspera = enCola?.estado === "pendiente";
+
+  // Una tarea nueva que entró desde la cola toma su id: el próximo guardado la actualiza
+  React.useEffect(
+    () =>
+      alDrenar((d) => {
+        const h = d.hechas.find((x) => x.op.clave === claveCola);
+        if (!h?.id || id !== null) return;
+        setId(h.id);
+        window.history.replaceState(null, "", rutaTarea(h.id));
+      }),
+    [claveCola, id],
+  );
+
+  /**
+   * Llama a la acción; con error, toast y (si la tarea cambió por fuera) recarga. Con `envio`
+   * (guardar o publicar): sin red, o si la red se cae a medio camino, queda en la cola con el
+   * mismo `opId` y se envía sola al volver (D292, D293).
+   */
   const enviar = (
-    llamar: () => Promise<ResultadoTarea>,
+    llamar: (opId: string) => Promise<ResultadoTarea>,
     alGuardar: (r: { id: string }) => void,
+    envio?: Parameters<AccionesTarea["guardar"]>[0],
   ) =>
     startTransition(async () => {
-      let r: ResultadoTarea;
-      try {
-        r = await llamar();
-      } catch {
-        r = { ok: false, error: "red" };
+      const opId = crypto.randomUUID();
+      let r: ResultadoTarea = { ok: false, error: "red" };
+      if (!envio || navigator.onLine) {
+        try {
+          r = await llamar(opId);
+        } catch {
+          r = { ok: false, error: "red" };
+        }
       }
       if (r.ok) {
         alGuardar(r);
         return;
+      }
+      if (envio && r.error === "red") {
+        const e = await encolarOp({
+          tipo: "tarea",
+          opId,
+          clave: claveCola,
+          titulo: envio.tarea.titulo.trim() || "Sin título",
+          envio,
+        });
+        if (e === "ok") {
+          toast(TOAST_ENCOLADA_TAREA);
+          void drenarCola();
+          return;
+        }
+        if (e === "sin-espacio") {
+          toast.error(SIN_ESPACIO_TAREA);
+          return;
+        }
       }
       toast.error(mensajeErrorTarea(r.error));
       if (r.error === "cerrada" || r.error === "no-existe") router.refresh();
@@ -246,6 +308,11 @@ export function TaskBuilder({
 
   const publicar = () => {
     if (motivo || pendiente || cerrada) return;
+    // Ya hay un guardado en la cola: otro a la vez podría crear la tarea dos veces
+    if (enEspera) {
+      toast(PENDIENTE_TAREA);
+      return;
+    }
     setIntentado(true);
     if (tieneErrores(validarTarea(tarea, hoy, fechaGuardada))) {
       enfocarInvalido();
@@ -257,23 +324,28 @@ export function TaskBuilder({
       router.push(listaHref);
       return;
     }
+    const envio = {
+      id,
+      accion: esBorrador ? ("publicar" as const) : ("guardar" as const),
+      tarea: tareaAGuardar(tarea),
+    };
     enviar(
-      () =>
-        acciones.guardar({
-          id,
-          accion: esBorrador ? "publicar" : "guardar",
-          tarea: tareaAGuardar(tarea),
-        }),
+      (opId) => acciones.guardar({ ...envio, opId }),
       () => {
         toast.success(exito);
         router.push(listaHref);
       },
+      envio,
     );
   };
 
   // Un borrador solo necesita el título (D199)
   const guardar = () => {
     if (pendiente) return;
+    if (enEspera) {
+      toast(PENDIENTE_TAREA);
+      return;
+    }
     setIntentoBorrador(true);
     if (tieneErrores(validarBorrador(tarea))) {
       enfocarInvalido();
@@ -283,13 +355,13 @@ export function TaskBuilder({
       toast.success(TOAST_BORRADOR);
       return;
     }
+    const envio = {
+      id,
+      accion: "borrador" as const,
+      tarea: tareaAGuardar(tarea),
+    };
     enviar(
-      () =>
-        acciones.guardar({
-          id,
-          accion: "borrador",
-          tarea: tareaAGuardar(tarea),
-        }),
+      (opId) => acciones.guardar({ ...envio, opId }),
       (r) => {
         toast.success(TOAST_BORRADOR);
         // Tarea nueva: la URL pasa a la suya sin volver a montar el constructor (el foco se
@@ -299,6 +371,7 @@ export function TaskBuilder({
           window.history.replaceState(null, "", rutaTarea(r.id));
         }
       },
+      envio,
     );
   };
 
@@ -317,12 +390,23 @@ export function TaskBuilder({
   };
 
   const notaPublicar = cerrada ? null : (
-    // Copy del lienzo (borrador); provisional en una publicada (fila 131)
-    <p className="text-center text-small text-text-2">
-      {esBorrador
-        ? "Al publicar, las secciones elegidas la ven en «Por entregar»."
-        : NOTA_PUBLICADA}
-    </p>
+    // Copy del lienzo (borrador); provisional en una publicada (fila 131). En la cola sin
+    // conexión, «Pendiente de enviar» (fila 156), anunciado al aparecer.
+    <output
+      aria-live="polite"
+      className="block text-center text-small text-text-2"
+    >
+      {enEspera ? (
+        <>
+          <span className="text-small-b text-text">{PENDIENTE_TITULO}:</span>{" "}
+          {PENDIENTE_TAREA}
+        </>
+      ) : esBorrador ? (
+        "Al publicar, las secciones elegidas la ven en «Por entregar»."
+      ) : (
+        NOTA_PUBLICADA
+      )}
+    </output>
   );
 
   const botonGuardarBorrador = (enTopbar: boolean) => (

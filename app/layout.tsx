@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Nunito_Sans, Poppins } from "next/font/google";
+import { RegistroServiceWorker } from "@/components/offline/registro-sw";
 import {
   BRAND_BG_DARK,
   BRAND_BLUE,
@@ -72,6 +73,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Saltar al contenido
         </a>
         {children}
+        <RegistroServiceWorker />
       </body>
     </html>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { Send } from "lucide-react";
+import { Clock, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, useTransition } from "react";
 import { ErrorEnPantalla } from "@/components/estados/errores";
@@ -21,9 +21,27 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { toast } from "@/components/ui/sonner";
 import type { ResultadoEnvio, ResultadoSubida } from "@/lib/acciones/entregas";
 import { IMAGEN_SUBIDA_MAX_BYTES } from "@/lib/almacen/imagen";
 import { type EnvioEntrega, mensajeErrorEntrega } from "@/lib/entregas";
+import {
+  claveEntrega,
+  IMAGEN_SIN_SUBIR,
+  type ImagenCola,
+  PENDIENTE_ENTREGA,
+  PENDIENTE_TITULO,
+  SIN_ESPACIO,
+  TOAST_ENCOLADA_ENTREGA,
+  tituloRechazo,
+} from "@/lib/offline/cola";
+import {
+  alDrenar,
+  descartarOp,
+  drenarCola,
+  encolarOp,
+  useOpCola,
+} from "@/lib/offline/navegador";
 import {
   avanceEntrega,
   BORRADOR_MS,
@@ -50,6 +68,8 @@ export type ImagenRespuesta = {
   error?: string;
   /** Ruta en el almacén una vez subida (D195). */
   path?: string;
+  /** Elegida sin conexión: el Blob comprimido está en `file.src` y se sube al entregar (D295). */
+  pendiente?: boolean;
 };
 
 /** Server Actions de la entrega; sin ellas (galerías) la imagen queda lista sin subir. */
@@ -91,9 +111,14 @@ function desdeBorrador(
  * entrega por Server Action; sin ellas (galerías) la imagen queda lista sin subir y «Entregar»
  * solo navega. "Entregar tarea" está deshabilitado hasta completar y pide confirmación. Con
  * `bloqueadaPor` (no capitán, D012) las preguntas se ven sin campos y no hay barra de acción.
+ * Sin conexión (D292, D295): una imagen elegida queda lista en el teléfono y «Entregar» deja la
+ * entrega en la cola (IndexedDB) con el mismo `opId`; se envía sola al volver la red. Mientras
+ * espera, «Pendiente de enviar»; si el servidor la rechaza (tarea cerrada o evaluada), el aviso
+ * y las respuestas siguen aquí.
  */
 export function TaskAnswerForm({
   tareaId,
+  titulo = "",
   preguntas,
   inicial = {},
   bloqueadaPor,
@@ -103,6 +128,8 @@ export function TaskAnswerForm({
   entregadaHref,
 }: {
   tareaId: string;
+  /** Título de la tarea: lo nombra el aviso cuando la entrega pendiente se envía. */
+  titulo?: string;
   preguntas: readonly PreguntaEntrega[];
   inicial?: RespuestasIniciales;
   /** Nombre corto del capitán cuando quien mira no lo es. */
@@ -144,6 +171,25 @@ export function TaskAnswerForm({
   const [confirmar, setConfirmar] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [enviando, startEnvio] = useTransition();
+  // Cola sin conexión (D292): la entrega de este alumno para esta tarea, si está encolada
+  const claveCola = claveEntrega(tareaId, titular ?? "");
+  const enCola = useOpCola(claveCola);
+  const enEspera = enCola?.estado === "pendiente";
+  const rechazada = enCola?.estado === "rechazada" ? enCola : null;
+
+  // Cuando la entrega encolada entra (en esta pestaña), el borrador del teléfono sobra
+  useEffect(
+    () =>
+      alDrenar((d) => {
+        if (!d.hechas.some((h) => h.op.clave === claveCola)) return;
+        try {
+          window.localStorage.removeItem(clave);
+        } catch {
+          // Nada que limpiar
+        }
+      }),
+    [claveCola, clave],
+  );
 
   // Recupera el borrador del dispositivo una vez (gana sobre lo inicial). Un refresco del
   // servidor trae props nuevas: el ref evita pisar lo que el alumno ya escribió.
@@ -194,7 +240,11 @@ export function TaskAnswerForm({
   }, [ediciones, textos, imagenes, clave, bloqueadaPor]);
 
   const imagenLista = (img: ImagenRespuesta | undefined) =>
-    img?.status === "lista" && (!acciones || Boolean(img.path));
+    img?.status === "lista" &&
+    (!acciones || Boolean(img.path) || Boolean(img.pendiente));
+  const imagenesSinSubir = Object.values(imagenes).some(
+    (i) => i.status === "lista" && i.pendiente,
+  );
   const estados: EstadoRespuesta[] = preguntas.map((p) =>
     p.formato === "texto"
       ? { formato: "texto", completa: (textos[p.id] ?? "").trim() !== "" }
@@ -205,7 +255,8 @@ export function TaskAnswerForm({
         },
   );
   const { faltan, subiendo } = avanceEntrega(estados);
-  const listo = puedeEntregar(estados) && !enviando;
+  // Ya en la cola: no se entrega otra vez (la primera puede estar entrando ahora mismo)
+  const listo = puedeEntregar(estados) && !enviando && !enEspera;
 
   const setImagen = (id: string, v: ImagenRespuesta) =>
     setImagenes((prev) => ({ ...prev, [id]: v }));
@@ -221,6 +272,12 @@ export function TaskAnswerForm({
         status: "error",
         error: mensajeErrorEntrega("imagen-peso"),
       });
+      return;
+    }
+    // Sin red: queda lista en el teléfono y se sube al entregar (D295)
+    if (!navigator.onLine) {
+      setImagen(id, { status: "lista", file, pendiente: true });
+      setEdiciones((n) => n + 1);
       return;
     }
     setImagen(id, { status: "subiendo", file });
@@ -242,10 +299,13 @@ export function TaskAnswerForm({
             ...prev,
             [id]: r.ok
               ? { status: "lista", file, path: r.imagenPath }
-              : { status: "error", error: mensajeErrorEntrega(r.error) },
+              : r.error === "red"
+                ? // Se cayó la red al subir: igual que sin conexión
+                  { status: "lista", file, pendiente: true }
+                : { status: "error", error: mensajeErrorEntrega(r.error) },
           },
     );
-    if (r.ok) setEdiciones((n) => n + 1);
+    if (r.ok || r.error === "red") setEdiciones((n) => n + 1);
   }
 
   function limpiarBorrador() {
@@ -263,30 +323,63 @@ export function TaskAnswerForm({
       return;
     }
     const respuestas: EnvioEntrega["respuestas"] = {};
+    const locales: ImagenCola[] = [];
     for (const p of preguntas) {
       if (p.formato === "texto")
         respuestas[p.id] = { texto: textos[p.id] ?? "" };
       else {
-        const path = imagenes[p.id]?.path;
-        if (path) respuestas[p.id] = { imagenPath: path };
+        const img = imagenes[p.id];
+        if (img?.path) respuestas[p.id] = { imagenPath: img.path };
+        else if (img?.pendiente && img.file?.src instanceof Blob)
+          locales.push({
+            preguntaId: p.id,
+            imagenId: crypto.randomUUID(),
+            blob: img.file.src,
+          });
       }
     }
+    // Un id por intento: si la red se cae a medio camino, la cola reintenta el mismo (D293)
+    const opId = crypto.randomUUID();
     setError(null);
     startEnvio(async () => {
-      let r: ResultadoEnvio;
-      try {
-        r = await acciones.enviar({ tareaId, respuestas });
-      } catch {
-        r = { ok: false, error: "red" };
+      if (locales.length === 0 && navigator.onLine) {
+        let r: ResultadoEnvio;
+        try {
+          r = await acciones.enviar({ tareaId, respuestas, opId });
+        } catch {
+          r = { ok: false, error: "red" };
+        }
+        if (r.ok) {
+          // La acción refresca la página: pasa a «¡Tarea entregada!»
+          setConfirmar(false);
+          limpiarBorrador();
+          return;
+        }
+        if (r.error !== "red" || !titular) {
+          setConfirmar(false);
+          setError(mensajeErrorEntrega(r.error));
+          if (r.error === "ya-entregada" || r.error === "cerrada")
+            router.refresh();
+          return;
+        }
       }
+      // Sin red (o con imágenes sin subir): a la cola, se envía sola al volver (D292)
+      const e = await encolarOp({
+        tipo: "entrega",
+        opId,
+        clave: claveCola,
+        titulo,
+        tareaId,
+        respuestas,
+        imagenes: locales,
+      });
       setConfirmar(false);
-      if (r.ok) {
-        // La acción refresca la página: pasa a «¡Tarea entregada!»
-        limpiarBorrador();
+      if (e === "ok") {
+        toast(TOAST_ENCOLADA_ENTREGA);
+        void drenarCola();
         return;
       }
-      setError(mensajeErrorEntrega(r.error));
-      if (r.error === "ya-entregada" || r.error === "cerrada") router.refresh();
+      setError(e === "sin-espacio" ? SIN_ESPACIO : mensajeErrorEntrega("red"));
     });
   }
 
@@ -348,11 +441,47 @@ export function TaskAnswerForm({
               {error} Tus respuestas siguen guardadas en este teléfono.
             </ErrorEnPantalla>
           ) : null}
+          {rechazada ? (
+            // D294: no se envió y no se reintenta; las respuestas siguen en el teléfono
+            <div className="flex flex-col items-start gap-2">
+              <ErrorEnPantalla titulo={tituloRechazo(rechazada)}>
+                {rechazada.mensaje} Tus respuestas siguen guardadas en este
+                teléfono.
+              </ErrorEnPantalla>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => void descartarOp(rechazada.opId)}
+              >
+                Entendido
+              </Button>
+            </div>
+          ) : null}
           <ActionBar>
             <div className="flex min-w-0 flex-col">
-              <p className="text-small-b text-text">
-                {faltaTexto(faltan, subiendo)}
-              </p>
+              {/* Región viva: «Pendiente de enviar» se anuncia al encolar (estado con ícono y texto) */}
+              <output aria-live="polite" className="flex flex-col">
+                {enEspera ? (
+                  <>
+                    <span className="flex items-center gap-1.5 text-small-b text-text">
+                      <Clock aria-hidden="true" className="size-4 shrink-0" />
+                      {PENDIENTE_TITULO}
+                    </span>
+                    <span id={helpId} className="text-small text-text-2">
+                      {PENDIENTE_ENTREGA}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-small-b text-text">
+                    {faltaTexto(faltan, subiendo)}
+                  </span>
+                )}
+                {imagenesSinSubir && !enEspera ? (
+                  <span className="text-small text-text-2">
+                    {IMAGEN_SIN_SUBIR}
+                  </span>
+                ) : null}
+              </output>
               {guardado ? (
                 <p className="text-small text-text-2">
                   {borradorTexto(guardado)}
@@ -399,7 +528,7 @@ export function TaskAnswerForm({
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
-              {listo || enviando ? null : (
+              {listo || enviando || enEspera ? null : (
                 <p id={helpId} className="text-small text-text-2">
                   Se activa cuando respondas todas las preguntas.
                 </p>
