@@ -9,16 +9,7 @@
 Fases 01–09 cerradas · **Track:** Product · main @ 8f818b8 · versión 1 entregada. Próximo QA de versión: `git diff --name-only d50568b..origin/main` (`plans/qa-version-1.md`).
 **Build local suprimido** (César, 2026-11-05): lo corren CI y Vercel. **QA con sesión:** `qa:local` y `.env.test.local`; nunca pedirle a César que inicie sesión.
 
-**Tanda 2026-11-06** (45 pedidos, 4 olas: la 4 es W18 offline, pedido 45 del 2026-11-07): `plans/batch-2026-11-06.md` · ola 1 mergeada (#78–#85) · **ola 2 de 3: 6 PRs abiertos (#86–#91)**, esperan revisión y merge de César (sin QA por memoria). Visuales elegidos: cinta de precaución + VS, podio que brilla + confeti, Puntos en una columna, píldora con extremos oscuros (W17).
-
-| Unit | Branch | Status |
-|---|---|---|
-| W9 ranking celebración (10, 15–20) | `feat/ranking-celebracion` | PR #89 (wt1) · destello del podio con `--surface` (en oscuro puede verse flojo) |
-| W10 Puntos formulario (11, 27) | `feat/puntos-formulario` | PR #88 (wt2) · equipo enlaza a su lista de sección |
-| W11 premios (7, 8) | `feat/premios` | PR #90 (wt3) · clave B2 debe escribir y borrar en `premios/` |
-| W12 alumnos CRUD (3) | `feat/alumnos-crud` | PR #91 (wt4) · el capitán borrado pasa al siguiente integrante (D269) |
-| W13 mensaje diario (25, 36, 37) | `feat/mensaje-diario` | PR #86 (wt5) · bandas cortadas en 14 y 17 |
-| W17 píldora extremos (22) | `fix/pildora-extremos` | PR #87 (wt6) · salto leve de luminosidad en 1,6 y 19,1 (alternativa: tinta #000) |
+**Tanda 2026-11-06** (45 pedidos, 4 olas: la 4 es W18 offline, pedido 45 del 2026-11-07): `plans/batch-2026-11-06.md` · olas 1 y 2 **cerradas** (#78–#91, main @ 9a630c3; sin QA por memoria) · **sigue: ola 3 de 4** — W14 `feat/presencia-alumno` · W15 `feat/animaciones` · W16 `feat/calendario` (prompt de inicio en el plan) · luego ola 4: W18 `feat/offline`. Pool: 8 slots libres.
 
 ## Blocked (actions for César or external)
 
@@ -36,7 +27,7 @@ QA de versión hecho (2026-11-06): lo no verificado está en `plans/qa-version-1
 
 **Acciones manuales:**
 - **Rotar la clave de la cuenta de servicio** de `krea-d22f7` (se pegó en el chat). Faltan las cuentas de los demás profesores.
-- Vercel: confirmar las `B2_*` (Production y Preview) y bucket privado; el código solo lee `B2_*` (D194), no `AWS_*`; la clave necesita **lectura**, escritura y borrado (el HEAD de D229).
+- Vercel: confirmar las `B2_*` (Production y Preview) y bucket privado; el código solo lee `B2_*` (D194), no `AWS_*`; la clave necesita **lectura**, escritura y borrado (el HEAD de D229), también en `premios/` (fotos de premio, #90).
 - Brevo: `BREVO_API_KEY` y `BREVO_SENDER_EMAIL` en Vercel; probar recuperar con 38291460.
 - Emails reales de los estudiantes (checklist #3): ya se cargan desde Alumnos → Editar (D209).
 - Confirmar indexación solo `/ingresar` (D023) y metadata (fila 22) · `NEXT_PUBLIC_SITE_URL` con dominio (fila 21).
