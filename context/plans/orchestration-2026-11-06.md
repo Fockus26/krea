@@ -32,7 +32,7 @@
 | W7 | `perf/cache-rutas` | Volver a una ruta sin recargar (14) | 1 |
 | W8 | `feat/alumnos-filtros` | Alumnos filtrable por URL: Panel y «Ver notas» llegan filtrados (12, 13) | 1 |
 | W9–W13, W17 | ver `batch-2026-11-06.md` (W17 `fix/pildora-extremos`: pedido 22, ronda 2) | | 2 |
-| W14–W16 | ver `batch-2026-11-06.md` | | 3 |
+| W14–W16, W19 | ver `batch-2026-11-06.md` (W19 `fix/ranking-vs-cinta`: VS en todos los empates y color de la cinta, pedidos 46–47) | | 3 |
 | W18 | `feat/offline` | Navegar offline y cola de envíos (45) | 4 |
 
 Slot y puerto los asigna `wt take` al lanzar; el mensaje que lanza a cada worker los repite.
@@ -61,7 +61,8 @@ Slot y puerto los asigna `wt take` al lanzar; el mensaje que lanza a cada worker
 | W4 (extra) | — | 155 |
 | W17 (píldora, ola 2) | D286–D287 | — |
 | W18 (offline, ola 4) | D291–D295 | 156–158 |
-| Libres para extras | D288–D290 | 159–160 |
+| W19 (correcciones de #89, ola 3) | D288–D290 | — |
+| Libres para extras | D296–D300 | 159–160 |
 
 Fuera de tu rango, nada. Una fila de checklist no la editas tú (regla 3): la describes en tu informe.
 
