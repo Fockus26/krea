@@ -9,7 +9,7 @@
 Fases 01–09 cerradas · **Track:** Product · main @ 8f818b8 · versión 1 entregada. Próximo QA de versión: `git diff --name-only d50568b..origin/main` (`plans/qa-version-1.md`).
 **Build local suprimido** (César, 2026-11-05): lo corren CI y Vercel. **QA con sesión:** `qa:local` y `.env.test.local`; nunca pedirle a César que inicie sesión.
 
-**Tanda 2026-11-06** (53 pedidos, 5 olas): `plans/batch-2026-11-06.md` · olas 1–3 **cerradas** (#78–#95, main @ 761805f; sin QA por memoria) · **ola 4 de 5: PRs abiertos** #96 W20 wt2 · #97 W24 wt4 · #98 W22 wt3 · #99 W18 wt1 (mergear #98 antes que #99; acción: TTL de `operaciones.expiraEn`) · luego ola 5: W23 `fix/icono-texto` (pedido 48).
+**Tanda 2026-11-06** (53 pedidos, 5 olas): `plans/batch-2026-11-06.md` · olas 1–3 **cerradas** (#78–#95, main @ 761805f; sin QA por memoria) · ola 4 **cerrada** (#96–#99 mergeados, main @ 1605d0a; acción: TTL de `operaciones.expiraEn`) · **ola 5 de 5 lanzada**: W23 `fix/icono-texto` wt1 · luego ola 5: W23 `fix/icono-texto` (pedido 48).
 
 ## Blocked (actions for César or external)
 
