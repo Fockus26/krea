@@ -20,7 +20,6 @@ import {
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/sonner";
-import type { SeccionEquipos } from "@/lib/equipos-profe";
 import {
   type BloqueoEquipo,
   bloqueoTexto,
@@ -32,6 +31,7 @@ import {
   TEMA_AYUDA,
   validarEquipo,
 } from "@/lib/equipos-gestion";
+import type { SeccionEquipos } from "@/lib/equipos-profe";
 
 export type AccionesGestionEquipos = {
   crear: (entrada: CrearEquipo) => Promise<ResultadoGestionEquipo>;
@@ -142,7 +142,10 @@ function EquipoForm({
   seccion: SeccionEquipos;
   inicial?: { nombre: string; tema: string | null };
   textoBoton: string;
-  enviar: (d: { nombre: string; tema: string }) => Promise<ResultadoGestionEquipo>;
+  enviar: (d: {
+    nombre: string;
+    tema: string;
+  }) => Promise<ResultadoGestionEquipo>;
 }) {
   const uid = useId();
   const [nombre, setNombre] = useState(inicial?.nombre ?? "");

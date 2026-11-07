@@ -4,6 +4,13 @@ import { Users } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { EmptyState } from "@/components/krea/empty-state";
 import { TeamCard } from "@/components/sections/equipos-profe/team-card";
+import {
+  type AccionesGestionEquipos,
+  CrearEquipoDialog,
+  EditarEquipoDialog,
+  EliminarEquipoDialog,
+  NUEVO_EQUIPO_ID,
+} from "@/components/sections/equipos-profe/team-dialogs";
 import { TeamsHeader } from "@/components/sections/equipos-profe/teams-header";
 import { UnassignedCard } from "@/components/sections/equipos-profe/unassigned-card";
 import { Card } from "@/components/ui/card";
@@ -15,6 +22,7 @@ import {
   type ResultadoEquipos,
   type ResultadoLogo,
 } from "@/lib/equipos-datos";
+import { bloqueoEliminar, eliminadoEquipoTexto } from "@/lib/equipos-gestion";
 import {
   type AlumnoEquipo,
   cambiarCapitan,
@@ -34,11 +42,15 @@ import {
 } from "@/lib/equipos-profe";
 import { estiloDe } from "@/lib/vistas-estudiante";
 
-/** Las Server Actions del tablero (D210, D212). Sin ellas (vista previa) nada se guarda. */
+/**
+ * Las Server Actions del tablero (D210, D212). Sin ellas (vista previa) nada se guarda. Con
+ * `gestion` (W12, D270) el tablero ofrece «Nuevo equipo», «Editar» y «Eliminar».
+ */
 export type AccionesEquipos = {
   mover: (entrada: MoverAlumno) => Promise<ResultadoEquipos>;
   capitan: (entrada: CambiarCapitan) => Promise<ResultadoEquipos>;
   logo: (form: FormData) => Promise<ResultadoLogo>;
+  gestion?: AccionesGestionEquipos;
 };
 
 const RED: ResultadoEquipos = { ok: false, error: "red" };
@@ -72,7 +84,15 @@ export function TeamsBoard({
   total: number;
   acciones?: AccionesEquipos;
 }) {
+  const gestion = acciones?.gestion;
   const [estado, setEstado] = useState(inicial);
+  // Tras `refresh()` (crear, eliminar o cualquier cambio guardado) manda el estado del servidor:
+  // así aparece la tarjeta de un equipo nuevo y desaparece la del eliminado
+  const [inicialAntes, setInicialAntes] = useState(inicial);
+  if (inicial !== inicialAntes) {
+    setInicialAntes(inicial);
+    setEstado(inicial);
+  }
   const [logos, setLogos] = useState<Record<string, string>>(() =>
     Object.fromEntries(
       equipos.flatMap((e) => (e.logo ? [[e.id, e.logo] as const] : [])),
@@ -194,6 +214,11 @@ export function TeamsBoard({
         )}
         seccion={seccion}
         base={base}
+        acciones={
+          gestion ? (
+            <CrearEquipoDialog seccion={seccion} crear={gestion.crear} />
+          ) : undefined
+        }
       />
       <h2 className="sr-only">Equipos de {seccion}</h2>
       {equipos.length === 0 ? (
@@ -233,6 +258,33 @@ export function TeamsBoard({
                   toast(capitanTexto(nombreAlumno(c), eq.nombre));
                 }}
                 onMover={mover}
+                acciones={
+                  gestion ? (
+                    <>
+                      <EditarEquipoDialog
+                        equipo={eq}
+                        seccion={seccion}
+                        editar={gestion.editar}
+                      />
+                      <EliminarEquipoDialog
+                        equipo={eq}
+                        bloqueo={bloqueoEliminar({
+                          integrantes: e.miembros.length,
+                          entregas: eq.conDatos?.entregas ?? 0,
+                          ajustes: eq.conDatos?.ajustes ?? 0,
+                        })}
+                        eliminar={gestion.eliminar}
+                        onEliminado={() => {
+                          toast(eliminadoEquipoTexto(eq.nombre));
+                          // Su tarjeta (y el botón que abrió el diálogo) ya no existe
+                          requestAnimationFrame(() =>
+                            document.getElementById(NUEVO_EQUIPO_ID)?.focus(),
+                          );
+                        }}
+                      />
+                    </>
+                  ) : undefined
+                }
               />
             </li>
           );
