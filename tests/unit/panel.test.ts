@@ -13,6 +13,7 @@ import {
   fechaAjusteTexto,
   filtrarPorSeccion,
   filtroTexto,
+  nombreSaludoProfe,
   porcentajeEvaluados,
   saludoPorHora,
   saludoTexto,
@@ -38,6 +39,17 @@ describe("saludoPorHora", () => {
   test("texto del h1", () => {
     expect(saludoTexto(9)).toBe("Buenos días, profe");
     expect(saludoTexto(15, "Ana")).toBe("Buenas tardes, Ana");
+    expect(saludoTexto(9, nombreSaludoProfe("César Augusto Pérez"))).toBe(
+      "Buenos días, profe César",
+    );
+  });
+
+  test("nombreSaludoProfe: primer nombre; sin nombre queda «profe»", () => {
+    expect(nombreSaludoProfe("  César Augusto ")).toBe("profe César");
+    expect(nombreSaludoProfe("")).toBe("profe");
+    expect(nombreSaludoProfe("   ")).toBe("profe");
+    expect(nombreSaludoProfe(undefined)).toBe("profe");
+    expect(nombreSaludoProfe(null)).toBe("profe");
   });
 });
 

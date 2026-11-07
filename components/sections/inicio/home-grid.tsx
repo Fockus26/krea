@@ -7,12 +7,15 @@ import type { ReactNode } from "react";
  */
 export function HomeGrid({
   saludo,
+  mensaje,
   puntos,
   notas,
   pendientes,
   equipo,
 }: {
   saludo: ReactNode;
+  /** «Mensaje del día» (D274), opcional: va entre el saludo y las tarjetas. */
+  mensaje?: ReactNode;
   puntos: ReactNode;
   notas: ReactNode;
   pendientes: ReactNode;
@@ -21,6 +24,7 @@ export function HomeGrid({
   return (
     <>
       {saludo}
+      {mensaje}
       <div className="g-home max-md:gap-6">
         <div className="flex min-w-0 flex-col gap-6">
           {puntos}

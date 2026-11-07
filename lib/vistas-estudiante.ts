@@ -35,7 +35,7 @@ import type {
   Tarea,
   Usuario,
 } from "@/lib/modelo";
-import { fechaNotaTexto } from "@/lib/notas";
+import { fechaNotaTexto, promedioNotas } from "@/lib/notas";
 import {
   baseChipTexto,
   capitanChipTexto,
@@ -133,6 +133,13 @@ function entregaDe(
   entregas: ReadonlyArray<ConId<Entrega>>,
 ): ConId<Entrega> | null {
   return entregas.find((e) => e.tareaId === tareaId) ?? null;
+}
+
+/** Promedio de sus notas evaluadas (`null` si no tiene ninguna); el de la leyenda y el mensaje del día. */
+export function promedioDelAlumno(
+  d: Pick<DatosAlumno, "usuario" | "tareas" | "entregas">,
+): number | null {
+  return promedioNotas(notasDelAlumno(d).map((n) => n.nota));
 }
 
 /**

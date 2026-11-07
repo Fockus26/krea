@@ -20,7 +20,14 @@ function suscribir(avisar: () => void) {
 const horaLocal = () => new Date().getHours();
 const horaServidor = () => HORA_SALUDO_SERVIDOR;
 
-export function PanelConHora({ datos }: { datos: DatosPanel }) {
+export function PanelConHora({
+  datos,
+  nombre,
+}: {
+  datos: DatosPanel;
+  /** Nombre del saludo ya armado: "profe César" (`nombreSaludoProfe`, D272). */
+  nombre?: string;
+}) {
   const hora = useSyncExternalStore(suscribir, horaLocal, horaServidor);
-  return <PanelView saludo={saludoTexto(hora)} datos={datos} />;
+  return <PanelView saludo={saludoTexto(hora, nombre)} datos={datos} />;
 }

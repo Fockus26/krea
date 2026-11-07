@@ -66,9 +66,32 @@ export function escalaDegradado(): string {
   return `linear-gradient(90deg, ${paradas.join(", ")})`;
 }
 
+/** Posición (0–100 %) de una nota en la barra de la leyenda; fuera de 1–20 se recorta (D273). */
+export function posicionEnEscala(n: number): number {
+  const acotada = Math.min(NOTA_MAX, Math.max(NOTA_MIN, n));
+  return ((acotada - NOTA_MIN) / (NOTA_MAX - NOTA_MIN)) * 100;
+}
+
 /** Posición del 10 en la barra de la leyenda: 47,4 % (§3 Mis notas). */
-export const MARCA_10_PCT =
-  ((NOTA_APROBATORIA - NOTA_MIN) / (NOTA_MAX - NOTA_MIN)) * 100;
+export const MARCA_10_PCT = posicionEnEscala(NOTA_APROBATORIA);
+
+/**
+ * Promedio de las notas evaluadas (las `null` = Pendiente no cuentan, D003), redondeado a la
+ * décima; `null` si no hay ninguna. Es el número de «Tú» en la leyenda y la banda del mensaje del día.
+ */
+export function promedioNotas(
+  notas: ReadonlyArray<number | null>,
+): number | null {
+  const ev = notas.filter((n): n is number => n !== null);
+  if (ev.length === 0) return null;
+  const suma = ev.reduce((a, n) => a + Math.round(n * 10), 0);
+  return Math.round(suma / ev.length) / 10;
+}
+
+/** "Tú: 15,5" (D273). */
+export function marcaTuTexto(promedio: number): string {
+  return `Tú: ${formatNota(promedio)}`;
+}
 
 /** "18,5 / 20". */
 export function puntajeTexto(puntaje: number): string {

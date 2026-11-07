@@ -14,7 +14,10 @@ import {
   filtrarNotas,
   formulaBaseTexto,
   MARCA_10_PCT,
+  marcaTuTexto,
+  posicionEnEscala,
   preguntasResumenTexto,
+  promedioNotas,
   puntajeTexto,
   tituloLista,
 } from "@/lib/notas";
@@ -105,5 +108,30 @@ describe("datos de ejemplo", () => {
     expect(
       n.slice(primeraPendiente).every((f) => f.fecha.startsWith("vence el")),
     ).toBe(true);
+  });
+});
+
+describe("marcador «Tú» de la leyenda (D273)", () => {
+  test("posicionEnEscala: 1 → 0 %, 10 → MARCA_10_PCT, 20 → 100 %", () => {
+    expect(posicionEnEscala(1)).toBe(0);
+    expect(posicionEnEscala(10)).toBe(MARCA_10_PCT);
+    expect(posicionEnEscala(20)).toBe(100);
+  });
+
+  test("posicionEnEscala recorta fuera de 1–20", () => {
+    expect(posicionEnEscala(0)).toBe(0);
+    expect(posicionEnEscala(25)).toBe(100);
+  });
+
+  test("promedioNotas ignora Pendiente y redondea a la décima", () => {
+    expect(promedioNotas([])).toBeNull();
+    expect(promedioNotas([null, null])).toBeNull();
+    expect(promedioNotas([15, null, 16])).toBe(15.5);
+    expect(promedioNotas([10, 10, 11])).toBe(10.3);
+  });
+
+  test("marcaTuTexto usa coma decimal", () => {
+    expect(marcaTuTexto(15.5)).toBe("Tú: 15,5");
+    expect(marcaTuTexto(12)).toBe("Tú: 12");
   });
 });
