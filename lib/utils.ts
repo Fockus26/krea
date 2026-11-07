@@ -26,6 +26,24 @@ export const TEXT_ROLES = [
   "grade-lg",
   "grade-total",
   "grade-xl",
+  // Roles de pieza (también fijan tamaño y familia): sin listarlos, `cn` borraba el color de
+  // texto que iba al lado — el número del podio perdía `text-on-accent` (D306).
+  "banner",
+  "callout",
+  "claim",
+  "code",
+  "cq-avatar",
+  "cq-team",
+  "nav",
+  "nav-sm",
+  "pod-name",
+  "pod-pts",
+  "pod-step",
+  "pod-step-1",
+  "rank-delta",
+  "score",
+  "stack-count",
+  "status-code",
 ] as const;
 
 export const Z_LAYERS = [
