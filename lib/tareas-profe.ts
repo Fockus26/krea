@@ -36,7 +36,7 @@ export type TareaProfe = {
   estado: EstadoTareaProfe;
   /** Día civil ISO de entrega; `null` = sin fecha (borrador). */
   fecha: string | null;
-  /** Solo grupales; `null` = premio por definir. */
+  /** Grupal o individual (D263); `null` = sin premio (en una grupal, por definir). */
   premio: string | null;
   preguntas: number;
   /** Suma de los valores de las preguntas (tiene que dar 20 para publicar, D004). */
@@ -449,7 +449,7 @@ export function puedePublicar(t: TareaBorrador, hoy: string): boolean {
   );
 }
 
-/** Lo que se guarda (`guardarTarea`, D199): fecha ISO o `null`, y el premio solo si es grupal. */
+/** Lo que se guarda (`guardarTarea`, D199): fecha ISO o `null`, y el premio (grupal o individual, D263). */
 export function tareaAGuardar(t: TareaBorrador) {
   const premio = t.premio.trim();
   return {
@@ -457,7 +457,7 @@ export function tareaAGuardar(t: TareaBorrador) {
     tipo: t.tipo,
     fecha: fechaIso(t.fecha),
     seccion: t.seccion,
-    premio: t.tipo === "grupal" && premio ? premio : null,
+    premio: premio || null,
     preguntas: t.preguntas.map(({ id, enunciado, formato, valor }) => ({
       id,
       enunciado: enunciado.trim(),

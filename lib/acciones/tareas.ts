@@ -5,6 +5,7 @@
 // puntos (D007); eliminar sí, y recalcula el ranking en su transacción (D206, D242).
 import { refresh } from "next/cache";
 import { almacenB2 } from "@/lib/almacen/b2";
+import { claveFotoPremio, validarFotoPremio } from "@/lib/almacen/imagen";
 import { exigirSesion } from "@/lib/dal";
 import { diaDeInstante } from "@/lib/fecha";
 import { firebaseAdmin } from "@/lib/firebase/admin";
@@ -12,16 +13,20 @@ import {
   cerrarTareaEnTransaccion,
   decidirPremioEnTransaccion,
   eliminarTareaEnTransaccion,
+  guardarPremioEnTransaccion,
   guardarTareaEnTransaccion,
 } from "@/lib/firebase/tareas";
+import type { ResultadoPremio } from "@/lib/premios";
 import {
+  type CambioFoto,
   type ResultadoTarea,
   zDecidirPremio,
   zGuardarTarea,
   zIdTareaProfe,
+  zTextoPremio,
 } from "@/lib/tareas-profe-datos";
 
-export type { ResultadoTarea };
+export type { ResultadoPremio, ResultadoTarea };
 
 function registrar(accion: string, e: unknown) {
   console.error(`[${accion}]`, (e as { code?: string }).code ?? "error");
@@ -36,13 +41,14 @@ export async function guardarTarea(entrada: unknown): Promise<ResultadoTarea> {
   if (!envio.success) return { ok: false, error: "invalida" };
   const ahora = Date.now();
   try {
-    const r = await guardarTareaEnTransaccion(
+    const { fotoSuelta, ...r } = await guardarTareaEnTransaccion(
       admin.db,
       sesion.uid,
       envio.data,
       diaDeInstante(ahora),
       ahora,
     );
+    if (fotoSuelta) await borrarFoto(fotoSuelta, "guardarTarea");
     if (r.ok) refresh();
     return r;
   } catch (e) {
@@ -101,6 +107,14 @@ export async function eliminarTarea(id: unknown): Promise<ResultadoTarea> {
   return { ok: true, id: tareaId.data };
 }
 
+/** Borra una foto de premio que ya no se usa; si falla, se registra y queda huérfana (D265). */
+async function borrarFoto(clave: string, accion: string) {
+  const almacen = almacenB2();
+  const b = almacen ? await almacen.borrar(clave).catch(() => null) : null;
+  if (!b?.ok)
+    console.error(`[${accion}] no se borró la foto anterior del premio`);
+}
+
 async function borrarImagenes(claves: readonly string[]) {
   if (claves.length === 0) return;
   const almacen = almacenB2();
@@ -138,6 +152,72 @@ export async function decidirPremio(entrada: unknown): Promise<ResultadoTarea> {
     return r;
   } catch (e) {
     registrar("decidirPremio", e);
+    return { ok: false, error: "red" };
+  }
+}
+
+/**
+ * Pone o cambia el premio de una tarea (grupal o individual) y su foto (D263, D265, D266).
+ * FormData: `tareaId`, `premio` (texto), `foto` (archivo, opcional) y `quitarFoto` ("1"). La foto
+ * se valida por sus bytes, se sube a B2 (`premios/{tareaId}/{uuid}.{ext}`) y luego se escribe la
+ * tarea; si la escritura falla se borra la nueva, y si sale bien se borra la anterior.
+ */
+export async function guardarPremio(form: FormData): Promise<ResultadoPremio> {
+  await exigirSesion("profesor");
+  const admin = firebaseAdmin();
+  if (!admin) return { ok: false, error: "red" };
+  const tareaId = zIdTareaProfe.safeParse(form.get("tareaId"));
+  const premio = zTextoPremio.safeParse(form.get("premio"));
+  const archivo = form.get("foto");
+  const quitar = form.get("quitarFoto") === "1";
+  if (!tareaId.success || !premio.success)
+    return { ok: false, error: "invalida" };
+  const conFoto = archivo instanceof Blob && archivo.size > 0;
+  if (conFoto && quitar) return { ok: false, error: "invalida" };
+
+  const almacen = almacenB2();
+  let foto: CambioFoto = quitar ? { tipo: "quitar" } : { tipo: "mantener" };
+  let nueva: string | null = null;
+  let guardado = false;
+  try {
+    if (conFoto) {
+      if (!almacen) {
+        console.error(
+          "[guardarPremio] almacén sin configurar (faltan las variables B2_*)",
+        );
+        return { ok: false, error: "almacen" };
+      }
+      const bytes = new Uint8Array(await archivo.arrayBuffer());
+      const v = validarFotoPremio(bytes);
+      if (!v.ok)
+        return {
+          ok: false,
+          error: v.error === "peso" ? "foto-peso" : "foto-tipo",
+        };
+      nueva = claveFotoPremio(tareaId.data, crypto.randomUUID(), v.extension);
+      const subida = await almacen.subir(nueva, bytes, v.tipo);
+      if (!subida.ok) return { ok: false, error: "almacen" };
+      foto = { tipo: "nueva", clave: nueva };
+    }
+    const r = await guardarPremioEnTransaccion(
+      admin.db,
+      tareaId.data,
+      premio.data,
+      foto,
+      Date.now(),
+    );
+    if (!r.ok) {
+      if (nueva) await almacen?.borrar(nueva).catch(() => null);
+      return r;
+    }
+    guardado = true;
+    if (r.anterior) await borrarFoto(r.anterior, "guardarPremio");
+    refresh();
+    return { ok: true };
+  } catch (e) {
+    registrar("guardarPremio", e);
+    // Solo si la tarea no llegó a apuntar a la foto nueva
+    if (nueva && !guardado) await almacen?.borrar(nueva).catch(() => null);
     return { ok: false, error: "red" };
   }
 }

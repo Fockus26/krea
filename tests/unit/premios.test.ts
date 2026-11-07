@@ -31,7 +31,7 @@ describe("estadoPremio", () => {
         { estado: "evaluada", premio: "P", fecha: "2026-10-17" },
         notas,
       ),
-    ).toEqual({ tipo: "ganado", equipoId: "a", nota: 19, fecha: "2026-10-17" });
+    ).toEqual({ tipo: "ganado", titularId: "a", nota: 19, fecha: "2026-10-17" });
   });
   test("empate: todos los de la mejor nota", () => {
     expect(
@@ -42,7 +42,7 @@ describe("estadoPremio", () => {
       ]),
     ).toEqual({
       tipo: "empate",
-      equipoIds: ["a", "b"],
+      titularIds: ["a", "b"],
       nota: 18.5,
       fecha: "2026-10-24",
     });
@@ -85,14 +85,14 @@ describe("estadoPremio", () => {
 describe("resolverEmpate", () => {
   const empate = {
     tipo: "empate",
-    equipoIds: ["a", "b"],
+    titularIds: ["a", "b"],
     nota: 18.5,
     fecha: "2026-10-24",
   } as const;
   test("dar a un equipo", () => {
     expect(resolverEmpate(empate, { tipo: "dar", equipoId: "b" })).toEqual({
       tipo: "ganado",
-      equipoId: "b",
+      titularId: "b",
       nota: 18.5,
       fecha: "2026-10-24",
     });
@@ -107,7 +107,7 @@ describe("resolverEmpate", () => {
     expect(resolverEmpate(empate, { tipo: "dar", equipoId: "z" })).toBe(empate);
     const ganado = {
       tipo: "ganado",
-      equipoId: "a",
+      titularId: "a",
       nota: 19,
       fecha: "x",
     } as const;
@@ -158,10 +158,10 @@ describe("datos de ejemplo", () => {
   });
   test("el ganado es 5A-G2 con 19; el empate es G2 y G5", () => {
     const g = TARJETAS_PREMIOS[0]?.estado;
-    expect(g).toMatchObject({ tipo: "ganado", equipoId: "5a-g2", nota: 19 });
+    expect(g).toMatchObject({ tipo: "ganado", titularId: "5a-g2", nota: 19 });
     expect(NOMBRES_EQUIPO["5a-g2"]).toBe("5A-G2 Repostería");
     expect(TARJETAS_PREMIOS[2]?.estado).toMatchObject({
-      equipoIds: ["5a-g2", "5a-g5"],
+      titularIds: ["5a-g2", "5a-g5"],
     });
   });
 });

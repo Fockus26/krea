@@ -3,6 +3,7 @@
 // lista y en el constructor, y las tarjetas de Premios. Lo usan los adaptadores del Admin SDK
 // (`lib/firebase/tareas.ts`), las páginas del profe y las pruebas.
 import { z } from "zod";
+import { notasPremioIndividual } from "@/lib/equipo";
 import {
   comparaFecha,
   diaDeInstante,
@@ -20,12 +21,14 @@ import {
   sumaValores as sumaModelo,
   type TareaDoc,
   TIPOS_TAREA,
+  type Usuario,
   zDecisionPremio,
   zDia,
   zPuntaje,
   zSeccion,
   zTarea,
   zTareaBorrador,
+  zTareaDoc,
 } from "@/lib/modelo";
 import {
   type EstadoPremio,
@@ -123,7 +126,9 @@ type Armar = {
   ahora: number;
 };
 
-type Armada = { ok: true; tarea: TareaDoc } | { ok: false; error: ErrorTarea };
+type Armada =
+  | { ok: true; tarea: TareaDoc; fotoSuelta?: string }
+  | { ok: false; error: ErrorTarea };
 
 function idsUnicos(preguntas: ReadonlyArray<{ id: string }>): boolean {
   return new Set(preguntas.map((p) => p.id)).size === preguntas.length;
@@ -166,6 +171,7 @@ function publicada(
     estado: base.estado,
     fechaEntrega: entrada.fecha,
     premio: premioDe(entrada),
+    ...fotoDe(premioDe(entrada), a.previa),
     preguntas: entrada.preguntas,
     importada: false,
     autorId: base.autorId,
@@ -176,8 +182,27 @@ function publicada(
     : { ok: false, error: "invalida" };
 }
 
-function premioDe(e: Pick<EntradaTarea, "tipo" | "premio">): string | null {
-  return e.tipo === "grupal" && e.premio ? e.premio : null;
+/** Grupal o individual: el premio es opcional en las dos (D263). */
+function premioDe(e: Pick<EntradaTarea, "premio">): string | null {
+  return e.premio ? e.premio : null;
+}
+
+/**
+ * La foto del premio no la toca el constructor (D265): se conserva mientras siga habiendo premio.
+ * Sin premio se va, y su clave sale en `fotoSuelta` para borrarla de B2 después del commit.
+ */
+function fotoDe(
+  premio: string | null,
+  previa: TareaDoc | null,
+): { premioFoto?: string } {
+  const foto = previa?.premioFoto;
+  return premio !== null && foto ? { premioFoto: foto } : {};
+}
+
+function conFotoSuelta(r: Armada, previa: TareaDoc | null): Armada {
+  const vieja = previa?.premioFoto;
+  if (!r.ok || !vieja || r.tarea.premioFoto === vieja) return r;
+  return { ...r, fotoSuelta: vieja };
 }
 
 /**
@@ -187,6 +212,10 @@ function premioDe(e: Pick<EntradaTarea, "tipo" | "premio">): string | null {
  * (`evaluada`) o importada del Excel: no se cambia.
  */
 export function armarTarea(a: Armar): Armada {
+  return conFotoSuelta(armarSinFoto(a), a.previa);
+}
+
+function armarSinFoto(a: Armar): Armada {
   const { entrada, previa, accion } = a;
   if (!idsUnicos(entrada.preguntas)) return { ok: false, error: "invalida" };
   if (previa && (previa.importada || previa.estado === "evaluada")) {
@@ -199,11 +228,14 @@ export function armarTarea(a: Armar): Armada {
     if (!a.conEntregas) return publicada(a, { estado: "abierta", autorId });
     const err = fechaOk(entrada.fecha, a.hoy, previa.fechaEntrega);
     if (err) return { ok: false, error: err };
+    const { premioFoto: _foto, ...sinFoto } = previa;
+    const premio = premioDe(entrada);
     const r = zTarea.safeParse({
-      ...previa,
+      ...sinFoto,
       titulo: entrada.titulo,
       fechaEntrega: entrada.fecha,
-      premio: premioDe({ tipo: previa.tipo, premio: entrada.premio }),
+      premio,
+      ...fotoDe(premio, previa),
       actualizadoEn: a.ahora,
     });
     return r.success
@@ -222,6 +254,7 @@ export function armarTarea(a: Armar): Armada {
     estado: "borrador",
     fechaEntrega: entrada.fecha,
     premio: premioDe(entrada),
+    ...fotoDe(premioDe(entrada), previa),
     preguntas: entrada.preguntas,
     importada: false,
     autorId,
@@ -295,7 +328,7 @@ export function tareaProfeDe(
     tipo: t.tipo,
     estado: t.estado,
     fecha: t.fechaEntrega,
-    premio: t.tipo === "grupal" ? t.premio : null,
+    premio: t.premio,
     preguntas: t.preguntas.length,
     suma: sumaModelo(t.preguntas.map((p) => ({ valor: p.valor ?? 0 }))),
     avance,
@@ -415,36 +448,49 @@ type EntregaPremio = Pick<
   "tareaId" | "tipo" | "titularId" | "seccion" | "estado" | "evaluacion"
 >;
 
+/** Lo que hace falta de cada alumno para el premio individual (D264). */
+export type AlumnoPremio = Pick<Usuario, "cedula" | "rol" | "seccion" | "base">;
+
 /**
- * Estado del premio de una tarea en una sección: compiten sus equipos con la nota grupal sin
- * base (D014). Cerrada: la fecha es la de la última evaluación (o la de entrega). Con empate y
- * decisión del profe, la decisión manda (D123, D124).
+ * Estado del premio de una tarea en una sección. Grupal: compiten sus equipos con la nota grupal
+ * sin base (D014). Individual (D263, D264): compiten sus alumnos con su nota final (con base).
+ * Cerrada: la fecha es la de la última evaluación (o la de entrega). Con empate y decisión del
+ * profe, la decisión manda (D123, D124); una decisión por alguien que ya no empata no cuenta.
  */
 export function estadoPremioSeccion(
-  t: Pick<TareaDoc, "estado" | "premio" | "fechaEntrega"> & {
+  t: Pick<TareaDoc, "estado" | "premio" | "fechaEntrega" | "tipo"> & {
     id: string;
     decisionesPremio?: DecisionesPremio | undefined;
   },
   seccion: SeccionId,
   equipos: ReadonlyArray<ConId<Pick<Equipo, "seccion">>>,
   entregas: ReadonlyArray<EntregaPremio>,
+  alumnos: ReadonlyArray<AlumnoPremio> = [],
 ): EstadoPremio {
   const deSeccion = entregas.filter(
     (e) =>
       e.tareaId === t.id &&
-      e.tipo === "grupal" &&
+      e.tipo === t.tipo &&
       e.seccion === seccion &&
       e.estado !== "borrador",
   );
-  const rivales = equipos.filter((e) => e.seccion === seccion);
-  const notas = rivales.map((eq) => {
-    const e = deSeccion.find((x) => x.titularId === eq.id);
-    return {
-      id: eq.id,
-      nota:
-        e?.estado === "evaluada" && e.evaluacion ? e.evaluacion.puntaje : null,
-    };
-  });
+  const notas =
+    t.tipo === "individual"
+      ? notasPremioIndividual(t.id, seccion, alumnos, deSeccion)
+      : equipos
+          .filter((e) => e.seccion === seccion)
+          .map((eq) => {
+            const e = deSeccion.find((x) => x.titularId === eq.id);
+            return {
+              id: eq.id,
+              nota:
+                e?.estado === "evaluada" && e.evaluacion
+                  ? e.evaluacion.puntaje
+                  : null,
+            };
+          });
+  const compiten = new Set(notas.map((n) => n.id));
+  const entregaron = deSeccion.filter((e) => compiten.has(e.titularId)).length;
   const ultima = Math.max(
     0,
     ...deSeccion.map((e) => e.evaluacion?.evaluadaEn ?? 0),
@@ -458,12 +504,23 @@ export function estadoPremioSeccion(
       estado: t.estado,
       premio: t.premio ?? undefined,
       fecha,
-      avance: { entregaron: deSeccion.length, total: rivales.length },
+      avance: { entregaron, total: notas.length },
     },
     notas,
   );
   const decision: DecisionPremio | undefined = t.decisionesPremio?.[seccion];
   return decision ? resolverEmpate(estado, decision) : estado;
+}
+
+/** ¿La decisión encaja con el tipo de tarea? «dar» es de grupales; «darAlumno», de individuales. */
+export function decisionEncaja(
+  tipo: TareaDoc["tipo"],
+  decision: DecisionPremio,
+): boolean {
+  if (decision.tipo === "compartir") return true;
+  return tipo === "grupal"
+    ? decision.tipo === "dar"
+    : decision.tipo === "darAlumno";
 }
 
 const ORDEN_PREMIO: Record<TareaDoc["estado"], number> = {
@@ -472,18 +529,27 @@ const ORDEN_PREMIO: Record<TareaDoc["estado"], number> = {
   borrador: 2,
 };
 
+/** ¿Se puede poner o cambiar el premio? Ni cerrada ni importada del Excel (D200, D266). */
+export function premioEditable(
+  t: Pick<TareaDoc, "estado" | "importada">,
+): boolean {
+  return t.estado !== "evaluada" && !t.importada;
+}
+
 /**
- * Tarjetas de Premios (D201): cada tarea grupal con premio, una por sección (el premio se
- * disputa en cada una). Un borrador grupal, o una abierta sin premio, da una tarjeta «por
- * definir». Las cerradas sin premio y las importadas del Excel no salen.
+ * Tarjetas de Premios (D201): cada tarea con premio, una por sección (el premio se disputa en
+ * cada una). Un borrador grupal, o una grupal abierta sin premio, da una tarjeta «por definir».
+ * Una individual sale solo si tiene premio (es opcional y son muchas, D263). Las cerradas sin
+ * premio y las importadas del Excel no salen. `alumnos`: los de las dos secciones (individuales).
  */
 export function tarjetasPremios(
   tareas: ReadonlyArray<ConId<TareaDoc>>,
   equipos: ReadonlyArray<ConId<Pick<Equipo, "seccion">>>,
   entregas: ReadonlyArray<EntregaPremio>,
+  alumnos: ReadonlyArray<AlumnoPremio> = [],
 ): TarjetaPremio[] {
-  const grupales = tareas
-    .filter((t) => t.tipo === "grupal" && !t.importada)
+  const conPremio = tareas
+    .filter((t) => !t.importada && (t.tipo === "grupal" || t.premio !== null))
     .sort(
       (a, b) =>
         ORDEN_PREMIO[a.estado] - ORDEN_PREMIO[b.estado] ||
@@ -492,8 +558,15 @@ export function tarjetasPremios(
           a.fechaEntrega ?? "0001-01-01",
         ),
     );
-  return grupales.flatMap((t): TarjetaPremio[] => {
-    const comun = { tarea: t.titulo, tareaId: t.id, premio: t.premio };
+  return conPremio.flatMap((t): TarjetaPremio[] => {
+    const comun = {
+      tarea: t.titulo,
+      tareaId: t.id,
+      tipoTarea: t.tipo,
+      premio: t.premio,
+      premioFoto: t.premioFoto ?? null,
+      editable: premioEditable(t),
+    };
     if (t.estado === "borrador" || !t.premio) {
       if (t.estado === "evaluada") return [];
       return [
@@ -512,7 +585,89 @@ export function tarjetasPremios(
       seccion: s,
       seccionId: s,
       borrador: false,
-      estado: estadoPremioSeccion(t, s, equipos, entregas),
+      estado: estadoPremioSeccion(t, s, equipos, entregas, alumnos),
     }));
   });
+}
+
+/* ---------- Crear y editar el premio (W11, D266) ---------- */
+
+/** Tarea que se puede elegir en «Crear premio»: sin premio, ni cerrada ni importada. */
+export type TareaParaPremio = {
+  id: string;
+  titulo: string;
+  tipo: TareaDoc["tipo"];
+  seccion: SeccionTarea;
+  borrador: boolean;
+};
+
+export function tareasParaPremio(
+  tareas: ReadonlyArray<ConId<TareaDoc>>,
+): TareaParaPremio[] {
+  return tareas
+    .filter((t) => t.premio === null && premioEditable(t))
+    .sort(
+      (a, b) =>
+        ORDEN_PREMIO[a.estado] - ORDEN_PREMIO[b.estado] ||
+        comparaFecha(
+          a.fechaEntrega ?? "9999-12-31",
+          b.fechaEntrega ?? "9999-12-31",
+        ),
+    )
+    .map((t) => ({
+      id: t.id,
+      titulo: t.titulo,
+      tipo: t.tipo,
+      seccion: seccionTareaDe(t.secciones),
+      borrador: t.estado === "borrador",
+    }));
+}
+
+/** Texto del premio que llega del diálogo (el archivo va aparte, en el FormData). */
+export const zTextoPremio = z.string().trim().min(1).max(200);
+
+/** Qué hacer con la foto al guardar: dejarla, quitarla o poner una nueva (su clave ya subida). */
+export type CambioFoto =
+  | { tipo: "mantener" }
+  | { tipo: "quitar" }
+  | { tipo: "nueva"; clave: string };
+
+export type PremioArmado =
+  | {
+      ok: true;
+      campos: { premio: string; premioFoto: string | null };
+      /** Foto anterior que deja de usarse: se borra de B2 después del commit. */
+      anterior: string | null;
+    }
+  | { ok: false; error: "cerrada" | "invalida" };
+
+/**
+ * Campos que escribe «Crear / Editar premio» sobre la tarea (D266). Solo en tareas no cerradas ni
+ * importadas; el documento resultante tiene que seguir validando. Guardar dos veces lo mismo deja
+ * lo mismo (el doble envío no duplica nada: es un `update` del documento).
+ */
+export function armarPremio(
+  previa: TareaDoc,
+  premio: string,
+  foto: CambioFoto,
+): PremioArmado {
+  if (!premioEditable(previa)) return { ok: false, error: "cerrada" };
+  const texto = zTextoPremio.safeParse(premio);
+  if (!texto.success) return { ok: false, error: "invalida" };
+  const vieja = previa.premioFoto ?? null;
+  const premioFoto =
+    foto.tipo === "mantener"
+      ? vieja
+      : foto.tipo === "quitar"
+        ? null
+        : foto.clave;
+  if (
+    !zTareaDoc.safeParse({ ...previa, premio: texto.data, premioFoto }).success
+  )
+    return { ok: false, error: "invalida" };
+  return {
+    ok: true,
+    campos: { premio: texto.data, premioFoto },
+    anterior: vieja !== null && vieja !== premioFoto ? vieja : null,
+  };
 }

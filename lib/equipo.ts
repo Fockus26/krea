@@ -1,7 +1,13 @@
 // Textos y lógica de Mi equipo (HANDOFF §3 Mi equipo; lienzo design/canvas/Equipo.dc.html).
 // Lógica pura, sin React.
-import { formatNota } from "@/lib/grades";
-import type { DecisionPremio } from "@/lib/modelo";
+import { formatNota, notaFinal } from "@/lib/grades";
+import {
+  type DecisionPremio,
+  type Entrega,
+  idDeDecision,
+  type SeccionId,
+  type Usuario,
+} from "@/lib/modelo";
 
 /** "Mi equipo · 5A". */
 export function eyebrowEquipo(seccion: string): string {
@@ -53,8 +59,45 @@ export function ganadoresPremio(
   if (evaluadas.length === 0) return [];
   const mejor = Math.max(...evaluadas.map((n) => n.nota));
   const empatados = evaluadas.filter((n) => n.nota === mejor).map((n) => n.id);
-  if (decision.tipo === "compartir") return empatados;
-  return empatados.includes(decision.equipoId) ? [decision.equipoId] : [];
+  const id = idDeDecision(decision);
+  if (id === null) return empatados;
+  return empatados.includes(id) ? [id] : [];
+}
+
+/**
+ * Quiénes compiten por el premio de una tarea individual en una sección (D264): los alumnos de
+ * la sección, cada uno con su nota final (puntaje × su base / 20, D006) si está evaluada; si no,
+ * `null` (Pendiente, no compite). El ganador sale de `ganadorPremio` / `ganadoresPremio`, como en
+ * las grupales. Un alumno que ya no existe no está en `alumnos` y no compite.
+ */
+export function notasPremioIndividual(
+  tareaId: string,
+  seccion: SeccionId,
+  alumnos: ReadonlyArray<Pick<Usuario, "cedula" | "rol" | "seccion" | "base">>,
+  entregas: ReadonlyArray<
+    Pick<Entrega, "tareaId" | "tipo" | "titularId" | "estado" | "evaluacion">
+  >,
+): Array<{ id: string; nota: number | null }> {
+  const evaluadas = new Map<string, number>();
+  for (const e of entregas) {
+    if (
+      e.tareaId === tareaId &&
+      e.tipo === "individual" &&
+      e.estado === "evaluada" &&
+      e.evaluacion
+    ) {
+      evaluadas.set(e.titularId, e.evaluacion.puntaje);
+    }
+  }
+  return alumnos
+    .filter((a) => a.rol === "estudiante" && a.seccion === seccion)
+    .map((a) => {
+      const puntaje = evaluadas.get(a.cedula);
+      return {
+        id: a.cedula,
+        nota: puntaje === undefined ? null : notaFinal(puntaje, a.base),
+      };
+    });
 }
 
 /** Nombre accesible de la fila de integrante cuando es quien mira: "Yeilin Duarte, tú" (§8). */

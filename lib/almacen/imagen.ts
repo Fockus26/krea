@@ -75,3 +75,37 @@ export function claveLogo(
 ): string {
   return `equipos/${equipoId}/${uuid}.${extension}`;
 }
+
+/* ---------- Foto del premio (W11, D265) ---------- */
+
+/**
+ * La foto llega comprimida por `ImageUpload` (JPEG ≤ 1600 px, `lib/image.ts`): el mismo tope que
+ * una respuesta. Se aceptan también PNG y WebP por si un navegador no codifica JPEG en `canvas`.
+ */
+export const FOTO_PREMIO_MAX_BYTES = IMAGEN_SUBIDA_MAX_BYTES;
+
+export type TipoFotoPremio = {
+  tipo: "image/jpeg" | "image/png" | "image/webp";
+  extension: "jpg" | "png" | "webp";
+};
+
+/** Tipo de la foto por la firma de sus bytes (nunca por lo que diga el navegador). */
+export function validarFotoPremio(
+  bytes: Uint8Array,
+): ({ ok: true } & TipoFotoPremio) | { ok: false; error: ErrorImagen } {
+  if (bytes.length === 0) return { ok: false, error: "vacia" };
+  if (bytes.length > FOTO_PREMIO_MAX_BYTES) return { ok: false, error: "peso" };
+  if (esJpeg(bytes)) return { ok: true, tipo: "image/jpeg", extension: "jpg" };
+  if (esPng(bytes)) return { ok: true, tipo: "image/png", extension: "png" };
+  if (esWebp(bytes)) return { ok: true, tipo: "image/webp", extension: "webp" };
+  return { ok: false, error: "tipo" };
+}
+
+/** Clave de la foto en B2: `premios/{tareaId}/{uuid}.{ext}` (D265). */
+export function claveFotoPremio(
+  tareaId: string,
+  uuid: string,
+  extension: TipoFotoPremio["extension"],
+): string {
+  return `premios/${tareaId}/${uuid}.${extension}`;
+}

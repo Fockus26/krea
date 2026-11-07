@@ -592,7 +592,7 @@ describe("premios", () => {
     ];
     expect(estadoPremioSeccion(base, "5A", EQUIPOS, empate)).toEqual({
       tipo: "empate",
-      equipoIds: ["5a-g1", "5a-g2"],
+      titularIds: ["5a-g1", "5a-g2"],
       nota: 18.5,
       fecha: "2026-11-03",
     });
@@ -602,7 +602,7 @@ describe("premios", () => {
     };
     expect(estadoPremioSeccion(dada, "5A", EQUIPOS, empate)).toMatchObject({
       tipo: "ganado",
-      equipoId: "5a-g2",
+      titularId: "5a-g2",
     });
     const compartida = {
       ...base,
@@ -618,7 +618,7 @@ describe("premios", () => {
     ];
     expect(estadoPremioSeccion(dada, "5A", EQUIPOS, unico)).toMatchObject({
       tipo: "ganado",
-      equipoId: "5a-g1",
+      titularId: "5a-g1",
     });
   });
 

@@ -3,10 +3,16 @@
 import { ganadorPremio } from "@/lib/equipo";
 import { formatFecha } from "@/lib/fecha";
 import { formatNota } from "@/lib/grades";
-import type { SeccionId } from "@/lib/modelo";
+import {
+  type DecisionPremio,
+  idDeDecision,
+  type SeccionId,
+  type TipoTareaId,
+} from "@/lib/modelo";
 
+/** PROVISIONAL (fila 146): ahora también hay premios en individuales (D263). */
 export const PREMIOS_EYEBROW =
-  "Se asignan al equipo con mejor nota de cada tarea grupal";
+  "Los gana la mejor nota de cada tarea en cada sección";
 
 /** Ruta del constructor para "Agregar premio" (fase 05): se edita el borrador. */
 export function agregarPremioHref(tareaId: string): string {
@@ -15,31 +21,42 @@ export function agregarPremioHref(tareaId: string): string {
 
 export type NotaEquipo = { id: string; nota: number | null };
 
-/** Una tarjeta de Premios: una tarea grupal en una sección (o el borrador, sin sección, D201). */
+/**
+ * Una tarjeta de Premios: una tarea en una sección (o el borrador, sin sección, D201). Grupal:
+ * compiten equipos; individual: alumnos (D263). Los ids del estado son de equipo o de alumno.
+ */
 export type TarjetaPremio = {
   id: string;
   tarea: string;
   tareaId: string;
+  /** Ausente en las vistas previas: grupal. */
+  tipoTarea?: TipoTareaId;
   /** Texto: "5A", "5A y 5C". */
   seccion: string;
   /** Sección donde se decide el empate; ausente en las vistas previas y en "por definir". */
   seccionId?: SeccionId;
   premio: string | null;
+  /** Clave B2 de la foto (D265); la página la firma en `fotoUrl`. */
+  premioFoto?: string | null;
+  /** URL firmada de la foto, solo si se pudo firmar. */
+  fotoUrl?: string;
+  /** ¿Se puede editar el premio? (tarea no cerrada ni importada). */
+  editable?: boolean;
   borrador: boolean;
   estado: EstadoPremio;
 };
 
 export type EstadoPremio =
-  | { tipo: "ganado"; equipoId: string; nota: number; fecha: string }
+  | { tipo: "ganado"; titularId: string; nota: number; fecha: string }
   | {
       tipo: "compartido";
-      equipoIds: readonly string[];
+      titularIds: readonly string[];
       nota: number;
       fecha: string;
     }
   | {
       tipo: "empate";
-      equipoIds: readonly string[];
+      titularIds: readonly string[];
       nota: number;
       fecha: string;
     }
@@ -92,36 +109,50 @@ export function estadoPremio(
   if (ganador) {
     return {
       tipo: "ganado",
-      equipoId: ganador,
+      titularId: ganador,
       nota: mejor,
       fecha: tarea.fecha,
     };
   }
   return {
     tipo: "empate",
-    equipoIds: evaluadas.filter((n) => n.nota === mejor).map((n) => n.id),
+    titularIds: evaluadas.filter((n) => n.nota === mejor).map((n) => n.id),
     nota: mejor,
     fecha: tarea.fecha,
   };
 }
 
-export type DecisionEmpate =
-  | { tipo: "dar"; equipoId: string }
-  | { tipo: "compartir" };
+/** La decisión guardada (D123, D124, D263): «dar» (equipo), «darAlumno» o «compartir». */
+export type DecisionEmpate = DecisionPremio;
 
-/** Resuelve un empate: lo da a uno de los empatados o lo declara compartido. Otro estado → igual. */
+/** Decisión de dar el premio a un empatado: al equipo en una grupal, al alumno en una individual. */
+export function decisionDar(
+  tipoTarea: TipoTareaId,
+  id: string,
+): DecisionEmpate {
+  return tipoTarea === "individual"
+    ? { tipo: "darAlumno", alumnoId: id }
+    : { tipo: "dar", equipoId: id };
+}
+
+/**
+ * Resuelve un empate: lo da a uno de los empatados o lo declara compartido. Otro estado → igual.
+ * Una decisión por alguien que ya no está entre los empatados (otra nota, o un alumno eliminado)
+ * no cuenta: el empate queda por decidir.
+ */
 export function resolverEmpate(
   estado: EstadoPremio,
   decision: DecisionEmpate,
 ): EstadoPremio {
   if (estado.tipo !== "empate") return estado;
-  if (decision.tipo === "compartir") {
+  const id = idDeDecision(decision);
+  if (id === null) {
     return { ...estado, tipo: "compartido" };
   }
-  if (!estado.equipoIds.includes(decision.equipoId)) return estado;
+  if (!estado.titularIds.includes(id)) return estado;
   return {
     tipo: "ganado",
-    equipoId: decision.equipoId,
+    titularId: id,
     nota: estado.nota,
     fecha: estado.fecha,
   };
@@ -156,14 +187,24 @@ export function notaFechaTexto(nota: number, fecha: string): string {
   return `nota ${formatNota(nota)} · ${formatFecha(fecha)}`;
 }
 
-/** "3 de 12 equipos entregaron · vence 30/10/2026". */
+/** "3 de 12 equipos entregaron · vence 30/10/2026" ("alumnos" en una individual). */
 export function avancePremioTexto(
   entregaron: number,
   total: number,
   vence: string,
+  tipoTarea: TipoTareaId = "grupal",
 ): string {
   const venceTxt = vence ? ` · vence ${formatFecha(vence)}` : "";
-  return `${entregaron} de ${total} equipos entregaron${venceTxt}`;
+  const quienes = tipoTarea === "individual" ? "alumnos" : "equipos";
+  return `${entregaron} de ${total} ${quienes} entregaron${venceTxt}`;
+}
+
+/** Nombre corto de un titular para los chips: "G2" (equipo) o el primer nombre y apellido. */
+export function nombreCortoTitular(
+  tipoTarea: TipoTareaId | undefined,
+  nombre: string,
+): string {
+  return tipoTarea === "individual" ? nombre : nombreCortoEquipo(nombre);
 }
 
 export function empateChipTexto(nombresCortos: readonly string[]): string {
@@ -194,7 +235,66 @@ export function decisionAviso(
   nombreEquipo: string,
   nombresCortos: readonly string[],
 ): string {
-  return decision.tipo === "dar"
-    ? `Premio para ${nombreEquipo}`
-    : `Premio compartido: ${listaY(nombresCortos)}`;
+  return decision.tipo === "compartir"
+    ? `Premio compartido: ${listaY(nombresCortos)}`
+    : `Premio para ${nombreEquipo}`;
+}
+
+/* ---------- Crear y editar un premio (W11, D266) — copy PROVISIONAL (fila 147) ---------- */
+
+export const CREAR_PREMIO_LABEL = "Crear premio";
+export const EDITAR_PREMIO_TITULO = "Editar premio";
+
+export function editarPremioLabel(premio: string): string {
+  return `Editar el premio ${premio}`;
+}
+
+/** Línea del premio que ve el alumno en su tarea. */
+export function premioParaTexto(tipoTarea: TipoTareaId): string {
+  return tipoTarea === "individual"
+    ? "Premio para la mejor nota de tu sección"
+    : "Premio para el equipo con mejor nota";
+}
+
+/** Ayuda del campo premio (constructor y diálogo). */
+export function ayudaPremio(tipoTarea: TipoTareaId): string {
+  return tipoTarea === "individual"
+    ? "Lo gana el alumno con mejor nota de cada sección."
+    : "Lo gana el equipo con mejor nota de cada sección.";
+}
+
+export const SIN_ALMACEN_FOTO =
+  "Las fotos no están disponibles: falta configurar el almacén de imágenes.";
+
+export const SIN_TAREAS_PARA_PREMIO =
+  "Todas las tareas abiertas y borradores ya tienen premio. Crea una tarea nueva para ponerle uno.";
+
+export type ErrorPremio =
+  | "no-existe"
+  | "cerrada"
+  | "invalida"
+  | "foto-peso"
+  | "foto-tipo"
+  | "almacen"
+  | "red";
+
+export type ResultadoPremio = { ok: true } | { ok: false; error: ErrorPremio };
+
+export function mensajeErrorPremio(error: ErrorPremio): string {
+  switch (error) {
+    case "no-existe":
+      return "Esta tarea ya no existe. Recarga la página.";
+    case "cerrada":
+      return "La tarea ya está cerrada: su premio no se puede cambiar.";
+    case "invalida":
+      return "Revisa el premio: hay algo que no se pudo guardar.";
+    case "foto-peso":
+      return "La foto pesa demasiado. Prueba con otra imagen.";
+    case "foto-tipo":
+      return "No pudimos leer la foto. Prueba con una imagen JPG o PNG.";
+    case "almacen":
+      return "No se guardó la foto por un problema del portal, no de tu conexión. Inténtalo más tarde.";
+    case "red":
+      return "No se guardó: revisa tu conexión e inténtalo otra vez.";
+  }
 }
