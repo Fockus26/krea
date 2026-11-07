@@ -33,6 +33,7 @@
 | W8 | `feat/alumnos-filtros` | Alumnos filtrable por URL: Panel y «Ver notas» llegan filtrados (12, 13) | 1 |
 | W9–W13, W17 | ver `batch-2026-11-06.md` (W17 `fix/pildora-extremos`: pedido 22, ronda 2) | | 2 |
 | W14–W16 | ver `batch-2026-11-06.md` | | 3 |
+| W18 | `feat/offline` | Navegar offline y cola de envíos (45) | 4 |
 
 Slot y puerto los asigna `wt take` al lanzar; el mensaje que lanza a cada worker los repite.
 
@@ -59,7 +60,8 @@ Slot y puerto los asigna `wt take` al lanzar; el mensaje que lanza a cada worker
 | W2 (ronda 2) | D285 | — |
 | W4 (extra) | — | 155 |
 | W17 (píldora, ola 2) | D286–D287 | — |
-| Libres para extras | D288–D290 | 156–160 |
+| W18 (offline, ola 4) | D291–D295 | 156–158 |
+| Libres para extras | D288–D290 | 159–160 |
 
 Fuera de tu rango, nada. Una fila de checklist no la editas tú (regla 3): la describes en tu informe.
 

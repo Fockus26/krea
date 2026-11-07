@@ -9,7 +9,7 @@
 Fases 01–09 cerradas · **Track:** Product · main @ 8f818b8 · versión 1 entregada. Próximo QA de versión: `git diff --name-only d50568b..origin/main` (`plans/qa-version-1.md`).
 **Build local suprimido** (César, 2026-11-05): lo corren CI y Vercel. **QA con sesión:** `qa:local` y `.env.test.local`; nunca pedirle a César que inicie sesión.
 
-**Tanda 2026-11-06** (44 pedidos, 3 olas): `plans/batch-2026-11-06.md` · ola 1 mergeada (#78–#85) · **ola 2 de 3: 6 PRs abiertos (#86–#91)**, esperan revisión y merge de César (sin QA por memoria). Visuales elegidos: cinta de precaución + VS, podio que brilla + confeti, Puntos en una columna, píldora con extremos oscuros (W17).
+**Tanda 2026-11-06** (45 pedidos, 4 olas: la 4 es W18 offline, pedido 45 del 2026-11-07): `plans/batch-2026-11-06.md` · ola 1 mergeada (#78–#85) · **ola 2 de 3: 6 PRs abiertos (#86–#91)**, esperan revisión y merge de César (sin QA por memoria). Visuales elegidos: cinta de precaución + VS, podio que brilla + confeti, Puntos en una columna, píldora con extremos oscuros (W17).
 
 | Unit | Branch | Status |
 |---|---|---|
