@@ -772,3 +772,229 @@ tinta la sigue eligiendo `gradeInk`.
 
 ### Cierre
 PR «fix: extremos de la escala de notas más oscuros para que el número blanco se lea».
+
+---
+
+# Ola 3 (2026-11-07) — main @ 9a630c3
+
+**Avisos para todos los workers de la ola 3** (además del brief):
+- El `.qa/pr-body.md` del slot puede traer el cuerpo de un PR anterior: escribe `.qa/pr-body-<unidad>.md`
+  con **Write** y ábrelo con Read antes de `gh pr create --body-file` para comprobar que es el tuyo.
+- `bunx biome check --write` solo al cierre de cada etapa (nunca `npx biome`); en medio, `bunx biome check <archivos>`.
+- La carpeta principal está en `main` con un `.gitignore` sin guardar que es de César: **no la toques**
+  salvo `context/PHASE_LOG/<tu-rama>.md` (regla 3).
+- Sin dev server, sin navegador, sin QA, sin build local (verificas con tests, typecheck, lint y a11y por código).
+
+---
+
+## W14 — `feat/presencia-alumno`
+
+Worker **W14**. Rama `feat/presencia-alumno`. Decisiones **D275–D277**. Checklist **154**.
+Modelo · esfuerzo: **opus · medium** (concurrencia entre profes, reglas de Firestore). Docker: **no** (emuladores con Java sí).
+
+Decisiones: D174, D175 (escrituras solo con Admin), D190 (`onSnapshot` en el navegador), D209 (editar alumno),
+D267–D271 (W12: crear/eliminar alumno, diálogos de Alumnos).
+
+### Lo que pide César
+> 5. «Presencia en vivo al editar un alumno» — si un profe está editando a un alumno, los demás profes lo ven
+> (y no se pisan los cambios). Pendiente relacionado en `CURRENT_PHASE.md` › Next: «Editar alumno "el último gana"».
+
+### Dónde está
+- Diálogo: `components/sections/alumnos/edit-student-dialog.tsx` (W12 lo dejó limpio; `add-student-dialog.tsx`
+  al lado), directorio `students-directory.tsx`, `students-table.tsx`.
+- Acción: `lib/acciones/alumnos.ts:41` `editarAlumno` → `lib/firebase/alumnos.ts:16` `editarAlumnoEnTransaccion`.
+- Lecturas en vivo con el SDK del navegador: `components/sections/ranking/ranking-en-vivo.tsx:29-140` (patrón de
+  `onSnapshot` + `tokenEnVivo` cuando el navegador no tiene la sesión de Firebase), `lib/firebase/cliente.ts`.
+- Reglas: `firebase/firestore.rules` (hoy **ninguna** escritura desde el cliente, `:1-10`); tests en `tests/rules/`.
+
+### Enfoque decidido
+- **Presencia** en `presencia/{cedulaAlumno}/editores/{cedulaProfe}` = `{ nombre, desde, latido }` (timestamps del
+  servidor). La escribe el **navegador** del profe: es efímera, no es dato de notas, y una Server Action cada
+  20 s llamaría `refresh()` (regla 10) y vaciaría la caché del router. Es la única excepción a D175: escríbela
+  como decisión nueva («Reemplaza en parte a D175: solo `presencia/`»). Reglas: leer `esProfe()`; crear/actualizar/
+  borrar solo si `esProfe() && request.auth.uid == cedulaProfe`, con claves exactas (`hasOnly`) y tipos validados;
+  nada más del cliente.
+- Al abrir el diálogo de editar: escribe su entrada y un latido cada ~20 s; al cerrar (y en `pagehide`) la borra.
+  Una entrada con latido > 45 s se ignora (pestaña muerta). Constantes nombradas en `lib/`, lógica de vigencia pura y testeada.
+- Los demás profes ven, en el diálogo abierto y en la fila/ficha del alumno, «<Nombre> está editando» (avatar o
+  punto + texto; nunca solo color; `aria-live="polite"` en el diálogo, una sola vez por cambio). No bloquea: avisa.
+- **«El último gana»:** al abrir el diálogo se guarda una versión del alumno (p. ej. `actualizadoEn` o los campos
+  editables); `editarAlumno` recibe esa versión y en la transacción, si el doc cambió desde entonces, responde un
+  error nuevo de `errorAlumnoTexto` («Otro profe guardó cambios de este alumno mientras editabas. Revisa y vuelve a
+  guardar.», `PROVISIONAL (fila 154)`) y el diálogo muestra los valores nuevos sin perder lo escrito.
+- Si el navegador no tiene sesión de Firebase, la presencia se apaga en silencio (el guardado sigue funcionando).
+
+### Trampas conocidas
+- `cacheComponents: true`: la suscripción vive en un componente cliente; nada de leer Firestore en el render del servidor para esto.
+- No dejes listeners ni intervalos vivos al cerrar el diálogo o desmontar (StrictMode monta dos veces).
+- Eliminar alumno (W12) también debe borrar `presencia/{cedula}` (Admin, en su flujo) — o documenta que queda huérfana e inofensiva.
+
+### Cómo verificar
+- `tests/rules/`: un profe escribe solo su entrada; no la de otro profe; un estudiante ni lee ni escribe; claves extra → denegado.
+- Puro: vigencia del latido, detección de conflicto. Emuladores: dos versiones → el segundo guardado recibe el conflicto.
+- `bun run test:rules` obligatorio.
+
+### Cierre
+PR «feat: los profes ven quién está editando a un alumno y no se pisan los cambios». «Cómo probar»: dos profes
+(dos navegadores) abren el mismo alumno; uno guarda, el otro intenta guardar.
+
+---
+
+## W15 — `feat/animaciones`
+
+Worker **W15**. Rama `feat/animaciones`. Decisiones **D278–D282**. Checklist: ninguna.
+Modelo · esfuerzo: **opus · medium** (transversal; la transición entre páginas hay que diseñarla con View Transitions en Next 16). Docker: **no**.
+
+Decisiones: las de movimiento (`grep -rhi "^# D.*anima\|^# D.*movimiento\|^# D.*reduced\|^# D.*flip" context/decisions/`),
+D095 (segmentado de enlaces), D250 (caché del router), D256–D258 (W9: VS, cinta, podio), D242–D245 (W4: tarea eliminada).
+CLAUDE.md: animaciones **solo `transform`/`opacity`**; reduced motion → sin movimiento (texto/cambio directo).
+
+### Lo que pide César
+> 39. Animar los cambios de layout. 40. Transición entre páginas. 41. Animar el buscador. 42. Que el selector 5A ↔ 5C
+> se desplace. 43. Que el indicador de las tabs se desplace. 44. Más animaciones (lo de tareas ya lo hizo W4).
+
+Decisión de César (ola 3) para **40**: **deslizar según la pestaña** — al ir a una pestaña que está a la derecha en la
+barra (inferior o lateral), la página nueva entra desde la derecha; a la izquierda, desde la izquierda. Barra inferior,
+lateral y encabezado quietos. Para los enlaces que no son pestañas (abrir una tarea, volver) decide tú la regla más
+sobria (p. ej. entrar a un detalle = desde la derecha, volver = desde la izquierda; o un fundido) y explícala en la decisión.
+
+### Dónde está
+- Guía: `node_modules/next/dist/docs/01-app/02-guides/view-transitions.md` (sección de navegación direccional) y
+  `.../03-api-reference/02-components/link.md` (`transitionTypes`); `next.config.ts` (flag si la guía lo pide). Léelas antes.
+- Navegación: `lib/nav.ts:46` (ESTUDIANTE) y `:97` (PROFESOR) — el orden de la barra da la dirección; `components/layout/
+  bottom-nav.tsx`, `side-nav.tsx`, `nav-item-link.tsx`, `AppShell.tsx:51-55` (`<main id="contenido">`).
+- Tabs: `components/ui/tabs.tsx:78-88` (indicador `after:` con solo opacidad hoy, variantes `line` y `segmented`).
+- 5A ↔ 5C: `components/sections/ranking/segmented-links.tsx` (enlaces, D095) y `components/ui/toggle-group.tsx`.
+- Buscador: `components/sections/alumnos/student-filters.tsx:60-70`.
+- Layout: `components/krea/use-flip.ts` (FLIP ya usado en `rank-list` y `teacher-task-list`), `app/globals.css:1260-1340`
+  (utilidades `animate-*`), tokens `--d-*` en `:298-316` y su versión reducida `:399-405`.
+
+### Enfoque decidido
+- **40:** View Transitions de React/Next con tipos de transición (p. ej. `desliz-izq`/`desliz-der`) calculados por el índice
+  de la pestaña de origen y destino (función pura en `lib/`, testeada). Solo el `<main>` anima; las barras se excluyen
+  (`view-transition-name` propio). Duración y desplazamiento con tokens nuevos (`--d-pagina`, `--desliz-pagina`, en la decisión).
+  Con `prefers-reduced-motion: reduce`, ninguna animación. Navegador sin View Transitions → cambio directo (no rompe).
+- **43 y 42:** un indicador que se **traslada** (transform `translateX` + `scaleX`, o un elemento medido) en `tabs.tsx`
+  (`line` y `segmented`) y en `SegmentedLinks`/`ToggleGroup`. En `SegmentedLinks` cambia la ruta: el indicador puede
+  animar con la view transition (nombre compartido) en vez de estado. Un componente/hook compartido, no tres copias.
+- **41:** el buscador: ícono/botón de limpiar que aparece con opacidad+escala, resultados que entran con `animate-fade-in`;
+  sin animar ancho/alto (solo transform/opacity).
+- **39:** reordenar/filtrar listas con `useFlip` donde hoy saltan (lista de alumnos al filtrar, equipos, ajustes);
+  elige 2–4 lugares de más impacto y nómbralos en el PR. Los acordeones ya animan.
+- **44:** repasa altas y bajas visibles (alumno creado/eliminado, ajuste agregado, toast) y añade entrada/salida
+  sobria con las utilidades existentes. Nada nuevo en ranking.
+
+### Trampas conocidas
+- **No toques** `components/krea/rank-list.tsx`, `rank-row.tsx`, `podium.tsx`, `lib/rank-row.ts` ni la utilidad
+  `cinta-riesgo` de `globals.css` (los cambia W19 en paralelo). El podio y el confeti ya animan: no los dupliques.
+- `globals.css` lo toca también W19 (solo `cinta-riesgo`, ~1290–1312, y quizá un token junto a `--error`): añade lo tuyo
+  en bloques **separados** de esas zonas para que el merge no choque.
+- W16 (en paralelo) toca `task-builder.tsx` y crea `components/krea/date-picker.tsx`; W14 toca
+  `components/sections/alumnos/edit-student-dialog.tsx`: no los toques.
+- Animar `width`/`left`/`height` está prohibido (CLAUDE.md): el indicador se mueve con transform.
+- `cacheComponents` + `staleTimes`: la transición debe correr también al volver a una ruta cacheada (por código: el tipo
+  se pone en el `Link`/`router.push`, no depende del fetch).
+
+### Cómo verificar
+- Puro: dirección de la transición por pestañas (estudiante y profe, admin incluido) y la regla de enlaces no-pestaña.
+- Por código: cada animación nueva tiene su rama reduced motion; solo `transform`/`opacity` (`grep` de `transition-\[width`, `left`).
+
+### Cierre
+PR «feat: animaciones de navegación, pestañas, selector de sección, buscador y listas».
+
+---
+
+## W16 — `feat/calendario`
+
+Worker **W16**. Rama `feat/calendario`. Decisiones **D283–D284**. Checklist: ninguna (días y meses no son placeholder).
+Modelo · esfuerzo: **sonnet · medium**. Docker: **no**.
+
+Decisiones: **D116** (fecha con máscara sin calendario: la nueva dice «Reemplaza en parte a D116»), D114, D200
+(fecha ya guardada que pasó), D071 (foco al inválido).
+
+### Lo que pide César
+> 31. «Un calendario propio en el campo de la fecha.»
+
+Decisión de César (ola 3): **popover bajo el campo en laptop y hoja inferior en móvil**, con el campo dd/mm/aaaa que se
+puede seguir escribiendo (máscara `mascaraFecha` como hoy).
+
+### Dónde está
+- `components/sections/tareas-profe/task-builder.tsx:543-561` (Field «Fecha de entrega», `Input` con `Calendar`
+  decorativo y el comentario «Sin calendario emergente (D116)»); `hoy` y `fechaGuardada` en las props `:123-141`;
+  validación `validarTarea`, `mascaraFecha`, `fechaIso` (`grep -rn "mascaraFecha\|fechaIso" lib`).
+- Primitivas: `components/ui/popover.tsx` (Radix no modal), `components/ui/sheet.tsx`, `components/ui/button.tsx`.
+  No hay librería de fechas ni de calendario: **no añadas dependencias**.
+- Corte móvil/laptop: el que ya use el proyecto (`grep -rn "useMediaQuery\|matchMedia" components lib`).
+
+### Enfoque decidido
+- Componente `components/krea/date-picker.tsx` + lógica pura `lib/calendario.ts` (semanas del mes lun–dom, día civil ISO,
+  sin `Date` con zona: el día civil es el de `America/Caracas`, como `hoy`).
+- El ícono pasa a ser un **botón** «Elegir fecha» (nombre accesible) que abre el popover (≥ corte) o la hoja (< corte);
+  el `Input` sigue escribible. Patrón ARIA de cuadrícula de fecha: `role="grid"`, flechas (día/semana), Inicio/Fin
+  (semana), RePág/AvPág (mes), Enter/Espacio elige, Esc cierra y el foco vuelve al botón. Encabezado «noviembre de 2026»
+  con flechas de mes; hoy marcado (no solo color: aro + «hoy» en el nombre accesible), el elegido con el acento, días
+  anteriores a `hoy` deshabilitados salvo `fechaGuardada` (D200). Elegir escribe `dd/mm/aaaa` en el campo y cierra.
+- Tokens existentes para todo (celdas ≥ 44 px en la hoja; en el popover el objetivo táctil mínimo del proyecto); un
+  tamaño sin token → el token existente más cercano.
+- Tarea cerrada (`readOnly`): el botón no abre.
+
+### Trampas conocidas
+- W15 (en paralelo) anima tabs/segmentados y transiciones de página: no toques `tabs.tsx`, `toggle-group.tsx` ni
+  `globals.css` (si necesitas una utilidad, un bloque propio al final del archivo).
+- Popover/hoja dentro de otro contenedor con portal: revisa `components/ui/portal-scope.tsx`.
+- Mes con 6 semanas; febrero bisiesto; cambio de año en las flechas.
+
+### Cómo verificar
+- Puro: semanas de nov 2026 y feb 2028, «siguiente foco» por tecla, deshabilitados, ida y vuelta dd/mm/aaaa ↔ ISO.
+- a11y por código: teclado completo, foco visible en celdas, contraste del elegido/hoy en 4 acentos × claro/oscuro, 320 px.
+
+### Cierre
+PR «feat: calendario propio para la fecha de entrega (popover en laptop, hoja en móvil)».
+
+---
+
+## W19 — `fix/ranking-vs-cinta`
+
+Worker **W19** (correcciones de César a #89). Rama `fix/ranking-vs-cinta`. Decisiones **D288–D290**. Checklist: ninguna.
+Modelo · esfuerzo: **sonnet · medium**. Docker: **no**.
+
+Decisiones: **D256** (VS solo en la zona: se reemplaza), **D257** (cinta: se reemplaza su color), D258 (podio), D051, D001.
+
+### Lo que pide César
+> 46. «El VS tiene que salir en todos los empates del ranking, no solo en la zona de riesgo — tengo un ranking donde 3
+> estudiantes tienen la misma nota.»
+> 47. «La cinta de la zona de riesgo no combina con ese amarillo y en modo oscuro se ve mal.»
+
+Decisión de César (ola 3) para **47**: rayas del **rojo de error** alternadas con un **tinte del mismo rojo** (sin `--warning`).
+
+### Dónde está
+- `components/krea/rank-list.tsx:39-50` — `pintar(lista, duelos)` solo llama `conectoresVs` con `duelos` (la zona).
+- `lib/rank-row.ts:98` `conectoresVs` (ya da `true` entre cada par de empatados seguidos, sirve para N).
+- `components/krea/rank-row.tsx` (`vsDespues` y el conector; con 3 empatados deben salir 2 «VS» y el lector no repetir
+  de más), `animate-vs` en `app/globals.css` (~1320).
+- Podio: `components/krea/podium.tsx` (escalones por puesto de competencia: dos 2.º → dos escalones iguales).
+- Cinta: `app/globals.css:1290-1312` utilidad `cinta-riesgo` (`var(--error)` / `var(--warning)`); `--error` claro `:64`
+  (#c80300) y oscuro `:135`, `:191` (#ff6b5e); tintes existentes `--tint-err` (`:257-273`).
+- Galería: `app/componentes/_familias/ranking.tsx` (casos de empate).
+
+### Enfoque decidido
+- **46:** `conectoresVs` en **las dos** listas (principal y riesgo); actualiza comentarios y reemplaza D256 con una decisión
+  nueva. En el **podio**, si dos o tres comparten puesto, un «VS» entre esas columnas (mismo `animate-vs`, `aria-hidden`; el
+  empate ya dicho en el nombre accesible). Sin empate, nada cambia.
+- **47:** `cinta-riesgo` con `var(--error)` y un tinte del mismo rojo (`color-mix(in oklab, var(--error) X%, <superficie>)`
+  o un token nuevo `--cinta-tinte` por tema, en la decisión). Raya fuerte contra el fondo ≥ 3:1 (gráfico) en 4 acentos ×
+  claro/oscuro, calculado y anotado en la decisión; añade el par a `tests/unit/contraste-tokens.test.ts` si cabe.
+  Animación y reduced motion, igual.
+
+### Trampas conocidas
+- W15 (en paralelo) toca `globals.css` en otras zonas y **no** toca `rank-list`/`rank-row`/`podium`/`lib/rank-row.ts`/
+  `cinta-riesgo`: limita tu diff de `globals.css` a `cinta-riesgo` (y el token nuevo, si lo hay, junto a los de error).
+- `splitRiesgo` deja al último de la principal y al primero de la zona en listas distintas: si empatan en el corte, no hay
+  VS entre listas (dilo en la decisión; no muevas el separador).
+
+### Cómo verificar
+- Puro: `conectoresVs` con 3 empatados en la principal (2 conectores), empates en el podio (función pura si la añades).
+- Contraste de la cinta calculado (test). a11y por código.
+
+### Cierre
+PR «fix: VS en todos los empates del ranking y cinta de riesgo en rojo».

@@ -35,3 +35,6 @@
 - (tanda 11-06, W11) Galerías `lib/demo/entrega.ts:123`, `evaluar.ts:412`, `tareas-profe.ts:138` siguen filtrando el premio a solo grupal.
 - (tanda 11-06, W12) `task-builder.tsx:466` y `teacher-task-list.tsx:211` usan `disabled`+`aria-busy` a mano en vez de `loading` (D285).
 - (tanda 11-06, W12) `tests/rules/firestore.test.ts` tiene el puerto 8080 fijo.
+- (tanda 11-06, W14) `EditStudentDialog` al guardar cierra con `setAbierto(false)` sin `onAbierto`: la URL conserva `?alumno=` tras guardar.
+- (tanda 11-06, W16) Con la hoja del calendario abierta el botón «Elegir fecha» dice `aria-expanded=false`; D116 y el docblock de `TaskBuilder` aún dicen «sin calendario».
+- (tanda 11-06, W15) Sin FLIP en «Sin equipo» ni tableros de equipos/premios (cuadrículas; `useFlip` solo mide en vertical); alumno eliminado sin salida animada.
