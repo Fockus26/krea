@@ -210,9 +210,9 @@ export async function resumenEliminarAlumnos(
   try {
     const resumenes: ResumenBorrado[] = [];
     for (const c of d.data) {
+      // Un fallo de red lanza (y cae en el catch); los demás errores no suman
       const r = await resumenBorradoCon(admin.db, c);
       if (r.ok) resumenes.push(r.resumen);
-      else if (r.error === "red") return { ok: false, error: "red" };
     }
     return { ok: true, resumen: sumarResumenes(resumenes) };
   } catch (e) {

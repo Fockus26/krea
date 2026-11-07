@@ -232,6 +232,15 @@ export type ResultadoResumenLote =
   | { ok: true; resumen: ResumenBorradoLote }
   | { ok: false; error: "invalida" | "red" };
 
+/** PROVISIONAL (fila 160). Como `borradoTexto`, pero de varios. */
+export function borradoLoteTexto(
+  r: Pick<ResumenBorrado, "notas" | "ajustes">,
+): string {
+  if (r.notas === 0 && r.ajustes === 0)
+    return "No tienen notas individuales ni ajustes de puntos.";
+  return borradoTexto(r);
+}
+
 /** PROVISIONAL (fila 160). «Entre ellos hay 2 capitanes: …» */
 export function capitanesTexto(n: number): string | null {
   if (n === 0) return null;

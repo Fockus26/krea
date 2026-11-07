@@ -39,7 +39,9 @@ export async function borrarEnLote<E>(
     const r = await borrarUno(cedula).catch(
       (): ResultadoUno<E> => ({ ok: false, error: errorRed }),
     );
-    out.push(r.ok ? { cedula, ok: true } : { cedula, ok: false, error: r.error });
+    out.push(
+      r.ok ? { cedula, ok: true } : { cedula, ok: false, error: r.error },
+    );
   }
   return out;
 }
@@ -173,6 +175,13 @@ export function fallidosTitulo(
       : `${hechos === 1 ? "Se eliminó 1" : `Se eliminaron ${hechos}`}.`;
   return `${parte} No se pudo eliminar a ${cuantos(fallidos, s)}:`;
 }
+
+/** Nombre de la casilla de una fila: «Seleccionar a Ana Pérez». */
+export const seleccionarLabel = (nombre: string) => `Seleccionar a ${nombre}`;
+export const SELECCIONAR_TODOS_ALUMNOS =
+  "Seleccionar a todos los alumnos visibles";
+export const SELECCIONAR_TODOS_PROFESORES =
+  "Seleccionar a todos los profesores (menos tú)";
 
 export const REINTENTAR_LOTE =
   "Siguen seleccionados: vuelve a intentarlo con «Eliminar».";

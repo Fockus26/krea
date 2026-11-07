@@ -6,6 +6,7 @@ import { GradePill } from "@/components/krea/grade-pill";
 import { useFlip } from "@/components/krea/use-flip";
 import { UserAvatar } from "@/components/krea/user-avatar";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -24,6 +25,11 @@ import {
   tablaLabel,
 } from "@/lib/alumnos";
 import { formatNota } from "@/lib/grades";
+import {
+  estadoTodos,
+  SELECCIONAR_TODOS_ALUMNOS,
+  seleccionarLabel,
+} from "@/lib/lote";
 import { presenciaTexto } from "@/lib/presencia";
 import { formatDecimal } from "@/lib/stepper";
 import {
@@ -48,7 +54,8 @@ function EditandoChip({ texto }: { texto: string }) {
 
 /**
  * Tabla de alumnos (HANDOFF §2.15, §3 Alumnos): Alumno · Cédula · Equipo · Base · Nota
- * individual · Puntos · Editar. La región desplazable, el `position: relative` para el `sr-only` y
+ * individual · Puntos · Editar (y Eliminar, D298). Con `seleccion`, una casilla al inicio de cada
+ * fila y «todos los visibles» en la cabecera, para eliminar en lote. La región desplazable, el `position: relative` para el `sr-only` y
  * la pista bajo 1024 los pone `Table` (D044). Nota `null` = Pendiente (D003); Raspado = ícono
  * con nombre accesible (`GradePill table`). Base ≠ 20 con chip, no solo con un número distinto.
  * Al filtrar, buscar o dar de alta, las filas que quedan viajan a su sitio y las que aparecen
@@ -66,6 +73,9 @@ export function StudentsTable({
   onGuardado,
   eliminar,
   presencia,
+  eliminarFila,
+  seleccion,
+  onYaNoExiste,
 }: {
   seccion: SeccionAlumnos;
   filas: readonly FilaAlumno[];
@@ -83,6 +93,16 @@ export function StudentsTable({
   eliminar?: (a: FilaAlumno) => ReactNode;
   /** Quién edita a cada alumno (W14, D277); sin ella (vista previa), nada. */
   presencia?: Presencia | null;
+  /** Otro profe lo eliminó mientras su ficha estaba abierta (D298): la ficha se cierra. */
+  onYaNoExiste?: (cedula: string) => void;
+  /** Eliminar de un toque junto a «Editar» (W22, D298). */
+  eliminarFila?: (a: FilaAlumno) => ReactNode;
+  /** Casillas para eliminar en lote (D298); «todos» = las filas visibles. */
+  seleccion?: {
+    marcadas: ReadonlySet<string>;
+    onUno: (cedula: string, marcada: boolean) => void;
+    onTodos: () => void;
+  };
 }) {
   const { registrar } = useFlip<HTMLTableRowElement>({
     duracion: "--d-normal",
@@ -93,6 +113,19 @@ export function StudentsTable({
     <Table label={tablaLabel(seccion)}>
       <TableHeader>
         <TableRow className="hover:bg-transparent">
+          {seleccion ? (
+            <TableHead scope="col" className="w-12 pr-0">
+              <Checkbox
+                checked={estadoTodos(
+                  filas.map((a) => a.cedula),
+                  seleccion.marcadas,
+                )}
+                onCheckedChange={() => seleccion.onTodos()}
+                disabled={filas.length === 0}
+                aria-label={SELECCIONAR_TODOS_ALUMNOS}
+              />
+            </TableHead>
+          ) : null}
           <TableHead scope="col">Alumno</TableHead>
           <TableHead scope="col">Cédula</TableHead>
           <TableHead scope="col">Equipo</TableHead>
@@ -113,7 +146,10 @@ export function StudentsTable({
       <TableBody>
         {filas.length === 0 ? (
           <TableRow className="hover:bg-transparent">
-            <TableCell colSpan={COLUMNAS} className="h-auto py-8 text-center">
+            <TableCell
+              colSpan={COLUMNAS + (seleccion ? 1 : 0)}
+              className="h-auto py-8 text-center"
+            >
               <span className="animate-fade-in text-body text-text-2">
                 {vacioTexto ??
                   `${contadorTexto(0, consulta, seccion)}. Prueba con otro nombre, apellido o cédula.`}
@@ -123,6 +159,17 @@ export function StudentsTable({
         ) : (
           filas.map((a) => (
             <TableRow key={a.cedula} ref={registrar(a.cedula)}>
+              {seleccion ? (
+                <TableCell className="w-12 pr-0">
+                  <Checkbox
+                    checked={seleccion.marcadas.has(a.cedula)}
+                    onCheckedChange={(v) =>
+                      seleccion.onUno(a.cedula, v === true)
+                    }
+                    aria-label={seleccionarLabel(nombreAlumno(a))}
+                  />
+                </TableCell>
+              ) : null}
               <TableCell>
                 <span className="flex items-center gap-3">
                   <UserAvatar
@@ -164,15 +211,19 @@ export function StudentsTable({
                 {formatDecimal(a.puntos)}
               </TableCell>
               <TableCell numeric>
-                <EditStudentDialog
-                  alumno={a}
-                  abiertoInicial={abierto === a.cedula}
-                  onAbierto={onAbierto}
-                  guardar={guardar}
-                  onGuardado={onGuardado}
-                  eliminar={eliminar?.(a)}
-                  presencia={presencia}
-                />
+                <span className="flex items-center justify-end gap-1">
+                  <EditStudentDialog
+                    alumno={a}
+                    abiertoInicial={abierto === a.cedula}
+                    onAbierto={onAbierto}
+                    guardar={guardar}
+                    onGuardado={onGuardado}
+                    eliminar={eliminar?.(a)}
+                    presencia={presencia}
+                    onYaNoExiste={onYaNoExiste}
+                  />
+                  {eliminarFila?.(a)}
+                </span>
               </TableCell>
             </TableRow>
           ))

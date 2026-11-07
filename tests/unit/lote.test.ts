@@ -14,8 +14,8 @@ import {
   partirEnLotes,
   podarSeleccion,
   type ResultadoLote,
-  separarResultados,
   seleccionadosTexto,
+  separarResultados,
   TOPE_LOTE,
   zCedulasLote,
 } from "@/lib/lote";

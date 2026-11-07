@@ -4,7 +4,9 @@ import {
   crearAlumno,
   editarAlumno,
   eliminarAlumno,
+  eliminarAlumnos,
   resumenEliminarAlumno,
+  resumenEliminarAlumnos,
 } from "@/lib/acciones/alumnos";
 import { leerFiltrosAlumnos, resumenTexto } from "@/lib/alumnos";
 import { filasAlumnos } from "@/lib/alumnos-datos";
@@ -68,6 +70,8 @@ export default async function AlumnosPage({
         crear: crearAlumno,
         resumir: resumenEliminarAlumno,
         eliminar: eliminarAlumno,
+        resumirVarios: resumenEliminarAlumnos,
+        eliminarVarios: eliminarAlumnos,
         equipos: equipos.map((e) => ({
           id: e.id,
           nombre: e.nombre,

@@ -70,6 +70,7 @@ export function EditStudentDialog({
   onGuardado,
   eliminar,
   presencia,
+  onYaNoExiste,
 }: {
   alumno: FilaAlumno;
   /**
@@ -85,6 +86,11 @@ export function EditStudentDialog({
   eliminar?: ReactNode;
   /** Presencia en vivo (D277); sin ella (vista previa), ni marca ni avisa. */
   presencia?: Presencia | null;
+  /**
+   * Al guardar, el servidor dice que ya no existe (otro profe lo eliminó, D298): la ficha se
+   * cierra y la pantalla quita la fila con un aviso. Sin él, el error se queda en el diálogo.
+   */
+  onYaNoExiste?: (cedula: string) => void;
 }) {
   const [abierto, setAbierto] = useState(abiertoInicial);
   const [pedidoAntes, setPedidoAntes] = useState(abiertoInicial);
@@ -122,6 +128,14 @@ export function EditStudentDialog({
             setAbierto(false);
           }}
           onVigente={(actual) => onGuardado(alumno.cedula, actual)}
+          onYaNoExiste={
+            onYaNoExiste
+              ? () => {
+                  setAbierto(false);
+                  onYaNoExiste(alumno.cedula);
+                }
+              : undefined
+          }
         />
       </DialogContent>
     </Dialog>
@@ -135,6 +149,7 @@ function EditForm({
   presencia,
   onListo,
   onVigente,
+  onYaNoExiste,
 }: {
   alumno: FilaAlumno;
   guardar?: GuardarAlumno;
@@ -143,6 +158,7 @@ function EditForm({
   onListo: (cambios: CambiosAlumno) => void;
   /** Conflicto (D276): la fila pasa a lo que otro profe guardó; el diálogo sigue abierto. */
   onVigente: (actual: CambiosAlumno) => void;
+  onYaNoExiste?: () => void;
 }) {
   const uid = useId();
   // Mientras el formulario está montado (= el diálogo abierto), «estoy editando» (D275)
@@ -238,6 +254,7 @@ function EditForm({
     enviando.current = false;
     setGuardando(false);
     if (r.ok) onListo(cambios);
+    else if (r.error === "no-existe" && onYaNoExiste) onYaNoExiste();
     else if (r.error === "conflicto") {
       // Lo escrito se queda en los campos; el próximo «Guardar» parte de lo vigente y gana
       setVersion(r.actual);

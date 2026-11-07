@@ -2,8 +2,10 @@
 // Lista de la pantalla Profesores (D233). Las filas llegan del servidor por props: cada Server
 // Action termina con `refresh()` y la lista se vuelve a pintar con los datos guardados, sin
 // copia local que se desfase. La contraseña temporal vive solo en el estado de esta pantalla.
+// Eliminar en lote (W22, D298): una casilla por profe salvo el propio admin (no puede borrarse).
 import { useState } from "react";
 import { UserAvatar } from "@/components/krea/user-avatar";
+import { EliminarEnLote } from "@/components/sections/shared/eliminar-en-lote";
 import { PageHeader } from "@/components/sections/shared/page-header";
 import {
   type CuentaCreada,
@@ -11,19 +13,36 @@ import {
 } from "@/components/sections/shared/password-temporal-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   contadorProfesores,
   detalleProfesor,
+  type ErrorProfesor,
+  errorProfesorTexto,
   type FilaProfesor,
   nombreProfesor,
 } from "@/lib/cuentas-datos";
+import {
+  alternarTodos,
+  alternarUno,
+  estadoTodos,
+  PROFESORES,
+  podarSeleccion,
+  SELECCIONAR_TODOS_PROFESORES,
+  seleccionarLabel,
+} from "@/lib/lote";
 import { estiloDe } from "@/lib/vistas-estudiante";
 import {
   type AccionesProfesores,
   CrearProfesorDialog,
   EditarProfesorDialog,
   EliminarProfesorDialog,
+  NUEVO_PROFESOR_ID,
 } from "./profesor-dialogs";
+
+// PROVISIONAL (CONTENT_CHECKLIST fila 159)
+const BORRADO_PROFESORES =
+  "Se borran sus cuentas y sus perfiles: ya no podrán entrar. Las tareas, evaluaciones y ajustes que hicieron se quedan.";
 
 export function ProfesoresDirectory({
   profesores,
@@ -33,6 +52,27 @@ export function ProfesoresDirectory({
   acciones: AccionesProfesores;
 }) {
   const [creado, setCreado] = useState<CuentaCreada | null>(null);
+  const [marcadas, setMarcadas] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
+  // La lista nueva del servidor (tras `refresh()`) poda la selección: lo borrado ya no está
+  const [antes, setAntes] = useState(profesores);
+  if (profesores !== antes) {
+    setAntes(profesores);
+    setMarcadas((m) =>
+      podarSeleccion(
+        m,
+        profesores.map((p) => p.cedula),
+      ),
+    );
+  }
+  const eliminarVarios = acciones.eliminarVarios;
+  // El admin no se selecciona a sí mismo: «todos» son los demás
+  const seleccionables = profesores.filter((p) => !p.tu).map((p) => p.cedula);
+  const conLote = eliminarVarios !== undefined && seleccionables.length > 0;
+  const seleccionados = profesores
+    .filter((p) => !p.tu && marcadas.has(p.cedula))
+    .map((p) => ({ cedula: p.cedula, nombre: nombreProfesor(p) }));
 
   return (
     <>
@@ -46,12 +86,58 @@ export function ProfesoresDirectory({
         }
       />
       <Card className="overflow-hidden p-0 md:p-0">
+        {conLote && eliminarVarios ? (
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-divider px-4 py-3 md:px-5">
+            <span className="flex items-center gap-3">
+              <Checkbox
+                checked={estadoTodos(seleccionables, marcadas)}
+                onCheckedChange={() =>
+                  setMarcadas((m) => alternarTodos(seleccionables, m))
+                }
+                aria-label={SELECCIONAR_TODOS_PROFESORES}
+              />
+              <span aria-hidden="true" className="text-label text-text-2">
+                Todos
+              </span>
+            </span>
+            <EliminarEnLote<ErrorProfesor>
+              seleccionados={seleccionados}
+              sustantivo={PROFESORES}
+              onLimpiar={() => setMarcadas(new Set())}
+              descripcion={BORRADO_PROFESORES}
+              eliminar={eliminarVarios}
+              errorTexto={errorProfesorTexto}
+              errorRed="red"
+              onEliminados={(cs) =>
+                setMarcadas((m) => {
+                  const fuera = new Set(cs);
+                  return new Set([...m].filter((c) => !fuera.has(c)));
+                })
+              }
+              focoAlTerminar={NUEVO_PROFESOR_ID}
+            />
+          </div>
+        ) : null}
         <ul className="divide-y divide-divider">
           {profesores.map((p) => (
             <li
               key={p.cedula}
               className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 md:px-5"
             >
+              {conLote ? (
+                // El propio admin no tiene casilla; el hueco mantiene alineadas las filas
+                <span className="flex w-5 shrink-0 justify-center">
+                  {p.tu ? null : (
+                    <Checkbox
+                      checked={marcadas.has(p.cedula)}
+                      onCheckedChange={(v) =>
+                        setMarcadas((m) => alternarUno(m, p.cedula, v === true))
+                      }
+                      aria-label={seleccionarLabel(nombreProfesor(p))}
+                    />
+                  )}
+                </span>
+              ) : null}
               <UserAvatar
                 estilo={estiloDe(p.estilo)}
                 seed={p.semilla}
