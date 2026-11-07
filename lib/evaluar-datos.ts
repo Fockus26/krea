@@ -251,11 +251,22 @@ export const TITULAR_DESCONOCIDO = "Sin nombre";
 /** PROVISIONAL (fila 133): tarea cuyo documento falta. */
 export const TAREA_DESCONOCIDA = "Tarea sin título";
 
+/**
+ * Nombre del equipo de una grupal (D308): el del equipo vivo; si se eliminó, el que tenía entonces
+ * (`titularNombre`); si no, `TITULAR_DESCONOCIDO`.
+ */
+export function nombreGrupal(
+  e: Pick<Entrega, "titularId" | "titularNombre">,
+  equipos: ReadonlyMap<string, Pick<Equipo, "nombre">>,
+): string {
+  return (
+    equipos.get(e.titularId)?.nombre ?? e.titularNombre ?? TITULAR_DESCONOCIDO
+  );
+}
+
 /** Nombre del titular: el equipo, o «Yeilin Duarte». */
 export function nombreTitular(e: Entrega, m: MapasEvaluar): string {
-  if (e.tipo === "grupal") {
-    return m.equipos.get(e.titularId)?.nombre ?? TITULAR_DESCONOCIDO;
-  }
+  if (e.tipo === "grupal") return nombreGrupal(e, m.equipos);
   const u = m.usuarios.get(e.titularId);
   return u ? nombreCorto(u) : TITULAR_DESCONOCIDO;
 }

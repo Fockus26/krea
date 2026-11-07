@@ -184,8 +184,10 @@ export async function editarEquipo(
 }
 
 /**
- * Elimina un equipo vacío, sin entregas grupales ni ajustes (D271), y su logo de B2 después del
- * commit (si B2 falla, se registra: queda huérfano, sin dueño).
+ * Elimina un equipo (D307): sus integrantes quedan «Sin equipo», sus entregas grupales se quedan
+ * con `titularNombre` y sus ajustes se borran, en una transacción. Después del commit: los claims
+ * de los integrantes (su sesión se cierra, como al moverlos; si falla, `sesiones`: el equipo ya
+ * no existe) y su logo de B2 (si B2 falla, se registra: queda huérfano, sin dueño).
  */
 export async function eliminarEquipo(
   equipoId: unknown,
@@ -196,7 +198,7 @@ export async function eliminarEquipo(
   const id = zIdDocumento.safeParse(equipoId);
   if (!id.success) return { ok: false, error: "invalida" };
   try {
-    const { resultado, logo } = await eliminarEquipoEnTransaccion(
+    const { resultado, logo, afectados } = await eliminarEquipoEnTransaccion(
       admin.db,
       id.data,
       Date.now(),
@@ -209,6 +211,8 @@ export async function eliminarEquipo(
         .catch(() => null);
       if (!b?.ok) console.error("[eliminarEquipo] no se borró el logo");
     }
+    const fallidas = await sincronizarClaims(admin.auth, admin.db, afectados);
+    if (fallidas.length) return { ok: false, error: "sesiones" };
     return resultado;
   } catch (e) {
     registrar("eliminarEquipo", e);

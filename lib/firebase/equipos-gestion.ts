@@ -1,22 +1,26 @@
-// Adaptadores del Admin SDK para crear, editar y eliminar equipos (W12, D270–D271). Sin
+// Adaptadores del Admin SDK para crear, editar y eliminar equipos (W12, D270, D307–D309). Sin
 // `server-only` para que las pruebas de tests/rules los corran contra los emuladores; la app los
 // usa solo desde lib/acciones/equipos.ts, después de `exigirSesion("profesor")`.
 //
 // El nombre y el logo del equipo viven también en `ranking/{seccion}`: cada cambio lo reescribe en
-// la misma transacción (D175). Eliminar solo un equipo vacío, sin entregas grupales ni ajustes
-// (`bloqueoEliminar`): así nunca se lleva una nota ni un punto.
+// la misma transacción (D175). Eliminar deshace el equipo sin llevarse ninguna nota: los
+// integrantes quedan «Sin equipo» y las entregas grupales se quedan con ellos (D307).
 import type { Firestore } from "firebase-admin/firestore";
-import { estadoDeDatos } from "@/lib/equipos-datos";
+import { cambiosEntre, conCambios, estadoDeDatos } from "@/lib/equipos-datos";
 import {
-  bloqueoEliminar,
+  consecuenciasEliminar,
   type EquipoACrear,
   type EquipoAEditar,
+  type ErrorGestionEquipo,
   equipoNuevo,
+  escriturasEliminarEquipo,
   nombreRepetido,
   type ResultadoGestionEquipo,
 } from "@/lib/equipos-gestion";
+import { moverAlumno } from "@/lib/equipos-profe";
 import { escribirRankingEnTx, leerSeccionEnTx } from "@/lib/firebase/ranking";
 import { COL, zEquipo } from "@/lib/modelo";
+import { MAX_ESCRITURAS_TX } from "@/lib/tareas-profe-datos";
 
 /** Crea un equipo en la sección y lo suma al ranking con 0 puntos. */
 export async function crearEquipoEnTransaccion(
@@ -74,11 +78,20 @@ export async function editarEquipoEnTransaccion(
   });
 }
 
-type Eliminado = { resultado: ResultadoGestionEquipo; logo: string | null };
+type Eliminado = {
+  resultado: ResultadoGestionEquipo;
+  logo: string | null;
+  /** Integrantes que quedaron «Sin equipo»: sus claims se ponen después del commit. */
+  afectados: string[];
+};
 
 /**
- * Elimina un equipo vacío, sin entregas grupales ni ajustes, y lo quita del ranking. Devuelve la
- * ruta del logo para borrarla de B2 después del commit. Uno que ya no existe: `no-existe`.
+ * Elimina un equipo con todo lo suyo en UNA transacción (D307–D309): sus integrantes pasan a «Sin
+ * equipo» (`moverAlumno` a `null`, como al quitarlos del tablero), cada entrega grupal suya se
+ * queda con su nota e `integrantes` y recibe `titularNombre`, sus ajustes de puntos se borran, y
+ * el ranking se reescribe sin él. Devuelve la ruta del logo (B2 la borra tras el commit) y los
+ * integrantes movidos. Uno que ya no existe: `no-existe`; si pasa de 500 escrituras: `demasiados`
+ * sin escribir nada.
  */
 export async function eliminarEquipoEnTransaccion(
   db: Firestore,
@@ -86,40 +99,86 @@ export async function eliminarEquipoEnTransaccion(
   ahora: number,
 ): Promise<Eliminado> {
   const ref = db.collection(COL.equipos).doc(equipoId);
+  const fallo = (error: ErrorGestionEquipo): Eliminado => ({
+    resultado: { ok: false, error },
+    logo: null,
+    afectados: [],
+  });
   return db.runTransaction(async (tx): Promise<Eliminado> => {
     const snap = await tx.get(ref);
-    if (!snap.exists)
-      return { resultado: { ok: false, error: "no-existe" }, logo: null };
+    if (!snap.exists) return fallo("no-existe");
     const e = zEquipo.safeParse(snap.data());
-    if (!e.success)
-      return { resultado: { ok: false, error: "invalida" }, logo: null };
+    if (!e.success) return fallo("invalida");
     const seccion = e.data.seccion;
-    const [datos, entregas, ajustes] = await Promise.all([
+    const [datos, entregasSnap, ajustesSnap] = await Promise.all([
       leerSeccionEnTx(tx, db, seccion),
-      // También las que no validan: un documento roto no debe dejar borrar sus datos
+      // También los que no validan: la consulta por id los trae igual
       tx.get(db.collection(COL.entregas).where("titularId", "==", equipoId)),
       tx.get(db.collection(COL.ajustes).where("destinoId", "==", equipoId)),
     ]);
-    const estado = estadoDeDatos(seccion, datos.usuarios, datos.equipos);
-    const bloqueo = bloqueoEliminar({
-      integrantes: estado.equipos[equipoId]?.miembros.length ?? 0,
-      entregas: entregas.docs.filter((d) => d.get("tipo") !== "individual")
-        .length,
-      ajustes: ajustes.docs.filter((d) => d.get("destino") !== "alumno").length,
+    const grupales = entregasSnap.docs.filter(
+      (d) => d.get("tipo") !== "individual",
+    );
+    const ajustes = ajustesSnap.docs.filter(
+      (d) => d.get("destino") !== "alumno",
+    );
+
+    // Cada integrante sale con la regla del tablero; el equipo se borra: su capitán no se escribe
+    let estado = estadoDeDatos(seccion, datos.usuarios, datos.equipos);
+    for (const c of estado.equipos[equipoId]?.miembros ?? [])
+      estado = moverAlumno(estado, c, null);
+    const cambios = cambiosEntre(
+      estado,
+      datos.usuarios,
+      datos.equipos,
+      seccion,
+    );
+    cambios.equipos = cambios.equipos.filter((c) => c.id !== equipoId);
+
+    const c = consecuenciasEliminar({
+      integrantes: cambios.usuarios.length,
+      entregas: grupales.length,
+      ajustes: ajustes.length,
     });
-    if (bloqueo)
-      return {
-        resultado: { ok: false, error: bloqueo.motivo },
-        logo: null,
-      };
+    if (
+      escriturasEliminarEquipo(c) + cambios.equipos.length >
+      MAX_ESCRITURAS_TX
+    )
+      return fallo("demasiados");
+
+    for (const u of cambios.usuarios) {
+      tx.update(db.collection(COL.usuarios).doc(u.cedula), {
+        equipoId: u.equipoId,
+        actualizadoEn: ahora,
+      });
+    }
+    for (const x of cambios.equipos) {
+      tx.update(db.collection(COL.equipos).doc(x.id), {
+        capitanId: x.capitanId,
+      });
+    }
+    for (const d of grupales)
+      tx.update(d.ref, { titularNombre: e.data.nombre });
+    for (const d of ajustes) tx.delete(d.ref);
     tx.delete(ref);
+
+    const borrados = new Set(ajustes.map((d) => d.id));
+    const sinEl = conCambios(datos, cambios, ahora);
     escribirRankingEnTx(
       tx,
       db,
       seccion,
-      { ...datos, equipos: datos.equipos.filter((x) => x.id !== equipoId) },
+      {
+        ...sinEl,
+        equipos: sinEl.equipos.filter((x) => x.id !== equipoId),
+        ajustes: sinEl.ajustes.filter((a) => !borrados.has(a.id)),
+      },
       ahora,
     );
-    return { resultado: { ok: true, id: equipoId }, logo: e.data.logoPath };
+    return {
+      resultado: { ok: true, id: equipoId },
+      logo: e.data.logoPath,
+      afectados: cambios.usuarios.map((u) => u.cedula),
+    };
   });
 }

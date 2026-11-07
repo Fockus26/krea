@@ -1,0 +1,5 @@
+# D308 · Datos · `entregas.titularNombre`: nombre del equipo al eliminarlo; se muestra equipo vivo → titularNombre → desconocido · Implemented
+
+**Decision:** `zEntrega` lleva `titularNombre: z.string().min(1).optional()`. Solo lo escribe la eliminación de un equipo, en cada entrega grupal suya, con el nombre que tenía. Para nombrar una grupal: `nombreGrupal(e, equipos)` en `lib/evaluar-datos.ts` (equipo vivo → su nombre; si no, `titularNombre`; si no, `TITULAR_DESCONOCIDO`), que usan `nombreTitular` (cola, panel, Evaluar). En Mis notas / Inicio del alumno, la fila grupal nombra el equipo de la entrega: su equipo actual solo si es el mismo `titularId`; si no, `titularNombre` (o nada). Sin entrega, el equipo actual.
+**Why:** el `titularId` de una grupal ya no apunta a nada cuando el equipo se elimina; sin el nombre la cola diría «Sin nombre». En Mis notas antes salía el nombre del equipo ACTUAL del alumno, que tras cambiar de equipo nombraba al equipo equivocado.
+**Discarded alternative:** reescribir `titularId` (rompe el id `tareaId__titularId` y el premio); guardar el nombre en cada entrega al enviarla (duplica un dato que cambia al renombrar).

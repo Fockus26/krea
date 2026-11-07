@@ -135,6 +135,29 @@ describe("notasDelAlumno / filasMisNotas", () => {
     const filas = filasMisNotas(datosDe(GABRIEL));
     expect(filas.every((f) => f.nota === null)).toBe(true);
   });
+
+  test("equipo eliminado: la nota grupal sigue con ella y nombra al equipo de entonces (D308)", () => {
+    // Tras eliminar 5a-g2: sin equipo, y su grupal lleva `titularNombre`
+    const d = datosDe(YEILIN, { usuario: { equipoId: null } });
+    expect(d.equipo).toBeNull();
+    const sinEquipo: DatosAlumno = {
+      ...d,
+      entregas: d.entregas.map((e) =>
+        e.tipo === "grupal" ? { ...e, titularNombre: "5A-G2 Repostería" } : e,
+      ),
+    };
+    const grupal = filasMisNotas(sinEquipo).find(
+      (f) => f.id === "logo-y-paleta",
+    );
+    expect(grupal?.nota).toBe(19);
+    expect(grupal?.detalle).toBe("5A-G2 Repostería");
+
+    // En otro equipo, la grupal del viejo no lleva el nombre del nuevo
+    const otro = datosDe(YEILIN, { usuario: { equipoId: "5a-g6" } });
+    const fila = filasMisNotas(otro).find((f) => f.id === "logo-y-paleta");
+    expect(fila?.nota).toBe(19);
+    expect(fila?.detalle).toBeUndefined();
+  });
 });
 
 describe("detalleNota", () => {

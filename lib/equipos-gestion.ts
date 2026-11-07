@@ -1,6 +1,6 @@
-// Crear, editar y eliminar equipos desde Equipos (W12, D270–D271). Puro (sin Firebase ni reloj): lo
-// que mandan los diálogos, el documento nuevo, la regla de nombre repetido y cuándo un equipo NO
-// se puede eliminar (tiene integrantes, entregas grupales o ajustes: borrarlo perdería datos).
+// Crear, editar y eliminar equipos desde Equipos (W12, D270, D307). Puro (sin Firebase ni reloj):
+// lo que mandan los diálogos, el documento nuevo, la regla de nombre repetido y lo que arrastra
+// eliminar un equipo (sus integrantes, entregas grupales y ajustes), para avisarlo antes.
 import { z } from "zod";
 import { zIdDocumento } from "@/lib/evaluar-datos";
 import { type Equipo, type SeccionId, zEquipo, zSeccion } from "@/lib/modelo";
@@ -62,34 +62,44 @@ export function nombreRepetido(
   );
 }
 
-/** Por qué un equipo no se puede eliminar (`null`: sí se puede). */
-export type BloqueoEquipo =
-  | { motivo: "integrantes"; n: number }
-  | { motivo: "entregas"; n: number }
-  | { motivo: "ajustes"; n: number };
-
-/**
- * Solo se elimina un equipo vacío, sin entregas grupales (su nota y su premio, D012) y sin ajustes
- * de puntos (D007): así borrarlo nunca se lleva datos. Se mira en ese orden.
- */
-export function bloqueoEliminar(c: {
+/** Lo que arrastra eliminar un equipo (D307): cuántos integrantes, entregas grupales y ajustes. */
+export type ConsecuenciasEliminar = {
   integrantes: number;
   entregas: number;
   ajustes: number;
-}): BloqueoEquipo | null {
-  if (c.integrantes > 0) return { motivo: "integrantes", n: c.integrantes };
-  if (c.entregas > 0) return { motivo: "entregas", n: c.entregas };
-  if (c.ajustes > 0) return { motivo: "ajustes", n: c.ajustes };
-  return null;
+};
+
+/**
+ * Un equipo siempre se puede eliminar (D307, reemplaza a D271): sus integrantes quedan «Sin
+ * equipo», sus entregas grupales se quedan (la nota es de cada integrante, D012) y sus ajustes de
+ * puntos se borran (eran del equipo, D007). Esto solo normaliza los recuentos para el diálogo.
+ */
+export function consecuenciasEliminar(c: {
+  integrantes: number;
+  entregas: number;
+  ajustes: number;
+}): ConsecuenciasEliminar {
+  const n = (x: number) => (Number.isFinite(x) && x > 0 ? Math.floor(x) : 0);
+  return {
+    integrantes: n(c.integrantes),
+    entregas: n(c.entregas),
+    ajustes: n(c.ajustes),
+  };
 }
+
+/**
+ * Escrituras de la transacción de eliminar: un perfil por integrante, `titularNombre` en cada
+ * entrega grupal, un borrado por ajuste, el equipo y el ranking. Tope de Firestore: 500.
+ */
+export const escriturasEliminarEquipo = (c: ConsecuenciasEliminar) =>
+  c.integrantes + c.entregas + c.ajustes + 2;
 
 export type ErrorGestionEquipo =
   | "invalida"
   | "no-existe"
   | "repetido"
-  | "integrantes"
-  | "entregas"
-  | "ajustes"
+  | "demasiados"
+  | "sesiones"
   | "red";
 
 export type ResultadoGestionEquipo =
@@ -114,15 +124,47 @@ export function validarEquipo(f: { nombre: string; tema: string }): {
   return e;
 }
 
-export function bloqueoTexto(b: BloqueoEquipo): string {
-  switch (b.motivo) {
-    case "integrantes":
-      return `Tiene ${b.n === 1 ? "1 integrante" : `${b.n} integrantes`}. Muévelos a otro equipo o a «Sin equipo» y luego elimínalo.`;
-    case "entregas":
-      return `Tiene ${b.n === 1 ? "1 entrega grupal" : `${b.n} entregas grupales`}: sus notas se perderían. Un equipo con entregas no se elimina.`;
-    case "ajustes":
-      return `Tiene ${b.n === 1 ? "1 ajuste" : `${b.n} ajustes`} de puntos: se perderían. Un equipo con ajustes no se elimina.`;
+/** «a», «a y b», «a, b y c». */
+function enumerar(partes: readonly string[]): string {
+  if (partes.length <= 1) return partes[0] ?? "";
+  return `${partes.slice(0, -1).join(", ")} y ${partes[partes.length - 1]}`;
+}
+
+const contar = (n: number, uno: string, varios: string) =>
+  `${n} ${n === 1 ? uno : varios}`;
+
+/**
+ * Texto del diálogo de eliminar (D307): qué tiene y qué pasa con cada cosa, con números. «Tiene 3
+ * integrantes, 2 entregas grupales y 1 ajuste: los integrantes quedan sin equipo, las notas se
+ * quedan con cada alumno y el ajuste se borra.» Solo nombra lo que tiene.
+ */
+export function consecuenciasTexto(c: ConsecuenciasEliminar): string {
+  const tiene: string[] = [];
+  const pasa: string[] = [];
+  if (c.integrantes > 0) {
+    tiene.push(contar(c.integrantes, "integrante", "integrantes"));
+    pasa.push(
+      c.integrantes === 1
+        ? "el integrante queda sin equipo"
+        : "los integrantes quedan sin equipo",
+    );
   }
+  if (c.entregas > 0) {
+    tiene.push(contar(c.entregas, "entrega grupal", "entregas grupales"));
+    pasa.push(
+      c.entregas === 1
+        ? "la nota se queda con cada alumno"
+        : "las notas se quedan con cada alumno",
+    );
+  }
+  if (c.ajustes > 0) {
+    tiene.push(contar(c.ajustes, "ajuste", "ajustes"));
+    pasa.push(c.ajustes === 1 ? "el ajuste se borra" : "los ajustes se borran");
+  }
+  const cierre = "Se borra también su logo. No se puede deshacer.";
+  if (tiene.length === 0)
+    return `No tiene integrantes, entregas grupales ni ajustes: no se pierde ninguna nota. ${cierre}`;
+  return `Tiene ${enumerar(tiene)}: ${enumerar(pasa)}. ${cierre}`;
 }
 
 export function errorGestionEquipoTexto(
@@ -134,12 +176,10 @@ export function errorGestionEquipoTexto(
       return `Ya hay un equipo con ese nombre${seccion ? ` en ${seccion}` : ""}.`;
     case "no-existe":
       return "Ese equipo ya no existe. Recarga la página.";
-    case "integrantes":
-      return "Ahora tiene integrantes: sácalos antes de eliminarlo.";
-    case "entregas":
-      return "Tiene entregas grupales: no se elimina.";
-    case "ajustes":
-      return "Tiene ajustes de puntos: no se elimina.";
+    case "demasiados":
+      return "Tiene demasiados datos para eliminarlo de una vez. No cambiamos nada: avísale al administrador.";
+    case "sesiones":
+      return "Se eliminó, pero no pudimos cerrar la sesión de algunos integrantes. Muévelos otra vez a «Sin equipo» para reintentarlo.";
     case "invalida":
       return "Revisa los datos: algo no se pudo guardar así.";
     case "red":

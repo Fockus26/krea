@@ -1,8 +1,8 @@
 "use client";
-// Crear, editar y eliminar equipos (W12, D270, D271). Cada formulario corta el doble envío con una
+// Crear, editar y eliminar equipos (W12, D270, D307). Cada formulario corta el doble envío con una
 // ref y el botón queda ocupado (`loading`, D285); si el servidor no guarda, el diálogo sigue
-// abierto con lo escrito y el error (D171). «Eliminar» siempre abre su diálogo: si el equipo no se
-// puede eliminar, el diálogo dice por qué y no ofrece confirmar (no hay botón apagado sin razón).
+// abierto con lo escrito y el error (D171). «Eliminar» siempre se puede: el diálogo dice antes,
+// con números, qué pasa con sus integrantes, sus entregas grupales y sus ajustes.
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { type FormEvent, useId, useRef, useState } from "react";
 import { ErrorEnPantalla } from "@/components/estados/errores";
@@ -21,9 +21,9 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/sonner";
 import {
-  type BloqueoEquipo,
-  bloqueoTexto,
+  type ConsecuenciasEliminar,
   type CrearEquipo,
+  consecuenciasTexto,
   creadoEquipoTexto,
   type EditarEquipo,
   errorGestionEquipoTexto,
@@ -241,13 +241,13 @@ function EquipoForm({
 
 export function EliminarEquipoDialog({
   equipo,
-  bloqueo,
+  consecuencias,
   eliminar,
   onEliminado,
 }: {
   equipo: { id: string; nombre: string };
-  /** Por qué no se puede (integrantes del tablero, entregas y ajustes del servidor). */
-  bloqueo: BloqueoEquipo | null;
+  /** Qué arrastra (integrantes del tablero, entregas y ajustes del servidor), D307. */
+  consecuencias: ConsecuenciasEliminar;
   eliminar: AccionesGestionEquipos["eliminar"];
   onEliminado: (equipoId: string) => void;
 }) {
@@ -264,12 +264,14 @@ export function EliminarEquipoDialog({
     const r = await eliminar(equipo.id).catch(() => RED);
     enviando.current = false;
     setBorrando(false);
-    if (!r.ok) {
+    if (!r.ok && r.error !== "sesiones") {
       setError(errorGestionEquipoTexto(r.error));
       return;
     }
+    // «sesiones»: el equipo ya se eliminó; solo falló cerrar alguna sesión
     setAbierto(false);
     onEliminado(equipo.id);
+    if (!r.ok) toast.error(errorGestionEquipoTexto(r.error));
   }
 
   return (
@@ -288,49 +290,32 @@ export function EliminarEquipoDialog({
         </Button>
       </DialogTrigger>
       <DialogContent>
-        {bloqueo ? (
-          <>
-            <DialogHeader>
-              <DialogTitle>{equipo.nombre} no se puede eliminar</DialogTitle>
-              <DialogDescription>{bloqueoTexto(bloqueo)}</DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button">Entendido</Button>
-              </DialogClose>
-            </DialogFooter>
-          </>
-        ) : (
-          <>
-            <DialogHeader>
-              <DialogTitle>¿Eliminar el equipo {equipo.nombre}?</DialogTitle>
-              <DialogDescription>
-                No tiene integrantes, entregas grupales ni ajustes: no se pierde
-                ninguna nota. Se borra también su logo. No se puede deshacer.
-              </DialogDescription>
-            </DialogHeader>
-            {error ? (
-              <ErrorEnPantalla titulo="No se eliminó">{error}</ErrorEnPantalla>
-            ) : null}
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button" variant="secondary">
-                  Cancelar
-                </Button>
-              </DialogClose>
-              <Button
-                type="button"
-                variant="danger"
-                loading={borrando}
-                loadingLabel="Eliminando…"
-                onClick={confirmar}
-              >
-                <Trash2 aria-hidden="true" />
-                Eliminar
-              </Button>
-            </DialogFooter>
-          </>
-        )}
+        <DialogHeader>
+          <DialogTitle>¿Eliminar el equipo {equipo.nombre}?</DialogTitle>
+          <DialogDescription>
+            {consecuenciasTexto(consecuencias)}
+          </DialogDescription>
+        </DialogHeader>
+        {error ? (
+          <ErrorEnPantalla titulo="No se eliminó">{error}</ErrorEnPantalla>
+        ) : null}
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="secondary">
+              Cancelar
+            </Button>
+          </DialogClose>
+          <Button
+            type="button"
+            variant="danger"
+            loading={borrando}
+            loadingLabel="Eliminando…"
+            onClick={confirmar}
+          >
+            <Trash2 aria-hidden="true" />
+            Eliminar
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

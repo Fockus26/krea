@@ -338,6 +338,11 @@ export const zEntrega = z
     tipo: z.enum(TIPOS_TAREA),
     /** Cédula (individual) o id del equipo (grupal). */
     titularId: z.string().min(1),
+    /**
+     * Nombre del equipo cuando se eliminó (D308): solo en una grupal cuyo equipo ya no existe.
+     * Quien la muestra usa el equipo vivo; si no, esto; si no, `TITULAR_DESCONOCIDO`.
+     */
+    titularNombre: z.string().min(1).optional(),
     seccion: zSeccion,
     /**
      * Quiénes reciben la nota: el alumno, o los integrantes del equipo al entregar (foto fija:

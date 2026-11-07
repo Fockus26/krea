@@ -180,17 +180,31 @@ export function notasDelAlumno(
   return [...evaluadas, ...pendientes];
 }
 
+/**
+ * Equipo que se nombra en una fila grupal: el de la entrega (D308) — su equipo actual si es el
+ * mismo; si el equipo se eliminó, el nombre que tenía (`titularNombre`). Sin entrega, el equipo
+ * actual (con él la entregará). Una entrega de otro equipo que sigue vivo no lo nombra.
+ */
+function equipoDeFila(
+  n: NotaAlumno,
+  equipo: Pick<ConId<Equipo>, "id" | "nombre"> | null,
+): string | undefined {
+  if (n.tarea.tipo !== "grupal") return undefined;
+  if (!n.entrega || n.entrega.titularId === equipo?.id) return equipo?.nombre;
+  return n.entrega.titularNombre;
+}
+
 function filaNota(
   n: NotaAlumno,
   base: number,
-  equipoNombre: string | undefined,
+  equipo: Pick<ConId<Equipo>, "id" | "nombre"> | null,
 ): FilaNota {
   return {
     id: n.tarea.id,
     href: `/notas/${n.tarea.id}`,
     titulo: n.tarea.titulo,
     tipo: n.tarea.tipo,
-    detalle: n.tarea.tipo === "grupal" ? equipoNombre : undefined,
+    detalle: equipoDeFila(n, equipo),
     fecha: n.fecha ? fechaNotaTexto(n.nota !== null, n.fecha) : "sin fecha",
     nota: n.nota,
     // La base escala también las grupales, por integrante (D177)
@@ -202,9 +216,7 @@ function filaNota(
 export function filasMisNotas(
   d: Pick<DatosAlumno, "usuario" | "equipo" | "tareas" | "entregas">,
 ): FilaNota[] {
-  return notasDelAlumno(d).map((n) =>
-    filaNota(n, d.usuario.base, d.equipo?.nombre),
-  );
+  return notasDelAlumno(d).map((n) => filaNota(n, d.usuario.base, d.equipo));
 }
 
 /* ---------- Detalle de nota ---------- */
@@ -503,7 +515,7 @@ export function inicioVista(
     notas: notas
       .filter((n) => n.nota !== null)
       .slice(0, NOTAS_EN_INICIO)
-      .map((n) => filaNota(n, u.base, d.equipo?.nombre)),
+      .map((n) => filaNota(n, u.base, d.equipo)),
     pendientes: filasPorEntregar(d),
     equipo,
   };

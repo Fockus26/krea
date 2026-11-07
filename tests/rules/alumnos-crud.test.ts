@@ -1,4 +1,4 @@
-// Alta y baja de alumnos y gestión de equipos contra los emuladores (W12, D267–D271): las
+// Alta y baja de alumnos y gestión de equipos contra los emuladores (W12, D267–D270, D307): las
 // transacciones reales del Admin SDK que usan las Server Actions de Alumnos y Equipos. Datos
 // propios en 5A (cédulas 3975xxxx, equipos `w12-…`) para no cruzarse con las demás pruebas.
 import { beforeAll, describe, expect, test } from "bun:test";
@@ -28,10 +28,12 @@ import {
   type Equipo,
   idEntrega,
   type Usuario,
+  zEntrega,
   zEquipo,
   zRankingSeccion,
   zUsuario,
 } from "@/lib/modelo";
+import { notaDeIntegrante } from "@/lib/ranking-datos";
 
 const PROYECTO = process.env.GCLOUD_PROJECT ?? "demo-krea";
 const app = () => getAdminApps()[0] ?? initAdmin({ projectId: PROYECTO });
@@ -48,6 +50,9 @@ const E_LLENO = "w12-lleno";
 const E_CON_ENTREGA = "w12-con-entrega";
 const E_CON_AJUSTE = "w12-con-ajuste";
 const E_OTRA = "w12-otra-seccion";
+const E_DISOLVER = "w12-disolver";
+const D1 = "39750004"; // capitán de E_DISOLVER
+const D2 = "39750005";
 
 const alumno = (cedula: string, equipoId: string | null): Usuario => ({
   cedula,
@@ -345,7 +350,7 @@ describe("eliminar alumno (D268, D269)", () => {
   });
 });
 
-describe("equipos (D270, D271)", () => {
+describe("equipos (D270, D307–D309)", () => {
   let creado = "";
 
   test("crea un equipo sin capitán ni logo y lo suma al ranking", async () => {
@@ -406,22 +411,108 @@ describe("equipos (D270, D271)", () => {
     expect((await ranking()).equipos[creado]?.nombre).toBe("W12 Renombrado");
   });
 
-  test("no se elimina con integrantes, con entregas grupales ni con ajustes", async () => {
-    const motivo = async (id: string) =>
-      (await eliminarEquipoEnTransaccion(db(), id, AHORA)).resultado;
-    expect(await motivo(E_LLENO)).toEqual({ ok: false, error: "integrantes" });
-    expect(await motivo(E_CON_ENTREGA)).toEqual({
-      ok: false,
-      error: "entregas",
+  test("con integrantes, entregas y ajustes también se elimina: se deshace todo (D307)", async () => {
+    // Datos propios: 2 integrantes, 1 grupal evaluada, 1 ajuste del equipo y 1 de un alumno
+    const b = db().batch();
+    b.set(db().collection(COL.usuarios).doc(D1), alumno(D1, E_DISOLVER));
+    b.set(db().collection(COL.usuarios).doc(D2), alumno(D2, E_DISOLVER));
+    b.set(
+      db().collection(COL.equipos).doc(E_DISOLVER),
+      equipo("W12 Disolver", D1),
+    );
+    b.set(db().collection(COL.entregas).doc(idEntrega("w12-g2", E_DISOLVER)), {
+      ...grupal("w12-g2", E_DISOLVER),
+      integrantes: [D1, D2],
+      enviadaPor: D1,
     });
-    expect(await motivo(E_CON_AJUSTE)).toEqual({ ok: false, error: "ajustes" });
-    for (const id of [E_LLENO, E_CON_ENTREGA, E_CON_AJUSTE])
-      expect(await existe(COL.equipos, id)).toBe(true);
+    b.set(
+      db().collection(COL.ajustes).doc("w12-aj-disolver"),
+      ajuste("equipo", E_DISOLVER),
+    );
+    b.set(db().collection(COL.ajustes).doc("w12-aj-d1"), ajuste("alumno", D1));
+    await b.commit();
+    await incorporarAlumnoEnTransaccion(db(), D2, E_DISOLVER, AHORA);
+    const antes = await ranking();
+    expect(antes.equipos[E_DISOLVER]?.puntos).toBeGreaterThan(0);
+    const puntosD1 = antes.alumnos[D1]?.puntos;
+    expect(puntosD1).toBeGreaterThan(0);
+
+    const r = await eliminarEquipoEnTransaccion(db(), E_DISOLVER, AHORA + 9);
+    expect(r.resultado).toEqual({ ok: true, id: E_DISOLVER });
+    expect(r.afectados.sort()).toEqual([D1, D2]);
+    expect(await existe(COL.equipos, E_DISOLVER)).toBe(false);
+
+    // Integrantes «Sin equipo»
+    for (const c of [D1, D2]) {
+      const u = zUsuario.parse(
+        (await db().collection(COL.usuarios).doc(c).get()).data(),
+      );
+      expect(u.equipoId).toBeNull();
+      expect(u.actualizadoEn).toBe(AHORA + 9);
+    }
+
+    // La entrega se queda intacta con el nombre del equipo
+    const g = zEntrega.parse(
+      (
+        await db()
+          .collection(COL.entregas)
+          .doc(idEntrega("w12-g2", E_DISOLVER))
+          .get()
+      ).data(),
+    );
+    expect(g.titularNombre).toBe("W12 Disolver");
+    expect(g.titularId).toBe(E_DISOLVER);
+    expect(g.integrantes).toEqual([D1, D2]);
+    expect(g.evaluacion?.puntaje).toBe(16);
+
+    // El ajuste del equipo se borra; el del alumno, no
+    expect(await existe(COL.ajustes, "w12-aj-disolver")).toBe(false);
+    expect(await existe(COL.ajustes, "w12-aj-d1")).toBe(true);
+
+    // Ranking: sin el equipo; los alumnos conservan sus puntos y quedan sin equipo
+    const despues = await ranking();
+    expect(despues.actualizadoEn).toBe(AHORA + 9);
+    expect(despues.equipos[E_DISOLVER]).toBeUndefined();
+    expect(despues.alumnos[D1]).toMatchObject({
+      equipoId: null,
+      puntos: puntosD1,
+    });
+
+    // Su nota en la grupal sigue saliendo: la busca por `integrantes`, como el DAL
+    const suyas = await db()
+      .collection(COL.entregas)
+      .where("integrantes", "array-contains", D2)
+      .get();
+    const deD2 = suyas.docs.map((d) => zEntrega.parse(d.data()));
+    const nota = deD2.find((e) => e.tareaId === "w12-g2");
+    expect(nota && notaDeIntegrante(nota, 20)).toBe(16);
+  });
+
+  test("con solo entregas o solo ajustes, igual: la entrega se queda y el ajuste se va", async () => {
+    for (const id of [E_CON_ENTREGA, E_CON_AJUSTE]) {
+      const r = await eliminarEquipoEnTransaccion(db(), id, AHORA);
+      expect(r.resultado).toEqual({ ok: true, id });
+      expect(r.afectados).toEqual([]);
+      expect(await existe(COL.equipos, id)).toBe(false);
+    }
+    const g = (
+      await db()
+        .collection(COL.entregas)
+        .doc(idEntrega("w12-g1", E_CON_ENTREGA))
+        .get()
+    ).data() as Entrega;
+    expect(g.titularNombre).toBe("W12 Con entrega");
+    expect(g.evaluacion?.puntaje).toBe(16);
+    expect(await existe(COL.ajustes, "w12-aj-equipo")).toBe(false);
   });
 
   test("un equipo vacío se elimina y sale del ranking; repetir: no existe", async () => {
     const r = await eliminarEquipoEnTransaccion(db(), creado, AHORA);
-    expect(r).toEqual({ resultado: { ok: true, id: creado }, logo: null });
+    expect(r).toEqual({
+      resultado: { ok: true, id: creado },
+      logo: null,
+      afectados: [],
+    });
     expect(await existe(COL.equipos, creado)).toBe(false);
     expect((await ranking()).equipos[creado]).toBeUndefined();
     expect(
