@@ -29,3 +29,9 @@
 - (tanda 11-06 W6, decisión de César) Borrador grupal compartido en Firestore para que los integrantes vean las respuestas antes del envío (hoy solo en localStorage del capitán, D196/D249).
 - (tanda 11-06 W1, baja) `sincronizarClaims` (`lib/firebase/equipos.ts`) mezcla claims viejas con las del perfil: una marca quitada solo del perfil seguiría en las claims.
 - (tanda 11-06 W1, baja) `CedulaInput` fija `autoComplete="username"`: en «Nuevo profesor» el navegador puede sugerir la cédula del admin.
+
+- (tanda 11-06, W10) `autoGrow` del Textarea en los otros campos libres: `question-card-answer`, `question-card-review`, `edit-student-dialog`, `question-editor`.
+- (tanda 11-06, W11) El alumno no ve en ningún lado que ganó un premio individual (calcularlo en el servidor con las notas de la sección).
+- (tanda 11-06, W11) Galerías `lib/demo/entrega.ts:123`, `evaluar.ts:412`, `tareas-profe.ts:138` siguen filtrando el premio a solo grupal.
+- (tanda 11-06, W12) `task-builder.tsx:466` y `teacher-task-list.tsx:211` usan `disabled`+`aria-busy` a mano en vez de `loading` (D285).
+- (tanda 11-06, W12) `tests/rules/firestore.test.ts` tiene el puerto 8080 fijo.

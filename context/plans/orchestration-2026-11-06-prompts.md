@@ -1,8 +1,8 @@
-# Prompts — orquestación 2026-11-06 (ola 1: W1–W8)
+# Prompts — orquestación 2026-11-06 (ola 1: W1–W8 · ola 2: W9–W13 + W17)
 
 > Brief compartido: `C:\Users\Cesar\Documents\Work\krea\context\plans\orchestration-2026-11-06.md` (léelo primero).
 > Decisiones: léelas **en tu slot** (`context/decisions/`), que está sobre `origin/main`.
-> Los prompts de la ola 2 (W9–W13) y 3 (W14–W16) los escribe la sesión de esa ola.
+> Los prompts de la ola 3 (W14–W16) los escribe la sesión de esa ola.
 
 ---
 
@@ -396,3 +396,379 @@ Alumnos), D115 («Ver notas» lleva a Alumnos), D170 (búsqueda vacía), D003.
 
 ### Cierre
 PR «feat: Alumnos filtrable por URL; el Panel y Ver notas llegan filtrados».
+
+---
+
+# Ola 2 (W9–W13 + W17)
+
+> main de partida: `67783e4` (ola 1 mergeada, #78–#85). Decisiones visuales de César (2026-11-06, ola 2):
+> zona de riesgo = **cinta de precaución** con duelo «VS» en empates; top 3 = **podio que brilla + confeti
+> al entrar**; Puntos = **una columna**; píldora (22) = **oscurecer los extremos** para que ahí el número sea blanco.
+
+---
+
+## W9 — `feat/ranking-celebracion`
+
+Worker **W9**. Rama `feat/ranking-celebracion`. Decisiones **D255–D259**. Checklist **142–144**.
+Modelo · esfuerzo: **sonnet · medium**. Docker: **no**.
+
+Decisiones que te restringen: D011 (ranking en vivo y animaciones), D051 (lista con separador de
+riesgo), D052 (`rankCompetition`, el podio no recalcula), D128 (topbar móvil y chip «En vivo»),
+D190 (ranking en vivo), D252–D254 (URL de Alumnos y ficha por URL), D001 (acento variable).
+
+### Lo que pide César
+> 10. «Desde el Ranking, al tocar un alumno se ve su perfil.»
+> 15. «El texto "Menor de 10 suma 0" centrado con el chip.»
+> 16. «La zona de riesgo animada y divertida.»
+> 17. «"Zona de riesgo" sin "· 5 últimos"; VS en los empates.»
+> 18. «En Equipos, en riesgo solo el último.»
+> 19. «Un top 3 de celebración.»
+> 20. «Quitar "En vivo".»
+
+Decisiones de César: clic en un alumno → el **profe** va a `rutaAlumnos({ alumno: <cédula>, seccion })`
+(`lib/alumnos.ts:238`, abre la ficha, D254); el **estudiante** ve una **tarjeta de solo lectura** del
+compañero (avatar, nombre, equipo, puesto, puntos; **nunca notas**). Visual elegido: **cinta de
+precaución** (rayas diagonales de peligro que se deslizan despacio + ícono de alerta que tiembla; los
+empates dentro de la zona salen como duelo, avatares enfrentados con un «VS» que late) y **podio que
+brilla + confeti al entrar** (destello que recorre las medallas, corona que se balancea en el 1.º,
+rebote corto de los avatares al cargar, y una lluvia corta de confeti en colores del acento sobre el
+podio **una vez por sesión** — `sessionStorage` con try/catch).
+
+### Dónde está
+- `lib/ranking.ts:5-6` `ZONA_RIESGO = 5`; `:37-61` cálculo de `enRiesgo` (borde con empates).
+- `lib/rank-row.ts:6` `RIESGO_SEPARADOR = "Zona de riesgo · 5 últimos"`; `:16-19` tipo de fila; `:84-89` `splitRiesgo`; `:96-106` anuncios (podio / riesgo).
+- `components/krea/rank-list.tsx` (separador y dos `<ol>`), `components/krea/rank-row.tsx` (fila), el podio: `grep -rn "function Podium" components`.
+- `components/sections/ranking/ranking-board.tsx:52-73` (podio + lista), `ranking-en-vivo.tsx`, `ranking-header.tsx:13-45` (chip «En vivo» ≥ 1024), `components/layout/top-bar.tsx:18,46` (`enVivo` en móvil) y `app/(estudiante)/ranking/_ranking.tsx:18`, `app/(profesor)/profe/ranking/_ranking.tsx:26` (quién pasa `enVivo`).
+- `components/sections/ranking/ranking-rules.tsx:16,35` + `lib/ranking-vista.ts:207` («Una nota menor de 10 suma 0.» junto a su chip de ejemplo).
+- `app/globals.css:310` `--d-live`, `:1222` onda del punto (lo que sobre al quitar «En vivo»).
+- Vista Equipos: `lib/ranking-vista.ts` (`Vista`) y donde se arma `enRiesgo` para equipos (`grep -rn "enRiesgo" lib components`).
+- Galería: `app/componentes/_familias/ranking.tsx`, `ranking-datos.tsx` (actualiza los ejemplos).
+
+### Enfoque decidido
+- **18:** el tamaño de la zona depende de la vista: estudiantes 5, equipos **1** (el último puesto, con
+  sus empatados). Parámetro en la función pura de `lib/ranking.ts`, no un `if` en el componente. Tests.
+- **17:** el separador dice solo «Zona de riesgo» (las dos vistas). **VS:** dentro de la zona, las filas
+  consecutivas con el mismo puesto se pintan como duelo: cada fila sigue siendo un `<li>` con su nombre
+  accesible (que ya dice «Empate»), y entre ellas un conector «VS» decorativo (`aria-hidden`). Fuera de
+  la zona los empates siguen como hoy.
+- **16:** cinta de rayas en el separador: una capa con `repeating-linear-gradient` de tokens (`--error` /
+  `--warning` o los que haya; sin hex) **movida con `transform: translateX`** en un pseudo-elemento con
+  `overflow: hidden` — nunca animes `background-position` (CLAUDE.md: solo `transform`/`opacity`). Ícono
+  de alerta con un temblor corto (`rotate`). `prefers-reduced-motion: reduce` → todo quieto (rayas
+  fijas, «VS» fijo). Duraciones con tokens `--d-*` existentes o nuevos en `globals.css` registrados en
+  una decisión.
+- **19:** sobre el `Podium` existente: destello (`opacity`/`translate` de un brillo dentro de la medalla),
+  corona en el 1.º (ícono `Crown` de lucide, balanceo `rotate`), rebote de avatares al montar, y confeti:
+  componente cliente propio (sin librería nueva) de ~30 piezas con `transform`/`opacity`, colores
+  `--accent` y derivados, ~2 s, `pointer-events: none`, `aria-hidden`, una vez por sesión y por vista;
+  con reduced motion no se monta. Sin saltos de layout (el confeti es `absolute`/`fixed`).
+- **20:** quitar el chip «En vivo» de `ranking-header` y de la topbar móvil (y la prop `enVivo` si queda
+  sin uso; el punto/onda en CSS si queda huérfano). El ranking **sigue** en vivo (D190): solo se quita el
+  rótulo. Repasa el anunciador (`rank-announcer.tsx`) por si citaba «en vivo».
+- **15:** el texto de la regla y su chip de ejemplo alineados al centro vertical (`items-center`) en
+  `ranking-rules.tsx` y en `ranking-how-to.tsx` si tiene la misma anatomía (regla 16).
+- **10:** filas de **estudiantes** (lista y podio) se vuelven interactivas: profe → `<Link>` a
+  `rutaAlumnos({ alumno, seccion })`; estudiante → botón que abre un `Dialog` (shadcn del proyecto) con
+  la tarjeta de solo lectura: avatar, nombre, equipo, puesto, puntos. Los datos salen de lo que ya trae
+  el ranking (si falta el nombre del equipo, de los equipos que la página ya lee); **ninguna lectura de
+  notas** nueva y nada de reglas nuevas. La fila propia del alumno también abre la tarjeta. Vista
+  Equipos: sin cambio. Foco visible en la fila, `Enter`/`Space`, el diálogo devuelve el foco. Sin
+  interactivos anidados, y las actualizaciones en vivo no cierran el diálogo abierto.
+
+### Trampas conocidas
+- El podio y la lista se re-renderizan con `onSnapshot`: el confeti y el rebote van **al montar**, no en
+  cada actualización (una `ref`/`sessionStorage`), y la tarjeta abierta se mantiene si la fila se mueve.
+- 320 px: la cinta y el duelo VS no causan scroll horizontal (`overflow-hidden`, `min-w-0`).
+- No dependas del color: la zona tiene el texto «Zona de riesgo»; el VS es texto.
+- 4 acentos × claro/oscuro: el confeti usa el acento; la cinta usa tokens de estado con contraste ≥ 3:1
+  contra el fondo como elemento gráfico.
+
+### Cómo verificar
+- Tests puros: zona por vista (5 / 1 con empates en el borde), agrupado de empates para el VS, texto del
+  separador, «una vez por sesión» si lo sacas a una función pura.
+- a11y por código: rol y nombre de las filas interactivas, diálogo con título, reduced motion.
+
+### Cierre
+PR «feat: ranking con zona de riesgo animada, duelo VS, podio que celebra y perfil del alumno».
+Copy nuevo (títulos de la tarjeta, aria) marcado `PROVISIONAL (filas 142–144)`.
+
+---
+
+## W10 — `feat/puntos-formulario`
+
+Worker **W10**. Rama `feat/puntos-formulario`. Decisiones **D260–D262**. Checklist **145**.
+Modelo · esfuerzo: **sonnet · medium**. Docker: **no**.
+
+Decisiones: D007 (nota ≠ puntos, todo ajuste lleva motivo), D252–D254 (URL de Alumnos), las de Puntos
+(`grep -rhi "^# D.*puntos\|^# D.*ajuste\|^# D.*historial" context/decisions/`).
+
+### Lo que pide César
+> 11. «En el Historial de Puntos, al tocar el alumno se va a su perfil; quitar "Ajuste del Excel".»
+> 27. «En Puntos, el Detalle es un textarea que crece con el texto, y arreglar la disposición.»
+
+Visual elegido por César (27): **una columna** — Motivo → Puntos → Detalle a todo el ancho, uno
+debajo del otro; luego vista previa y «Aplicar ajuste».
+
+### Dónde está
+- `components/sections/puntos/adjustment-form.tsx:295-403`: hoy Puntos y Detalle comparten una fila
+  `flex-wrap` (`:295`); el `Textarea` `rows={2} compact` (`:395-401`).
+- `components/ui/textarea.tsx` (¿ya soporta crecer? `field-sizing: content` o autoajuste).
+- `components/sections/puntos/adjustment-history.tsx:211` nombre del destino en la fila; `lib/puntos.ts`
+  (`FilaHistorial`, `filtrarHistorial`, `motivoTexto:323`, `MOTIVOS_FILTRO:479`).
+- Ajustes del Excel: `lib/seed-firestore.ts:227-233` (`motivoId: "importado"`, motivo «Ajuste del
+  Excel»); dónde se arman las filas del historial: `grep -rn "FilaHistorial" lib`.
+- `rutaAlumnos` en `lib/alumnos.ts:238`.
+
+### Enfoque decidido
+- **27:** una columna en todos los anchos (`flex-col gap-6`, como el resto del form). El Textarea del
+  Detalle crece con el contenido: `field-sizing: content` con `min-height` de 2 líneas y un `max-height`
+  con scroll (tokens); si el navegador no lo soporta, fallback por JS mínimo en el componente
+  `Textarea` (prop `autoGrow`), reutilizable. Repasa los otros textarea (regla 16): si alguno es un
+  campo de texto libre parecido, dilo en el informe; no los cambies salvo el de Puntos.
+- **11a:** el nombre del destino en cada fila del Historial es un enlace a
+  `rutaAlumnos({ alumno: <cédula>, seccion })` cuando el destino es un alumno; si es un equipo, a
+  `/profe/equipos/<seccion>` si existe esa ruta, si no, sin enlace. El menú de la fila no cambia.
+- **11b:** las filas con `motivoId: "importado"` («Ajuste del Excel») **no se muestran** en el Historial
+  ni cuentan en sus filtros; **siguen contando** en los puntos (no se borra nada). Alternativa en el PR:
+  borrarlas (cambiaría puntos — no lo hagas).
+
+### Trampas conocidas
+- No toques `lib/firebase/ajustes.ts` (anulación) más que para leer.
+- El enlace dentro de una fila con menú: dos destinos de foco distintos, sin anidar interactivos.
+
+### Cómo verificar
+- Tests puros del filtro (importado fuera, el resto igual) y del destino del enlace.
+- a11y: el textarea a 200 % y 320 px, label asociado, error anunciado como antes.
+
+### Cierre
+PR «feat: Puntos en una columna con Detalle que crece y el Historial lleva al alumno».
+
+---
+
+## W11 — `feat/premios`
+
+Worker **W11**. Rama `feat/premios`. Decisiones **D263–D266**. Checklist **146–147**.
+Modelo · esfuerzo: **opus · medium** (cambia la forma guardada de la tarea y sube archivos). Docker: **no**.
+
+Decisiones: D012, D086, D123, D124 (empates de premio), D201 (premio por sección), D174 (modelo),
+D175 (escrituras en el servidor), D194 (imágenes en B2), D212 (logos firmados), D246–D247 (pegar /
+arrastrar imagen), D242–D245 (constructor tras W4).
+
+### Lo que pide César
+> 7. «Poder crear premios; que también haya premio en tareas individuales.»
+> 8. «Fotos del premio.»
+
+Decisión de César: premio en tarea individual **opcional**; lo gana **la mejor nota de cada sección**;
+empate → el profe da a uno o comparte (igual que la grupal).
+
+### Dónde está
+- `lib/modelo.ts:169-213`: `zDecisionPremio` (`dar` con `equipoId` / `compartir`), `zDecisionesPremio`,
+  `premioSoloGrupal` (hoy prohíbe premio en individual), `zTarea.premio`; `:245-251` la otra forma
+  que usa `premioSoloGrupal`.
+- `lib/premios.ts` (tarjetas, `estadoPremio:64`, `resolverEmpate:113`, textos); `lib/equipo.ts:26`
+  `ganadorPremio`; `lib/tareas-profe-datos.ts:478` `tarjetasPremios`.
+- `app/(profesor)/profe/premios/page.tsx`, `components/sections/premios/prizes-board.tsx`,
+  `prize-card-teacher.tsx`; `lib/acciones/tareas.ts` (`decidirPremio`).
+- Constructor: `components/sections/tareas-profe/task-builder.tsx:601-604` (campo premio).
+- Estudiante: `app/(estudiante)/equipo/page.tsx`, `app/(estudiante)/tareas/[tarea]/page.tsx`,
+  `lib/vistas-estudiante.ts`, `lib/datos/estudiante.ts` (dónde ve el premio).
+- Subida: patrón del logo de equipo — `lib/acciones/equipos.ts:79` `subirLogoEquipo`,
+  `lib/almacen/imagen.ts:36-71` (`validarLogoSubido`, `claveLogo`), `lib/almacen/s3.ts` (URL firmada),
+  `components/krea/image-upload.tsx` + `lib/image-entrada.ts` (pegar / arrastrar / explorar, W5).
+
+### Formas (fíjalas así)
+- `zTarea.premio` sigue `texto(200).nullable()`; se quita la restricción `premioSoloGrupal` (individual
+  puede llevar premio). Nuevo `premioFoto: z.string().nullable().optional()` = clave B2 (ausente/null =
+  sin foto), validada con `esClaveValida`.
+- `zDecisionPremio` gana la variante `{ tipo: "darAlumno", alumnoId: zCedula }` (la de equipo no
+  cambia: los datos guardados siguen válidos). Todos los `switch` sobre `tipo` la cubren.
+
+### Enfoque decidido
+- **Individual:** ganador = mejor nota de la sección entre los alumnos evaluados (función pura junto a
+  `ganadorPremio`, mismos estados: por definir / ganado / empate / compartido). En Premios la tarjeta
+  muestra al alumno ganador; el empate se decide con `decidirPremio` extendido (`darAlumno`).
+- **Crear premios:** en Premios, botón «Crear premio» → diálogo: elegir una tarea (grupal o individual,
+  sin premio, no cerrada) + texto del premio + foto opcional; guarda con una Server Action nueva
+  (`exigirSesion("profesor")`, zod, `refresh()`). En el constructor el campo premio aparece también en
+  individuales. Editar/quitar el premio desde la tarjeta (menú existente) si cabe sin rediseñar; si no,
+  «Editar» lleva al constructor como hoy.
+- **Foto:** subida con `image-upload` (pegar/arrastrar/explorar), validación como el logo (tipo y peso;
+  `validarLogoSubido` o una variante `validarFotoPremio`), clave `premios/<tareaId>/<uuid>.<ext>`;
+  se muestra **firmada** (URL de `s3.ts`, como los logos, D212) en la tarjeta del profe y donde el
+  estudiante ve el premio; `alt` = el texto del premio. Reemplazar la foto borra la vieja (best effort).
+- Sin B2 configurado (`almacenB2()` null): la foto no se ofrece y se dice por qué; el resto funciona.
+
+### Trampas conocidas
+- `firebase/firestore.rules`: si el estudiante lee `premioFoto` de la tarea por cliente, no hace falta
+  regla nueva (es un campo más); la URL firmada la da el servidor. Si tocas reglas, `bun run test:rules`.
+- Tareas importadas del Excel y cerradas: siguen sin tarjeta (`tarjetasPremios:478`).
+- Doble envío del diálogo: `disabled` mientras vuela; la acción no duplica (es un `update` del doc).
+- W12 (en paralelo) borra alumnos: si un `darAlumno` apunta a un alumno que ya no existe, la tarjeta
+  vuelve a «por definir» (no rompe). Pruébalo puro.
+
+### Cómo verificar
+- Tests puros: ganador individual (único, empate, sin evaluadas), `zTarea` con premio individual y
+  `premioFoto`, `zDecisionPremio` con `darAlumno`, datos viejos aún válidos.
+- Validación de la foto y la clave. a11y del diálogo y la imagen.
+
+### Cierre
+PR «feat: premios en tareas individuales, crear premios y foto del premio». Acción manual si la hay
+(CORS del bucket, permisos de la clave B2 para `premios/`).
+
+---
+
+## W12 — `feat/alumnos-crud`
+
+Worker **W12**. Rama `feat/alumnos-crud`. Decisiones **D267–D271**. Checklist **148–149**.
+Modelo · esfuerzo: **opus · high** (cuentas, borrado con datos, ranking recalculado en transacción).
+Docker: **no** (emuladores con Java sí).
+
+Decisiones: D008, D174, D175, D180, D209 (editar alumno), D210 (mover de equipo revoca sesión), D012
+(capitán), D231–D235 (cuentas y contraseña temporal, W1), D252–D254 (URL de Alumnos).
+
+### Lo que pide César
+> 3. «Que los profesores puedan crear, editar y eliminar alumnos, grupos (equipos) y capitanes.»
+
+Decisiones de César: cuenta nueva con **contraseña temporal mostrada una sola vez** (como W1);
+**eliminar alumno con datos: se borra todo** (cuenta, notas individuales, ajustes), **ranking
+recalculado**; en grupales entregadas el equipo **conserva** su nota. La confirmación dice **cuántas
+notas** se pierden.
+
+### Dónde está
+- `lib/cuentas.ts:25` `crearCuenta(entrada)` y `:35` `eliminarCuenta(cedula)` (W1; genérica por rol:
+  estudiante con `seccion`, `equipoId: null`, `base: 20`). Patrón de UI: la pantalla Profesores de W1
+  (`app/(profesor)/profe/profesores/`, `components/sections/profesores/`, `lib/acciones/profesores.ts:22-66`),
+  diálogo de la contraseña temporal incluido: **reutilízalo** (sácalo a un componente compartido si hoy
+  vive dentro de profesores).
+- Alumnos: `app/(profesor)/profe/alumnos/page.tsx`, `components/sections/alumnos/students-directory.tsx`,
+  `students-table.tsx`, `edit-student-dialog.tsx` (W14 en la ola 3 va sobre este diálogo: déjalo limpio),
+  `lib/acciones/alumnos.ts:13` `editarAlumno`.
+- Equipos: `app/(profesor)/profe/equipos/[seccion]`, `components/sections/equipos-profe/*`
+  (`teams-board.tsx:188` `TeamsHeader`, `member-menu.tsx`, `unassigned-card.tsx`), `lib/acciones/equipos.ts:33,58`
+  (`moverAlumnoDeEquipo`, `cambiarCapitanDeEquipo`), `lib/equipos-datos.ts:165` (cambios + ranking en la
+  misma transacción), `lib/firebase/ranking.ts:91` `escribirRankingEnTx`.
+- `rutaAlumnos` `lib/alumnos.ts:238` (tras crear, abrir la ficha con `?alumno=`).
+
+### Enfoque decidido
+- **Alumnos:** «Agregar alumno» en Alumnos (cédula, nombres, apellidos, sección, email opcional,
+  equipo opcional) → `crearCuenta` + diálogo de contraseña temporal; luego la ficha abierta. Editar ya
+  existe (D209). **Eliminar** desde la ficha: confirmación que dice «Se borrarán N notas individuales y
+  M ajustes» (contados en el servidor antes de confirmar, acción de solo lectura) → acción que en
+  **una transacción** borra entregas/notas individuales del alumno y sus ajustes, lo saca de su equipo
+  (si era capitán, el equipo queda sin capitán y la UI lo marca), y reescribe el ranking de la sección
+  (`escribirRankingEnTx`); después `eliminarCuenta` (Auth + `usuarios` + `privados`). Las entregas
+  grupales no se tocan. Idempotente: un segundo intento sobre un alumno ya borrado responde «ya no existe».
+- **Equipos:** crear (nombre, tema si el modelo lo pide; sección de la página), renombrar y eliminar
+  (solo si está vacío **y** sin entregas grupales; si no, el botón dice por qué). Capitanes: ya existe
+  `cambiarCapitanDeEquipo`; añade «quitar capitán» si el modelo lo admite (D012: el capitán es quien
+  envía; sin capitán nadie envía — dilo en la UI).
+- Todas las acciones: `exigirSesion("profesor")`, zod con `.trim().min(1)`, nunca un uid del body para
+  la sesión, `refresh()` al terminar, `disabled` mientras vuela, rechazan destinos con `rol: "profesor"`.
+
+### Trampas conocidas
+- Firestore: una transacción ≤ 500 escrituras; un alumno tiene pocas, pero cuenta y falla claro si pasa.
+  Lee todo antes de escribir (reglas de transacción).
+- Mover/quitar de equipo revoca la sesión del alumno (D210): mismo trato al borrarlo.
+- W11 (en paralelo) añade premios individuales con `darAlumno`: no toques `zDecisionPremio`; un premio
+  ganado por el alumno borrado no se reescribe (W11 lo cubre).
+- La cédula es el uid (D174): no se edita; crear con una que existe → «Ya existe una cuenta con esa cédula».
+
+### Cómo verificar
+- Tests puros (conteo de lo que se borra, validaciones) y **emuladores**: crear alumno, borrarlo con
+  notas y ajustes, ranking recalculado, grupal intacta (`tests/rules/` o archivo propio con
+  `firebase emulators:exec`). `bun run test:rules` si tocas reglas.
+
+### Cierre
+PR «feat: profes crean, editan y eliminan alumnos, equipos y capitanes». «Cómo probar»: profe crea
+alumno (temporal), primer ingreso, eliminar con notas (conteo), crear/eliminar equipo, capitán.
+
+---
+
+## W13 — `feat/mensaje-diario`
+
+Worker **W13**. Rama `feat/mensaje-diario`. Decisiones **D272–D274**. Checklist **150–153**.
+Modelo · esfuerzo: **sonnet · medium**. Docker: **no**.
+
+Decisiones: D133 (saludo por la hora del profe), D098 (el prerender no lee el reloj), D004 (escala de
+color), D003 (Pendiente), las de Inicio (`grep -rhi "^# D.*inicio\|^# D.*saludo" context/decisions/`).
+
+### Lo que pide César
+> 25. «En la bienvenida, "profe César".»
+> 36. «En la leyenda de colores, que se vea dónde está el alumno.»
+> 37. «Un mensaje diario según la nota.»
+
+### Dónde está
+- `lib/panel.ts:22` `NOMBRE_SALUDO_PROFE = "profe"`, `:38-43` `saludoTexto(hora, nombre)`;
+  `components/sections/profe-panel/panel-con-hora.tsx:25`, `panel-header.tsx`; `app/(profesor)/profe/page.tsx`.
+- Inicio del estudiante: `lib/vistas-estudiante.ts:474-480` (`saludo`: eyebrow, título, línea),
+  `lib/inicio.ts:10` `lineaPendientes`, `components/sections/inicio/*`, `lib/demo/inicio.ts:99`.
+- Leyenda: `components/sections/notas/grade-legend.tsx` (barra con `escalaDegradado()`, marcas 1/10/20,
+  `MARCA_10_PCT` en `lib/notas.ts`); la usan `app/(estudiante)/notas/page.tsx:20` y `app/secciones/notas/page.tsx:24`.
+
+### Enfoque decidido
+- **25:** el saludo del Panel usa el nombre del profe con sesión: «Buenos días, profe César» = `profe` +
+  primer nombre de `usuarios/{cedula}.nombres`. Sin nombre → «profe» como hoy. Función pura en `lib/panel.ts`.
+- **36:** en la leyenda, un marcador sobre la barra en la posición del **promedio** del alumno (la misma
+  cuenta que ya muestre Mis notas; sin notas evaluadas → sin marcador y nada roto), con texto visible
+  «Tú: 15,5» (coma decimal) y el valor en el `aria-label` de la barra. Posición con la misma fórmula que
+  `MARCA_10_PCT` (función pura `posicionEnEscala(n)`). La leyenda recibe el dato por props; la galería
+  `/secciones` pasa uno de ejemplo.
+- **37:** en Inicio del estudiante, una línea/card «Mensaje del día» elegida por la banda de su promedio
+  (raspado < 10, 10–13,5, 14–16,5, 17–20, sin notas) y por el **día** (índice = día del año módulo la
+  cantidad de mensajes de la banda), así cambia cada día y no cada recarga. El día sale del servidor en
+  la zona `America/Caracas` en tiempo de petición (no en prerender: D098 — mira cómo `panel-con-hora`
+  evita leer el reloj en el prerender y haz lo equivalente). Mensajes en `lib/mensaje-diario.ts`, cálidos y
+  justos (tono del proyecto), 3–5 por banda, **todos `PROVISIONAL (filas 150–153)`**; nunca culpan al
+  alumno raspado. Sin animaciones nuevas (W15 las hace).
+
+### Trampas conocidas
+- `cacheComponents: true`: leer la fecha o la sesión dentro de una página cacheada rompe el prerender;
+  lee `node_modules/next/dist/docs/` sobre `connection()` / Suspense antes.
+- El promedio ya existe en algún lado (`grep -rn "promedio" lib`): no lo dupliques.
+- W17 (en paralelo) cambia `gradeColor` en `lib/grades.ts`: no toques esa función; la leyenda la sigue usando.
+
+### Cómo verificar
+- Tests puros: `saludoTexto` con nombre, `posicionEnEscala` (1 → 0 %, 10 → `MARCA_10_PCT`, 20 → 100 %),
+  banda y mensaje del día (determinista por fecha).
+- a11y: el marcador no depende del color, texto a 200 %.
+
+### Cierre
+PR «feat: saludo con el nombre del profe, tu lugar en la leyenda y mensaje del día».
+
+---
+
+## W17 — `fix/pildora-extremos`
+
+Worker **W17** (ronda 2 del pedido 22, que W2 dejó a decisión de César). Rama `fix/pildora-extremos`.
+Decisiones **D286–D287**. Checklist: ninguna. Modelo · esfuerzo: **sonnet · medium**. Docker: **no**.
+
+Decisiones: D004 (escala de color), D040, **D236** (tinta por contraste: `gradeInk`), D238 (test de contraste).
+
+### Lo que pide César
+> 22. «El texto de la píldora de nota siempre es oscuro y en algunas notas no se lee: debe ser claro donde haga falta (mantener 4.5:1).»
+
+Decisión de César (ola 2): **oscurecer los extremos** de la escala — el rojo de las notas bajas y el
+verde de las altas — hasta que **ahí** el número blanco pase 4,5:1; el resto de la escala igual; la
+tinta la sigue eligiendo `gradeInk`.
+
+### Dónde está
+- `lib/grades.ts:37-45` `gradeColor` (HSL continuo: 1–10 de 0° a 52°, 10–20 de 52° a 140°);
+  `:47-80` `contraste`, `GRADE_INK_*`, `gradeInk`. Medido hoy: oscura 4,77:1 en la nota 1 (#FF0A0A) y
+  4,76:1 en la 20 (#1A9342); blanco 3,96–3,97:1 en esas dos y peor en el resto.
+- `lib/notas.ts` `escalaDegradado()` (la leyenda usa `gradeColor`), `app/globals.css:68-69`, tests de
+  `gradeInk` y `tests/unit/contraste-tokens.test.ts`; `design/HANDOFF.md` §1.3 (tabla de la escala:
+  anota el cambio en la decisión, no edites el handoff).
+
+### Enfoque decidido
+- Bajar la luminosidad solo en los tramos extremos (p. ej. notas ≤ ~3 y ≥ ~17) con una curva continua
+  (sin escalones visibles), lo justo para que el blanco llegue a ≥ 4,5:1 en esos tramos; en el tramo
+  medio la oscura sigue ≥ 4,5:1. Ninguna nota queda por debajo de 4,5:1 con la tinta que elige
+  `gradeInk`. Elige los límites de tramo midiendo; dilos en la decisión.
+- Test que recorre 1–20 en pasos de 0,5: contraste ≥ 4,5:1 con la tinta elegida, y que en los extremos
+  la elegida sea la clara. La leyenda y toda píldora salen solas de `gradeColor`.
+- Repasa usos de `gradeColor` fuera de la píldora (`grep -rn "gradeColor" components app lib`): si algún
+  texto oscuro fijo va sobre ese color (barra, chips), usa `gradeInk` también (regla 16).
+- W13 (en paralelo) toca `grade-legend.tsx` y `lib/notas.ts`: tú no los tocas.
+
+### Cierre
+PR «fix: extremos de la escala de notas más oscuros para que el número blanco se lea».

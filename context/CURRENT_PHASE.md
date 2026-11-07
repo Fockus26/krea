@@ -9,18 +9,16 @@
 Fases 01–09 cerradas · **Track:** Product · main @ 8f818b8 · versión 1 entregada. Próximo QA de versión: `git diff --name-only d50568b..origin/main` (`plans/qa-version-1.md`).
 **Build local suprimido** (César, 2026-11-05): lo corren CI y Vercel. **QA con sesión:** `qa:local` y `.env.test.local`; nunca pedirle a César que inicie sesión.
 
-**Tanda 2026-11-06** (44 pedidos, 3 olas): `plans/batch-2026-11-06.md` · ola 1 de 3: 8 PRs abiertos (#78–#85), esperan revisión y merge de César. Orden: #81 antes o junto con #84 y #85; #82 y #84 chocan poco en task-builder; #78 y #81 en salir/ingresar.
+**Tanda 2026-11-06** (44 pedidos, 3 olas): `plans/batch-2026-11-06.md` · ola 1 mergeada (#78–#85) · **ola 2 de 3: 6 PRs abiertos (#86–#91)**, esperan revisión y merge de César (sin QA por memoria). Visuales elegidos: cinta de precaución + VS, podio que brilla + confeti, Puntos en una columna, píldora con extremos oscuros (W17).
 
 | Unit | Branch | Status |
 |---|---|---|
-| W1 profes admin (1, 2, 4) | `feat/profes-admin` | PR #85 (wt1) · emuladores huérfanos PID 20056/5024 |
-| W2 contraste y foco (21–23, 29) | `fix/contraste-y-foco` | PR #82 (wt2) · píldora (22): decide César |
-| W3 textos y layout (24, 26, 34, 35, 38) | `fix/textos-y-layout` | PR #78 (wt3) |
-| W4 eliminar tareas (6, 30, 32, 33, 44) | `feat/tareas-eliminar` | PR #84 (wt4) |
-| W5 imagen pegar/arrastrar (28) | `feat/imagen-pegar-arrastrar` | PR #79 (wt5) |
-| W6 grupal integrantes (9) | `feat/grupal-integrantes` | PR #80 (wt6) |
-| W7 caché entre rutas (14) | `perf/cache-rutas` | PR #81 (wt7) — mergear antes que W1/W4 o junto |
-| W8 Alumnos por URL (12, 13) | `feat/alumnos-filtros` | PR #83 (wt8) |
+| W9 ranking celebración (10, 15–20) | `feat/ranking-celebracion` | PR #89 (wt1) · destello del podio con `--surface` (en oscuro puede verse flojo) |
+| W10 Puntos formulario (11, 27) | `feat/puntos-formulario` | PR #88 (wt2) · equipo enlaza a su lista de sección |
+| W11 premios (7, 8) | `feat/premios` | PR #90 (wt3) · clave B2 debe escribir y borrar en `premios/` |
+| W12 alumnos CRUD (3) | `feat/alumnos-crud` | PR #91 (wt4) · el capitán borrado pasa al siguiente integrante (D269) |
+| W13 mensaje diario (25, 36, 37) | `feat/mensaje-diario` | PR #86 (wt5) · bandas cortadas en 14 y 17 |
+| W17 píldora extremos (22) | `fix/pildora-extremos` | PR #87 (wt6) · salto leve de luminosidad en 1,6 y 19,1 (alternativa: tinta #000) |
 
 ## Blocked (actions for César or external)
 
