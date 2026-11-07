@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { GradePill } from "@/components/krea/grade-pill";
 import { useFlip } from "@/components/krea/use-flip";
 import { UserAvatar } from "@/components/krea/user-avatar";
+import type { useSeleccionLote } from "@/components/sections/shared/use-seleccion-lote";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -100,7 +101,8 @@ export function StudentsTable({
   /** Casillas para eliminar en lote (D298); «todos» = las filas visibles. */
   seleccion?: {
     marcadas: ReadonlySet<string>;
-    onUno: (cedula: string, marcada: boolean) => void;
+    /** Props de la casilla de una fila (Shift+clic = rango, D310). */
+    casilla: ReturnType<typeof useSeleccionLote>["casilla"];
     onTodos: () => void;
   };
 }) {
@@ -162,10 +164,7 @@ export function StudentsTable({
               {seleccion ? (
                 <TableCell className="w-12 pr-0">
                   <Checkbox
-                    checked={seleccion.marcadas.has(a.cedula)}
-                    onCheckedChange={(v) =>
-                      seleccion.onUno(a.cedula, v === true)
-                    }
+                    {...seleccion.casilla(a.cedula)}
                     aria-label={seleccionarLabel(nombreAlumno(a))}
                   />
                 </TableCell>
