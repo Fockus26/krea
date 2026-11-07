@@ -8,6 +8,7 @@ import {
   type CuentaCreada,
   PasswordTemporalDialog,
 } from "@/components/sections/shared/password-temporal-dialog";
+import { useSeleccionLote } from "@/components/sections/shared/use-seleccion-lote";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/components/ui/sonner";
@@ -27,7 +28,6 @@ import {
 } from "@/lib/alumnos";
 import { ALTA_SIN_EQUIPO, type OpcionEquipo } from "@/lib/alumnos-alta";
 import type { EditarAlumno, ResultadoAlumno } from "@/lib/alumnos-datos";
-import { alternarTodos, alternarUno, podarSeleccion } from "@/lib/lote";
 import {
   AddStudentDialog,
   AGREGAR_ALUMNO_ID,
@@ -87,20 +87,6 @@ export function StudentsDirectory({
   const [filas, setFilas] = useState<readonly FilaAlumno[]>(alumnos);
   // La lista del servidor manda cuando cambia (tras crear, eliminar o editar: `refresh()`)
   const [alumnosAntes, setAlumnosAntes] = useState(alumnos);
-  // Casillas del lote (D298): solo de lo visible; se vacían al cambiar de sección o de filtro
-  const [marcadas, setMarcadas] = useState<ReadonlySet<string>>(
-    () => new Set(),
-  );
-  if (alumnos !== alumnosAntes) {
-    setAlumnosAntes(alumnos);
-    setFilas(alumnos);
-    setMarcadas((m) =>
-      podarSeleccion(
-        m,
-        alumnos.map((a) => a.cedula),
-      ),
-    );
-  }
   // Con `alumno`, la lista se abre en la sección de ese alumno para que su fila sea visible.
   const seccionDelAlumno = alumnos.find(
     (a) => a.cedula === filtrosIniciales.alumno,
@@ -134,7 +120,7 @@ export function StudentsDirectory({
     tarea: tareaId,
     alumno: alumnoAbierto,
   });
-  const limpiarSeleccion = () => setMarcadas(new Set());
+  const limpiarSeleccion = () => seleccion.limpiar();
   function cambiarSeccion(s: SeccionAlumnos) {
     setSeccion(s);
     limpiarSeleccion();
@@ -178,7 +164,7 @@ export function StudentsDirectory({
   function quitarFilas(cedulas: readonly string[]) {
     const fuera = new Set(cedulas);
     setFilas((actuales) => actuales.filter((a) => !fuera.has(a.cedula)));
-    setMarcadas((m) => new Set([...m].filter((c) => !fuera.has(c))));
+    seleccion.quitar(cedulas);
     if (alumnoAbierto && fuera.has(alumnoAbierto)) {
       setAlumnoAbierto(undefined);
       sincronizar({ ...actuales(), alumno: undefined });
@@ -209,6 +195,14 @@ export function StudentsDirectory({
     "5C": porEstado("5C").length,
   };
   const visibles = filtrarAlumnos(porEstado(seccion), consulta);
+  // Casillas del lote (D298, D310): solo de lo visible; se vacían al cambiar de sección o de filtro
+  const seleccion = useSeleccionLote(visibles.map((a) => a.cedula));
+  const marcadas = seleccion.marcadas;
+  if (alumnos !== alumnosAntes) {
+    setAlumnosAntes(alumnos);
+    setFilas(alumnos);
+    seleccion.podar(alumnos.map((a) => a.cedula));
+  }
   const lote =
     alta?.resumirVarios && alta.eliminarVarios
       ? { resumir: alta.resumirVarios, eliminar: alta.eliminarVarios }
@@ -319,15 +313,8 @@ export function StudentsDirectory({
             lote
               ? {
                   marcadas,
-                  onUno: (cedula, v) =>
-                    setMarcadas((m) => alternarUno(m, cedula, v)),
-                  onTodos: () =>
-                    setMarcadas((m) =>
-                      alternarTodos(
-                        visibles.map((a) => a.cedula),
-                        m,
-                      ),
-                    ),
+                  casilla: seleccion.casilla,
+                  onTodos: seleccion.alternarTodos,
                 }
               : undefined
           }

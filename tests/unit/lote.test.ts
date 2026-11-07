@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { capitanesTexto, sumarResumenes } from "@/lib/alumnos-alta";
 import {
   ALUMNOS,
+  alternarRango,
   alternarTodos,
   alternarUno,
   borrarEnLote,
@@ -122,6 +123,57 @@ describe("selección", () => {
     expect([...alternarUno(s, "a", false)]).toEqual([]);
     expect([...s]).toEqual(["a"]);
     expect([...podarSeleccion(new Set(["a", "b"]), ["b", "c"])]).toEqual(["b"]);
+  });
+});
+
+describe("alternarRango (D310)", () => {
+  const ids = ["a", "b", "c", "d", "e"];
+  test("hacia abajo y hacia arriba, ambos extremos incluidos", () => {
+    expect([...alternarRango(new Set(), ids, "b", "d", true)].sort()).toEqual([
+      "b",
+      "c",
+      "d",
+    ]);
+    expect([...alternarRango(new Set(), ids, "d", "b", true)].sort()).toEqual([
+      "b",
+      "c",
+      "d",
+    ]);
+  });
+  test("desmarcar un rango deja el resto", () => {
+    const s = new Set(ids);
+    expect([...alternarRango(s, ids, "a", "c", false)]).toEqual(["d", "e"]);
+  });
+  test("conserva lo marcado fuera del rango y no muta", () => {
+    const s = new Set(["a"]);
+    expect([...alternarRango(s, ids, "c", "d", true)].sort()).toEqual([
+      "a",
+      "c",
+      "d",
+    ]);
+    expect([...s]).toEqual(["a"]);
+  });
+  test("ancla nula o fuera de la lista = alternarUno", () => {
+    expect([...alternarRango(new Set(), ids, null, "c", true)]).toEqual(["c"]);
+    expect([...alternarRango(new Set(), ids, "zz", "c", true)]).toEqual(["c"]);
+    expect([...alternarRango(new Set(["c"]), ids, "zz", "c", false)]).toEqual(
+      [],
+    );
+  });
+  test("con ids filtrados cuenta el orden visible", () => {
+    const visibles = ["a", "c", "e"];
+    expect([...alternarRango(new Set(), visibles, "a", "e", true)]).toEqual([
+      "a",
+      "c",
+      "e",
+    ]);
+    // el ancla ya no es visible
+    expect([...alternarRango(new Set(), visibles, "b", "e", true)]).toEqual([
+      "e",
+    ]);
+  });
+  test("ancla = clicado marca solo ese", () => {
+    expect([...alternarRango(new Set(), ids, "c", "c", true)]).toEqual(["c"]);
   });
 });
 

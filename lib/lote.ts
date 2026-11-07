@@ -124,6 +124,32 @@ export function alternarUno(
   return s;
 }
 
+/**
+ * Shift+clic (D310): pone `marcar` en todo el rango ancla→`id` (ambos incluidos, en el orden de
+ * `ids`, que es el visible). Sin ancla, o con el ancla fuera de la lista (filtro o búsqueda
+ * nuevos), o si `id` no está en la lista, es `alternarUno`. No muta la selección.
+ */
+export function alternarRango(
+  seleccion: ReadonlySet<string>,
+  ids: readonly string[],
+  ancla: string | null,
+  id: string,
+  marcar: boolean,
+): Set<string> {
+  const a = ancla === null ? -1 : ids.indexOf(ancla);
+  const b = ids.indexOf(id);
+  if (a === -1 || b === -1) return alternarUno(seleccion, id, marcar);
+  const s = new Set(seleccion);
+  for (const c of ids.slice(Math.min(a, b), Math.max(a, b) + 1)) {
+    if (marcar) s.add(c);
+    else s.delete(c);
+  }
+  return s;
+}
+
+/** Ayuda corta junto a la barra. PROVISIONAL (sin fila: copy de apoyo, D311). */
+export const AYUDA_RANGO = "Mantén Shift para elegir varios seguidos";
+
 /** Solo las cédulas que siguen en la lista (tras borrar o recargar). */
 export function podarSeleccion(
   seleccion: ReadonlySet<string>,

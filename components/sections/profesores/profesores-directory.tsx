@@ -11,6 +11,7 @@ import {
   type CuentaCreada,
   PasswordTemporalDialog,
 } from "@/components/sections/shared/password-temporal-dialog";
+import { useSeleccionLote } from "@/components/sections/shared/use-seleccion-lote";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -23,11 +24,8 @@ import {
   nombreProfesor,
 } from "@/lib/cuentas-datos";
 import {
-  alternarTodos,
-  alternarUno,
   estadoTodos,
   PROFESORES,
-  podarSeleccion,
   SELECCIONAR_TODOS_PROFESORES,
   seleccionarLabel,
 } from "@/lib/lote";
@@ -52,23 +50,17 @@ export function ProfesoresDirectory({
   acciones: AccionesProfesores;
 }) {
   const [creado, setCreado] = useState<CuentaCreada | null>(null);
-  const [marcadas, setMarcadas] = useState<ReadonlySet<string>>(
-    () => new Set(),
-  );
+  // El admin no se selecciona a sí mismo: «todos» son los demás
+  const seleccionables = profesores.filter((p) => !p.tu).map((p) => p.cedula);
+  const seleccion = useSeleccionLote(seleccionables);
+  const marcadas = seleccion.marcadas;
   // La lista nueva del servidor (tras `refresh()`) poda la selección: lo borrado ya no está
   const [antes, setAntes] = useState(profesores);
   if (profesores !== antes) {
     setAntes(profesores);
-    setMarcadas((m) =>
-      podarSeleccion(
-        m,
-        profesores.map((p) => p.cedula),
-      ),
-    );
+    seleccion.podar(profesores.map((p) => p.cedula));
   }
   const eliminarVarios = acciones.eliminarVarios;
-  // El admin no se selecciona a sí mismo: «todos» son los demás
-  const seleccionables = profesores.filter((p) => !p.tu).map((p) => p.cedula);
   const conLote = eliminarVarios !== undefined && seleccionables.length > 0;
   const seleccionados = profesores
     .filter((p) => !p.tu && marcadas.has(p.cedula))
@@ -91,9 +83,7 @@ export function ProfesoresDirectory({
             <span className="flex items-center gap-3">
               <Checkbox
                 checked={estadoTodos(seleccionables, marcadas)}
-                onCheckedChange={() =>
-                  setMarcadas((m) => alternarTodos(seleccionables, m))
-                }
+                onCheckedChange={seleccion.alternarTodos}
                 aria-label={SELECCIONAR_TODOS_PROFESORES}
               />
               <span aria-hidden="true" className="text-label text-text-2">
@@ -103,17 +93,12 @@ export function ProfesoresDirectory({
             <EliminarEnLote<ErrorProfesor>
               seleccionados={seleccionados}
               sustantivo={PROFESORES}
-              onLimpiar={() => setMarcadas(new Set())}
+              onLimpiar={seleccion.limpiar}
               descripcion={BORRADO_PROFESORES}
               eliminar={eliminarVarios}
               errorTexto={errorProfesorTexto}
               errorRed="red"
-              onEliminados={(cs) =>
-                setMarcadas((m) => {
-                  const fuera = new Set(cs);
-                  return new Set([...m].filter((c) => !fuera.has(c)));
-                })
-              }
+              onEliminados={seleccion.quitar}
               focoAlTerminar={NUEVO_PROFESOR_ID}
             />
           </div>
@@ -129,10 +114,7 @@ export function ProfesoresDirectory({
                 <span className="flex w-5 shrink-0 justify-center">
                   {p.tu ? null : (
                     <Checkbox
-                      checked={marcadas.has(p.cedula)}
-                      onCheckedChange={(v) =>
-                        setMarcadas((m) => alternarUno(m, p.cedula, v === true))
-                      }
+                      {...seleccion.casilla(p.cedula)}
                       aria-label={seleccionarLabel(nombreProfesor(p))}
                     />
                   )}

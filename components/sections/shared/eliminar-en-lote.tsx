@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/sonner";
 import {
+  AYUDA_RANGO,
   eliminadosTexto,
   eliminarLoteBoton,
   eliminarLoteTitulo,
@@ -135,6 +136,10 @@ export function EliminarEnLote<E>({
       >
         {n === 0 && !tocado ? "" : seleccionadosTexto(n, sustantivo)}
       </p>
+      {n > 0 ? (
+        // PROVISIONAL (D311, sin fila): ayuda del Shift; el teclado la tiene como Shift+Espacio
+        <span className="text-small text-text-2">{AYUDA_RANGO}</span>
+      ) : null}
       {/* El diálogo no depende de la selección: si se borraron todos, cierra con su animación */}
       <Dialog open={abierto} onOpenChange={abrir}>
         {n > 0 ? (
