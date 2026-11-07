@@ -3,6 +3,7 @@ import {
   agruparAnuncios,
   anuncioTexto,
   conectoresVs,
+  conectoresVsPodio,
   deltaDir,
   deltaTexto,
   deltaVisible,
@@ -133,7 +134,7 @@ describe("splitRiesgo", () => {
   });
 });
 
-describe("separador y duelo VS (D256)", () => {
+describe("separador y duelo VS (D256, D288)", () => {
   test("el separador dice solo «Zona de riesgo»", () => {
     expect(RIESGO_SEPARADOR).toBe("Zona de riesgo");
   });
@@ -165,6 +166,29 @@ describe("separador y duelo VS (D256)", () => {
       false,
     ]);
     expect(conectoresVs([])).toEqual([]);
+  });
+
+  test("VS también en la lista principal, fuera de la zona (D288)", () => {
+    const l = rankCompetition([
+      e("a", 90),
+      e("b", 80),
+      e("c", 80),
+      e("d", 80),
+      ...Array.from({ length: 6 }, (_, i) => e(`t${i}`, 70 - i)),
+    ]);
+    const { principal } = splitRiesgo(l);
+    const vs = conectoresVs(principal);
+    expect(vs.slice(0, 4)).toEqual([false, true, true, false]);
+  });
+
+  test("podio: el VS solo va entre columnas vecinas (2-1-3) (D289)", () => {
+    // [1.º, 2.º, 3.º] por índice de lista; visualmente: lista[1] | lista[0] | lista[2]
+    expect(conectoresVsPodio([1, 2, 3])).toEqual([false, false, false]);
+    expect(conectoresVsPodio([1, 1, 3])).toEqual([false, true, false]);
+    expect(conectoresVsPodio([1, 1, 1])).toEqual([true, true, false]);
+    expect(conectoresVsPodio([1, 2, 2])).toEqual([false, false, false]);
+    expect(conectoresVsPodio([1, 1])).toEqual([false, true]);
+    expect(conectoresVsPodio([])).toEqual([]);
   });
 });
 
