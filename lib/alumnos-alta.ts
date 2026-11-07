@@ -72,14 +72,16 @@ export function errorCrearAlumnoTexto(e: ErrorCrearAlumno): string {
 export const ALTA_SIN_EQUIPO =
   "La cuenta se creó, pero no pudimos ponerla en su equipo. Asígnalo desde Equipos.";
 
-/** Equipos que ofrece el formulario: los de la sección elegida. */
+/** Equipos que ofrece el formulario: los de la sección elegida, por nombre. */
 export type OpcionEquipo = { id: string; nombre: string; seccion: SeccionId };
 
 export function equiposDeSeccion(
   equipos: readonly OpcionEquipo[],
   seccion: SeccionId,
 ): OpcionEquipo[] {
-  return equipos.filter((e) => e.seccion === seccion);
+  return equipos
+    .filter((e) => e.seccion === seccion)
+    .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
 }
 
 /* ---------- Eliminar alumno ---------- */

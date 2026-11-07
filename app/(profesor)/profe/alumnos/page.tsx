@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { StudentsDirectory } from "@/components/sections/alumnos/students-directory";
-import { PageHeader } from "@/components/sections/shared/page-header";
-import { editarAlumno } from "@/lib/acciones/alumnos";
+import {
+  crearAlumno,
+  editarAlumno,
+  eliminarAlumno,
+  resumenEliminarAlumno,
+} from "@/lib/acciones/alumnos";
 import { leerFiltrosAlumnos, resumenTexto } from "@/lib/alumnos";
 import { filasAlumnos } from "@/lib/alumnos-datos";
 import {
@@ -22,7 +26,8 @@ export const metadata: Metadata = {
 // Los filtros viajan en la URL (D252): ?seccion=5A|5C&estado=evaluados|raspados|pendientes&tarea=<id>&alumno=<cédula>.
 // Alumnos (HANDOFF §3; W8, D209): las mismas secciones que /secciones/alumnos con Firestore. La
 // búsqueda y la sección filtran en el cliente; «Guardar cambios» escribe perfil, historial de base
-// (D176), email de recuperación y ranking en una transacción y la página se refresca.
+// (D176), email de recuperación y ranking en una transacción y la página se refresca. «Agregar
+// alumno» y «Eliminar alumno» (W12, D267, D268) también terminan con `refresh()`.
 export default async function AlumnosPage({
   searchParams,
 }: {
@@ -51,21 +56,26 @@ export default async function AlumnosPage({
     emails,
   });
   return (
-    <>
-      <PageHeader
-        eyebrow={resumenTexto(alumnos.length, SECCIONES.length)}
-        title="Alumnos"
-      />
-      <StudentsDirectory
-        alumnos={alumnos}
-        guardar={editarAlumno}
-        filtrosIniciales={{
-          ...filtros,
-          tarea: tarea?.id,
-          alumno: alumnoExiste ? filtros.alumno : undefined,
-        }}
-        tarea={tarea ? { id: tarea.id, titulo: tarea.titulo } : undefined}
-      />
-    </>
+    <StudentsDirectory
+      encabezado={{ eyebrow: resumenTexto(alumnos.length, SECCIONES.length) }}
+      alumnos={alumnos}
+      guardar={editarAlumno}
+      alta={{
+        crear: crearAlumno,
+        resumir: resumenEliminarAlumno,
+        eliminar: eliminarAlumno,
+        equipos: equipos.map((e) => ({
+          id: e.id,
+          nombre: e.nombre,
+          seccion: e.seccion,
+        })),
+      }}
+      filtrosIniciales={{
+        ...filtros,
+        tarea: tarea?.id,
+        alumno: alumnoExiste ? filtros.alumno : undefined,
+      }}
+      tarea={tarea ? { id: tarea.id, titulo: tarea.titulo } : undefined}
+    />
   );
 }

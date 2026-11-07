@@ -3,8 +3,14 @@
 import { Search } from "lucide-react";
 import { useState } from "react";
 import { EmptyState } from "@/components/krea/empty-state";
+import { PageHeader } from "@/components/sections/shared/page-header";
+import {
+  type CuentaCreada,
+  PasswordTemporalDialog,
+} from "@/components/sections/shared/password-temporal-dialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { toast } from "@/components/ui/sonner";
 import {
   busquedaVacia,
   contadorEstadoTexto,
@@ -14,13 +20,31 @@ import {
   type FiltrosAlumnos,
   filtrarAlumnos,
   filtrarPorEstado,
+  nombreAlumno,
   otraSeccion,
   rutaAlumnos,
   type SeccionAlumnos,
 } from "@/lib/alumnos";
+import { ALTA_SIN_EQUIPO, type OpcionEquipo } from "@/lib/alumnos-alta";
 import type { EditarAlumno, ResultadoAlumno } from "@/lib/alumnos-datos";
+import {
+  AddStudentDialog,
+  AGREGAR_ALUMNO_ID,
+  type AlumnoCreado,
+  type CrearAlumnoAccion,
+} from "./add-student-dialog";
+import {
+  type AccionesBorrarAlumno,
+  DeleteStudentDialog,
+} from "./delete-student-dialog";
 import { StudentFilters } from "./student-filters";
 import { StudentsTable } from "./students-table";
+
+/** Agregar y eliminar alumnos (W12, D267, D268): las Server Actions y los equipos para el alta. */
+export type AltaAlumnos = AccionesBorrarAlumno & {
+  crear: CrearAlumnoAccion;
+  equipos: readonly OpcionEquipo[];
+};
 
 /**
  * Filtros + tabla (HANDOFF §3 Alumnos). Recibe la lista completa por props; la sección y la
@@ -29,6 +53,9 @@ import { StudentsTable } from "./students-table";
  * Búsqueda sin resultados: vacío con «Buscar en {otra sección}» si allí hay coincidencias (D170).
  * Sección, estado, tarea y ficha abierta se leen de la URL al entrar y la URL se actualiza al
  * cambiarlos con `history.replaceState` (sin recargar ni ensuciar el historial, D252).
+ * Con `encabezado` pinta también el `PageHeader`, y con `alta` su «Agregar alumno»: tras crear,
+ * la contraseña temporal (una sola vez, D232) y luego la ficha del alumno nuevo (D267). Cada acción
+ * termina con `refresh()`: cuando llega la lista nueva del servidor, reemplaza a la local.
  */
 export function StudentsDirectory({
   alumnos,
@@ -36,6 +63,8 @@ export function StudentsDirectory({
   guardar,
   filtrosIniciales = {},
   tarea,
+  encabezado,
+  alta,
 }: {
   alumnos: readonly FilaAlumno[];
   seccionInicial?: SeccionAlumnos;
@@ -44,8 +73,16 @@ export function StudentsDirectory({
   filtrosIniciales?: FiltrosAlumnos;
   /** La tarea de `filtrosIniciales.tarea`, con su título (si existe). */
   tarea?: { id: string; titulo: string };
+  encabezado?: { eyebrow: string };
+  alta?: AltaAlumnos;
 }) {
   const [filas, setFilas] = useState<readonly FilaAlumno[]>(alumnos);
+  // La lista del servidor manda cuando cambia (tras crear, eliminar o editar: `refresh()`)
+  const [alumnosAntes, setAlumnosAntes] = useState(alumnos);
+  if (alumnos !== alumnosAntes) {
+    setAlumnosAntes(alumnos);
+    setFilas(alumnos);
+  }
   // Con `alumno`, la lista se abre en la sección de ese alumno para que su fila sea visible.
   const seccionDelAlumno = alumnos.find(
     (a) => a.cedula === filtrosIniciales.alumno,
@@ -61,6 +98,9 @@ export function StudentsDirectory({
     filtrosIniciales.alumno,
   );
   const [consulta, setConsulta] = useState("");
+  const [creado, setCreado] = useState<
+    (CuentaCreada & { cedula: string }) | null
+  >(null);
 
   // Refleja el filtro en la URL sin navegar. La búsqueda por texto no viaja (es efímera).
   function sincronizar(c: FiltrosAlumnos) {
@@ -90,6 +130,35 @@ export function StudentsDirectory({
     setAlumnoAbierto(alumno);
     sincronizar({ ...actuales(), alumno });
   }
+  function alCrear(a: AlumnoCreado) {
+    // Su fila tiene que verse al abrir la ficha: su sección y sin búsqueda
+    setConsulta("");
+    setSeccion(a.seccion);
+    sincronizar({ ...actuales(), seccion: a.seccion });
+    setCreado({
+      cedula: a.cedula,
+      nombre: a.nombre,
+      passwordTemporal: a.passwordTemporal,
+    });
+    if (a.sinEquipo) toast.error(ALTA_SIN_EQUIPO);
+  }
+  function alCerrarCreado() {
+    const cedula = creado?.cedula;
+    setCreado(null);
+    // Después de la contraseña, la ficha del alumno nuevo (D267)
+    if (cedula) cambiarAbierto(cedula, true);
+  }
+  function alEliminar(cedula: string) {
+    const fila = filas.find((a) => a.cedula === cedula);
+    setFilas((actuales) => actuales.filter((a) => a.cedula !== cedula));
+    setAlumnoAbierto(undefined);
+    sincronizar({ ...actuales(), alumno: undefined });
+    if (fila) toast(`Eliminaste a ${nombreAlumno(fila)}`);
+    // Su fila (y el botón que abrió la ficha) ya no existe: el foco va a «Agregar alumno»
+    requestAnimationFrame(() =>
+      document.getElementById(AGREGAR_ALUMNO_ID)?.focus(),
+    );
+  }
   const porEstado = (s: SeccionAlumnos) =>
     filtrarPorEstado(
       filas.filter((a) => a.seccion === s),
@@ -118,6 +187,22 @@ export function StudentsDirectory({
 
   return (
     <>
+      {encabezado ? (
+        <PageHeader
+          eyebrow={encabezado.eyebrow}
+          title="Alumnos"
+          actions={
+            alta ? (
+              <AddStudentDialog
+                equipos={alta.equipos}
+                seccionInicial={seccion}
+                crear={alta.crear}
+                onCreado={alCrear}
+              />
+            ) : undefined
+          }
+        />
+      ) : null}
       <StudentFilters
         seccion={seccion}
         onSeccion={cambiarSeccion}
@@ -173,8 +258,22 @@ export function StudentsDirectory({
               ),
             )
           }
+          eliminar={
+            alta
+              ? (a) => (
+                  <DeleteStudentDialog
+                    alumno={a}
+                    acciones={alta}
+                    onEliminado={alEliminar}
+                  />
+                )
+              : undefined
+          }
         />
       )}
+      {alta ? (
+        <PasswordTemporalDialog creado={creado} onCerrar={alCerrarCreado} />
+      ) : null}
     </>
   );
 }

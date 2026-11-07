@@ -1,7 +1,7 @@
 "use client";
 
 import { Pencil } from "lucide-react";
-import { useId, useRef, useState } from "react";
+import { type ReactNode, useId, useRef, useState } from "react";
 import { ErrorEnPantalla } from "@/components/estados/errores";
 import { NumberStepper } from "@/components/krea/number-stepper";
 import { Button } from "@/components/ui/button";
@@ -52,7 +52,7 @@ export type GuardarAlumno = (entrada: EditarAlumno) => Promise<ResultadoAlumno>;
  * `DialogTrigger`: al cerrar, Radix devuelve el foco al botón que lo abrió. El contenido solo se
  * monta abierto, así que el formulario siempre parte de los datos vigentes. Con `guardar` escribe
  * en Firestore (D209): si falla, el diálogo sigue abierto con lo escrito y el error (D171); sin
- * `guardar` (vista previa) solo `onGuardado`.
+ * `guardar` (vista previa) solo `onGuardado`. `eliminar` (W12) va a la izquierda del pie.
  */
 export function EditStudentDialog({
   alumno,
@@ -60,16 +60,27 @@ export function EditStudentDialog({
   onAbierto,
   guardar,
   onGuardado,
+  eliminar,
 }: {
   alumno: FilaAlumno;
-  /** Abre la ficha al montar (viene de `?alumno=` en la URL, D252). */
+  /**
+   * Abre la ficha al montar (viene de `?alumno=` en la URL, D252) y también si pasa a `true`
+   * después (la ficha del alumno recién creado, D267).
+   */
   abiertoInicial?: boolean;
   /** Avisa de cada apertura o cierre para reflejarlo en la URL. */
   onAbierto?: (cedula: string, abierto: boolean) => void;
   guardar?: GuardarAlumno;
   onGuardado: (cedula: string, cambios: CambiosAlumno) => void;
+  /** «Eliminar alumno» (D268); sin él, la ficha no lo ofrece (vista previa). */
+  eliminar?: ReactNode;
 }) {
   const [abierto, setAbierto] = useState(abiertoInicial);
+  const [pedidoAntes, setPedidoAntes] = useState(abiertoInicial);
+  if (abiertoInicial !== pedidoAntes) {
+    setPedidoAntes(abiertoInicial);
+    if (abiertoInicial) setAbierto(true);
+  }
   return (
     <Dialog
       open={abierto}
@@ -93,6 +104,7 @@ export function EditStudentDialog({
         <EditForm
           alumno={alumno}
           guardar={guardar}
+          eliminar={eliminar}
           onListo={(cambios) => {
             onGuardado(alumno.cedula, cambios);
             setAbierto(false);
@@ -106,10 +118,12 @@ export function EditStudentDialog({
 function EditForm({
   alumno,
   guardar,
+  eliminar,
   onListo,
 }: {
   alumno: FilaAlumno;
   guardar?: GuardarAlumno;
+  eliminar?: ReactNode;
   onListo: (cambios: CambiosAlumno) => void;
 }) {
   const uid = useId();
@@ -324,6 +338,7 @@ function EditForm({
         </ErrorEnPantalla>
       ) : null}
       <DialogFooter>
+        {eliminar ? <div className="mr-auto">{eliminar}</div> : null}
         <DialogClose asChild>
           <Button type="button" variant="secondary">
             Cancelar
