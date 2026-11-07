@@ -1,0 +1,5 @@
+# D296 · Components · La foto subida de `ImageUpload` ocupa todo el ancho y sus botones flotan encima · Implemented
+
+**Decision:** en el estado `lista` de `components/krea/image-upload.tsx` la foto va a todo el ancho (4:3) y «Cambiar imagen» y «Quitar imagen» son botones de ícono de 44 px (`aria-label` y `title`) arriba a la derecha, sobre `--scrim-chip` con `--on-scrim`. El chip «nombre · tamaño» queda abajo a la izquierda. Hover de «Cambiar»: `--accent` con `--on-accent`; hover de «Quitar»: `--error` con `--on-error` (pares ya medidos en `tests/unit/contraste-tokens.test.ts`). Vale para el premio, la respuesta de tarea y la pregunta con imagen (mismo componente).
+**Why:** la foto de 220 px con dos botones en columna al lado dejaba espacio muerto; así la imagen se ve grande y los controles no ocupan sitio.
+**Discarded alternative:** variante `ghost-danger` de `Button` (la crea W22 en paralelo y aún no está en main): se usan los tokens de error directamente; cuando exista se puede cambiar sin tocar el diseño.
