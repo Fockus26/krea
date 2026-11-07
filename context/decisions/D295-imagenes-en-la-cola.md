@@ -1,0 +1,5 @@
+# D295 · Data · Imágenes en la cola: el Blob ya comprimido en IndexedDB, subida idempotente y aviso sin espacio · Implemented
+
+**Decision:** sin red (o si la subida falla por red), la imagen elegida queda «lista» en el formulario con su Blob ya comprimido (`lib/image-entrada.ts`), cuenta como respondida y «Entregar» la guarda en la operación con un `imagenId` (uuid). Al drenar se sube primero cada imagen (`subirImagenPendiente`, clave `entregas/{tarea}/{carpeta}/{imagenId}.jpg`: un reintento pisa el mismo objeto) y cada subida exitosa se guarda en la operación al momento (la ruta pasa a `respuestas` y el Blob sale); luego se envía la entrega. Si IndexedDB no tiene cuota (`QuotaExceededError`): «No hay espacio en este teléfono para guardar la entrega sin conexión…». Se pide `navigator.storage.persist()` al encolar.
+**Why:** decisión de César (2026-11-07): «Imágenes sí, ya comprimidas como hoy; si no hay espacio, se avisa». Guardar el avance evita volver a subir tras un éxito parcial (imagen subida, entrega no).
+**Discarded alternative:** uuid aleatorio en el servidor también desde la cola — cada reintento dejaría otra copia huérfana en B2.
