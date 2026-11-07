@@ -12,11 +12,13 @@ import {
   emailsTodos,
   entregasTodas,
   equiposTodos,
+  profesorActual,
   rankingsTodos,
   tareasProfe,
   usuariosTodos,
 } from "@/lib/datos/profesor";
 import { SECCIONES } from "@/lib/modelo";
+import { nombrePresencia } from "@/lib/presencia";
 
 export const metadata: Metadata = {
   title: "Alumnos",
@@ -27,14 +29,15 @@ export const metadata: Metadata = {
 // Alumnos (HANDOFF §3; W8, D209): las mismas secciones que /secciones/alumnos con Firestore. La
 // búsqueda y la sección filtran en el cliente; «Guardar cambios» escribe perfil, historial de base
 // (D176), email de recuperación y ranking en una transacción y la página se refresca. «Agregar
-// alumno» y «Eliminar alumno» (W12, D267, D268) también terminan con `refresh()`.
+// alumno» y «Eliminar alumno» (W12, D267, D268) también terminan con `refresh()`. `yo` enciende la
+// presencia en vivo al editar (W14, D275–D277): la suscripción vive en el cliente, no aquí.
 export default async function AlumnosPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const filtros = leerFiltrosAlumnos(await searchParams);
-  const [usuarios, equipos, entregas, rankings, emails, tareas] =
+  const [usuarios, equipos, entregas, rankings, emails, tareas, profe] =
     await Promise.all([
       usuariosTodos(),
       equiposTodos(),
@@ -42,6 +45,7 @@ export default async function AlumnosPage({
       rankingsTodos(),
       emailsTodos(),
       tareasProfe(),
+      profesorActual(),
     ]);
   // Una tarea que no existe se ignora, como cualquier otro valor inválido.
   const tarea = tareas.find((t) => t.id === filtros.tarea);
@@ -76,6 +80,10 @@ export default async function AlumnosPage({
         alumno: alumnoExiste ? filtros.alumno : undefined,
       }}
       tarea={tarea ? { id: tarea.id, titulo: tarea.titulo } : undefined}
+      yo={{
+        uid: profe.sesion.uid,
+        nombre: nombrePresencia(profe.usuario),
+      }}
     />
   );
 }

@@ -3,12 +3,16 @@
 // lib/acciones/alumnos.ts, después de `exigirSesion("profesor")`.
 //
 // Perfil, historial de base (D176) y email de recuperación se escriben en UNA transacción con
-// `ranking/{seccion}` (D175): el nombre y la base del alumno entran en el ranking.
+// `ranking/{seccion}` (D175): el nombre y la base del alumno entran en el ranking. Con `version`
+// (W14, D276), si otro profe guardó los campos editables desde que se abrió el diálogo, no se
+// escribe nada y se responde `conflicto` con los valores vigentes.
 import type { Firestore } from "firebase-admin/firestore";
 import {
   armarEdicion,
   type EditarAlumno,
+  hayConflicto,
   type ResultadoAlumno,
+  versionDe,
 } from "@/lib/alumnos-datos";
 import { escribirRankingEnTx, leerSeccionEnTx } from "@/lib/firebase/ranking";
 import { COL, zPrivado, zUsuario } from "@/lib/modelo";
@@ -33,13 +37,18 @@ export async function editarAlumnoEnTransaccion(
     if (!u.success || u.data.rol !== "estudiante" || u.data.seccion === null)
       return { ok: false, error: "invalida" };
     const p = zPrivado.safeParse(privado.data() ?? { email: null });
+    const emailActual = p.success ? p.data.email : null;
+    // Otro profe guardó desde que se abrió el diálogo: no se pisa (D276); se devuelve lo vigente
+    const actual = versionDe(u.data, emailActual);
+    if (hayConflicto(entrada.version, actual))
+      return { ok: false, error: "conflicto", actual };
     const seccion = u.data.seccion;
     // Todas las lecturas antes de la primera escritura (Firestore)
     const datos = await leerSeccionEnTx(tx, db, seccion);
 
     const r = armarEdicion({
       actual: u.data,
-      emailActual: p.success ? p.data.email : null,
+      emailActual,
       entrada,
       autorId,
       ahora,
