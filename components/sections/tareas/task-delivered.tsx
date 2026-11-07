@@ -13,6 +13,7 @@ export function TaskDelivered({
   fecha,
   hora,
   evaluada = false,
+  notaHref,
   inicioHref,
 }: {
   /** Quién la envió; `null` si la nota vino del Excel sin ese registro. */
@@ -23,6 +24,8 @@ export function TaskDelivered({
   hora: string | null;
   /** Ya tiene nota: cambia el texto de abajo. */
   evaluada?: boolean;
+  /** Detalle de la nota (D248): con él, evaluada ofrece «Ver mi nota» en vez de mandar a Mis notas. */
+  notaHref?: string | null;
   inicioHref: string;
 }) {
   return (
@@ -48,13 +51,24 @@ export function TaskDelivered({
       )}
       <p className="text-body text-text-2">
         {evaluada
-          ? // PLACEHOLDER de copy (fila 129)
-            "Tu profe ya la evaluó: la nota está en Mis notas."
+          ? notaHref
+            ? // PROVISIONAL (fila 141)
+              "Tu profe ya la evaluó. Mira tu nota y cómo salió cada pregunta."
+            : // PLACEHOLDER de copy (fila 129)
+              "Tu profe ya la evaluó: la nota está en Mis notas."
           : "Tu profe la evaluará pronto. Cuando tengas la nota, aparece en Mis notas."}
       </p>
-      <Button asChild variant="secondary" className="mt-1">
-        <Link href={inicioHref}>Volver al inicio</Link>
-      </Button>
+      <div className="mt-1 flex flex-wrap gap-3">
+        {evaluada && notaHref ? (
+          <Button asChild>
+            {/* PROVISIONAL (fila 141) */}
+            <Link href={notaHref}>Ver mi nota</Link>
+          </Button>
+        ) : null}
+        <Button asChild variant="secondary">
+          <Link href={inicioHref}>Volver al inicio</Link>
+        </Button>
+      </div>
     </Card>
   );
 }

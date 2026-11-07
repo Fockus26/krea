@@ -80,6 +80,7 @@ export default async function TareaPage({ params }: Props) {
             fecha={d.fecha}
             hora={d.hora}
             evaluada={d.evaluada}
+            notaHref={d.notaHref}
             inicioHref="/"
           />
           {d.respuestas.some((r) => r !== null) ? (
