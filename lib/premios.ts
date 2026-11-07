@@ -31,7 +31,7 @@ export type TarjetaPremio = {
   tareaId: string;
   /** Ausente en las vistas previas: grupal. */
   tipoTarea?: TipoTareaId;
-  /** Texto: "5A", "5A y 5C". */
+  /** Texto (`listaSecciones`): «5A», «4B y 5A». */
   seccion: string;
   /** Sección donde se decide el empate; ausente en las vistas previas y en "por definir". */
   seccionId?: SeccionId;

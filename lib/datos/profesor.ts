@@ -1,10 +1,11 @@
 import "server-only";
 // Lecturas del profesor en el servidor (fase 07 W6, D199): Admin SDK detrás de
-// `exigirSesion("profesor")`, una vez por request (`cache`). El profe ve las dos secciones
-// (`seccion: null`); el mapeo a las pantallas es puro (`lib/tareas-profe-datos.ts`).
+// `exigirSesion("profesor")`, una vez por request (`cache`). El profe ve todas las secciones del
+// catálogo (`seccion: null`, D323); el mapeo a las pantallas es puro (`lib/tareas-profe-datos.ts`).
 import { cache } from "react";
 import { exigirSesion } from "@/lib/dal";
 import { db, lista, parsear } from "@/lib/datos/comun";
+import { catalogoSecciones } from "@/lib/datos/secciones";
 import {
   colaPorEvaluar,
   type MapasEvaluar,
@@ -16,7 +17,6 @@ import {
   type Entrega,
   type Equipo,
   type RankingSeccion,
-  SECCIONES,
   type SeccionId,
   type TareaDoc,
   type Usuario,
@@ -28,8 +28,9 @@ import {
   zTareaDoc,
   zUsuario,
 } from "@/lib/modelo";
+import { seccionesDe } from "@/lib/secciones";
 import type { Sesion } from "@/lib/sesion";
-import type { Conteos } from "@/lib/tareas-profe-datos";
+import { type Conteos, conteosDe } from "@/lib/tareas-profe-datos";
 
 type ConId<T> = { id: string } & T;
 
@@ -108,17 +109,16 @@ export const conteos = cache(async (): Promise<Conteos> => {
         .count()
         .get()
     ).data().count;
-  const [a5A, a5C, equipos] = await Promise.all([
-    contar("5A"),
-    contar("5C"),
+  // Una cuenta por sección del catálogo (D323): una sección nueva sale con 0 y sin equipos
+  const secciones = seccionesDe(await catalogoSecciones());
+  const [cuentas, equipos] = await Promise.all([
+    Promise.all(secciones.map(contar)),
     equiposTodos(),
   ]);
-  const de = (s: SeccionId) =>
-    equipos.filter((e) => e.seccion === s).map((e) => e.id);
-  return {
-    alumnos: { "5A": a5A, "5C": a5C },
-    equipos: { "5A": de("5A"), "5C": de("5C") },
-  };
+  const alumnos = Object.fromEntries(
+    secciones.map((s, i) => [s, cuentas[i] ?? 0]),
+  );
+  return conteosDe(secciones, alumnos, equipos);
 });
 
 /* ---------- Evaluar, Ajustes de puntos y Panel (W7) ---------- */
@@ -164,15 +164,19 @@ export const ajustesTodos = cache(async (): Promise<Array<ConId<Ajuste>>> => {
   return lista(db().collection(COL.ajustes), zAjuste, COL.ajustes);
 });
 
-/** `ranking/{seccion}` de las dos secciones (`null` si aún no existe). */
+/**
+ * `ranking/{seccion}` de cada sección del catálogo (`null` si aún no existe, D323). Una sección
+ * que no está en el catálogo no sale: quien indexa lee `rankings[s]` con `?.`.
+ */
 export const rankingsTodos = cache(
-  async (): Promise<Record<SeccionId, RankingSeccion | null>> => {
+  async (): Promise<Partial<Record<SeccionId, RankingSeccion | null>>> => {
     await exigirSesion("profesor");
+    const secciones = seccionesDe(await catalogoSecciones());
     const snaps = await Promise.all(
-      SECCIONES.map((s) => db().collection(COL.ranking).doc(s).get()),
+      secciones.map((s) => db().collection(COL.ranking).doc(s).get()),
     );
-    const r = {} as Record<SeccionId, RankingSeccion | null>;
-    SECCIONES.forEach((s, i) => {
+    const r: Partial<Record<SeccionId, RankingSeccion | null>> = {};
+    secciones.forEach((s, i) => {
       const snap = snaps[i];
       r[s] = snap?.exists
         ? parsear(zRankingSeccion, COL.ranking, s, snap.data())
@@ -197,7 +201,10 @@ export const emailsTodos = cache(
   },
 );
 
-/** Secciones que ve el profe: la suya o las dos (`seccion: null`). */
-export function seccionesDelProfe(u: Usuario | null): readonly SeccionId[] {
-  return u?.seccion ? [u.seccion] : SECCIONES;
+/** Secciones que ve el profe: la suya o todas las del catálogo (`seccion: null`, D323). */
+export function seccionesDelProfe(
+  u: Usuario | null,
+  secciones: readonly SeccionId[],
+): readonly SeccionId[] {
+  return u?.seccion ? [u.seccion] : secciones;
 }

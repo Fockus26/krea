@@ -2,12 +2,12 @@
 // la fecha de un ajuste nuevo llega por argumento. Un ajuste mueve puntos del ranking, nunca la nota (D007).
 import { normalizar, rutaAlumnos } from "@/lib/alumnos";
 import type { DicebearEstilo } from "@/lib/dicebear";
+import type { SeccionId } from "@/lib/modelo";
 import { chipAjuste, fechaAjusteTexto } from "@/lib/panel";
 import { rankCompetition } from "@/lib/ranking";
 import { formatDecimal, STEP_DEFAULT } from "@/lib/stepper";
 
 export type TipoDestino = "alumno" | "equipo";
-export type SeccionPuntos = "5A" | "5C";
 
 /* ---------- Motivos fijos (HANDOFF §3 Ajustes de puntos; D007) ---------- */
 
@@ -94,7 +94,7 @@ export type Candidato = {
   /** Cédula del alumno o id del equipo. */
   id: string;
   tipo: TipoDestino;
-  seccion: SeccionPuntos;
+  seccion: SeccionId;
   /** "Jorge Quintero" o "5A-G3 Ropa". */
   nombre: string;
   /** Puntos actuales del ranking. */
@@ -281,7 +281,7 @@ export type FilaHistorial = {
   id: string;
   tipo: TipoDestino;
   destinoId: string;
-  seccion: SeccionPuntos;
+  seccion: SeccionId;
   /** "Jorge Quintero" o "Equipo 5A-G3 Ropa". */
   nombre: string;
   valor: number;
@@ -465,7 +465,8 @@ export function ajusteAnuladoTexto(
 /* ---------- Filtro del historial («Filtrar»: sección, alumno/equipo, motivo) ---------- */
 
 export type FiltroHistorial = {
-  seccion: SeccionPuntos | "todas";
+  /** Un código del catálogo o "todas" (un código nunca es una palabra). */
+  seccion: SeccionId | "todas";
   tipo: TipoDestino | "todos";
   /** Etiqueta del motivo, o "todos". */
   motivo: string;

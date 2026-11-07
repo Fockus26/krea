@@ -1,12 +1,10 @@
 import { describe, expect, test } from "bun:test";
+import { ESTADOS_SLUG, estadoDeSlug, estadoSlug } from "@/lib/demo/ranking";
 import { rankCompetition } from "@/lib/ranking";
 import {
   AYUDA_CLAVE,
   ayudaAbiertaDe,
   ayudaValor,
-  ESTADOS_SLUG,
-  estadoDeSlug,
-  estadoSlug,
   eyebrowRanking,
   type ItemRanking,
   MAX_MOVIMIENTOS,

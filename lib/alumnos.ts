@@ -3,14 +3,14 @@
 
 import type { DicebearEstilo } from "@/lib/dicebear";
 import { BASE_MAX, BASE_MIN, NOTA_APROBATORIA } from "@/lib/grades";
+import type { SeccionId } from "@/lib/modelo";
 import { cedulaTexto } from "@/lib/perfil";
-
-export type SeccionAlumnos = "5A" | "5C";
+import { esCodigoSeccion, ordenarSecciones } from "@/lib/secciones";
 
 /** Una fila de la tabla: lo que la pantalla necesita ya resuelto (la fuente real llega en la fase 07). */
 export type FilaAlumno = {
   cedula: string;
-  seccion: SeccionAlumnos;
+  seccion: SeccionId;
   nombres: string;
   apellidos: string;
   /** "5A-G2 Repostería"; `null` = "Sin equipo". */
@@ -72,7 +72,7 @@ export function filtrarAlumnos<
 export function contadorTexto(
   n: number,
   consulta: string,
-  seccion?: SeccionAlumnos,
+  seccion?: SeccionId,
 ): string {
   const q = consulta.replace(/\s+/g, " ").trim();
   if (q === "") {
@@ -84,7 +84,7 @@ export function contadorTexto(
 }
 
 /** Opción del segmentado: "5A · 35". */
-export function seccionOpcionTexto(seccion: SeccionAlumnos, n: number): string {
+export function seccionOpcionTexto(seccion: SeccionId, n: number): string {
   return `${seccion} · ${n}`;
 }
 
@@ -94,7 +94,7 @@ export function resumenTexto(total: number, secciones: number): string {
 }
 
 /** Nombre accesible de la región desplazable de la tabla. */
-export function tablaLabel(seccion: SeccionAlumnos): string {
+export function tablaLabel(seccion: SeccionId): string {
   return `Tabla de alumnos de ${seccion}`;
 }
 
@@ -189,21 +189,34 @@ export function unirNombre(primero: string, segundo: string): string {
   return `${primero} ${segundo}`.replace(/\s+/g, " ").trim();
 }
 
-/** La otra sección (5A ↔ 5C). */
-export const otraSeccion = (s: SeccionAlumnos): SeccionAlumnos =>
-  s === "5A" ? "5C" : "5A";
+/**
+ * Sección que sugiere el vacío de la búsqueda: la que tiene más coincidencias, sin contar la
+ * actual; en empate, la primera por año y letra. Ninguna con coincidencias → `null`.
+ */
+export function seccionSugerida(
+  actual: SeccionId,
+  coincidencias: Readonly<Record<SeccionId, number>>,
+): SeccionId | null {
+  let mejor: SeccionId | null = null;
+  for (const s of ordenarSecciones(Object.keys(coincidencias))) {
+    const n = coincidencias[s] ?? 0;
+    if (s === actual || n <= 0) continue;
+    if (mejor === null || n > (coincidencias[mejor] ?? 0)) mejor = s;
+  }
+  return mejor;
+}
 
 /**
  * Vacío de la búsqueda sin resultados (lienzo Vacios.dc.html «Alumnos · búsqueda sin resultados»,
- * D170). Sugiere la otra sección solo si allí sí hay coincidencias (`enOtra` > 0).
+ * D170). Sugiere otra sección solo si allí sí hay coincidencias: la que tiene más (D323).
  */
 export function busquedaVacia(
   consulta: string,
-  seccion: SeccionAlumnos,
-  enOtra: number,
-): { titulo: string; descripcion: string; otra: SeccionAlumnos | null } {
+  seccion: SeccionId,
+  coincidencias: Readonly<Record<SeccionId, number>>,
+): { titulo: string; descripcion: string; otra: SeccionId | null } {
   const q = consulta.replace(/\s+/g, " ").trim();
-  const otra = enOtra > 0 ? otraSeccion(seccion) : null;
+  const otra = seccionSugerida(seccion, coincidencias);
   return {
     titulo: `Nadie con «${q}» en ${seccion}`,
     descripcion: otra
@@ -224,7 +237,7 @@ export const ESTADOS_ALUMNOS: readonly EstadoAlumnos[] = [
 
 /** Filtros de /profe/alumnos que viajan en la URL; todos opcionales. */
 export type FiltrosAlumnos = {
-  seccion?: SeccionAlumnos;
+  seccion?: SeccionId;
   estado?: EstadoAlumnos;
   /** Id de la tarea sobre la que se miran `estado` y la columna de nota. */
   tarea?: string;
@@ -249,8 +262,14 @@ type ParamsCrudos =
   | URLSearchParams
   | Readonly<Record<string, string | readonly string[] | undefined>>;
 
-/** Lee los filtros de la URL; un valor inválido o repetido se ignora (nunca error). */
-export function leerFiltrosAlumnos(params: ParamsCrudos): FiltrosAlumnos {
+/**
+ * Lee los filtros de la URL; un valor inválido o repetido se ignora (nunca error). Con
+ * `secciones` (las del catálogo), una sección que no está en la lista también se ignora.
+ */
+export function leerFiltrosAlumnos(
+  params: ParamsCrudos,
+  secciones?: readonly SeccionId[],
+): FiltrosAlumnos {
   const uno = (clave: string): string | undefined => {
     const v =
       params instanceof URLSearchParams ? params.get(clave) : params[clave];
@@ -259,7 +278,8 @@ export function leerFiltrosAlumnos(params: ParamsCrudos): FiltrosAlumnos {
   };
   const filtros: FiltrosAlumnos = {};
   const seccion = uno("seccion");
-  if (seccion === "5A" || seccion === "5C") filtros.seccion = seccion;
+  if (esCodigoSeccion(seccion) && (!secciones || secciones.includes(seccion)))
+    filtros.seccion = seccion;
   const estado = ESTADOS_ALUMNOS.find((e) => e === uno("estado"));
   if (estado) filtros.estado = estado;
   const tarea = uno("tarea");
@@ -315,7 +335,7 @@ const ESTADO_TEXTO: Record<EstadoAlumnos, [string, string]> = {
 export function contadorEstadoTexto(
   n: number,
   estado: EstadoAlumnos,
-  seccion: SeccionAlumnos,
+  seccion: SeccionId,
   tareaTitulo?: string,
 ): string {
   const [uno, varios] = ESTADO_TEXTO[estado];

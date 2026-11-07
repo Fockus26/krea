@@ -16,7 +16,6 @@ import {
   type DecisionPremio,
   type Entrega,
   type Equipo,
-  SECCIONES,
   type SeccionId,
   sumaValores as sumaModelo,
   type TareaDoc,
@@ -46,11 +45,10 @@ import {
   MAX_PREGUNTAS,
   type ModoConstructor,
   type PerdidaEliminar,
-  SECCIONES_TAREA,
-  type SeccionTarea,
   SIN_PERDIDA,
   type TareaProfe,
 } from "@/lib/tareas-profe";
+import { listaSecciones, ordenarSecciones } from "@/lib/secciones";
 
 type ConId<T> = { id: string } & T;
 
@@ -66,7 +64,12 @@ export const zEntradaTarea = z.object({
   titulo: z.string().trim().max(120),
   tipo: z.enum(TIPOS_TAREA),
   fecha: zDia.nullable(),
-  seccion: z.enum(SECCIONES_TAREA as [SeccionTarea, ...SeccionTarea[]]),
+  // Códigos con forma válida y sin repetir; que existan en el catálogo lo mira la acción (D323)
+  secciones: z
+    .array(zSeccion)
+    .min(1)
+    .max(9 * 26)
+    .refine((xs) => new Set(xs).size === xs.length, "Sección repetida"),
   premio: z.string().trim().max(200).nullable(),
   preguntas: z
     .array(
@@ -102,18 +105,6 @@ export type DecidirPremio = z.infer<typeof zDecidirPremio>;
 export type ResultadoTarea =
   | { ok: true; id: string }
   | { ok: false; error: ErrorTarea };
-
-/* ---------- Secciones ---------- */
-
-export function seccionesDe(s: SeccionTarea): SeccionId[] {
-  return s === "5A y 5C" ? [...SECCIONES] : [s];
-}
-
-export function seccionTareaDe(secciones: readonly SeccionId[]): SeccionTarea {
-  // La vista aún lista 5A/5C (las secciones del catálogo llegan con X5b, D317)
-  const unica = secciones.length === 1 ? secciones[0] : undefined;
-  return (unica as SeccionTarea | undefined) ?? "5A y 5C";
-}
 
 /* ---------- Armar el documento ---------- */
 
@@ -171,7 +162,7 @@ function publicada(
   const r = zTarea.safeParse({
     titulo: entrada.titulo,
     tipo: entrada.tipo,
-    secciones: seccionesDe(entrada.seccion),
+    secciones: ordenarSecciones(entrada.secciones),
     estado: base.estado,
     fechaEntrega: entrada.fecha,
     premio: premioDe(entrada),
@@ -254,7 +245,7 @@ function armarSinFoto(a: Armar): Armada {
   const r = zTareaBorrador.safeParse({
     titulo: entrada.titulo,
     tipo: entrada.tipo,
-    secciones: seccionesDe(entrada.seccion),
+    secciones: ordenarSecciones(entrada.secciones),
     estado: "borrador",
     fechaEntrega: entrada.fecha,
     premio: premioDe(entrada),
@@ -322,6 +313,26 @@ export type Conteos = {
 };
 
 /**
+ * `Conteos` de cada sección del catálogo (D323): las que no tienen alumnos o equipos salen con
+ * 0 y `[]`, así una sección nueva nunca da `undefined`. `alumnos`: cuántos hay en cada una.
+ */
+export function conteosDe(
+  secciones: readonly SeccionId[],
+  alumnos: Readonly<Record<SeccionId, number>>,
+  equipos: ReadonlyArray<{ id: string; seccion: SeccionId }>,
+): Conteos {
+  return {
+    alumnos: Object.fromEntries(secciones.map((s) => [s, alumnos[s] ?? 0])),
+    equipos: Object.fromEntries(
+      secciones.map((s) => [
+        s,
+        equipos.filter((e) => e.seccion === s).map((e) => e.id),
+      ]),
+    ),
+  };
+}
+
+/**
  * Total del avance (D316): titulares con entrega (enviada o evaluada, aunque su equipo ya no
  * exista) + titulares vivos de las secciones de la tarea sin entrega. Así `hechas <= total`
  * siempre. En la individual los alumnos llegan contados, no por id: un alumno eliminado se lleva
@@ -369,7 +380,7 @@ export function tareaProfeDe(
     tipo: t.tipo,
     estado: t.estado,
     fecha: t.fechaEntrega,
-    secciones: seccionTareaDe(t.secciones),
+    secciones: listaSecciones(t.secciones),
     premio: t.premio,
     preguntas: t.preguntas.length,
     suma: sumaModelo(t.preguntas.map((p) => ({ valor: p.valor ?? 0 }))),
@@ -402,7 +413,7 @@ export function perdidaAlEliminar(
   return {
     notas,
     sinEvaluar,
-    secciones: SECCIONES.filter((s) => conNotas.has(s)),
+    secciones: ordenarSecciones(conNotas),
   };
 }
 
@@ -449,7 +460,7 @@ export function planEliminar(
       if ("imagenPath" in r) imagenes.push(r.imagenPath);
     }
   }
-  const s = SECCIONES.filter((x) => secciones.has(x));
+  const s = ordenarSecciones(secciones);
   return {
     secciones: s,
     imagenes: [...new Set(imagenes)],
@@ -463,7 +474,7 @@ export function datosBorradorDe(t: TareaDoc): DatosBorrador {
     titulo: t.titulo,
     tipo: t.tipo,
     fecha: fechaCampo(t.fechaEntrega),
-    seccion: seccionTareaDe(t.secciones),
+    secciones: [...t.secciones],
     premio: t.premio ?? "",
     preguntas: t.preguntas.map(({ id, enunciado, formato, valor }) => ({
       id,
@@ -615,7 +626,7 @@ export function tarjetasPremios(
         {
           ...comun,
           id: t.id,
-          seccion: seccionTareaDe(t.secciones),
+          seccion: listaSecciones(t.secciones),
           borrador: t.estado === "borrador",
           estado: { tipo: "por-definir" },
         },
@@ -639,7 +650,8 @@ export type TareaParaPremio = {
   id: string;
   titulo: string;
   tipo: TareaDoc["tipo"];
-  seccion: SeccionTarea;
+  /** «5A» o «4B, 5A y 5C» (`listaSecciones`). */
+  seccion: string;
   borrador: boolean;
 };
 
@@ -660,7 +672,7 @@ export function tareasParaPremio(
       id: t.id,
       titulo: t.titulo,
       tipo: t.tipo,
-      seccion: seccionTareaDe(t.secciones),
+      seccion: listaSecciones(t.secciones),
       borrador: t.estado === "borrador",
     }));
 }

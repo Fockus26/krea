@@ -9,11 +9,11 @@ import {
   type Ajuste,
   type Equipo,
   type RankingSeccion,
-  SECCIONES,
   type SeccionId,
   type Usuario,
   zAjuste,
 } from "@/lib/modelo";
+import { SECCION_NO_EXISTE } from "@/lib/secciones";
 import { fechaAjusteTexto } from "@/lib/panel";
 import {
   type Candidato,
@@ -53,6 +53,8 @@ export type ErrorAjuste =
   | "no-existe"
   | "detalle"
   | "anulado"
+  /** La sección del destino ya no está en el catálogo (D323). */
+  | "seccion"
   | "red";
 
 export type ResultadoAjuste =
@@ -70,6 +72,8 @@ export function errorAjusteTexto(e: ErrorAjuste): string {
       return "En «Otro», explica el motivo en el detalle.";
     case "no-existe":
       return "Ese alumno, equipo o ajuste ya no existe. Recarga la página.";
+    case "seccion":
+      return SECCION_NO_EXISTE;
     default:
       return "No se pudo guardar el ajuste. Recarga la página e inténtalo de nuevo.";
   }
@@ -190,8 +194,7 @@ export function historialDe(
         id: a.id,
         tipo: a.destino,
         destinoId: a.destinoId,
-        // La vista aún lista 5A/5C (las secciones del catálogo llegan con X5b, D317)
-        seccion: a.seccion as FilaHistorial["seccion"],
+        seccion: a.seccion,
         nombre: nombreDe(a, n),
         valor: a.valor,
         motivo: a.motivo,
@@ -216,28 +219,33 @@ export type CandidatosPorSeccion = Record<
 
 const porNombre = new Intl.Collator("es", { sensitivity: "base" });
 
-/** Destinatarios del combobox con los puntos actuales de `ranking/{seccion}`, por nombre. */
+/**
+ * Destinatarios del combobox con los puntos actuales de `ranking/{seccion}`, por nombre. Cada
+ * sección de `secciones` (las del catálogo) sale aunque esté vacía; un alumno o equipo de una
+ * sección que no está en la lista también se agrupa (`??=`), nunca un `undefined.push` (D323).
+ */
 export function candidatosDe({
   usuarios,
   equipos,
   rankings,
+  secciones = [],
 }: {
   usuarios: ReadonlyArray<Usuario>;
   equipos: ReadonlyArray<ConId<Equipo>>;
   rankings: Readonly<Partial<Record<SeccionId, RankingSeccion | null>>>;
+  secciones?: readonly SeccionId[];
 }): CandidatosPorSeccion {
   const c: CandidatosPorSeccion = {
-    alumno: { "5A": [], "5C": [] },
-    equipo: { "5A": [], "5C": [] },
+    alumno: Object.fromEntries(secciones.map((s) => [s, []])),
+    equipo: Object.fromEntries(secciones.map((s) => [s, []])),
   };
   for (const u of usuarios) {
     if (u.rol !== "estudiante" || u.seccion === null) continue;
     const nombre = nombreCorto(u);
-    c.alumno[u.seccion].push({
+    (c.alumno[u.seccion] ??= []).push({
       id: u.cedula,
       tipo: "alumno",
-      // La vista aún lista 5A/5C (las secciones del catálogo llegan con X5b, D317)
-      seccion: u.seccion as Candidato["seccion"],
+      seccion: u.seccion,
       nombre,
       puntos: rankings[u.seccion]?.alumnos[u.cedula]?.puntos ?? 0,
       primerApellido: primerApellido(u.apellidos),
@@ -249,19 +257,21 @@ export function candidatosDe({
     });
   }
   for (const e of equipos) {
-    c.equipo[e.seccion].push({
+    (c.equipo[e.seccion] ??= []).push({
       id: e.id,
       tipo: "equipo",
-      seccion: e.seccion as Candidato["seccion"],
+      seccion: e.seccion,
       nombre: e.nombre,
       puntos: rankings[e.seccion]?.equipos[e.id]?.puntos ?? 0,
       primerApellido: e.nombre,
       avatar: { tipo: "equipo", tema: e.tema ?? e.nombre, logo: null },
     });
   }
-  for (const s of SECCIONES) {
-    c.alumno[s].sort((x, y) => porNombre.compare(x.nombre, y.nombre));
-    c.equipo[s].sort((x, y) => porNombre.compare(x.nombre, y.nombre));
+  for (const lista of [
+    ...Object.values(c.alumno),
+    ...Object.values(c.equipo),
+  ]) {
+    lista.sort((x, y) => porNombre.compare(x.nombre, y.nombre));
   }
   return c;
 }

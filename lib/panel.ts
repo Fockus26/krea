@@ -1,21 +1,29 @@
 // Lógica y textos del Panel del profesor (fase 04, D098–D101). Funciones puras, sin React ni reloj:
 // la hora y los datos llegan por argumento (con `cacheComponents` el servidor no lee `Date.now()`).
 import { formatNota } from "@/lib/grades";
+import type { SeccionId } from "@/lib/modelo";
 import { formatDecimal } from "@/lib/stepper";
 
-export type SeccionPanel = "5A" | "5C";
-export type FiltroSeccion = SeccionPanel | "ambas";
+/** Una sección del catálogo o «todas» (antes «ambas»: con el catálogo pueden ser más de dos, D322). */
+export type FiltroSeccion = SeccionId | typeof TODAS_SECCIONES;
+export const TODAS_SECCIONES = "todas";
+/** PROVISIONAL (CONTENT_CHECKLIST fila 168). */
+export const TODAS_TEXTO = "Todas";
 
-/** Opciones del segmentado de sección, en el orden del lienzo: 5A · 5C · Ambas. */
-export const FILTROS_SECCION: ReadonlyArray<readonly [FiltroSeccion, string]> =
-  [
-    ["5A", "5A"],
-    ["5C", "5C"],
-    ["ambas", "Ambas"],
-  ];
+/** ¿Es «todas» o una de `secciones`? Lo que no, no filtra (se ignora). */
+export function esFiltroSeccion(
+  valor: string,
+  secciones: readonly SeccionId[],
+): valor is FiltroSeccion {
+  return valor === TODAS_SECCIONES || secciones.includes(valor);
+}
 
-export function esFiltroSeccion(valor: string): valor is FiltroSeccion {
-  return valor === "5A" || valor === "5C" || valor === "ambas";
+/** Secciones que suma el filtro: todas las de la lista o solo la elegida. */
+export function seccionesDelFiltro(
+  filtro: FiltroSeccion,
+  secciones: readonly SeccionId[],
+): SeccionId[] {
+  return filtro === TODAS_SECCIONES ? [...secciones] : [filtro];
 }
 
 /** Nombre que el saludo usa si no hay nombre del profe (HANDOFF §9 #6, checklist fila 53). */
@@ -59,12 +67,12 @@ export function saludoTexto(
  */
 export const HORA_SALUDO_SERVIDOR = 9;
 
-/** Filtra por sección; "ambas" devuelve todo (HANDOFF §9 #7: el panel agrega las dos). */
-export function filtrarPorSeccion<T extends { seccion: SeccionPanel }>(
+/** Filtra por sección; «todas» devuelve todo (HANDOFF §9 #7: el panel agrega las secciones). */
+export function filtrarPorSeccion<T extends { seccion: SeccionId }>(
   items: readonly T[],
   filtro: FiltroSeccion,
 ): T[] {
-  return filtro === "ambas"
+  return filtro === TODAS_SECCIONES
     ? [...items]
     : items.filter((i) => i.seccion === filtro);
 }
@@ -185,7 +193,7 @@ export const ENTREGAS_VISIBLES = 5;
 
 /** Frase estable para la región viva del filtro (una sola, D098): "Mostrando la sección 5A". */
 export function filtroTexto(filtro: FiltroSeccion): string {
-  return filtro === "ambas"
-    ? "Mostrando ambas secciones"
+  return filtro === TODAS_SECCIONES
+    ? "Mostrando todas las secciones"
     : `Mostrando la sección ${filtro}`;
 }
