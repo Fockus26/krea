@@ -6,6 +6,7 @@
 // Renombrar un año o una sección cambia su código, que está guardado en usuarios, claims,
 // equipos, tareas, entregas, ajustes y el ranking: por eso editar y eliminar exigen que esté
 // vacía (D318). Aquí solo se transforma el catálogo; quien escribe comprueba el uso.
+import { zCatalogoSecciones } from "@/lib/modelo";
 
 /** Años con las letras de sus secciones, ordenados (años y letras). */
 export type CatalogoSecciones = ReadonlyArray<{
@@ -17,6 +18,19 @@ export type CatalogoSecciones = ReadonlyArray<{
 export const CATALOGO_INICIAL: CatalogoSecciones = [
   { numero: 5, letras: ["A", "C"] },
 ];
+
+/**
+ * Catálogo de lo leído en `config/secciones`: ausente → `CATALOGO_INICIAL`; presente con
+ * `anios: []` → sin secciones (no resucita el inicial); que no valida → `null` (quien lee decide).
+ */
+export function catalogoDeDocumento(
+  existe: boolean,
+  data: unknown,
+): CatalogoSecciones | null {
+  if (!existe) return CATALOGO_INICIAL;
+  const r = zCatalogoSecciones.safeParse(data);
+  return r.success ? normalizarCatalogo(r.data.anios) : null;
+}
 
 export const ANIO_MIN = 1;
 export const ANIO_MAX = 9;
@@ -289,6 +303,70 @@ export function letrasLibres(
   return LETRAS.filter((l) => !usadas.has(l));
 }
 
+/* ---------- Operaciones de la pantalla (las Server Actions, D318) ---------- */
+
+export type OperacionSecciones =
+  | { tipo: "crearAnio"; numero: number; letras: readonly string[] }
+  | { tipo: "editarAnio"; de: number; a: number }
+  | { tipo: "eliminarAnio"; numero: number }
+  | { tipo: "crearSeccion"; numero: number; letra: string }
+  | { tipo: "editarSeccion"; codigo: string; letra: string }
+  | { tipo: "eliminarSeccion"; codigo: string };
+
+export function aplicarOperacion(
+  catalogo: CatalogoSecciones,
+  op: OperacionSecciones,
+): CambioCatalogo {
+  switch (op.tipo) {
+    case "crearAnio":
+      return agregarAnio(catalogo, op.numero, op.letras);
+    case "editarAnio":
+      return renombrarAnio(catalogo, op.de, op.a);
+    case "eliminarAnio":
+      return quitarAnio(catalogo, op.numero);
+    case "crearSeccion":
+      return agregarSeccion(catalogo, op.numero, op.letra);
+    case "editarSeccion":
+      return renombrarSeccion(catalogo, op.codigo, op.letra);
+    case "eliminarSeccion":
+      return quitarSeccion(catalogo, op.codigo);
+  }
+}
+
+/**
+ * Códigos que dejan de existir con la operación (antes de aplicarla): tienen que estar vacíos y
+ * su `ranking/{codigo}` se borra (D318). Crear no quita ninguno; renombrar a lo mismo, tampoco.
+ */
+export function codigosQueSeVan(
+  catalogo: CatalogoSecciones,
+  op: OperacionSecciones,
+): string[] {
+  switch (op.tipo) {
+    case "crearAnio":
+    case "crearSeccion":
+      return [];
+    case "editarAnio":
+      return op.de === op.a ? [] : seccionesDelAnio(catalogo, op.de);
+    case "eliminarAnio":
+      return seccionesDelAnio(catalogo, op.numero);
+    case "editarSeccion":
+      return partesSeccion(op.codigo)?.letra === op.letra ? [] : [op.codigo];
+    case "eliminarSeccion":
+      return [op.codigo];
+  }
+}
+
+/** Lo que se guarda en `config/secciones` (sin el instante). */
+export function anioDoc(catalogo: CatalogoSecciones): Array<{
+  numero: number;
+  letras: string[];
+}> {
+  return normalizarCatalogo(catalogo).map((a) => ({
+    numero: a.numero,
+    letras: [...a.letras],
+  }));
+}
+
 /* ---------- Uso de una sección (D318) ---------- */
 
 /** Qué hay guardado con el código de la sección. */
@@ -380,6 +458,52 @@ export function usoPorSeccion(datos: {
 
 export const usoDe = (usos: ReadonlyMap<string, UsoSeccion>, codigo: string) =>
   usos.get(codigo) ?? USO_VACIO;
+
+/** Una sección en la pantalla Años y secciones. */
+export type FilaSeccion = {
+  codigo: string;
+  letra: string;
+  uso: UsoSeccion;
+  vacia: boolean;
+};
+
+/** Un año en la pantalla: su uso es la suma del de sus secciones. */
+export type FilaAnio = {
+  numero: number;
+  nombre: string;
+  secciones: FilaSeccion[];
+  uso: UsoSeccion;
+  vacio: boolean;
+};
+
+/** Años y secciones del catálogo con su uso, en orden (D319). */
+export function filasSecciones(
+  catalogo: CatalogoSecciones,
+  usos: ReadonlyMap<string, UsoSeccion>,
+): FilaAnio[] {
+  return normalizarCatalogo(catalogo).map((a) => {
+    const secciones = a.letras.map((letra): FilaSeccion => {
+      const codigo = codigoSeccion(a.numero, letra);
+      const uso = usoDe(usos, codigo);
+      return { codigo, letra, uso, vacia: seccionVacia(uso) };
+    });
+    const uso = sumarUso(secciones.map((s) => s.uso));
+    return {
+      numero: a.numero,
+      nombre: nombreAnio(a.numero),
+      secciones,
+      uso,
+      vacio: seccionVacia(uso),
+    };
+  });
+}
+
+/** Eyebrow: «2 años · 5 secciones». */
+export function resumenCatalogo(catalogo: CatalogoSecciones): string {
+  const anios = catalogo.length;
+  const secciones = seccionesDe(catalogo).length;
+  return `${anios} ${anios === 1 ? "año" : "años"} · ${secciones} ${secciones === 1 ? "sección" : "secciones"}`;
+}
 
 /* ---------- Textos (PROVISIONAL: CONTENT_CHECKLIST fila 166) ---------- */
 

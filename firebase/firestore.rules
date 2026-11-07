@@ -82,6 +82,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Configuración de la escuela: hoy el catálogo de años y secciones (D317). Solo el profe la
+    // lee; el estudiante no la necesita (su sección viene en el claim).
+    match /config/{doc} {
+      allow read: if esProfe();
+      allow write: if false;
+    }
+
     // Presencia al editar un alumno (D275): la ÚNICA escritura desde el cliente. Efímera, no es
     // dato de notas: cada profe escribe y borra solo SU entrada, con claves y tipos exactos y los
     // timestamps del servidor. Leer: solo profes (también la consulta de grupo «editores», que es
