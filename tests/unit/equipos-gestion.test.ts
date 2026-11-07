@@ -1,9 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { equiposProfeDatos } from "@/lib/equipos-datos";
 import {
-  bloqueoEliminar,
-  bloqueoTexto,
+  consecuenciasEliminar,
+  consecuenciasTexto,
   equipoNuevo,
+  escriturasEliminarEquipo,
   nombreRepetido,
   validarEquipo,
   zCrearEquipo,
@@ -60,20 +61,43 @@ describe("crear y editar equipo (D270)", () => {
   });
 });
 
-describe("eliminar equipo (D271)", () => {
-  test("solo vacío, sin entregas grupales ni ajustes; dice por qué", () => {
-    expect(bloqueoEliminar({ integrantes: 0, entregas: 0, ajustes: 0 })).toBe(
-      null,
-    );
-    const b = bloqueoEliminar({ integrantes: 3, entregas: 2, ajustes: 1 });
-    expect(b).toEqual({ motivo: "integrantes", n: 3 });
-    expect(bloqueoTexto({ motivo: "integrantes", n: 1 })).toContain(
-      "1 integrante.",
+describe("eliminar equipo (D307)", () => {
+  test("siempre se puede: los recuentos se normalizan", () => {
+    expect(
+      consecuenciasEliminar({ integrantes: 3, entregas: 2, ajustes: 1 }),
+    ).toEqual({ integrantes: 3, entregas: 2, ajustes: 1 });
+    expect(
+      consecuenciasEliminar({
+        integrantes: -1,
+        entregas: Number.NaN,
+        ajustes: 2.7,
+      }),
+    ).toEqual({ integrantes: 0, entregas: 0, ajustes: 2 });
+  });
+
+  test("el texto dice qué tiene y qué pasa con cada cosa, con números", () => {
+    expect(
+      consecuenciasTexto({ integrantes: 3, entregas: 2, ajustes: 1 }),
+    ).toBe(
+      "Tiene 3 integrantes, 2 entregas grupales y 1 ajuste: los integrantes quedan sin equipo, las notas se quedan con cada alumno y el ajuste se borra. Se borra también su logo. No se puede deshacer.",
     );
     expect(
-      bloqueoEliminar({ integrantes: 0, entregas: 1, ajustes: 4 }),
-    ).toEqual({ motivo: "entregas", n: 1 });
-    expect(bloqueoTexto({ motivo: "ajustes", n: 2 })).toContain("2 ajustes");
+      consecuenciasTexto({ integrantes: 1, entregas: 0, ajustes: 4 }),
+    ).toBe(
+      "Tiene 1 integrante y 4 ajustes: el integrante queda sin equipo y los ajustes se borran. Se borra también su logo. No se puede deshacer.",
+    );
+    expect(
+      consecuenciasTexto({ integrantes: 0, entregas: 1, ajustes: 0 }),
+    ).toStartWith("Tiene 1 entrega grupal: la nota se queda con cada alumno.");
+    expect(
+      consecuenciasTexto({ integrantes: 0, entregas: 0, ajustes: 0 }),
+    ).toStartWith("No tiene integrantes, entregas grupales ni ajustes");
+  });
+
+  test("escrituras: un perfil, una entrega y un ajuste cada uno, más el equipo y el ranking", () => {
+    expect(
+      escriturasEliminarEquipo({ integrantes: 3, entregas: 2, ajustes: 1 }),
+    ).toBe(8);
   });
 
   test("el tablero cuenta entregas grupales y ajustes de cada equipo", () => {

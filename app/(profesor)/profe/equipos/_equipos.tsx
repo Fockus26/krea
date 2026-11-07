@@ -40,7 +40,7 @@ const ACCIONES: AccionesEquipos = {
  * `/profe/equipos` (5A, la sección por defecto) y `/profe/equipos/[seccion]`. Mover, capitán,
  * logo y crear/editar/eliminar equipo (W12, D270) se guardan con Server Actions; solo se firman
  * los logos de esta sección (los que se ven). Entregas y ajustes solo cuentan para saber qué
- * equipo se puede eliminar (D271). El aviso «pasó a …» usa el Toaster global (D131).
+ * arrastra eliminar un equipo (D307). El aviso «pasó a …» usa el Toaster global (D131).
  */
 export async function EquiposProfe({ seccion }: { seccion: SeccionEquipos }) {
   const [usuarios, equipos, rankings, entregas, ajustes] = await Promise.all([

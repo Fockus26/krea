@@ -194,7 +194,7 @@ export function conCambios<
  * Tablero de una sección con los documentos reales: equipos en el orden del ranking (puntos de
  * `ranking/{seccion}`; sin documento, 0 y empate), integrantes con su avatar y el estado inicial.
  * `logos`: equipo → URL firmada (solo la de los que tienen logo). Con `entregas` y `ajustes`,
- * cada equipo lleva cuántos tiene (`conDatos`: con alguno no se elimina, D271).
+ * cada equipo lleva cuántos tiene (`conDatos`: el diálogo de eliminar los nombra, D307).
  */
 export function equiposProfeDatos(
   seccion: SeccionId,

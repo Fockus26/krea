@@ -38,7 +38,7 @@ export type EquipoVista = {
   empate: boolean;
   /** URL firmada del logo (D212); `null`/ausente → iniciales. */
   logo?: string | null;
-  /** Entregas grupales y ajustes del equipo: con alguno no se elimina (D271). */
+  /** Entregas grupales y ajustes del equipo: el diálogo de eliminar dice qué pasa con ellos (D307). */
   conDatos?: { entregas: number; ajustes: number };
 };
 

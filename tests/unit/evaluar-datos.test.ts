@@ -8,8 +8,11 @@ import {
   entregaEvaluada,
   IMAGEN_NO_DISPONIBLE,
   mapasEvaluar,
+  nombreGrupal,
+  nombreTitular,
   RUTA_EVALUAR,
   SIN_RESPUESTA,
+  TITULAR_DESCONOCIDO,
   vistaEvaluar,
   zGuardarEvaluacion,
 } from "@/lib/evaluar-datos";
@@ -320,5 +323,30 @@ describe("fechas de Caracas", () => {
     expect(hora24DeInstante(ms)).toBe("10:15");
     expect(isoLocalDeInstante(ms)).toBe("2026-10-25T10:15");
     expect(hora24DeInstante(Date.UTC(2026, 9, 25, 4, 5))).toBe("00:05");
+  });
+});
+
+describe("nombre de una grupal (D308)", () => {
+  const equipo: { id: string } & Equipo = {
+    id: "eq",
+    nombre: "Repostería",
+    seccion: "5A",
+    tema: null,
+    capitanId: null,
+    logoPath: null,
+  };
+  const grupal = (o: Partial<Entrega> = {}) =>
+    ent({ id: "g", tipo: "grupal", titularId: "eq", ...o });
+  const mapas = (equipos: Array<{ id: string } & Equipo>) =>
+    mapasEvaluar({ usuarios: [], equipos, tareas: [] });
+
+  test("equipo vivo → su nombre; eliminado → el de entonces; si no, desconocido", () => {
+    expect(
+      nombreTitular(grupal({ titularNombre: "Viejo" }), mapas([equipo])),
+    ).toBe("Repostería");
+    expect(nombreGrupal(grupal({ titularNombre: "Viejo" }), new Map())).toBe(
+      "Viejo",
+    );
+    expect(nombreTitular(grupal(), mapas([]))).toBe(TITULAR_DESCONOCIDO);
   });
 });

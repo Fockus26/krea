@@ -22,7 +22,10 @@ import {
   type ResultadoEquipos,
   type ResultadoLogo,
 } from "@/lib/equipos-datos";
-import { bloqueoEliminar, eliminadoEquipoTexto } from "@/lib/equipos-gestion";
+import {
+  consecuenciasEliminar,
+  eliminadoEquipoTexto,
+} from "@/lib/equipos-gestion";
 import {
   type AlumnoEquipo,
   cambiarCapitan,
@@ -268,7 +271,7 @@ export function TeamsBoard({
                       />
                       <EliminarEquipoDialog
                         equipo={eq}
-                        bloqueo={bloqueoEliminar({
+                        consecuencias={consecuenciasEliminar({
                           integrantes: e.miembros.length,
                           entregas: eq.conDatos?.entregas ?? 0,
                           ajustes: eq.conDatos?.ajustes ?? 0,
