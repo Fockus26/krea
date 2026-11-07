@@ -30,7 +30,7 @@ export type FilaAjuste = {
  */
 export function RecentAdjustments({ filas }: { filas: readonly FilaAjuste[] }) {
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
         <CardTitle level={2}>Últimos ajustes</CardTitle>
         <Button asChild variant="secondary" size="sm">

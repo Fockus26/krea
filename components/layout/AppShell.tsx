@@ -30,7 +30,7 @@ export function AppShell({
   children,
 }: AppShellProps) {
   return (
-    <div className="min-h-dvh lg:flex" data-role={role}>
+    <div className="flex min-h-dvh flex-col lg:flex-row" data-role={role}>
       {sidebar ? (
         <div className="hidden shrink-0 self-start lg:sticky lg:top-0 lg:block">
           <nav

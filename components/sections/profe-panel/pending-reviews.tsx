@@ -46,7 +46,7 @@ export function PendingReviews({ filas }: { filas: readonly FilaEvaluar[] }) {
   const visibles = filas.slice(0, ENTREGAS_VISIBLES);
   const primera = filas[0];
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
         <CardTitle level={2}>Por evaluar</CardTitle>
         {primera ? (

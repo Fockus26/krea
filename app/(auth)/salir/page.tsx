@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { CerrarSesion } from "@/components/sections/auth/cerrar-sesion";
 
 export const metadata: Metadata = {
-  title: "Cerrando sesión",
+  title: "¡Hasta luego!",
   robots: { index: false, follow: false },
 };
 
