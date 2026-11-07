@@ -9,7 +9,7 @@
 Fases 01–09 cerradas · **Track:** Product · main @ 8f818b8 · versión 1 entregada. Próximo QA de versión: `git diff --name-only d50568b..origin/main` (`plans/qa-version-1.md`).
 **Build local suprimido** (César, 2026-11-05): lo corren CI y Vercel. **QA con sesión:** `qa:local` y `.env.test.local`; nunca pedirle a César que inicie sesión.
 
-**Tanda 2026-11-06** (53 pedidos, 5 olas): `plans/batch-2026-11-06.md` · olas 1–3 **cerradas** (#78–#95, main @ 761805f; sin QA por memoria) · ola 4 **cerrada** (#96–#99 mergeados, main @ 1605d0a; acción: TTL de `operaciones.expiraEn`) · **ola 5 de 5 lanzada**: W23 `fix/icono-texto` wt1 · luego ola 5: W23 `fix/icono-texto` (pedido 48).
+**Tanda 2026-11-06** (53 pedidos, 5 olas): `plans/batch-2026-11-06.md` · olas 1–3 **cerradas** (#78–#95, main @ 761805f; sin QA por memoria) · ola 4 **cerrada** (#96–#99 mergeados, main @ 1605d0a) · TTL de `operaciones` descartado (Firebase de pago; se migra al VPS) · **ola 5 de 5**: #100 W23 `fix/icono-texto` wt1 (terminando tras corte de red) · #101 `fix/podio-numero` wt2 (D306: `cn` borraba el color del número del podio) · luego ola 5: W23 `fix/icono-texto` (pedido 48).
 
 ## Blocked (actions for César or external)
 
@@ -33,6 +33,8 @@ QA de versión hecho (2026-11-06): lo no verificado está en `plans/qa-version-1
 - Confirmar indexación solo `/ingresar` (D023) y metadata (fila 22) · `NEXT_PUBLIC_SITE_URL` con dominio (fila 21).
 
 ## Next
+
+- **Migrar al VPS** (César, 2026-11-07): Firebase → Postgres del VPS (`tech/migrate-firebase-vps.md`). Sin migrar datos: se borran todos **menos los profesores**.
 
 - Lanzamiento: contenido real (CONTENT_CHECKLIST filas 2–11, 14, 21, 64) y acciones de César de arriba.
 - Pendientes chicos: capitán movido tras una entrega (D221) · Editar alumno «el último gana».
