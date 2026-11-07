@@ -1,6 +1,7 @@
 import { Trophy } from "lucide-react";
 import type { Metadata } from "next";
 import { EmptyState } from "@/components/krea/empty-state";
+import { DailyMessage } from "@/components/sections/inicio/daily-message";
 import { HomeGrid } from "@/components/sections/inicio/home-grid";
 import { PendingTasks } from "@/components/sections/inicio/pending-tasks";
 import { PointsCard } from "@/components/sections/inicio/points-card";
@@ -13,7 +14,9 @@ import {
   integrantesDe,
   logoDeEquipo,
 } from "@/lib/datos/estudiante";
-import { inicioVista } from "@/lib/vistas-estudiante";
+import { diaDeInstante } from "@/lib/fecha";
+import { mensajeDelDia } from "@/lib/mensaje-diario";
+import { inicioVista, promedioDelAlumno } from "@/lib/vistas-estudiante";
 
 export const metadata: Metadata = { title: "Inicio" };
 
@@ -26,6 +29,12 @@ export default async function InicioPage() {
     logoDeEquipo(datos.equipo),
   ]);
   const d = inicioVista(datos, companeros);
+  // Día de Caracas leído tras `datosAlumno()` (sesión = dato de la petición, D098): nunca en el
+  // prerender. Cambia cada día, no cada recarga (D274).
+  const mensaje = mensajeDelDia(
+    promedioDelAlumno(datos),
+    diaDeInstante(Date.now()),
+  );
   return (
     <HomeGrid
       saludo={
@@ -35,6 +44,7 @@ export default async function InicioPage() {
           description={d.saludo.linea}
         />
       }
+      mensaje={<DailyMessage mensaje={mensaje} />}
       puntos={
         d.puntos ? (
           <PointsCard {...d.puntos} rankingHref="/ranking" />

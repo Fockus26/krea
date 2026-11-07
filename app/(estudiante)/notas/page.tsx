@@ -3,7 +3,7 @@ import { GradeLegend } from "@/components/sections/notas/grade-legend";
 import { GradesList } from "@/components/sections/notas/grades-list";
 import { PageHeader } from "@/components/sections/shared/page-header";
 import { datosAlumno } from "@/lib/datos/estudiante";
-import { filasMisNotas } from "@/lib/vistas-estudiante";
+import { filasMisNotas, promedioDelAlumno } from "@/lib/vistas-estudiante";
 
 export const metadata: Metadata = { title: "Mis notas" };
 
@@ -17,7 +17,7 @@ export default async function NotasPage() {
         title="Mis notas"
         description="Toca una nota para ver cómo se evaluó cada pregunta."
       />
-      <GradeLegend />
+      <GradeLegend promedio={promedioDelAlumno(datos)} />
       <GradesList filas={filasMisNotas(datos)} tareasHref="/tareas" />
     </>
   );

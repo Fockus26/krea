@@ -21,7 +21,8 @@ export default function NotasVista() {
         title="Mis notas"
         description="Toca una nota para ver cómo se evaluó cada pregunta."
       />
-      <GradeLegend />
+      {/* Promedio de ejemplo para ver el marcador «Tú» */}
+      <GradeLegend promedio={15.5} />
       <GradesList filas={misNotasDe(alumno)} tareasHref="/tareas" />
     </Vista>
   );

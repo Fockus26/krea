@@ -18,8 +18,19 @@ export function esFiltroSeccion(valor: string): valor is FiltroSeccion {
   return valor === "5A" || valor === "5C" || valor === "ambas";
 }
 
-/** Nombre que el saludo usa mientras el del profe sea placeholder (HANDOFF §9 #6, checklist fila 53). */
+/** Nombre que el saludo usa si no hay nombre del profe (HANDOFF §9 #6, checklist fila 53). */
 export const NOMBRE_SALUDO_PROFE = "profe";
+
+/**
+ * Nombre del saludo con el del profe de la sesión (D272): "profe César" = `profe` + primer nombre
+ * de `usuarios/{cedula}.nombres`. Sin nombre (vacío, solo espacios o ausente) queda "profe".
+ */
+export function nombreSaludoProfe(nombres: string | null | undefined): string {
+  const primero = (nombres ?? "").trim().split(/\s+/)[0] ?? "";
+  return primero === ""
+    ? NOMBRE_SALUDO_PROFE
+    : `${NOMBRE_SALUDO_PROFE} ${primero}`;
+}
 
 /**
  * Saludo por hora local (0–23): días 5–11, tardes 12–18, noches 19–4.
