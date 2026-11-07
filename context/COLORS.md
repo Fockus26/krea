@@ -72,6 +72,7 @@ Degradado continuo, no por rangos. `gradeColor(n)` en HSL:
 - D001: #EE0400 como texto sobre #F6F4FA da 4.13:1 → el texto rojo usa `accent-ink` #C80300.
 - Las gotas (`splash`) son decorativas y no tienen requisito de contraste (el logo tiene `<title>`).
 - **Texto normal sobre `accent-soft-2` va en `--text`**, no en el acento (con los tintes de antes `accent-ink` ahí daba 4,09:1 en rojo claro y 3,77:1 en morado oscuro; desde D236 con 16/18 % llega a 4,5:1 en los 4 acentos y lo vigila `tests/unit/contraste-tokens.test.ts`). Sobre `accent-soft` sí vale `accent-ink` (≥ 4,74:1).
+- **Acento lleno (botón primario, chip «tú», 1.º del podio)**: texto `--on-accent`. En oscuro es blanco y `--accent` es un relleno oscurecido (azul #5773AF, rojo #BF5046, verde #34816E, morado #7D67B2; blanco ≥ 4,66:1); el tono claro de antes vive en `--accent-ink` (D301). El destello del podio va detrás del número y el del 1.º es una sombra (D303). Auditoría: `bun run scripts/qa/contraste-acentos.ts` (D302).
 - `--grade-ink` es #111111 y `--grade-ink-on-dark` #FFFFFF en claro y oscuro (no se invierten). `::selection` = acento al 22 % (claro) / 40 % (oscuro) sobre `--bg`, texto `--text` (D236). El toast sí invierte (`--toast-bg`/`--toast-text`).
 
 ## Implementación (`app/globals.css`, D015–D016)

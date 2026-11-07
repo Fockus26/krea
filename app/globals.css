@@ -99,6 +99,9 @@
   --tint-alert-warn: 26%;
   --tint-alert-ok: 12%;
   --hover-mix: #000000;
+  --brillo-mezcla: 55%; /* destello de los escalones 2.º y 3.º: --surface a este % (aclara en claro, oscurece en oscuro) */
+  --brillo-1-tinta: #000000; /* el del 1.º es una sombra suave: aclarar bajo el número blanco lo borraba (D303) */
+  --brillo-1-mezcla: 18%;
 
   color-scheme: light;
 }
@@ -141,9 +144,9 @@
   --toast-bg: #f4f1f8;
   --toast-text: #221d2b;
 
-  --accent: #7aa2f7;
+  --accent: #5773af;
   --accent-ink: #7aa2f7;
-  --on-accent: #14121a;
+  --on-accent: #ffffff; /* blanco sobre el relleno oscurecido de abajo (D301) */
 
   /* Tarjetas: sombra mínima; el componente Card añade borde 1 px --divider (HANDOFF §1.5) */
   --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
@@ -158,20 +161,20 @@
   --tint-ok: 14%;
   --tint-warn: 14%;
   --tint-prize: 18%;
-  --hover-mix: #ffffff;
+  --hover-mix: #000000; /* hover del botón: oscurece, el texto blanco no pierde contraste (D301) */
 
   color-scheme: dark;
 }
 [data-theme="dark"][data-accent="rojo"] {
-  --accent: #ff6b5e;
+  --accent: #bf5046;
   --accent-ink: #ff6b5e;
 }
 [data-theme="dark"][data-accent="verde"] {
-  --accent: #4fc4a6;
+  --accent: #34816e;
   --accent-ink: #4fc4a6;
 }
 [data-theme="dark"][data-accent="morado"] {
-  --accent: #a98bf0;
+  --accent: #7d67b2;
   --accent-ink: #a98bf0;
 }
 
@@ -197,9 +200,9 @@
     --toast-bg: #f4f1f8;
     --toast-text: #221d2b;
 
-    --accent: #7aa2f7;
+    --accent: #5773af;
     --accent-ink: #7aa2f7;
-    --on-accent: #14121a;
+    --on-accent: #ffffff;
 
     --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
     --shadow-2: 0 6px 20px rgb(0 0 0 / 0.4);
@@ -213,20 +216,20 @@
     --tint-ok: 14%;
     --tint-warn: 14%;
     --tint-prize: 18%;
-    --hover-mix: #ffffff;
+    --hover-mix: #000000;
 
     color-scheme: dark;
   }
   :root:not([data-theme="light"])[data-accent="rojo"] {
-    --accent: #ff6b5e;
+    --accent: #bf5046;
     --accent-ink: #ff6b5e;
   }
   :root:not([data-theme="light"])[data-accent="verde"] {
-    --accent: #4fc4a6;
+    --accent: #34816e;
     --accent-ink: #4fc4a6;
   }
   :root:not([data-theme="light"])[data-accent="morado"] {
-    --accent: #a98bf0;
+    --accent: #7d67b2;
     --accent-ink: #a98bf0;
   }
 }
@@ -1331,6 +1334,7 @@
 @utility brillo-podio {
   position: relative;
   overflow: hidden;
+  isolation: isolate;
   &::after {
     content: "";
     position: absolute;
@@ -1338,10 +1342,16 @@
     left: 0;
     width: 35%;
     pointer-events: none;
+    /* Va detrás del número (z -1 dentro del escalón aislado, D303); el 1.º cambia tinta y mezcla */
+    z-index: -1;
     background: linear-gradient(
       90deg,
       transparent,
-      color-mix(in srgb, var(--surface) 55%, transparent),
+      color-mix(
+        in srgb,
+        var(--brillo-tinta, var(--surface)) var(--brillo-mezcla),
+        transparent
+      ),
       transparent
     );
     opacity: 0;

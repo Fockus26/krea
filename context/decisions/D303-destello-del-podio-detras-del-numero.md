@@ -1,0 +1,5 @@
+# D303 · Colors · El destello del podio va detrás del número y el del 1.º es una sombra suave · Implemented
+
+**Decision:** `brillo-podio` aísla el escalón (`isolation: isolate`) y pone el destello en `z-index: -1`, detrás del número. Para el escalón del 1.º (`bg-accent` + texto `--on-accent` blanco en claro) la tinta del destello es `--brillo-1-tinta` (`#000000`) al `--brillo-1-mezcla` (18 %): oscurece en vez de aclarar. Los escalones 2.º y 3.º conservan `--surface` al `--brillo-mezcla` (55 %, el valor de antes). Con el acento rojo, el blanco sobre `#ee0400` queda en 4,51:1 sin destello, así que cualquier aclarado lo rompe.
+**Why:** pedido de César (53): en claro el número del 1.º no se veía con ningún acento. Causa medida: el destello (`--surface` = blanco al 55 %) pasaba por encima del número blanco y aclaraba el relleno, con picos de 2,0–2,3:1. Ahora el pico queda en ≥ 6:1 para el 1.º y ≥ 4,5:1 para el resto, en los 4 acentos × claro/oscuro.
+**Discarded alternative:** oscurecer `--accent` en claro para dar margen al rojo: toca la marca (D001) sin necesidad una vez que el destello no aclara.
