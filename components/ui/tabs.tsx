@@ -2,6 +2,7 @@
 
 import { Tabs as TabsPrimitive } from "radix-ui";
 import type * as React from "react";
+import { Indicador, useIndicador } from "@/components/krea/indicador";
 import { cn } from "@/lib/utils";
 
 /*
@@ -12,9 +13,10 @@ import { cn } from "@/lib/utils";
  *  - `segmented`: contenedor `--surface-2`; la opción activa sube a `--surface` con `shadow-1`.
  * Para elegir un valor (5A/5C, tema) usa `ToggleGroup`, que es `radiogroup`, no `tablist`.
  *
- * Indicador: cambia con opacidad 150 ms (alternativa conservadora de D039): medir el DOM para
- * deslizarlo con `transform` es frágil con scroll y cambios de ancho. Con reduced motion las
- * duraciones valen 0 (D017) y el salto es inmediato.
+ * Indicador (D279, reemplaza a D039): un solo elemento (`Indicador`) que se desliza con
+ * `transform` hasta la pestaña activa (barra de 3 px en `line`, opción levantada en `segmented`),
+ * 250 ms. Hasta que mide (HTML del servidor) la pestaña activa pinta su propia barra/fondo. Con
+ * reduced motion las duraciones valen 0 (D017) y el salto es inmediato.
  */
 
 function Tabs({
@@ -34,19 +36,25 @@ function TabsList({
   className,
   variant = "line",
   block = false,
+  children,
   ...props
 }: React.ComponentProps<typeof TabsPrimitive.List> & {
   variant?: "line" | "segmented";
   /** Solo `segmented`: reparte el ancho (`seg-block`); bajo 400 px se ocultan los íconos. */
   block?: boolean;
 }) {
+  const { listaRef, indicadorRef } = useIndicador<HTMLDivElement>({
+    activo: ':scope > [data-slot="tabs-trigger"][data-state="active"]',
+    eje: variant === "line" ? "x" : "xy",
+  });
   return (
     <TabsPrimitive.List
+      ref={listaRef}
       data-slot="tabs-list"
       data-variant={variant}
       data-block={block || undefined}
       className={cn(
-        "group/tabs-list",
+        "group/tabs-list relative isolate",
         variant === "line" &&
           "flex gap-6 overflow-x-auto border-b border-divider",
         variant === "segmented" &&
@@ -56,7 +64,13 @@ function TabsList({
         className,
       )}
       {...props}
-    />
+    >
+      <Indicador
+        ref={indicadorRef}
+        variante={variant === "line" ? "linea" : "segmentado"}
+      />
+      {children}
+    </TabsPrimitive.List>
   );
 }
 
@@ -80,12 +94,16 @@ function TabsTrigger({
         "group-data-[variant=line]/tabs-list:after:h-0.75 group-data-[variant=line]/tabs-list:after:rounded-t-xs group-data-[variant=line]/tabs-list:after:bg-accent",
         "group-data-[variant=line]/tabs-list:after:opacity-0 group-data-[variant=line]/tabs-list:after:transition-opacity group-data-[variant=line]/tabs-list:after:duration-fast",
         "group-data-[variant=line]/tabs-list:data-[state=active]:after:opacity-100",
+        // Cuando el indicador ya midió (`data-ind`, D279), la barra es él
+        "group-data-[variant=line]/tabs-list:group-data-[ind]/tabs-list:data-[state=active]:after:opacity-0",
         // Segmentado
         "group-data-[variant=segmented]/tabs-list:h-10 group-data-[variant=segmented]/tabs-list:gap-2 group-data-[variant=segmented]/tabs-list:rounded-nav group-data-[variant=segmented]/tabs-list:px-4",
         "group-data-[variant=segmented]/tabs-list:outline-offset-2",
         // 40 px visibles (HANDOFF §2) y 44 de área táctil, dentro del padding del contenedor (D215)
         "group-data-[variant=segmented]/tabs-list:after:absolute group-data-[variant=segmented]/tabs-list:after:inset-x-0 group-data-[variant=segmented]/tabs-list:after:-inset-y-0.5",
         "group-data-[variant=segmented]/tabs-list:data-[state=active]:bg-surface group-data-[variant=segmented]/tabs-list:data-[state=active]:text-text group-data-[variant=segmented]/tabs-list:data-[state=active]:shadow-1",
+        // Cuando el indicador ya midió (`data-ind`, D279), el fondo y la sombra son él
+        "group-data-[variant=segmented]/tabs-list:group-data-[ind]/tabs-list:data-[state=active]:bg-transparent group-data-[variant=segmented]/tabs-list:group-data-[ind]/tabs-list:data-[state=active]:shadow-none",
         // seg-block: reparte el ancho y, por debajo de 400 px (25 rem) del contenedor, solo texto
         "group-data-[block]/tabs-list:min-w-0 group-data-[block]/tabs-list:flex-1 group-data-[block]/tabs-list:justify-center group-data-[block]/tabs-list:px-2",
         "group-data-[block]/tabs-list:@max-seg:[&_svg]:hidden",

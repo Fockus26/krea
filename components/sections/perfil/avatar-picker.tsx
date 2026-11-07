@@ -86,6 +86,7 @@ export function AvatarPicker({
         Elige tu avatar
       </p>
       <ToggleGroup
+        indicador={false}
         aria-labelledby={gridLabel}
         value={valor}
         onValueChange={elegir}

@@ -2,6 +2,7 @@
 
 import { ToggleGroup as ToggleGroupPrimitive } from "radix-ui";
 import * as React from "react";
+import { Indicador, useIndicador } from "@/components/krea/indicador";
 import { cn } from "@/lib/utils";
 
 /*
@@ -10,7 +11,8 @@ import { cn } from "@/lib/utils";
  * `role="radio"` + `aria-checked` en cada opción (lo verifica tests/unit/toggle-group.test.ts),
  * así que no se reescriben los roles. Lo que Radix no hace y este wrapper añade (D038):
  *  - no se puede deseleccionar: pulsar la opción activa no vacía el valor;
- *  - las flechas mueven Y seleccionan (patrón radiogroup), como Inicio/Fin.
+ *  - las flechas mueven Y seleccionan (patrón radiogroup), como Inicio/Fin;
+ *  - la opción levantada se desliza a la elegida (`Indicador`, D279; reduced motion: salto).
  * Para pestañas (`tablist`) usa `Tabs variant="segmented"`.
  */
 
@@ -35,6 +37,11 @@ type ToggleGroupProps = Omit<
   onValueChange?: (value: string) => void;
   /** `seg-block`: reparte el ancho; bajo 400 px de ancho se ocultan los íconos. */
   block?: boolean;
+  /**
+   * Opción levantada que se desliza (D279). `false` en los grupos con opciones propias (dado de
+   * notas, avatares, muestras de acento): cada opción pinta su estado elegido.
+   */
+  indicador?: boolean;
 };
 
 function ToggleGroup({
@@ -43,9 +50,14 @@ function ToggleGroup({
   defaultValue,
   onValueChange,
   block = false,
+  indicador = true,
   onKeyDownCapture,
+  children,
   ...props
 }: ToggleGroupProps) {
+  const { listaRef, indicadorRef } = useIndicador<HTMLDivElement>({
+    activo: ':scope > [data-slot="toggle-group-item"][data-state="on"]',
+  });
   const [inner, setInner] = React.useState(defaultValue ?? "");
   const controlled = valueProp !== undefined;
   const value = controlled ? valueProp : inner;
@@ -61,6 +73,7 @@ function ToggleGroup({
     <NavContext.Provider value={{ navigating }}>
       <ToggleGroupPrimitive.Root
         {...props}
+        ref={listaRef}
         type="single"
         value={value}
         onValueChange={change}
@@ -77,14 +90,19 @@ function ToggleGroup({
           }
         }}
         className={cn(
-          "group/toggle-group gap-1 rounded-md bg-surface-2 p-1",
+          "group/toggle-group relative isolate gap-1 rounded-md bg-surface-2 p-1",
           // `@container` (container-type: inline-size) solo en block: en un grupo de ancho propio colapsaría al padding
           block
             ? "@container flex w-full"
             : "inline-flex w-fit max-w-full flex-wrap", // envuelve si no cabe (texto grande, D-A1)
           className,
         )}
-      />
+      >
+        {indicador ? (
+          <Indicador ref={indicadorRef} variante="segmentado" />
+        ) : null}
+        {children}
+      </ToggleGroupPrimitive.Root>
     </NavContext.Provider>
   );
 }
@@ -117,6 +135,8 @@ function ToggleGroupItem({
         "after:absolute after:inset-x-0 after:-inset-y-0.5",
         "transition-[color,background-color,box-shadow] duration-fast ease-krea",
         "hover:text-text data-[state=on]:bg-surface data-[state=on]:text-text data-[state=on]:shadow-1",
+        // Cuando el indicador deslizante ya midió (`data-ind`, D279), el fondo y la sombra son él
+        "group-data-[ind]/toggle-group:data-[state=on]:bg-transparent group-data-[ind]/toggle-group:data-[state=on]:shadow-none",
         "disabled:cursor-not-allowed disabled:text-text-dis disabled:hover:text-text-dis",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
         "[&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0",
