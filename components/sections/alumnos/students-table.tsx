@@ -22,7 +22,6 @@ import {
   type FilaAlumno,
   nombreAlumno,
   notaParaFiltro,
-  type SeccionAlumnos,
   tablaLabel,
 } from "@/lib/alumnos";
 import { formatNota } from "@/lib/grades";
@@ -31,6 +30,7 @@ import {
   SELECCIONAR_TODOS_ALUMNOS,
   seleccionarLabel,
 } from "@/lib/lote";
+import type { SeccionId } from "@/lib/modelo";
 import { presenciaTexto } from "@/lib/presencia";
 import { formatDecimal } from "@/lib/stepper";
 import {
@@ -78,7 +78,7 @@ export function StudentsTable({
   seleccion,
   onYaNoExiste,
 }: {
-  seccion: SeccionAlumnos;
+  seccion: SeccionId;
   filas: readonly FilaAlumno[];
   consulta: string;
   /** Frase del vacío cuando lo causa el filtro de estado (en vez de la de la búsqueda). */

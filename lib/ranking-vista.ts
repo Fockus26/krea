@@ -2,11 +2,11 @@
 // lo que depende de la hora recibe `ahora` (con `cacheComponents` el servidor no lee `Date.now()`).
 
 import type { DicebearEstilo } from "./dicebear";
+import type { SeccionId } from "./modelo";
 import type { RankingPuesto } from "./ranking";
 import { formatDecimal } from "./stepper";
 
 export type Vista = "estudiantes" | "equipos";
-export type SeccionRanking = "5A" | "5C";
 export type RolRanking = "estudiante" | "profesor";
 
 /** Cuántos puestos van en el podio; el resto va a la lista. */
@@ -50,7 +50,7 @@ export function partirRanking(items: readonly ItemRanking[]): {
 
 /** "Sección 5A · 35 estudiantes" / "Sección 5A · 6 equipos". */
 export function eyebrowRanking(
-  seccion: SeccionRanking,
+  seccion: SeccionId,
   cantidad: number,
   vista: Vista,
 ): string {
@@ -93,7 +93,7 @@ export function tituloLista(total: number): string {
 /** Texto del estado vacío (D312); `null` si hay filas y se pintan podio y lista. */
 export function vacioRanking(
   vista: Vista,
-  seccion: SeccionRanking,
+  seccion: SeccionId,
   total: number,
 ): { titulo: string; descripcion: string } | null {
   if (total > 0) return null;
@@ -108,50 +108,6 @@ export function vacioRanking(
         descripcion: "Cuando se armen los equipos, aquí verás su posición.",
       };
 }
-
-// ---- Rutas de los estados de la vista previa (D072, D094) ----
-
-export type EstadoRanking = {
-  rol: RolRanking;
-  seccion: SeccionRanking;
-  vista: Vista;
-};
-
-/** Slug del estado: estudiante → `estudiantes`/`equipos`; profe → `profesor[-5c][-equipos]`. */
-export function estadoSlug({ rol, seccion, vista }: EstadoRanking): string {
-  if (rol === "estudiante") return vista;
-  return [
-    "profesor",
-    seccion === "5C" ? "5c" : "",
-    vista === "equipos" ? "equipos" : "",
-  ]
-    .filter(Boolean)
-    .join("-");
-}
-
-/** Inverso de `estadoSlug`; `undefined` si el slug no existe. */
-export function estadoDeSlug(slug: string): EstadoRanking | undefined {
-  if (slug === "estudiantes" || slug === "equipos") {
-    return { rol: "estudiante", seccion: "5A", vista: slug };
-  }
-  const m = /^profesor(-5c)?(-equipos)?$/.exec(slug);
-  if (!m) return undefined;
-  return {
-    rol: "profesor",
-    seccion: m[1] ? "5C" : "5A",
-    vista: m[2] ? "equipos" : "estudiantes",
-  };
-}
-
-/** Los cuatro/seis slugs válidos, para `generateStaticParams`. */
-export const ESTADOS_SLUG: readonly string[] = [
-  "estudiantes",
-  "equipos",
-  "profesor",
-  "profesor-equipos",
-  "profesor-5c",
-  "profesor-5c-equipos",
-];
 
 // ---- Feed «Últimos movimientos» ----
 

@@ -101,6 +101,33 @@ describe("panelDatosDe", () => {
     });
   });
 
+  test("una sección nueva (4B): avance propio, sin `undefined` y las secciones del filtro (D323)", () => {
+    const de4B: Usuario = { ...alumno("40000001", "5A"), seccion: "4B" };
+    const t = { ...tarea, secciones: ["4B", "5A"] };
+    const d = panelDatosDe({
+      cola: [],
+      entregas: [
+        { ...evaluada("40000001", 8), seccion: "4B" },
+        evaluada("30000001", 18),
+      ],
+      ajustes: [],
+      mapas: mapasEvaluar({
+        usuarios: [...mapas.usuarios.values(), de4B],
+        equipos: [],
+        tareas: [t],
+      }),
+      secciones: ["4B", "5A", "5C", "6A"],
+    });
+    expect(d.secciones).toEqual(["4B", "5A", "5C", "6A"]);
+    expect(d.avance).toEqual({
+      "4B": { evaluados: 1, total: 1 },
+      "5A": { evaluados: 1, total: 3 },
+      "5C": { evaluados: 0, total: 0 },
+      "6A": { evaluados: 0, total: 0 },
+    });
+    expect(d.raspados.map((r) => r.seccion)).toEqual(["4B", "5A"]);
+  });
+
   test("sin evaluaciones; los últimos ajustes, del más reciente, con «Otro» y su detalle", () => {
     const aj = (id: string, en: number, o: Partial<Ajuste> = {}) => ({
       id,

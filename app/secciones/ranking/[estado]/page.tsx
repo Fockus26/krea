@@ -3,18 +3,16 @@ import { notFound } from "next/navigation";
 import { Ranking } from "@/components/sections/ranking/ranking";
 import {
   AHORA_DEMO,
+  ESTADOS_SLUG,
+  type EstadoRanking,
   equipoIdDemo,
+  estadoDeSlug,
+  estadoSlug,
   itemsEquipos,
   itemsEstudiantes,
   movimientosDe,
 } from "@/lib/demo/ranking";
 import { CEDULA_DEMO } from "@/lib/demo/seed";
-import {
-  ESTADOS_SLUG,
-  type EstadoRanking,
-  estadoDeSlug,
-  estadoSlug,
-} from "@/lib/ranking-vista";
 import { Estados } from "../../_vista/estados";
 import { Vista } from "../../_vista/vista";
 

@@ -9,13 +9,59 @@ import {
   nombreCorto,
   rankingAlumnos,
   rankingEquipos,
+  type Seccion,
 } from "@/lib/demo/seed";
 import {
   type ItemRanking,
   type Movimiento,
-  type SeccionRanking,
+  type RolRanking,
   subtituloEquipo,
+  type Vista,
 } from "@/lib/ranking-vista";
+
+// ---- Rutas de los estados de la vista previa (D072, D094; la galería sigue en 5A/5C) ----
+
+export type EstadoRanking = {
+  rol: RolRanking;
+  seccion: Seccion;
+  vista: Vista;
+};
+
+/** Slug del estado: estudiante → `estudiantes`/`equipos`; profe → `profesor[-5c][-equipos]`. */
+export function estadoSlug({ rol, seccion, vista }: EstadoRanking): string {
+  if (rol === "estudiante") return vista;
+  return [
+    "profesor",
+    seccion === "5C" ? "5c" : "",
+    vista === "equipos" ? "equipos" : "",
+  ]
+    .filter(Boolean)
+    .join("-");
+}
+
+/** Inverso de `estadoSlug`; `undefined` si el slug no existe. */
+export function estadoDeSlug(slug: string): EstadoRanking | undefined {
+  if (slug === "estudiantes" || slug === "equipos") {
+    return { rol: "estudiante", seccion: "5A", vista: slug };
+  }
+  const m = /^profesor(-5c)?(-equipos)?$/.exec(slug);
+  if (!m) return undefined;
+  return {
+    rol: "profesor",
+    seccion: m[1] ? "5C" : "5A",
+    vista: m[2] ? "equipos" : "estudiantes",
+  };
+}
+
+/** Los cuatro/seis slugs válidos, para `generateStaticParams`. */
+export const ESTADOS_SLUG: readonly string[] = [
+  "estudiantes",
+  "equipos",
+  "profesor",
+  "profesor-equipos",
+  "profesor-5c",
+  "profesor-5c-equipos",
+];
 
 /** Instante fijo de la vista (sin `Date.now()` en el servidor): sábado 25/10/2026, 4:30 p. m. */
 export const AHORA_DEMO = Date.UTC(2026, 9, 25, 20, 30);
@@ -27,7 +73,7 @@ export const AHORA_DEMO = Date.UTC(2026, 9, 25, 20, 30);
 const DELTAS_DEMO = [1, 2, 0, 1, 0, -1, 0, 3, -2, 0, 1, 0, -1] as const;
 
 export function itemsEstudiantes(
-  seccion: SeccionRanking,
+  seccion: Seccion,
   /** Cédula del estudiante que mira (solo se marca «tú»); `null` en la vista del profesor. */
   cedulaTu: string | null,
 ): ItemRanking[] {
@@ -52,7 +98,7 @@ export function itemsEstudiantes(
 }
 
 export function itemsEquipos(
-  seccion: SeccionRanking,
+  seccion: Seccion,
   /** Equipo del estudiante que mira (se marca «tú»); `null` en la vista del profesor. */
   equipoIdTu: string | null,
 ): ItemRanking[] {

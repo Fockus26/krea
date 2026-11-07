@@ -18,11 +18,15 @@ import {
   claimsDe,
   DOC_SECCIONES,
   emailInterno,
-  SECCIONES,
   type Usuario,
 } from "@/lib/modelo";
 import { calcularRanking } from "@/lib/ranking-datos";
-import { anioDoc, CATALOGO_INICIAL } from "@/lib/secciones";
+import {
+  anioDoc,
+  CATALOGO_INICIAL,
+  listaSecciones,
+  seccionesDe,
+} from "@/lib/secciones";
 import {
   type AlumnoSeed,
   docsDesdeSeed,
@@ -107,7 +111,8 @@ const datos = {
   entregas: docs.entregas.map((e) => e.data),
   ajustes: docs.ajustes.map((a) => a.data),
 };
-for (const s of SECCIONES)
+const seccionesSeed = seccionesDe(CATALOGO_INICIAL);
+for (const s of seccionesSeed)
   await poner(COL.ranking, s, calcularRanking(s, datos, ahora));
 // Catálogo de años y secciones (D317): el de producción, explícito
 await poner(COL.config, DOC_SECCIONES, {
@@ -135,6 +140,6 @@ for (const { data: u } of docs.usuarios) {
 console.log(
   `✓ Seed en ${proyecto}: ${docs.usuarios.length} usuarios (${creadas} cuentas nuevas), ` +
     `${docs.equipos.length} equipos, ${docs.tareas.length} tareas, ${docs.entregas.length} entregas, ` +
-    `${docs.ajustes.length} ajustes, ranking de ${SECCIONES.join(" y ")}.`,
+    `${docs.ajustes.length} ajustes, ranking de ${listaSecciones(seccionesSeed)}.`,
 );
 process.exit(0);

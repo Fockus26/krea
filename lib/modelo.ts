@@ -58,12 +58,9 @@ export function idEntrega(tareaId: string, titularId: string): string {
 /* ---------- Primitivas ---------- */
 
 /**
- * @deprecated Las secciones salen del catálogo `config/secciones` (D317): `catalogoSecciones()`
- * en el servidor y `seccionesDe(...)` de `lib/secciones.ts`. Queda con los valores de siempre
- * mientras las pantallas que listan 5A/5C pasan a leer el catálogo.
+ * Código de sección = número de año + letra: «5A» (D317). Texto validado, no unión fija: las que
+ * existen salen del catálogo `config/secciones` (`catalogoSecciones()` y `seccionesDe(...)`).
  */
-export const SECCIONES = ["5A", "5C"] as const;
-/** Código de sección = número de año + letra: «5A» (D317). Texto validado, no unión fija. */
 export type SeccionId = string;
 export const zSeccion = z.string().regex(/^[1-9][A-Z]$/, "Sección inválida");
 /** Letra de una sección dentro de su año (D317). */

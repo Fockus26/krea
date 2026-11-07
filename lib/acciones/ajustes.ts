@@ -10,11 +10,13 @@ import {
   zAplicarAjuste,
 } from "@/lib/ajustes-datos";
 import { exigirSesion } from "@/lib/dal";
+import { catalogoSecciones } from "@/lib/datos/secciones";
 import { firebaseAdmin } from "@/lib/firebase/admin";
 import {
   anularAjusteEnTransaccion,
   aplicarAjusteEnTransaccion,
 } from "@/lib/firebase/ajustes";
+import { seccionesDe } from "@/lib/secciones";
 
 export type { ResultadoAjuste };
 
@@ -32,11 +34,13 @@ export async function aplicarAjuste(
   const d = zAplicarAjuste.safeParse(entrada);
   if (!d.success) return { ok: false, error: "invalida" };
   try {
+    // La sección del destino tiene que existir en el catálogo (D323)
     const r = await aplicarAjusteEnTransaccion(
       admin.db,
       sesion.uid,
       d.data,
       Date.now(),
+      seccionesDe(await catalogoSecciones()),
     );
     if (r.ok) refresh();
     return r;

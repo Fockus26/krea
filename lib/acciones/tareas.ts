@@ -7,6 +7,7 @@ import { refresh } from "next/cache";
 import { almacenB2 } from "@/lib/almacen/b2";
 import { claveFotoPremio, validarFotoPremio } from "@/lib/almacen/imagen";
 import { exigirSesion, sesionDeCola } from "@/lib/dal";
+import { catalogoSecciones } from "@/lib/datos/secciones";
 import { diaDeInstante } from "@/lib/fecha";
 import { firebaseAdmin } from "@/lib/firebase/admin";
 import {
@@ -19,6 +20,7 @@ import {
 import { borrarEnLote, type ResultadoLote, zIdsLote } from "@/lib/lote";
 import { zQuien } from "@/lib/offline/operacion";
 import type { ResultadoPremio } from "@/lib/premios";
+import { seccionesEnCatalogo } from "@/lib/secciones";
 import type { ErrorTarea } from "@/lib/tareas-profe";
 import {
   type CambioFoto,
@@ -71,6 +73,14 @@ async function guardar(uid: string, entrada: unknown): Promise<ResultadoTarea> {
   if (!envio.success) return { ok: false, error: "invalida" };
   const ahora = Date.now();
   try {
+    // `zSeccion` valida la forma; cada sección además tiene que existir en el catálogo (D323)
+    if (
+      !seccionesEnCatalogo(
+        envio.data.tarea.secciones,
+        await catalogoSecciones(),
+      )
+    )
+      return { ok: false, error: "seccion" };
     const { fotoSuelta, ...r } = await guardarTareaEnTransaccion(
       admin.db,
       uid,

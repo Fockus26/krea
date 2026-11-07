@@ -13,11 +13,11 @@ import {
 import { diaDeInstante, formatFecha, isoLocalDeInstante } from "@/lib/fecha";
 import { NOTA_APROBATORIA } from "@/lib/grades";
 import type { Ajuste, Entrega, SeccionId, Usuario } from "@/lib/modelo";
-import { SECCIONES } from "@/lib/modelo";
 import { entregaMetaTexto } from "@/lib/panel";
 import { motivoTexto, nombreDestino } from "@/lib/puntos";
 import { primerApellido } from "@/lib/ranking";
 import { notaDeIntegrante } from "@/lib/ranking-datos";
+import { ordenarSecciones } from "@/lib/secciones";
 import { estiloDe, nombreCorto } from "@/lib/vistas-estudiante";
 
 type ConId<T> = { id: string } & T;
@@ -35,8 +35,7 @@ function filaEvaluar(e: ConId<Entrega>, m: MapasEvaluar): FilaEvaluar {
   const fecha =
     e.enviadaEn === null ? "" : formatFecha(diaDeInstante(e.enviadaEn));
   const nombre = nombreTitular(e, m);
-  // La vista aún lista 5A/5C (las secciones del catálogo llegan con X5b, D317)
-  const seccion = e.seccion as FilaEvaluar["seccion"];
+  const seccion = e.seccion;
   if (e.tipo === "grupal") {
     const eq = m.equipos.get(e.titularId);
     const autor = e.enviadaPor ? m.usuarios.get(e.enviadaPor) : undefined;
@@ -87,7 +86,7 @@ function filaAjuste(a: ConId<Ajuste>, m: MapasEvaluar): FilaAjuste {
         : TITULAR_DESCONOCIDO;
   return {
     id: a.id,
-    seccion: a.seccion as FilaAjuste["seccion"],
+    seccion: a.seccion,
     nombre,
     valor: a.valor,
     motivo: motivoTexto({ motivo: a.motivo, detalle: a.nota ?? undefined }),
@@ -115,18 +114,21 @@ function tareaMasReciente(entregas: ReadonlyArray<Entrega>): string | null {
 /**
  * Datos del Panel: la cola entera (el Panel enseña 5 y «Ver las N»), los últimos ajustes, y de
  * la tarea evaluada más reciente cuántos alumnos de cada sección tienen nota y quiénes sacaron
- * menos de 10 con su base (D006, D177).
+ * menos de 10 con su base (D006, D177). `secciones`: las del catálogo (las opciones del filtro);
+ * el avance sale para cada una y para cualquier otra con alumnos, nunca `undefined` (D323).
  */
 export function panelDatosDe({
   cola,
   entregas,
   ajustes,
   mapas,
+  secciones = [],
 }: {
   cola: ReadonlyArray<ConId<Entrega>>;
   entregas: ReadonlyArray<Entrega>;
   ajustes: ReadonlyArray<ConId<Ajuste>>;
   mapas: MapasEvaluar;
+  secciones?: readonly SeccionId[];
 }): DatosPanel {
   const tareaId = tareaMasReciente(entregas);
   const tarea = tareaId ? mapas.tareas.get(tareaId) : undefined;
@@ -135,15 +137,13 @@ export function panelDatosDe({
       u.rol === "estudiante" && u.seccion !== null,
   );
 
-  const avance: Record<
-    (typeof SECCIONES)[number],
-    { evaluados: number; total: number }
-  > = {
-    "5A": { evaluados: 0, total: 0 },
-    "5C": { evaluados: 0, total: 0 },
-  };
+  const avance: Record<SeccionId, { evaluados: number; total: number }> = {};
   const raspados: Array<DatosPanel["raspados"][number]> = [];
-  for (const s of SECCIONES) {
+  const todas = ordenarSecciones([
+    ...secciones,
+    ...alumnos.map((u) => u.seccion),
+  ]);
+  for (const s of todas) {
     const enSeccion = tarea?.secciones.includes(s)
       ? alumnos.filter((u) => u.seccion === s)
       : [];
@@ -177,6 +177,7 @@ export function panelDatosDe({
       .map((a) => filaAjuste(a, mapas)),
     tareaEvaluada: tarea?.titulo ?? SIN_TAREA_EVALUADA,
     tareaId: tarea ? tareaId : null,
+    secciones: [...secciones],
     avance,
     raspados: raspados.sort((a, b) => a.nota - b.nota),
   };

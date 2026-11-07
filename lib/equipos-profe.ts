@@ -2,10 +2,9 @@
 // el estado (quién está en qué equipo, quién es capitán) es un valor inmutable y cada acción
 // devuelve uno nuevo. Salvo `dibujarLogo`, que necesita DOM, todo está probado.
 
+import type { SeccionId } from "./modelo";
 import { integrantesTexto } from "./sections";
 import { formatDecimal } from "./stepper";
-
-export type SeccionEquipos = "5A" | "5C";
 
 /** Un equipo en el estado local: cédulas en orden de llegada y capitán (`null` si quedó vacío). */
 export type EquipoEstado = {
@@ -43,7 +42,7 @@ export type EquipoVista = {
 };
 
 export type DatosEquiposProfe = {
-  seccion: SeccionEquipos;
+  seccion: SeccionId;
   /** Equipos de la sección en el orden del ranking (el del lienzo: puesto, luego nombre). */
   equipos: EquipoVista[];
   alumnos: Record<string, AlumnoEquipo>;
@@ -56,7 +55,7 @@ export type DatosEquiposProfe = {
 
 /** "5A · 6 equipos · 30 de 35 con equipo". */
 export function eyebrowEquipos(
-  seccion: SeccionEquipos,
+  seccion: SeccionId,
   equipos: number,
   conEquipo: number,
   total: number,

@@ -22,6 +22,7 @@ import {
 import {
   armarTarea,
   type Conteos,
+  conteosDe,
   datosBorradorDe,
   type EntradaTarea,
   estadoPremioSeccion,
@@ -33,8 +34,6 @@ import {
   puedeCerrar,
   type ResumenEntregas,
   resumenEntregas,
-  seccionesDe,
-  seccionTareaDe,
   tareaProfeDe,
   tarjetasPremios,
   totalTitulares,
@@ -49,7 +48,7 @@ const entrada = (o: Partial<EntradaTarea> = {}): EntradaTarea => ({
   titulo: "Plan de redes",
   tipo: "grupal",
   fecha: "2026-11-14",
-  seccion: "5A y 5C",
+  secciones: ["5A", "5C"],
   premio: "Salida al cine",
   preguntas: [
     { id: "q1", enunciado: "Uno", formato: "texto", valor: 12 },
@@ -218,7 +217,7 @@ describe("armarTarea: publicada (D200)", () => {
         fecha: "2026-11-20",
         premio: "Cuenta Canva Pro",
         tipo: "individual",
-        seccion: "5C",
+        secciones: ["5C"],
         preguntas: [
           { id: "x", enunciado: "Otra", formato: "imagen", valor: 20 },
         ],
@@ -273,6 +272,7 @@ describe("entrada de la acción", () => {
       titulo: " Plan ",
       tipo: "grupal",
       fecha: "14/11/2026",
+      secciones: ["5A"],
       premio: "Cine",
       preguntas: [
         { id: "p1", enunciado: "Uno", formato: "texto", valor: 10 },
@@ -341,10 +341,12 @@ describe("constructor con ids guardados", () => {
     const d = datosBorradorDe(t);
     expect(d).toMatchObject({
       fecha: "01/11/2026",
-      seccion: "5A y 5C",
+      secciones: ["5A", "5C"],
       premio: "Almuerzo",
     });
-    expect(tareaAGuardar(crearBorrador(d)).preguntas).toEqual(t.preguntas);
+    const vuelta = tareaAGuardar(crearBorrador(d));
+    expect(vuelta.preguntas).toEqual(t.preguntas);
+    expect(vuelta.secciones).toEqual(["5A", "5C"]);
   });
 
   test("modoConstructor", () => {
@@ -358,11 +360,41 @@ describe("constructor con ids guardados", () => {
     );
   });
 
-  test("secciones", () => {
-    expect(seccionesDe("5A y 5C")).toEqual(["5A", "5C"]);
-    expect(seccionesDe("5C")).toEqual(["5C"]);
-    expect(seccionTareaDe(["5A"])).toBe("5A");
-    expect(seccionTareaDe(["5A", "5C"])).toBe("5A y 5C");
+  test("secciones del catálogo (D324): las que llegan, ordenadas; ninguna o repetida no valida", () => {
+    const r = armar({
+      accion: "publicar",
+      entrada: entrada({ secciones: ["5C", "4B", "5A"] }),
+    });
+    if (!r.ok) throw new Error(r.error);
+    expect(r.tarea.secciones).toEqual(["4B", "5A", "5C"]);
+    const base = { id: null, accion: "borrador" as const };
+    expect(
+      zGuardarTarea.safeParse({ ...base, tarea: entrada({ secciones: [] }) })
+        .success,
+    ).toBe(false);
+    expect(
+      zGuardarTarea.safeParse({
+        ...base,
+        tarea: entrada({ secciones: ["5A", "5A"] }),
+      }).success,
+    ).toBe(false);
+    expect(
+      zGuardarTarea.safeParse({
+        ...base,
+        tarea: entrada({ secciones: ["5a"] }),
+      }).success,
+    ).toBe(false);
+    expect(
+      zGuardarTarea.safeParse({
+        ...base,
+        tarea: entrada({ secciones: ["4B"] }),
+      }).success,
+    ).toBe(true);
+  });
+
+  test("la lista y Premios muestran las secciones con listaSecciones", () => {
+    const t = { id: "a", ...publicada({ secciones: ["5C", "4B", "5A"] }) };
+    expect(tareaProfeDe(t, undefined, CONTEOS).secciones).toBe("4B, 5A y 5C");
   });
 
   test("cada error tiene copy", () => {
@@ -724,5 +756,48 @@ describe("premios", () => {
         tipo: "compartir",
       }),
     ).toEqual(["g1"]);
+  });
+});
+
+/* ---------- Secciones del catálogo (X5b, D323) ---------- */
+
+describe("conteos por catálogo", () => {
+  const equipos = [
+    { id: "4b-g1", seccion: "4B" },
+    { id: "5a-g1", seccion: "5A" },
+    { id: "5a-g2", seccion: "5A" },
+    // De una sección que no está en el catálogo: no cuenta
+    { id: "7z-g1", seccion: "7Z" },
+  ];
+
+  test("una entrada por sección, también la nueva y vacía", () => {
+    expect(
+      conteosDe(["4B", "5A", "5C"], { "4B": 3, "5A": 35 }, equipos),
+    ).toEqual({
+      alumnos: { "4B": 3, "5A": 35, "5C": 0 },
+      equipos: { "4B": ["4b-g1"], "5A": ["5a-g1", "5a-g2"], "5C": [] },
+    });
+    expect(conteosDe([], {}, equipos)).toEqual({ alumnos: {}, equipos: {} });
+  });
+
+  test("totalTitulares con tres secciones", () => {
+    const c = conteosDe(
+      ["4B", "5A", "5C"],
+      { "4B": 3, "5A": 35, "5C": 34 },
+      equipos,
+    );
+    const ind = {
+      ...publicada({
+        tipo: "individual",
+        premio: null,
+        secciones: ["4B", "5A", "5C"],
+      }),
+    };
+    expect(totalTitulares(ind, c)).toBe(72);
+    const grupal = publicada({ secciones: ["4B", "5A"] });
+    expect(totalTitulares(grupal, c)).toBe(3);
+    // Una sección que el catálogo ya no tiene cuenta 0, no rompe
+    const huerfana = publicada({ secciones: ["5A", "9Z"] });
+    expect(totalTitulares(huerfana, c)).toBe(2);
   });
 });

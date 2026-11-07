@@ -260,12 +260,12 @@ export function notasPorTarea(
   return notas;
 }
 
-/** Filas de /profe/alumnos: los estudiantes de las dos secciones, por sección y nombre. */
+/** Filas de /profe/alumnos: los estudiantes de todas las secciones, por sección y nombre. */
 export function filasAlumnos(datos: {
   usuarios: readonly Usuario[];
   equipos: ReadonlyArray<ConId<Equipo>>;
   entregas: readonly Entrega[];
-  rankings: Readonly<Record<SeccionId, RankingSeccion | null>>;
+  rankings: Readonly<Partial<Record<SeccionId, RankingSeccion | null>>>;
   /** cédula → email de `privados` (sin entrada: sin email). */
   emails: ReadonlyMap<string, string | null>;
 }): FilaAlumno[] {
@@ -278,8 +278,7 @@ export function filasAlumnos(datos: {
     .map(
       (u): FilaAlumno => ({
         cedula: u.cedula,
-        // La vista aún lista 5A/5C (las secciones del catálogo llegan con X5b, D317)
-        seccion: u.seccion as FilaAlumno["seccion"],
+        seccion: u.seccion,
         nombres: u.nombres,
         apellidos: u.apellidos,
         equipo: (u.equipoId && equipos.get(u.equipoId)) || null,

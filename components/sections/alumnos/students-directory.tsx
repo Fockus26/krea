@@ -22,12 +22,11 @@ import {
   filtrarAlumnos,
   filtrarPorEstado,
   nombreAlumno,
-  otraSeccion,
   rutaAlumnos,
-  type SeccionAlumnos,
 } from "@/lib/alumnos";
 import { ALTA_SIN_EQUIPO, type OpcionEquipo } from "@/lib/alumnos-alta";
 import type { EditarAlumno, ResultadoAlumno } from "@/lib/alumnos-datos";
+import type { SeccionId } from "@/lib/modelo";
 import {
   AddStudentDialog,
   AGREGAR_ALUMNO_ID,
@@ -63,7 +62,8 @@ export type AltaAlumnos = AccionesBorrarAlumno & {
  */
 export function StudentsDirectory({
   alumnos,
-  seccionInicial = "5A",
+  secciones,
+  seccionInicial,
   guardar,
   filtrosIniciales = {},
   tarea,
@@ -72,7 +72,10 @@ export function StudentsDirectory({
   yo,
 }: {
   alumnos: readonly FilaAlumno[];
-  seccionInicial?: SeccionAlumnos;
+  /** Secciones del catálogo, ordenadas (D323); al menos una (sin ninguna, la página muestra el vacío). */
+  secciones: readonly SeccionId[];
+  /** Por defecto, la primera del catálogo. */
+  seccionInicial?: SeccionId;
   guardar?: (entrada: EditarAlumno) => Promise<ResultadoAlumno>;
   /** Filtros ya validados que llegaron por la URL. */
   filtrosIniciales?: FiltrosAlumnos;
@@ -91,8 +94,12 @@ export function StudentsDirectory({
   const seccionDelAlumno = alumnos.find(
     (a) => a.cedula === filtrosIniciales.alumno,
   )?.seccion;
-  const [seccion, setSeccion] = useState<SeccionAlumnos>(
-    seccionDelAlumno ?? filtrosIniciales.seccion ?? seccionInicial,
+  const [seccion, setSeccion] = useState<SeccionId>(
+    seccionDelAlumno ??
+      filtrosIniciales.seccion ??
+      seccionInicial ??
+      secciones[0] ??
+      "",
   );
   const [estado, setEstado] = useState<EstadoAlumnos | undefined>(
     filtrosIniciales.estado,
@@ -121,7 +128,7 @@ export function StudentsDirectory({
     alumno: alumnoAbierto,
   });
   const limpiarSeleccion = () => seleccion.limpiar();
-  function cambiarSeccion(s: SeccionAlumnos) {
+  function cambiarSeccion(s: SeccionId) {
     setSeccion(s);
     limpiarSeleccion();
     sincronizar({ ...actuales(), seccion: s });
@@ -182,7 +189,7 @@ export function StudentsDirectory({
       document.getElementById(AGREGAR_ALUMNO_ID)?.focus(),
     );
   }
-  const porEstado = (s: SeccionAlumnos) =>
+  const porEstado = (s: SeccionId) =>
     filtrarPorEstado(
       filas.filter((a) => a.seccion === s),
       estado,
@@ -190,10 +197,9 @@ export function StudentsDirectory({
       alumnoAbierto,
     );
 
-  const conteos: Record<SeccionAlumnos, number> = {
-    "5A": porEstado("5A").length,
-    "5C": porEstado("5C").length,
-  };
+  const conteos: Record<SeccionId, number> = Object.fromEntries(
+    secciones.map((s) => [s, porEstado(s).length]),
+  );
   const visibles = filtrarAlumnos(porEstado(seccion), consulta);
   // Casillas del lote (D298, D310): solo de lo visible; se vacían al cambiar de sección o de filtro
   const seleccion = useSeleccionLote(visibles.map((a) => a.cedula));
@@ -216,7 +222,12 @@ export function StudentsDirectory({
       ? busquedaVacia(
           consulta,
           seccion,
-          filtrarAlumnos(porEstado(otraSeccion(seccion)), consulta).length,
+          // Coincidencias en cada otra sección: sugiere la que tiene más (D323)
+          Object.fromEntries(
+            secciones
+              .filter((s) => s !== seccion)
+              .map((s) => [s, filtrarAlumnos(porEstado(s), consulta).length]),
+          ),
         )
       : null;
 
@@ -230,6 +241,7 @@ export function StudentsDirectory({
             alta ? (
               <AddStudentDialog
                 equipos={alta.equipos}
+                secciones={secciones}
                 seccionInicial={seccion}
                 crear={alta.crear}
                 onCreado={alCrear}
@@ -239,6 +251,7 @@ export function StudentsDirectory({
         />
       ) : null}
       <StudentFilters
+        secciones={secciones}
         seccion={seccion}
         onSeccion={cambiarSeccion}
         conteos={conteos}

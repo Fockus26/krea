@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
+// La primera sección del catálogo; las demás en /profe/equipos/[seccion] (D323).
 export default function EquiposPage() {
-  return <EquiposProfe seccion="5A" />;
+  return <EquiposProfe />;
 }

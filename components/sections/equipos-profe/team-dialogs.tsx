@@ -32,8 +32,8 @@ import {
   TEMA_AYUDA,
   validarEquipo,
 } from "@/lib/equipos-gestion";
-import type { SeccionEquipos } from "@/lib/equipos-profe";
 import type { ResultadoLote } from "@/lib/lote";
+import type { SeccionId } from "@/lib/modelo";
 
 export type AccionesGestionEquipos = {
   crear: (entrada: CrearEquipo) => Promise<ResultadoGestionEquipo>;
@@ -56,7 +56,7 @@ export function CrearEquipoDialog({
   seccion,
   crear,
 }: {
-  seccion: SeccionEquipos;
+  seccion: SeccionId;
   crear: AccionesGestionEquipos["crear"];
 }) {
   const [abierto, setAbierto] = useState(false);
@@ -101,7 +101,7 @@ export function EditarEquipoDialog({
   editar,
 }: {
   equipo: { id: string; nombre: string; tema: string | null };
-  seccion: SeccionEquipos;
+  seccion: SeccionId;
   editar: AccionesGestionEquipos["editar"];
 }) {
   const [abierto, setAbierto] = useState(false);
@@ -145,7 +145,7 @@ function EquipoForm({
   textoBoton,
   enviar,
 }: {
-  seccion: SeccionEquipos;
+  seccion: SeccionId;
   inicial?: { nombre: string; tema: string | null };
   textoBoton: string;
   enviar: (d: {

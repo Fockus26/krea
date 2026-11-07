@@ -18,6 +18,7 @@ import {
   zTarea,
   zUsuario,
 } from "@/lib/modelo";
+import { CATALOGO_INICIAL, seccionesDe } from "@/lib/secciones";
 
 export type AlumnoSeed = {
   cedula: string;
@@ -135,7 +136,7 @@ export function docsDesdeSeed(
   const individual: Tarea = zTarea.parse({
     titulo: tarea.titulo,
     tipo: "individual",
-    secciones: ["5A", "5C"],
+    secciones: seccionesDe(CATALOGO_INICIAL),
     estado: "evaluada",
     fechaEntrega: FECHA_IDENTIDAD_SEED,
     premio: null,
@@ -184,7 +185,7 @@ export function docsDesdeSeed(
     data: zTarea.parse({
       titulo: TAREA_GRUPAL_SEED.titulo,
       tipo: "grupal",
-      secciones: ["5A", "5C"],
+      secciones: seccionesDe(CATALOGO_INICIAL),
       estado: "evaluada",
       fechaEntrega: TAREA_GRUPAL_SEED.fechaEntrega,
       premio: null,

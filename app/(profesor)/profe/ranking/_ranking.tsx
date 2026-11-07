@@ -1,7 +1,10 @@
 import { Trophy } from "lucide-react";
+import { notFound } from "next/navigation";
 import { EmptyState } from "@/components/krea/empty-state";
 import { RankingEnVivo } from "@/components/sections/ranking/ranking-en-vivo";
 import { PageHeader } from "@/components/sections/shared/page-header";
+import { SelectorSeccion } from "@/components/sections/shared/selector-seccion";
+import { SinSecciones } from "@/components/sections/shared/sin-secciones";
 import { Card } from "@/components/ui/card";
 import { urlsFirmadas } from "@/lib/datos/imagenes";
 import {
@@ -9,31 +12,50 @@ import {
   profesorActual,
   rankingsTodos,
 } from "@/lib/datos/profesor";
+import { catalogoSecciones } from "@/lib/datos/secciones";
 import { infoDeEquipos } from "@/lib/ranking-en-vivo";
-import type { SeccionRanking, Vista } from "@/lib/ranking-vista";
+import type { Vista } from "@/lib/ranking-vista";
+import { seccionDeSlug, seccionesDe, slugSeccion } from "@/lib/secciones";
 
 const RUTA = "/profe/ranking";
 
-/** Ruta de cada uno de los 6 estados del profesor (5A/5C × estudiantes/equipos; D157). */
-const href = (seccion: SeccionRanking, vista: Vista) =>
-  `${RUTA}${seccion === "5C" ? "/5c" : ""}${vista === "equipos" ? "/equipos" : ""}`;
+/** Ruta de cada sección × vista: `/profe/ranking/4b`, `/profe/ranking/4b/equipos` (D323). */
+const href = (seccion: string, vista: Vista) =>
+  `${RUTA}/${slugSeccion(seccion)}${vista === "equipos" ? "/equipos" : ""}`;
 
 const SIN_TU = { cedula: null, equipoId: null };
 
 /**
  * Ranking del profesor (HANDOFF §3; W8): `ranking/{seccion}` en vivo como el del estudiante
- * (D190), sin fila «tú» y con el segmentado 5A | 5C. Las pestañas y la sección son enlaces entre
- * rutas (D095, D157). Los logos se firman solo en la vista de equipos (D212).
+ * (D190), sin fila «tú» y con el selector de sección del catálogo (D322). Las pestañas y la
+ * sección son enlaces entre rutas (D095, D157, D323): `slug` es el segmento de la URL («4b»);
+ * sin él (`/profe/ranking`), la primera sección del catálogo. Un slug que no está en el catálogo
+ * da 404. Los logos se firman solo en la vista de equipos (D212).
  */
 export async function RankingProfe({
-  seccion,
+  slug,
   vista,
 }: {
-  seccion: SeccionRanking;
+  slug?: string;
   vista: Vista;
 }) {
-  const [{ sesion }, rankings, equipos] = await Promise.all([
+  const [{ sesion }, catalogo] = await Promise.all([
     profesorActual(),
+    catalogoSecciones(),
+  ]);
+  const secciones = seccionesDe(catalogo);
+  if (secciones.length === 0) {
+    return (
+      <>
+        <PageHeader title="Ranking" />
+        <SinSecciones admin={sesion.admin === true} />
+      </>
+    );
+  }
+  const seccion =
+    slug === undefined ? secciones[0] : seccionDeSlug(slug, catalogo);
+  if (!seccion) notFound();
+  const [rankings, equipos] = await Promise.all([
     rankingsTodos(),
     equiposTodos(),
   ]);
@@ -43,12 +65,23 @@ export async function RankingProfe({
       estudiantes: href(seccion, "estudiantes"),
       equipos: href(seccion, "equipos"),
     },
-    seccion: { "5A": href("5A", vista), "5C": href("5C", vista) },
+    seccion: Object.fromEntries(secciones.map((s) => [s, href(s, vista)])),
   };
   if (!ranking) {
     return (
       <>
-        <PageHeader eyebrow={`Sección ${seccion}`} title="Ranking" />
+        <PageHeader
+          eyebrow={`Sección ${seccion}`}
+          title="Ranking"
+          actions={
+            // Una sección sin ranking todavía (p. ej. recién creada): se puede ir a otra
+            <SelectorSeccion
+              secciones={secciones}
+              valor={seccion}
+              hrefs={enlaces.seccion}
+            />
+          }
+        />
         <Card>
           {/* PLACEHOLDER de copy (CONTENT_CHECKLIST fila 127) */}
           <EmptyState

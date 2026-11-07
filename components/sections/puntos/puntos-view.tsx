@@ -7,10 +7,12 @@ import {
   errorAjusteTexto,
   type ResultadoAjuste,
 } from "@/lib/ajustes-datos";
-import type { CandidatosPuntos, InicialAjuste } from "@/lib/demo/puntos";
+import type { InicialAjuste } from "@/lib/demo/puntos";
+import type { SeccionId } from "@/lib/modelo";
 import {
   ajusteAnuladoTexto,
   anular,
+  type CandidatosPuntos,
   deltasSesion,
   FILTRO_VACIO,
   type FilaHistorial,
@@ -37,12 +39,15 @@ const sinRed = (): ResultadoAjuste => ({ ok: false, error: "red" });
  */
 export function PuntosView({
   candidatos,
+  secciones,
   historial,
   inicial,
   profe,
   acciones,
 }: {
   candidatos: CandidatosPuntos;
+  /** Secciones del catálogo, ordenadas (D322). */
+  secciones: readonly SeccionId[];
   historial: readonly FilaHistorial[];
   inicial?: InicialAjuste;
   profe: string;
@@ -81,6 +86,7 @@ export function PuntosView({
     <div className="g-home max-md:gap-6">
       <AdjustmentForm
         candidatos={candidatos}
+        secciones={secciones}
         deltas={deltas}
         inicial={inicial}
         profe={profe}
@@ -104,6 +110,7 @@ export function PuntosView({
       />
       <AdjustmentHistory
         filas={filas}
+        secciones={secciones}
         filtro={filtro}
         onFiltro={setFiltro}
         onAnular={onAnular}

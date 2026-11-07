@@ -3,12 +3,15 @@ import { zCatalogoSecciones, zDecisionesPremio, zSeccion } from "@/lib/modelo";
 import {
   agregarAnio,
   agregarSeccion,
+  agruparPorAnio,
   anioDoc,
   aplicarOperacion,
   bloqueoTexto,
   CATALOGO_INICIAL,
+  CATALOGO_VACIO_TITULO,
   type CatalogoSecciones,
   catalogoDeDocumento,
+  catalogoVacioTexto,
   codigoSeccion,
   codigosQueSeVan,
   errorSeccionesTexto,
@@ -17,6 +20,7 @@ import {
   letrasDeTexto,
   letrasLibres,
   listaSecciones,
+  MAX_SEGMENTADO,
   nombreAnio,
   normalizarCatalogo,
   numerosLibres,
@@ -27,13 +31,17 @@ import {
   renombrarAnio,
   renombrarSeccion,
   resumenCatalogo,
+  SECCION_NO_EXISTE,
   seccionDeSlug,
+  seccionEnCatalogo,
   seccionesDe,
   seccionesDelAnio,
+  seccionesEnCatalogo,
   seccionVacia,
   slugSeccion,
   sumarUso,
   USO_VACIO,
+  usaSegmentado,
   usoDe,
   usoPorSeccion,
   usoTexto,
@@ -471,5 +479,52 @@ describe("letras de «Nuevo año»", () => {
       const r = letrasDeTexto(malo);
       expect(r.ok).toBe(false);
     }
+  });
+});
+
+/* ---------- Usar el catálogo en pantallas y acciones (X5b, D322–D325) ---------- */
+
+describe("catálogo en pantallas y acciones", () => {
+  const CAT: CatalogoSecciones = [
+    { numero: 4, letras: ["B"] },
+    { numero: 5, letras: ["A", "C"] },
+  ];
+
+  test("una sección existe solo si está en el catálogo (D323)", () => {
+    expect(seccionEnCatalogo("4B", CAT)).toBe(true);
+    expect(seccionEnCatalogo("5B", CAT)).toBe(false);
+    expect(seccionEnCatalogo("4B", CATALOGO_INICIAL)).toBe(false);
+    expect(seccionEnCatalogo("5A", [])).toBe(false);
+    expect(seccionesEnCatalogo(["5C", "4B"], CAT)).toBe(true);
+    expect(seccionesEnCatalogo(["5A", "6A"], CAT)).toBe(false);
+    expect(seccionesEnCatalogo([], CAT)).toBe(false);
+  });
+
+  test("agrupar por año, en orden; lo que no es código va al final", () => {
+    expect(agruparPorAnio(["5C", "4B", "5A"])).toEqual([
+      { numero: 4, nombre: "4.º año", secciones: ["4B"] },
+      { numero: 5, nombre: "5.º año", secciones: ["5A", "5C"] },
+    ]);
+    expect(agruparPorAnio(["5A", "x"]).map((g) => g.nombre)).toEqual([
+      "5.º año",
+      "Otras",
+    ]);
+    expect(agruparPorAnio([])).toEqual([]);
+  });
+
+  test("segmentado hasta 4 secciones; con más, Select (D322)", () => {
+    expect(MAX_SEGMENTADO).toBe(4);
+    expect(usaSegmentado(seccionesDe(CAT).length)).toBe(true);
+    expect(usaSegmentado(4)).toBe(true);
+    expect(usaSegmentado(5)).toBe(false);
+  });
+
+  test("textos del vacío sin secciones y de sección que ya no está (D325)", () => {
+    expect(CATALOGO_VACIO_TITULO).toBe("Todavía no hay secciones");
+    expect(catalogoVacioTexto(false)).toBe(
+      "Pídele al administrador que cree una.",
+    );
+    expect(catalogoVacioTexto(true)).not.toBe(catalogoVacioTexto(false));
+    expect(SECCION_NO_EXISTE.length).toBeGreaterThan(0);
   });
 });

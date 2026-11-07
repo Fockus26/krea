@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { TeamsBoard } from "@/components/sections/equipos-profe/teams-board";
 import { equiposProfeVista } from "@/lib/demo/equipos-profe";
-import type { SeccionEquipos } from "@/lib/equipos-profe";
+import type { Seccion } from "@/lib/demo/seed";
 import { Vista } from "../../_vista/vista";
 
 export const metadata: Metadata = {
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 const BASE = "/secciones/equipos-profe";
-const SECCIONES: Record<string, SeccionEquipos> = { "5a": "5A", "5c": "5C" };
+const SECCIONES: Record<string, Seccion> = { "5a": "5A", "5c": "5C" };
 
 // Un estado por ruta estática (D072): la sección. El segmentado del encabezado navega entre ellas
 // (D110), así que no hace falta la barra de estados de la vista previa.
@@ -30,6 +30,7 @@ export default async function EquiposProfeVista({
     <Vista rol="profesor" ruta="/profe/equipos">
       <TeamsBoard
         seccion={d.seccion}
+        secciones={Object.values(SECCIONES)}
         base={BASE}
         equipos={d.equipos}
         alumnos={d.alumnos}

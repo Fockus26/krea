@@ -7,7 +7,12 @@ import { ErrorEnPantalla, SesionVencida } from "@/components/estados/errores";
 import { RankAnnouncer } from "@/components/krea/rank-announcer";
 import { tokenEnVivo } from "@/lib/acciones/en-vivo";
 import { firebaseCliente } from "@/lib/firebase/cliente";
-import { COL, type RankingSeccion, zRankingSeccion } from "@/lib/modelo";
+import {
+  COL,
+  type RankingSeccion,
+  type SeccionId,
+  zRankingSeccion,
+} from "@/lib/modelo";
 import type { RankEvento } from "@/lib/rank-row";
 import {
   eventosEntre,
@@ -18,7 +23,7 @@ import {
   puestosDe,
   type Tu,
 } from "@/lib/ranking-en-vivo";
-import type { Movimiento, SeccionRanking, Vista } from "@/lib/ranking-vista";
+import type { Movimiento, Vista } from "@/lib/ranking-vista";
 import { Ranking } from "./ranking";
 
 /** Cada cuánto se refresca «hace N min» del feed. */
@@ -42,16 +47,17 @@ export function RankingEnVivo({
   enlaces,
 }: {
   uid: string;
-  /** El profesor: sin fila «tú» (`tu` vacío) y con el segmentado 5A | 5C (`enlaces.seccion`). */
+  /** El profesor: sin fila «tú» (`tu` vacío) y con el selector de sección (`enlaces.seccion`, D322). */
   rol?: "estudiante" | "profesor";
-  seccion: SeccionRanking;
+  seccion: SeccionId;
   vista: Vista;
   inicial: RankingSeccion;
   tu: Tu;
   info: InfoEquipos;
   enlaces: {
     vista: Record<Vista, string>;
-    seccion?: Record<SeccionRanking, string>;
+    /** Ruta de cada sección del catálogo, en orden (la misma pestaña). */
+    seccion?: Readonly<Record<SeccionId, string>>;
   };
 }) {
   const [ranking, setRanking] = useState(inicial);

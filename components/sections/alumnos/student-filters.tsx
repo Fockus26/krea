@@ -2,28 +2,25 @@
 
 import { Search, X } from "lucide-react";
 import { useRef } from "react";
+import { SelectorSeccion } from "@/components/sections/shared/selector-seccion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import {
-  type EstadoAlumnos,
-  type SeccionAlumnos,
-  seccionOpcionTexto,
-} from "@/lib/alumnos";
-
-const SECCIONES: readonly SeccionAlumnos[] = ["5A", "5C"];
+import { type EstadoAlumnos, seccionOpcionTexto } from "@/lib/alumnos";
+import type { SeccionId } from "@/lib/modelo";
 
 /**
- * Filtros de Alumnos (HANDOFF §3 Alumnos): segmentado de sección con recuentos, búsqueda y
- * contador. El segmentado es un radiogroup (D090); la etiqueta de la búsqueda es `sr-only` (el
+ * Filtros de Alumnos (HANDOFF §3 Alumnos): selector de sección del catálogo con recuentos (D322),
+ * búsqueda y contador. Con pocas secciones es un radiogroup (D090) y con más un `Select` por año;
+ * la etiqueta de la búsqueda es `sr-only` (el
  * placeholder repite el texto, como el lienzo) y el contador es la única región `role="status"`:
  * frase completa y estable, no un número suelto.
  * Buscador animado (pedido 41, D280): «Borrar la búsqueda» aparece con opacidad y escala cuando
  * hay texto y devuelve el foco al campo; las filas que entran o se van las anima la tabla.
  */
 export function StudentFilters({
+  secciones,
   seccion,
   onSeccion,
   conteos,
@@ -32,9 +29,11 @@ export function StudentFilters({
   contador,
   filtroActivo,
 }: {
-  seccion: SeccionAlumnos;
-  onSeccion: (seccion: SeccionAlumnos) => void;
-  conteos: Record<SeccionAlumnos, number>;
+  /** Secciones del catálogo, ordenadas. */
+  secciones: readonly SeccionId[];
+  seccion: SeccionId;
+  onSeccion: (seccion: SeccionId) => void;
+  conteos: Readonly<Record<SeccionId, number>>;
   consulta: string;
   onConsulta: (consulta: string) => void;
   /** Frase del contador (`contadorTexto`). */
@@ -50,17 +49,12 @@ export function StudentFilters({
   const hayConsulta = consulta.length > 0;
   return (
     <section aria-label="Filtros" className="flex flex-wrap items-center gap-3">
-      <ToggleGroup
-        aria-label="Sección"
-        value={seccion}
-        onValueChange={(v) => onSeccion(v as SeccionAlumnos)}
-      >
-        {SECCIONES.map((s) => (
-          <ToggleGroupItem key={s} value={s} className="nums">
-            {seccionOpcionTexto(s, conteos[s])}
-          </ToggleGroupItem>
-        ))}
-      </ToggleGroup>
+      <SelectorSeccion
+        secciones={secciones}
+        valor={seccion}
+        onCambio={onSeccion}
+        texto={(s) => seccionOpcionTexto(s, conteos[s] ?? 0)}
+      />
       <div className="flex min-w-[min(--spacing(60),100%)] max-w-105 flex-1 flex-col">
         <Label htmlFor="buscar-alumno" className="sr-only">
           Buscar por nombre o cédula

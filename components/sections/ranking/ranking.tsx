@@ -1,8 +1,8 @@
+import type { SeccionId } from "@/lib/modelo";
 import type {
   ItemRanking,
   Movimiento,
   RolRanking,
-  SeccionRanking,
   Vista,
 } from "@/lib/ranking-vista";
 import { RankingBoard } from "./ranking-board";
@@ -13,7 +13,7 @@ import { RankingRules } from "./ranking-rules";
 
 type Props = {
   rol: RolRanking;
-  seccion: SeccionRanking;
+  seccion: SeccionId;
   vista: Vista;
   items: readonly ItemRanking[];
   movimientos: readonly Movimiento[];
@@ -21,7 +21,7 @@ type Props = {
   ahora: number;
   enlaces: {
     vista: Record<Vista, string>;
-    seccion?: Record<SeccionRanking, string>;
+    seccion?: Readonly<Record<SeccionId, string>>;
   };
 };
 

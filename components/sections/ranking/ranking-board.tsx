@@ -14,12 +14,12 @@ import { TeamLogo } from "@/components/krea/team-logo";
 import { UserAvatar } from "@/components/krea/user-avatar";
 import { Card } from "@/components/ui/card";
 import { rutaAlumnos } from "@/lib/alumnos";
+import type { SeccionId } from "@/lib/modelo";
 import {
   etiquetasRanking,
   type ItemRanking,
   partirRanking,
   type RolRanking,
-  type SeccionRanking,
   tituloLista,
   type Vista,
   vacioRanking,
@@ -87,7 +87,7 @@ export function RankingBoard({
   vista: Vista;
   items: readonly ItemRanking[];
   rol: RolRanking;
-  seccion: SeccionRanking;
+  seccion: SeccionId;
 }) {
   const { podio, resto } = partirRanking(items);
   const etiquetas = etiquetasRanking(vista);

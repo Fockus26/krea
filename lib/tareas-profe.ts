@@ -10,6 +10,12 @@ import {
 } from "@/lib/fecha";
 import { NOTA_MAX } from "@/lib/grades";
 import { percent, sumMeterInfo } from "@/lib/meters";
+import type { SeccionId } from "@/lib/modelo";
+import {
+  listaSecciones,
+  ordenarSecciones,
+  SECCION_NO_EXISTE,
+} from "@/lib/secciones";
 
 /* ---------- Rutas de la fase 05 (brief de la ola 4) ---------- */
 
@@ -36,8 +42,8 @@ export type TareaProfe = {
   estado: EstadoTareaProfe;
   /** Día civil ISO de entrega; `null` = sin fecha (borrador). */
   fecha: string | null;
-  /** «5A», «5C» o «5A y 5C» (columna de la vista Lista, D313); ausente en la vista previa. */
-  secciones?: SeccionTarea;
+  /** «5A» o «4B y 5A» (`listaSecciones`; columna de la vista Lista, D313); ausente en la vista previa. */
+  secciones?: string;
   /** Grupal o individual (D263); `null` = sin premio (en una grupal, por definir). */
   premio: string | null;
   preguntas: number;
@@ -120,9 +126,20 @@ export function ordenarTareas(tareas: readonly TareaProfe[]): TareaProfe[] {
   });
 }
 
-/** Eyebrow de la lista: "5 tareas · 5A y 5C". */
+/** Eyebrow de la lista: "5 tareas · 4B y 5A". */
 export function eyebrowTareas(n: number, secciones: string): string {
-  return `${n} ${n === 1 ? "tarea" : "tareas"} · ${secciones}`;
+  const tareas = `${n} ${n === 1 ? "tarea" : "tareas"}`;
+  return secciones ? `${tareas} · ${secciones}` : tareas;
+}
+
+/** Con más de esto, el eyebrow dice cuántas secciones son en vez de nombrarlas. */
+const SECCIONES_EN_EYEBROW = 3;
+
+/** Secciones del eyebrow: «4B y 5A» o, si son muchas, «6 secciones» (no desborda a 320 px). */
+export function seccionesResumen(secciones: readonly SeccionId[]): string {
+  if (secciones.length <= SECCIONES_EN_EYEBROW)
+    return listaSecciones(secciones);
+  return `${secciones.length} secciones`;
 }
 
 export function preguntasTexto(n: number): string {
@@ -197,11 +214,22 @@ export function evaluarLabel(n: number, titulo: string): string {
 
 /* ---------- Constructor ---------- */
 
-export type SeccionTarea = "5A" | "5C" | "5A y 5C";
-export const SECCIONES_TAREA: readonly SeccionTarea[] = ["5A", "5C", "5A y 5C"];
+/**
+ * Marca o desmarca una sección en las casillas del constructor (D324). El resultado sale
+ * ordenado por año y letra y sin repetir.
+ */
+export function alternarSeccion(
+  secciones: readonly SeccionId[],
+  codigo: SeccionId,
+  marcada: boolean,
+): SeccionId[] {
+  const resto = secciones.filter((s) => s !== codigo);
+  return ordenarSecciones(marcada ? [...resto, codigo] : resto);
+}
 
-export function esSeccionTarea(valor: string): valor is SeccionTarea {
-  return (SECCIONES_TAREA as readonly string[]).includes(valor);
+/** Resumen de las secciones elegidas: «4B y 5A»; ninguna → «Ninguna sección». PROVISIONAL (fila 168). */
+export function seccionesTareaTexto(secciones: readonly SeccionId[]): string {
+  return secciones.length === 0 ? "Ninguna sección" : listaSecciones(secciones);
 }
 
 export type FormatoPregunta = "texto" | "imagen";
@@ -226,7 +254,8 @@ export type TareaBorrador = {
   tipo: TipoTareaProfe;
   /** Lo escrito en el campo, "dd/mm/aaaa" (puede estar a medias). */
   fecha: string;
-  seccion: SeccionTarea;
+  /** Secciones del catálogo que reciben la tarea, ordenadas (D324); al menos una para guardar. */
+  secciones: readonly SeccionId[];
   /**
    * Se conserva al pasar a Individual (el campo solo se oculta, D116): si el profe vuelve a
    * Grupal lo encuentra igual. Al guardar o publicar una individual no se envía (`tareaAGuardar`).
@@ -267,7 +296,8 @@ export function crearBorrador(datos: DatosBorrador = {}): TareaBorrador {
     titulo: datos.titulo ?? "",
     tipo: datos.tipo ?? "individual",
     fecha: datos.fecha ?? "",
-    seccion: datos.seccion ?? "5A y 5C",
+    // Una tarea nueva recibe las secciones que pase quien la crea (las del profe, D324)
+    secciones: ordenarSecciones(datos.secciones ?? []),
     premio: datos.premio ?? "",
     preguntas,
     siguiente: siguienteLibre(preguntas),
@@ -277,7 +307,7 @@ export function crearBorrador(datos: DatosBorrador = {}): TareaBorrador {
 export type AccionBorrador =
   | { tipo: "titulo" | "fecha" | "premio"; valor: string }
   | { tipo: "tipo"; valor: TipoTareaProfe }
-  | { tipo: "seccion"; valor: SeccionTarea }
+  | { tipo: "seccion"; codigo: SeccionId; marcada: boolean }
   | { tipo: "agregar" }
   | { tipo: "eliminar"; id: string }
   | { tipo: "restaurar"; pregunta: PreguntaBorrador; indice: number }
@@ -301,7 +331,14 @@ export function borradorReducer(
     case "tipo":
       return { ...estado, tipo: accion.valor };
     case "seccion":
-      return { ...estado, seccion: accion.valor };
+      return {
+        ...estado,
+        secciones: alternarSeccion(
+          estado.secciones,
+          accion.codigo,
+          accion.marcada,
+        ),
+      };
     case "agregar": {
       if (estado.preguntas.length >= MAX_PREGUNTAS) return estado;
       // Un id restaurado con «Deshacer» puede coincidir con el contador: se salta
@@ -390,12 +427,16 @@ export const ERRORES = {
   fechaLejana: "La fecha de entrega puede ser como mucho dentro de un año.",
   enunciado: "Escribe el enunciado de la pregunta.",
   valor: "Ponle un valor a la pregunta.",
+  /** PROVISIONAL (CONTENT_CHECKLIST fila 168). */
+  secciones: "Elige al menos una sección.",
 } as const;
 
 export type ErroresPregunta = { enunciado?: string; valor?: string };
 export type ErroresTarea = {
   titulo?: string;
   fecha?: string;
+  /** Ninguna casilla de sección marcada (D324). */
+  secciones?: string;
   /** Por id de pregunta; solo las que tienen algún error. */
   preguntas: Record<string, ErroresPregunta>;
   /** Motivo de la suma (≠ 20); el botón Publicar va deshabilitado por él. */
@@ -422,6 +463,7 @@ export function validarTarea(
 ): ErroresTarea {
   const errores: ErroresTarea = { preguntas: {} };
   if (!t.titulo.trim()) errores.titulo = ERRORES.titulo;
+  if (t.secciones.length === 0) errores.secciones = ERRORES.secciones;
   const iso = fechaIso(t.fecha);
   if (!iso) errores.fecha = ERRORES.fecha;
   else if (comparaFecha(iso, hoy) < 0 && iso !== fechaGuardada)
@@ -444,15 +486,20 @@ export function validarTarea(
 
 export function tieneErrores(e: ErroresTarea): boolean {
   return Boolean(
-    e.titulo || e.fecha || e.suma || Object.keys(e.preguntas).length > 0,
+    e.titulo ||
+      e.fecha ||
+      e.secciones ||
+      e.suma ||
+      Object.keys(e.preguntas).length > 0,
   );
 }
 
-/** Para guardar un borrador basta el título (D199). */
+/** Para guardar un borrador basta el título (D199) y al menos una sección (D324). */
 export function validarBorrador(t: TareaBorrador): ErroresTarea {
-  return t.titulo.trim()
-    ? { preguntas: {} }
-    : { preguntas: {}, titulo: ERRORES.titulo };
+  const errores: ErroresTarea = { preguntas: {} };
+  if (!t.titulo.trim()) errores.titulo = ERRORES.titulo;
+  if (t.secciones.length === 0) errores.secciones = ERRORES.secciones;
+  return errores;
 }
 
 export function puedePublicar(t: TareaBorrador, hoy: string): boolean {
@@ -468,7 +515,7 @@ export function tareaAGuardar(t: TareaBorrador) {
     titulo: t.titulo.trim(),
     tipo: t.tipo,
     fecha: fechaIso(t.fecha),
-    seccion: t.seccion,
+    secciones: [...t.secciones],
     premio: premio || null,
     preguntas: t.preguntas.map(({ id, enunciado, formato, valor }) => ({
       id,
@@ -513,6 +560,8 @@ export type ErrorTarea =
   | "fecha-pasada"
   | "fecha-lejana"
   | "sin-empate"
+  /** Una sección elegida ya no está en el catálogo (D323). */
+  | "seccion"
   | "red";
 
 /** Copy de los errores. PLACEHOLDER de copy (CONTENT_CHECKLIST fila 131). */
@@ -530,6 +579,8 @@ export function mensajeErrorTarea(error: ErrorTarea): string {
       return ERRORES.fechaLejana;
     case "sin-empate":
       return "Ya no hay empate en esta sección: recarga la página.";
+    case "seccion":
+      return SECCION_NO_EXISTE;
     case "red":
       return "No se pudo conectar. Revisa tu conexión e inténtalo otra vez.";
   }
@@ -554,7 +605,8 @@ export const NOTA_PUBLICADA =
 export type PerdidaEliminar = {
   notas: number;
   sinEvaluar: number;
-  secciones: ReadonlyArray<Exclude<SeccionTarea, "5A y 5C">>;
+  /** Ordenadas por año y letra. */
+  secciones: readonly SeccionId[];
 };
 
 export const SIN_PERDIDA: PerdidaEliminar = {
@@ -592,12 +644,12 @@ export function sumarPerdidas(
   return {
     notas,
     sinEvaluar,
-    secciones: (["5A", "5C"] as const).filter((s) => secciones.has(s)),
+    secciones: ordenarSecciones(secciones),
   };
 }
 
 /**
- * «Se borrarán 23 notas de 5A y 5C. Los puntos del ranking se recalculan.» Sin `perdida` (la
+ * «Se borrarán 23 notas de 4B y 5A. Los puntos del ranking se recalculan.» Sin `perdida` (la
  * vista previa no la conoce) dice lo mismo sin cifras. `varias`: la del lote (D314; solo cambia
  * «Todavía no tiene entregas» por «tienen»). PROVISIONAL (lote: CONTENT_CHECKLIST fila 165).
  */
@@ -617,7 +669,7 @@ export function eliminarTareaDescripcion(
   );
   const verbo = (uno: boolean) => (uno ? "Se borrará" : "Se borrarán");
   if (notas > 0) {
-    const de = secciones.length > 0 ? ` de ${secciones.join(" y ")}` : "";
+    const de = secciones.length > 0 ? ` de ${listaSecciones(secciones)}` : "";
     const y = sinEvaluar > 0 ? ` y ${pendientes}` : "";
     return `${verbo(notas === 1 && sinEvaluar === 0)} ${plural(notas, "nota", "notas")}${de}${y}. Los puntos del ranking se recalculan. ${fin}`;
   }

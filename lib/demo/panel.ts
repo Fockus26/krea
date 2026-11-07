@@ -151,6 +151,7 @@ export function panelDe(): DatosPanel {
     entregas: ENTREGAS_PANEL.map(aFilaEvaluar),
     ajustes: AJUSTES.map(aFilaAjuste),
     tareaEvaluada: TAREA_IDENTIDAD.titulo,
+    secciones: ["5A", "5C"],
     avance: { "5A": avanceDe("5A"), "5C": avanceDe("5C") },
     raspados: TAREA_IDENTIDAD.evaluaciones
       .filter((e) => e.nota < 10)

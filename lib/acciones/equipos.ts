@@ -8,6 +8,7 @@ import { refresh } from "next/cache";
 import { almacenB2 } from "@/lib/almacen/b2";
 import { claveLogo, validarLogoSubido } from "@/lib/almacen/imagen";
 import { exigirSesion } from "@/lib/dal";
+import { catalogoSecciones } from "@/lib/datos/secciones";
 import {
   type ResultadoEquipos,
   type ResultadoLogo,
@@ -34,6 +35,7 @@ import {
   eliminarEquipoEnTransaccion,
 } from "@/lib/firebase/equipos-gestion";
 import { borrarEnLote, type ResultadoLote, zIdsLote } from "@/lib/lote";
+import { seccionEnCatalogo } from "@/lib/secciones";
 
 export type { ResultadoEquipos, ResultadoGestionEquipo, ResultadoLogo };
 
@@ -157,6 +159,9 @@ export async function crearEquipo(
   const d = zCrearEquipo.safeParse(entrada);
   if (!d.success) return { ok: false, error: "invalida" };
   try {
+    // `zSeccion` valida la forma; la sección además tiene que existir en el catálogo (D323)
+    if (!seccionEnCatalogo(d.data.seccion, await catalogoSecciones()))
+      return { ok: false, error: "seccion" };
     const r = await crearEquipoEnTransaccion(admin.db, d.data, Date.now());
     if (r.ok) refresh();
     return r;

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { PuntosView } from "@/components/sections/puntos/puntos-view";
 import { PageHeader } from "@/components/sections/shared/page-header";
+import { SinSecciones } from "@/components/sections/shared/sin-secciones";
 import { anularAjuste, aplicarAjuste } from "@/lib/acciones/ajustes";
 import { candidatosDe, historialDe } from "@/lib/ajustes-datos";
 import {
@@ -10,6 +11,8 @@ import {
   rankingsTodos,
   usuariosTodos,
 } from "@/lib/datos/profesor";
+import { catalogoSecciones } from "@/lib/datos/secciones";
+import { seccionesDe } from "@/lib/secciones";
 import { nombreCorto } from "@/lib/vistas-estudiante";
 
 export const metadata: Metadata = {
@@ -19,32 +22,42 @@ export const metadata: Metadata = {
 
 const ACCIONES = { aplicar: aplicarAjuste, anular: anularAjuste };
 
+const EYEBROW = "Puntos del ranking · no cambian la nota";
+
 // Ajustes de puntos (HANDOFF §3; W7, D207): las mismas secciones que /secciones/puntos con
 // Firestore. Los ajustes mueven puntos del ranking, nunca la nota (D007); aplicar y anular
 // escriben el ajuste y el ranking en una transacción y la página se refresca con lo guardado.
-// Los avisos usan el Toaster global (D131).
+// Las secciones salen del catálogo (D323); sin ninguna, el vacío de D325. Los avisos usan el
+// Toaster global (D131).
 export default async function PuntosPage() {
-  const [{ usuario }, usuarios, equipos, ajustes, rankings] = await Promise.all(
-    [
+  const [{ usuario, sesion }, usuarios, equipos, ajustes, rankings, catalogo] =
+    await Promise.all([
       profesorActual(),
       usuariosTodos(),
       equiposTodos(),
       ajustesTodos(),
       rankingsTodos(),
-    ],
-  );
+      catalogoSecciones(),
+    ]);
+  const secciones = seccionesDe(catalogo);
+  if (secciones.length === 0) {
+    return (
+      <>
+        <PageHeader eyebrow={EYEBROW} title="Ajustes de puntos" />
+        <SinSecciones admin={sesion.admin === true} />
+      </>
+    );
+  }
   const nombres = {
     usuarios: new Map(usuarios.map((u) => [u.cedula, u])),
     equipos: new Map(equipos.map((e) => [e.id, e])),
   };
   return (
     <>
-      <PageHeader
-        eyebrow="Puntos del ranking · no cambian la nota"
-        title="Ajustes de puntos"
-      />
+      <PageHeader eyebrow={EYEBROW} title="Ajustes de puntos" />
       <PuntosView
-        candidatos={candidatosDe({ usuarios, equipos, rankings })}
+        candidatos={candidatosDe({ usuarios, equipos, rankings, secciones })}
+        secciones={secciones}
         historial={historialDe(ajustes, nombres)}
         profe={usuario ? nombreCorto(usuario) : ""}
         acciones={ACCIONES}

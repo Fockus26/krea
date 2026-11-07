@@ -19,6 +19,8 @@ import {
 /** "Hoy" fijo de la vista previa (el servidor no lee el reloj con `cacheComponents`). */
 export const HOY_DEMO = "2026-10-30";
 export const SECCIONES_PROFE = "5A y 5C";
+/** Las secciones del seed para las casillas del constructor (D324). */
+export const SECCIONES_DEMO: readonly string[] = ["5A", "5C"];
 
 /** Id y título del borrador: los mismos que usa Premios (W4) para «Agregar premio». */
 export const BORRADOR_ID = "plan-redes";
@@ -29,7 +31,7 @@ export const BORRADOR_DEMO: DatosBorrador = {
   titulo: BORRADOR_TITULO,
   tipo: "grupal",
   fecha: "",
-  seccion: "5A y 5C",
+  secciones: SECCIONES_DEMO,
   premio: "",
   preguntas: [
     {
@@ -86,8 +88,8 @@ export const BORRADOR_DEMO: DatosBorrador = {
   ],
 };
 
-/** Tarea nueva: vacía, con una pregunta. */
-export const NUEVA_DEMO: DatosBorrador = {};
+/** Tarea nueva: vacía, con una pregunta y las dos secciones marcadas (como el profe sin sección). */
+export const NUEVA_DEMO: DatosBorrador = { secciones: SECCIONES_DEMO };
 
 /**
  * Estado y avance del lado del profe. El `estado` de `TAREAS` es el que ve el alumno (su entrega

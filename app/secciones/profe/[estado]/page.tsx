@@ -14,9 +14,9 @@ export const metadata: Metadata = {
 const BASE = "/secciones/profe";
 // Hora fija por estado: con `cacheComponents` el servidor no lee el reloj (D098). `filtro` es el del segmentado al abrir.
 const ESTADOS = [
-  ["manana", "Mañana (9 h)", 9, "ambas"],
-  ["tarde", "Tarde (15 h)", 15, "ambas"],
-  ["noche", "Noche (21 h)", 21, "ambas"],
+  ["manana", "Mañana (9 h)", 9, "todas"],
+  ["tarde", "Tarde (15 h)", 15, "todas"],
+  ["noche", "Noche (21 h)", 21, "todas"],
   ["5c", "Sección 5C", 9, "5C"],
 ] as const satisfies ReadonlyArray<
   readonly [string, string, number, FiltroSeccion]

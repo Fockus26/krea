@@ -44,18 +44,35 @@ describe("leerFiltrosAlumnos", () => {
   });
   test("valores inválidos se ignoran sin error", () => {
     expect(
-      leerFiltrosAlumnos({
-        seccion: "5B",
-        estado: "todos",
-        tarea: "a/b",
-        alumno: "abc",
-      }),
+      leerFiltrosAlumnos(
+        {
+          seccion: "5B",
+          estado: "todos",
+          tarea: "a/b",
+          alumno: "abc",
+        },
+        ["5A", "5C"],
+      ),
     ).toEqual({});
+    // Sin forma de código, aunque no se pase el catálogo
+    expect(leerFiltrosAlumnos({ seccion: "5a" })).toEqual({});
+    expect(leerFiltrosAlumnos({ seccion: "todas" })).toEqual({});
     expect(leerFiltrosAlumnos({ tarea: "", alumno: "123" })).toEqual({});
     expect(leerFiltrosAlumnos({ tarea: "x".repeat(200) })).toEqual({});
     expect(leerFiltrosAlumnos(new URLSearchParams("estado=%E0%A4%A"))).toEqual(
       {},
     );
+  });
+  test("una sección nueva del catálogo (4B) vale; la que no está, no (D323)", () => {
+    expect(leerFiltrosAlumnos({ seccion: "4B" }, ["4B", "5A", "5C"])).toEqual({
+      seccion: "4B",
+    });
+    expect(leerFiltrosAlumnos({ seccion: "4B" }, ["5A", "5C"])).toEqual({});
+    expect(
+      leerFiltrosAlumnos(new URLSearchParams("seccion=4B&estado=raspados"), [
+        "4B",
+      ]),
+    ).toEqual({ seccion: "4B", estado: "raspados" });
   });
   test("un valor repetido toma el primero", () => {
     expect(leerFiltrosAlumnos({ seccion: ["5C", "5A"] })).toEqual({

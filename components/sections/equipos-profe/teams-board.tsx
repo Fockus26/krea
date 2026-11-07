@@ -51,10 +51,10 @@ import {
   moverAlumno,
   movidoTexto,
   quitadoTexto,
-  type SeccionEquipos,
   validarLogo,
 } from "@/lib/equipos-profe";
 import { EQUIPOS } from "@/lib/lote";
+import type { SeccionId } from "@/lib/modelo";
 import { CLAVE_VISTA_EQUIPOS } from "@/lib/vista";
 import { estiloDe } from "@/lib/vistas-estudiante";
 
@@ -88,6 +88,7 @@ const tituloDe = (id: string) => `titulo-${id}`;
  */
 export function TeamsBoard({
   seccion,
+  secciones,
   base,
   equipos,
   alumnos,
@@ -95,7 +96,9 @@ export function TeamsBoard({
   total,
   acciones,
 }: {
-  seccion: SeccionEquipos;
+  seccion: SeccionId;
+  /** Secciones del catálogo para el selector (D322). */
+  secciones: readonly SeccionId[];
   base: string;
   equipos: readonly EquipoVista[];
   alumnos: Readonly<Record<string, AlumnoEquipo>>;
@@ -299,6 +302,7 @@ export function TeamsBoard({
           total,
         )}
         seccion={seccion}
+        secciones={secciones}
         base={base}
         acciones={
           gestion ? (

@@ -116,12 +116,71 @@ export function seccionesDe(catalogo: CatalogoSecciones): string[] {
   );
 }
 
-/** «4B, 5A y 5C» (ordenadas); una sola → «5A»; ninguna → «». */
+/** «4B, 5A y 6A» (ordenadas); una sola → «5A»; ninguna → «». */
 export function listaSecciones(codigos: Iterable<string>): string {
   const xs = ordenarSecciones(codigos);
   if (xs.length <= 1) return xs[0] ?? "";
   return `${xs.slice(0, -1).join(", ")} y ${xs[xs.length - 1]}`;
 }
+
+/* ---------- Usar el catálogo en las pantallas y las acciones (X5b, D322–D325) ---------- */
+
+/** ¿Existe la sección en el catálogo? Lo comprueba cada acción que recibe una (D323). */
+export function seccionEnCatalogo(
+  codigo: string,
+  catalogo: CatalogoSecciones,
+): boolean {
+  return seccionesDe(catalogo).includes(codigo);
+}
+
+/** ¿Existen todas (y hay al menos una)? Para las secciones de una tarea (D323, D324). */
+export function seccionesEnCatalogo(
+  codigos: readonly string[],
+  catalogo: CatalogoSecciones,
+): boolean {
+  const existen = new Set(seccionesDe(catalogo));
+  return codigos.length > 0 && codigos.every((c) => existen.has(c));
+}
+
+/** Un año con los códigos de sus secciones: para agrupar el selector y las casillas (D322, D324). */
+export type GrupoAnio = { numero: number; nombre: string; secciones: string[] };
+
+/**
+ * Códigos agrupados por año, en orden: 4B, 5A, 6A → 4.º año [4B], 5.º año [5A], 6.º año [6A].
+ * Lo que no es un código va en un grupo final sin año (`numero: 0`, nombre «Otras»): una tarea
+ * con una sección que el catálogo ya no tiene la sigue mostrando (D324).
+ */
+export function agruparPorAnio(codigos: Iterable<string>): GrupoAnio[] {
+  const grupos = new Map<number, string[]>();
+  for (const c of ordenarSecciones(codigos)) {
+    const n = partesSeccion(c)?.numero ?? 0;
+    grupos.set(n, [...(grupos.get(n) ?? []), c]);
+  }
+  return [...grupos.entries()]
+    .sort(([a], [b]) => (a === 0 ? 1 : b === 0 ? -1 : a - b))
+    .map(([numero, secciones]) => ({
+      numero,
+      nombre: numero === 0 ? "Otras" : nombreAnio(numero),
+      secciones,
+    }));
+}
+
+/** Con más de esto, el selector de sección pasa de segmentado a `Select` por año (D322). */
+export const MAX_SEGMENTADO = 4;
+
+export const usaSegmentado = (n: number) => n <= MAX_SEGMENTADO;
+
+/* Textos. PROVISIONAL (CONTENT_CHECKLIST fila 169): vacíos sin secciones y sección que ya no está. */
+export const SECCION_NO_EXISTE =
+  "Esa sección ya no existe. Recarga la página y elige otra.";
+export const CATALOGO_VACIO_TITULO = "Todavía no hay secciones";
+/** Descripción del vacío sin secciones: el admin las crea; el resto se las pide (D325). */
+export function catalogoVacioTexto(admin: boolean): string {
+  return admin
+    ? "Crea un año y sus secciones para empezar a cargar alumnos, equipos y tareas."
+    : "Pídele al administrador que cree una.";
+}
+export const CATALOGO_VACIO_ENLACE = "Crear años y secciones";
 
 /* ---------- Transformar el catálogo ---------- */
 

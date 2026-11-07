@@ -4,6 +4,7 @@
 import { z } from "zod";
 import { zIdDocumento } from "@/lib/evaluar-datos";
 import { type Equipo, type SeccionId, zEquipo, zSeccion } from "@/lib/modelo";
+import { SECCION_NO_EXISTE } from "@/lib/secciones";
 
 /** Tema vacío = sin tema (`null`, «Sin tema elegido»). */
 const zTemaEntrada = z
@@ -116,6 +117,8 @@ export type ErrorGestionEquipo =
   | "repetido"
   | "demasiados"
   | "sesiones"
+  /** La sección ya no está en el catálogo (D323). */
+  | "seccion"
   | "red";
 
 export type ResultadoGestionEquipo =
@@ -199,6 +202,8 @@ export function errorGestionEquipoTexto(
       return `Ya hay un equipo con ese nombre${seccion ? ` en ${seccion}` : ""}.`;
     case "no-existe":
       return "Ese equipo ya no existe. Recarga la página.";
+    case "seccion":
+      return SECCION_NO_EXISTE;
     case "demasiados":
       return "Tiene demasiados datos para eliminarlo de una vez. No cambiamos nada: avísale al administrador.";
     case "sesiones":

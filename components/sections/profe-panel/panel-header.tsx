@@ -1,43 +1,47 @@
 import { PageHeader } from "@/components/sections/shared/page-header";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { SelectorSeccion } from "@/components/sections/shared/selector-seccion";
+import type { SeccionId } from "@/lib/modelo";
 import {
   esFiltroSeccion,
-  FILTROS_SECCION,
   type FiltroSeccion,
+  TODAS_SECCIONES,
+  TODAS_TEXTO,
 } from "@/lib/panel";
 
 /**
  * Encabezado del Panel (HANDOFF §3 Panel §1): eyebrow, el único `<h1>` con el saludo por hora y el
- * segmentado 5A · 5C · Ambas (radiogroup de `ToggleGroup`, D038/D090) que envuelve debajo si no cabe.
+ * filtro «Todas» + cada sección del catálogo (selector compartido, D322: radiogroup de
+ * `ToggleGroup` con pocas, D038/D090; `Select` por año con más) que envuelve debajo si no cabe.
  * El saludo llega ya armado: la hora no se lee en el servidor (`saludoTexto` en `lib/panel.ts`).
+ * Sin año fijo en el eyebrow (D326): la escuela puede tener varios.
  */
 export function PanelHeader({
   saludo,
+  secciones,
   filtro,
   onFiltro,
 }: {
   saludo: string;
+  secciones: readonly SeccionId[];
   filtro: FiltroSeccion;
   onFiltro: (f: FiltroSeccion) => void;
 }) {
   return (
     <PageHeader
-      eyebrow="Escuela Creativa · 5.º año"
+      // PROVISIONAL (CONTENT_CHECKLIST fila 170)
+      eyebrow="Escuela Creativa del liceo"
       title={saludo}
       actions={
-        <ToggleGroup
-          aria-label="Sección"
-          value={filtro}
-          onValueChange={(v) => {
-            if (esFiltroSeccion(v)) onFiltro(v);
-          }}
-        >
-          {FILTROS_SECCION.map(([valor, texto]) => (
-            <ToggleGroupItem key={valor} value={valor}>
-              {texto}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
+        secciones.length > 0 ? (
+          <SelectorSeccion
+            secciones={secciones}
+            valor={filtro}
+            todas={{ valor: TODAS_SECCIONES, texto: TODAS_TEXTO }}
+            onCambio={(v) => {
+              if (esFiltroSeccion(v, secciones)) onFiltro(v);
+            }}
+          />
+        ) : null
       }
     />
   );
