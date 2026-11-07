@@ -11,7 +11,7 @@ Fases 01–09 cerradas · **Track:** Product · main @ 8f818b8 · versión 1 ent
 
 **Tanda 2026-11-06** cerrada (olas 1–5, #78–#101, main @ 0f74ca4).
 
-**Tanda 2026-11-07** (pedidos 54–58, 3 olas): `plans/batch-2026-11-07.md` · ola 1 **cerrada** (#102 ranking vacío, #103 Shift, #104 eliminar equipo; sin QA por memoria) · ola 2 **cerrada** (#105 vista Tarjetas/Lista + lote + «3 de 2 evaluadas», D313–D316; main @ d85c184) · **sigue ola 3 de 3**: X5 años › secciones (D317–D326).
+**Tanda 2026-11-07** (pedidos 54–58, 3 olas): `plans/batch-2026-11-07.md` · ola 1 **cerrada** (#102 ranking vacío, #103 Shift, #104 eliminar equipo; sin QA por memoria) · ola 2 **cerrada** (#105 vista Tarjetas/Lista + lote + «3 de 2 evaluadas», D313–D316; main @ d85c184) · **ola 3 de 3 en curso**: X5a = **#106 abierto** (D317–D321, fila 166; slot wt1; CI verde con `rules`) y luego X5b `feat/secciones-dinamicas` (D322–D326, filas 168–170).
 
 ## Blocked (actions for César or external)
 

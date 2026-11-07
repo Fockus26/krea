@@ -224,3 +224,222 @@ solo si tocas reglas o la transacción. typecheck, lint, suite entera, `a11y` po
 claro/oscuro). Sin servidor ni capturas. «Cómo probar» del PR: rol profesor, ambas pantallas,
 ambas vistas, borrar 2 en lote, recargar y ver que recuerda la vista, y el avance de una grupal
 tras eliminar un equipo con entrega.
+
+---
+
+## X5a — Catálogo de años y secciones + gestión (`feat/secciones-datos`)
+
+**Modelo:** opus · high · **Decisiones:** D317–D321 · **Checklist:** fila 166 · sin changeset ·
+**Docker:** no (emuladores con Java para `test:rules`).
+
+**Qué pidió César (pedido 58):** «Crear, editar y eliminar años y sus secciones». Decidido con
+él (ronda única, `batch-2026-11-07.md`): modelo **Año › secciones** (1.º–5.º… y dentro A, B, C;
+el código «5A» = año + letra). Un año o una sección **solo se elimina vacío** (sin alumnos,
+equipos ni tareas). Se hace ya, en Firebase.
+
+**Alcance de esta unidad:** las **formas compartidas** de X5 (brief, «Ola 3 — Formas compartidas
+de X5»: créalas exactamente así), el CRUD del catálogo y la pantalla para gestionarlo. **No**
+cambias las pantallas que hoy listan 5A/5C (segmentados, filtros, tareas, ranking, panel,
+puntos, alumnos, `conteos()`, `rankingsTodos()`): eso es X5b, después de ti. Tras tu PR la app
+se comporta igual que hoy para 5A/5C; solo se suma la pantalla nueva.
+
+**Dónde está el código:**
+- `lib/modelo.ts:55-57` `SECCIONES`/`SeccionId`/`zSeccion` (enum fijo); `:117` `zUsuario.seccion`,
+  `:157` equipo, `:219-220` `zDecisionesPremio` con claves `"5A"`/`"5C"` → pásalo a
+  `z.record(zSeccion, zDecisionPremio)` (compatible con los datos guardados). `:238`, `:287`
+  `secciones` de tarea y borrador; `:346`, `:387` entrega y ajuste; `:437` `Claims`. `COL` en `:15`.
+- `lib/sesion.ts:97` acepta solo `"5A" | "5C"` del claim → `esCodigoSeccion`. Tests en
+  `tests/unit/sesion.test.ts`.
+- Tipos con alias propios que hoy son `"5A" | "5C"` (`lib/alumnos.ts:8`, `lib/equipos-profe.ts:8`,
+  `lib/panel.ts:6`, `lib/puntos.ts:10`, `lib/ranking-vista.ts:9`, `lib/tareas-profe.ts:200`): **no
+  los toques** (X5b); compila igual porque `SeccionId` se ensancha.
+- Seed: `lib/seed-firestore.ts:85, :138, :187` y `scripts/seed-emulator.ts:108` → el seed escribe
+  también `config/secciones` con `CATALOGO_INICIAL`.
+- Reglas: `firebase/firestore.rules` (funciones `:14-27`; `ranking/{seccion}` `:80`) → añade
+  `config/{doc}` (solo lectura profe). Test en `tests/rules/` (mira `tests/rules/firestore.test.ts`).
+- Pantalla admin de referencia (estructura, diálogos, `exigirAdmin`): `app/(profesor)/profe/profesores/page.tsx`,
+  `components/sections/profesores/profesores-directory.tsx`, `profesor-dialogs.tsx`,
+  `lib/acciones/profesores.ts` (`exigirAdmin`, `lib/dal.ts:57`). Nav: `lib/nav.ts:166-173`
+  (ítem `profesores`, `soloAdmin`) e íconos en `components/layout/nav-icon.tsx`.
+- Loaders existentes para contar uso: `lib/datos/profesor.ts` (`usuariosTodos`, `equiposTodos`,
+  `tareasProfe` —borradores incluidos—, `entregasTodas`, `ajustesTodos`).
+
+**Enfoque decidido:**
+- **Pantalla `/profe/secciones` «Años y secciones»**, ítem de nav `secciones` junto a Profesores,
+  **solo admin** (`soloAdmin`, acciones con `exigirAdmin`): es estructura de toda la escuela.
+  Lista de años (tarjeta por año, `nombreAnio`), dentro sus secciones (letra + uso: n alumnos,
+  n equipos, n tareas). Acciones: «Nuevo año» (número 1–9 sin usar + letras iniciales, puede ser
+  ninguna), por año «Agregar sección» (letra sin usar), «Editar año» (cambiar el número) y
+  «Eliminar año»; por sección «Editar» (cambiar la letra) y «Eliminar».
+- **Editar = renombrar el código, y solo vacío.** Cambiar el número de un año o la letra de una
+  sección cambia el código («5A» → «4A»), que está guardado en usuarios, claims, equipos, tareas,
+  entregas, ajustes, `ranking/{seccion}` y `decisionesPremio`. Para no reescribir todo eso, se
+  permite **solo si la sección (o todas las del año) está vacía**, la misma regla que eliminar.
+  Con datos, el botón sigue visible pero el diálogo explica por qué no (`usoTexto`), no solo un
+  `disabled` mudo. Alternativa descartada (en la decisión): renombrar en cascada con datos.
+- **Vacío** = `seccionVacia(uso)`: 0 usuarios con esa `seccion` (alumnos **y** profes asignados,
+  ver `seccionesDelProfe` en `lib/datos/profesor.ts:201`), 0 equipos, 0 tareas o borradores con
+  esa sección en `secciones`, 0 entregas, 0 ajustes. La pantalla lo calcula con los loaders ya
+  cacheados y una función pura `usoPorSeccion(...)`; la **acción lo vuelve a comprobar** dentro de
+  una transacción (consultas `count()` o `limit(1)` por colección + lee `config/secciones`) y,
+  al eliminar, borra también `ranking/{codigo}` si existe. Año: vacío si todas sus secciones lo están.
+- **Acciones** en `lib/acciones/secciones.ts`: `crearAnio`, `editarAnio`, `eliminarAnio`,
+  `crearSeccion`, `editarSeccion`, `eliminarSeccion`; entrada zod (`zNumeroAnio`, `zLetra`,
+  `zSeccion`), transacción sobre `config/secciones` (documento ausente → parte de
+  `CATALOGO_INICIAL`), `refresh()` al terminar (guardián `tests/unit/cache-rutas.test.ts`),
+  idempotentes (crear lo que ya existe = error claro «Ya existe 5A», no duplica), resultado
+  `{ ok: true } | { ok: false; error: <código> }` con texto puro al estilo de
+  `errorGestionEquipoTexto`. La lógica de transformar el catálogo (agregar, renombrar, quitar,
+  ordenar, validar duplicados) es **pura** en `lib/secciones.ts`, con tests.
+- **Sin acceso a la base real.** Nada de script de migración: el documento ausente ya vale
+  `CATALOGO_INICIAL`.
+
+**Trampas:**
+- `zSeccion` deja de ser enum: busca `zSeccion.options`, `z.enum(SECCIONES` y `as SeccionId` que
+  dependan de la unión (`grep -rn "zSeccion\.\|SECCIONES" app lib components scripts tests`) y
+  haz que compilen; `Record<SeccionId, …>` con literales `{ "5A": …, "5C": … }` sigue compilando
+  con `string`, no los reescribas.
+- `tests/unit/modelo.test.ts` probablemente prueba que «5B» es inválida: ahora es válida
+  (formato); inválidas son «5», «AA», «0A», «5a».
+- `decisionesPremio` como `z.record`: revisa quién lo lee (`grep -rn "decisionesPremio" lib components app`)
+  y que acceder a una clave ausente siga dando `undefined`.
+- Next 16 con `cacheComponents`: la página nueva sigue el patrón de `profesores/page.tsx` (loader
+  bajo `Suspense`/`loading.tsx`). Lee `node_modules/next/dist/docs/` si usas algo nuevo.
+- 320 px sin scroll horizontal; confirmación antes de eliminar; foco al diálogo y de vuelta;
+  submit `disabled` mientras vuela; el estado «no se puede eliminar» con texto, no solo color.
+
+**Copy provisional** (fila 166): título y eyebrow de la pantalla, textos de los diálogos (nuevo
+año, agregar sección, editar, eliminar, «no se puede porque…»), errores y vacío («Todavía no hay
+años»). Descríbelo en el informe; no edites el checklist.
+
+**Decisiones** (D317–D321, propuesta): D317 catálogo `config/secciones` (documento único, ausente
+= inicial, código año+letra); D318 eliminar y renombrar solo vacío (qué cuenta como uso; cascada
+descartada); D319 pantalla Años y secciones solo admin; D320 `decisionesPremio` por registro.
+Usa menos si sobran.
+
+**Verificar:** tests puros de `lib/secciones.ts` (códigos, slugs, `listaSecciones`, transformar
+catálogo con duplicados y límites, `seccionVacia`, `usoTexto`, `usoPorSeccion`), `modelo.test.ts`
+y `sesion.test.ts` al día, `bun run test:rules` (el profe lee `config/secciones`, el estudiante
+no, nadie escribe). typecheck, lint, suite entera, `a11y` por código. Sin servidor ni capturas.
+«Cómo probar» del PR: rol profesor admin; crear 4.º año con A y B, renombrar 4B → 4D, eliminar
+4D; intentar eliminar 5A (tiene alumnos) y ver el motivo; un profe no admin no ve la pantalla.
+
+---
+
+## X5b — Secciones dinámicas en toda la app (`feat/secciones-dinamicas`)
+
+**Modelo:** opus · high · **Decisiones:** D322–D326 · **Checklist:** filas 168–170 · sin
+changeset · **Docker:** no. **Se lanza con X5a ya en `main`**: antes de empezar, confirma que
+existen `lib/secciones.ts`, `lib/datos/secciones.ts` y `config/secciones` en las reglas; si X5a
+cambió alguna forma del brief, manda lo que está en `main` (léelo en su D317).
+
+**Lo que dejó X5a (#106, léelo en `context/decisions/D317`–`D321` y en `lib/secciones.ts`):**
+- Formas del brief creadas, más `DOC_SECCIONES` y `CatalogoSeccionesDoc` en `lib/modelo.ts`, y
+  helpers extra en `lib/secciones.ts` (`seccionesDelAnio`, `filasSecciones`, `resumenCatalogo`, …):
+  úsalos antes de escribir otros.
+- **Estrechamientos transitorios (D321) que tienes que quitar:** 11 `as <Tipo>["seccion"]` con el
+  comentario «La vista aún lista 5A/5C (… X5b, D317)» en `app/(estudiante)/ranking/_ranking.tsx`,
+  `lib/ajustes-datos.ts` (×3), `lib/alumnos-datos.ts`, `lib/equipos-datos.ts`, `lib/panel-datos.ts`
+  (×4, incluido el tipo de `avance`) y `lib/tareas-profe-datos.ts` (`seccionTareaDe`).
+  `git grep -n "X5b, D317"` los encuentra todos; al terminar no queda ninguno.
+- **Choque de nombres:** `lib/tareas-profe-datos.ts` exporta su propio `seccionesDe(SeccionTarea)`;
+  el de `lib/secciones.ts` es `seccionesDe(catalogo)`. Borra o renombra el de tareas.
+- **Riesgo real:** `candidatosDe` (`lib/ajustes-datos.ts`) y `datosPanel` (`lib/panel-datos.ts`)
+  indexan registros literales `{ "5A": …, "5C": … }`: un alumno de 4B da `undefined.push`. Constrúyelos
+  desde el catálogo (o con `??=`), con test de una sección nueva.
+- **Hueco de validación:** `zSeccion` valida la forma (`/^[1-9][A-Z]$/`), no que exista. Las acciones
+  que reciben una sección (alta y edición de alumno, crear equipo, crear/editar tarea, ajuste de
+  puntos) comprueban además que esté en `catalogoSecciones()`; si no, error claro. Con test.
+
+**Qué pidió César (pedido 58):** «Crear, editar y eliminar años y sus secciones». X5a creó el
+catálogo y su pantalla; tu unidad hace que **todo lo que hoy lista 5A/5C use el catálogo**, para
+que una sección nueva (p. ej. 4B) funcione entera: alumnos, equipos, tareas, evaluar, puntos,
+ranking, panel y premios.
+
+**Dónde está el código** (fijo hoy en 5A/5C; `grep -rnE "\"5[AC]\"|'5[AC]'|SECCIONES|/5c|5A y 5C" app lib components scripts`
+fuera de `lib/demo/`, `app/secciones/`, `app/componentes/`, `app/estados/`, que son galería con
+datos de muestra y se quedan):
+- **Loaders:** `lib/datos/profesor.ts:96-122` `conteos()` (`contar("5A")`, `contar("5C")`),
+  `:168-184` `rankingsTodos()` y `:201` `seccionesDelProfe` → recorren `seccionesDe(await catalogoSecciones())`.
+  `Conteos` (`lib/tareas-profe-datos.ts:318-321`) pasa a `Record<string, …>` con todas las secciones.
+- **Rutas del ranking del profe:** `app/(profesor)/profe/ranking/page.tsx`, `equipos/page.tsx`,
+  `5c/page.tsx`, `5c/equipos/page.tsx` (+ `loading.tsx`) y `_ranking.tsx:18-19, :46` (`href` y
+  enlaces `"5A"`/`"5C"`). Pasan a `/profe/ranking/[seccion]` y `/profe/ranking/[seccion]/equipos`
+  (slug `slugSeccion`, `seccionDeSlug` → `notFound()` si no existe); `/profe/ranking` y
+  `/profe/ranking/equipos` muestran la **primera** sección del catálogo. `/profe/ranking/5c`
+  sigue funcionando (es un slug). La carpeta `5c/` sobra (la cubre `[seccion]`): bórrala.
+- **Equipos:** `app/(profesor)/profe/equipos/[seccion]/page.tsx:8-26` (mapa fijo y
+  `generateStaticParams`), `equipos/page.tsx:10` (`seccion="5A"`), `_equipos.tsx:25`,
+  `components/sections/equipos-profe/teams-header.tsx:8, :39`.
+- **Selectores y filtros:** `components/sections/ranking/ranking-header.tsx:48-49`,
+  `components/sections/alumnos/student-filters.tsx:16, :58`, `students-directory.tsx:66, :194-195`,
+  `add-student-dialog.tsx:273`, `components/sections/puntos/adjustment-form.tsx:48, :94, :203`,
+  `adjustment-history.tsx:46-50, :123`, `components/sections/profe-panel/panel-view.tsx:52`,
+  `lib/panel.ts:6-18` (filtro `"ambas"`), `lib/alumnos.ts:8, :194-210` (`otraSeccion`,
+  `busquedaVacia`), `:262` (filtro de URL), `app/(profesor)/profe/alumnos/page.tsx:66`.
+- **Tareas:** `lib/tareas-profe.ts:200-205` (`SeccionTarea` = «5A» | «5C» | «5A y 5C»), `:595`,
+  `lib/tareas-profe-datos.ts:49, :69, :97, :108-115` (`seccionesDe`/`seccionTareaDe`), `:394-404`,
+  `:443-451`, `components/sections/tareas-profe/task-builder.tsx:82, :656`, `tasks-header.tsx:16`.
+- **Otros datos:** `lib/ajustes-datos.ts:213-260` (candidatos `{ "5A": [], "5C": [] }`),
+  `lib/panel-datos.ts:132-141` (avance por sección), `lib/premios.ts:34-37`,
+  `components/sections/premios/prizes-board.tsx`, `lib/ranking-vista.ts:9`.
+- **Alias de tipo a borrar** (todos = `SeccionId`): `SeccionAlumnos`, `SeccionEquipos`,
+  `SeccionPanel`, `SeccionPuntos`, `SeccionRanking`, `SeccionTarea`. Y `SECCIONES` de
+  `lib/modelo.ts` (X5a lo dejó `@deprecated`): al final no queda ningún uso fuera de la galería
+  y el seed (que usan `CATALOGO_INICIAL`).
+- **Copy fija con «5.º año»:** `components/sections/auth/auth-layout.tsx:48` («5.º año, secciones
+  A y C»), `components/sections/auth/login-form.tsx:53`, `components/sections/profe-panel/panel-header.tsx:25`.
+
+**Enfoque decidido:**
+- Cada página del profe lee `catalogoSecciones()` en el servidor y pasa `secciones: string[]`
+  (o el catálogo, si agrupa por año) a sus componentes cliente. Nada en el cliente lee Firestore
+  para esto.
+- **Un selector de sección compartido** (`components/sections/shared/selector-seccion.tsx`): con
+  **≤ 4 secciones**, el segmentado actual (enlaces o `ToggleGroup`, como hoy); con **más**, un
+  `Select` agrupado por año (`SelectGroup` + `SelectLabel` «5.º año», como la galería
+  `app/componentes/_familias/formularios.tsx:61`). Con `flex-wrap`, sin scroll horizontal a 320 px.
+  Úsalo en ranking, equipos, alumnos, puntos y panel. Es decisión visual nueva tomada de forma
+  conservadora: explícala en el PR con su alternativa (siempre `Select`, o pestañas con scroll).
+- **Panel:** el filtro «Ambas» pasa a «Todas» + cada sección.
+- **Tareas:** «5A | 5C | 5A y 5C» → casillas por sección agrupadas por año (`fieldset` + `legend`
+  por año), al menos una; el texto de resumen usa `listaSecciones` («4B, 5A y 5C»). `SeccionTarea`
+  desaparece; `seccionesDe`/`seccionTareaDe` se borran o pasan a `string[]`. Si una tarea tiene una
+  sección que el catálogo ya no tiene (no debería: solo se elimina vacía), muéstrala con su código.
+- **Alumnos:** `busquedaVacia` sugiere la sección con más coincidencias (o ninguna), no «la otra».
+- **Sin secciones** (catálogo vacío): Alumnos, Equipos, Tareas (crear), Puntos y Ranking muestran
+  un `EmptyState` «Todavía no hay secciones» con enlace a `/profe/secciones` si el profe es admin;
+  si no, «Pídele al administrador que cree una» (fila 169).
+- **Copy de «5.º año»** en login/auth y panel: quita el año fijo («Escuela Creativa del liceo»);
+  fila 170. En login no hay sesión: no leas el catálogo allí.
+- **`seccionesDelProfe`**: un profe con `seccion` asignada sigue viendo solo la suya.
+
+**Trampas:**
+- Next 16 + `cacheComponents`: `generateStaticParams` en `[seccion]` ya no puede salir de un mapa
+  fijo. Lee en `node_modules/next/dist/docs/` qué pide `cacheComponents` a una ruta dinámica
+  (Suspense alrededor de lo que lee `params`; si `generateStaticParams` debe devolver al menos un
+  valor, usa `CATALOGO_INICIAL`). Conserva el `loading.tsx` de cada ruta.
+- `/profe/ranking/equipos` (estático) gana a `[seccion]`: no hay choque (un código es número +
+  letra, nunca «equipos»).
+- `scripts/qa/paginas.mjs` y `scripts/qa/segmentado.mjs` listan rutas `5c`: siguen valiendo,
+  revisa que no se rompan.
+- Los textos de accesibilidad que dicen «5A y 5C» (`aria-label`, `eyebrow`,
+  `eliminarTareaDescripcion` con `secciones`, `lib/tareas-profe.ts:595`) pasan por `listaSecciones`.
+- Arregla la clase entera en la primera pasada: al terminar, el `grep` de arriba no da nada fuera
+  de galería/demo/seed/tests.
+
+**Copy provisional** (filas 168–170): 168 = selector de sección y casillas de Tareas (`aria-label`,
+`legend`, «Todas»); 169 = vacíos sin secciones; 170 = login/auth/panel sin «5.º año». En el
+informe; no edites el checklist.
+
+**Decisiones** (D322–D326, propuesta): D322 selector de sección (segmentado ≤ 4, `Select` por año);
+D323 rutas `/profe/ranking/[seccion]`; D324 tareas con casillas por sección; D325 vacíos sin
+secciones; D326 copy sin año fijo. Usa menos si sobran.
+
+**Verificar:** tests puros de lo que cambie (`conteos` por catálogo vía funciones puras,
+`busquedaVacia`, filtros de URL con «4B», `totalTitulares` con 3 secciones, panel «Todas»,
+resumen de tareas con `listaSecciones`); el `grep` de la clase vacío; typecheck, lint, suite
+entera; `bun run test:rules` si tocas reglas. `a11y` por código (selector con teclado y nombre,
+casillas con `legend`, 320 px, 4 acentos × claro/oscuro). Sin servidor ni capturas. «Cómo probar»
+del PR: rol profesor; con 4B creada en `/profe/secciones`, alta de un alumno en 4B, equipo en 4B,
+tarea para 4B y 5A, evaluarla, ajuste de puntos en 4B, ranking `/profe/ranking/4b`, panel «Todas»;
+el estudiante de 4B entra y ve su ranking.

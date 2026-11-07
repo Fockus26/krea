@@ -99,3 +99,42 @@ Sin script compartido de mocks. Las pruebas con Auth/Firestore van contra los em
     primer inválido; confirmación antes de borrar; `exigirSesion(rol)` en cada acción.
 15. **PR:** modo `pr` (skill `git-flow`): push a tu rama y `gh pr create` en español, cuerpo con
     Qué / Por qué / Cómo probar / Decisión tomada / Kit feedback. Nunca merge.
+
+## Ola 3 — X5 partido en dos (secuencial)
+
+X5 se parte en **X5a `feat/secciones-datos`** (catálogo, gestión y pantalla) y **X5b
+`feat/secciones-dinamicas`** (todo lo que hoy lista 5A/5C pasa a leer el catálogo). X5b se lanza
+cuando X5a esté mergeado (toca los mismos tipos; en paralelo chocarían).
+
+| # | Rama | Qué | Modelo | Decisiones | Filas |
+|---|---|---|---|---|---|
+| X5a | `feat/secciones-datos` | Catálogo Año › secciones + CRUD (solo vacío) + pantalla `/profe/secciones` | opus · high | D317–D321 | 166 |
+| X5b | `feat/secciones-dinamicas` | Rutas, selectores, filtros, tareas, panel, puntos, alumnos, loaders con el catálogo | opus · high | D322–D326 | 168–170 |
+
+### Formas compartidas de X5 (fijas; X5a las crea, X5b las usa)
+
+- **Código de sección** = número de año + letra: `"5A"`. `SeccionId = string` (deja de ser unión).
+  `zSeccion = z.string().regex(/^[1-9][A-Z]$/, "Sección inválida")` en `lib/modelo.ts` (reemplaza
+  `z.enum(SECCIONES)`). `zLetra = z.string().regex(/^[A-Z]$/)`, `zNumeroAnio = z.number().int().min(1).max(9)`.
+  `SECCIONES` **desaparece** de `lib/modelo.ts` en X5b; en X5a queda como `@deprecated` con los
+  mismos valores para que el resto compile sin cambios.
+- **Catálogo**: un solo documento `config/secciones` (`COL.config = "config"`, id `"secciones"`):
+  `zCatalogoSecciones = z.object({ anios: z.array(zAnio).max(9), actualizadoEn: zInstante })`,
+  `zAnio = z.object({ numero: zNumeroAnio, letras: z.array(zLetra).min(0).max(26) })` (números sin
+  repetir, letras sin repetir; se guarda ordenado). Documento **ausente** = `CATALOGO_INICIAL`
+  (`[{ numero: 5, letras: ["A", "C"] }]`, lo que hay hoy en producción); la primera escritura lo
+  materializa. Documento presente con `anios: []` = sin secciones (no resucita el inicial).
+- **Puro, `lib/secciones.ts`** (sin Firebase; tests en `tests/unit/secciones.test.ts`):
+  `type CatalogoSecciones = ReadonlyArray<{ numero: number; letras: readonly string[] }>`;
+  `CATALOGO_INICIAL`; `codigoSeccion(numero, letra): string`; `partesSeccion(codigo): { numero; letra } | null`;
+  `esCodigoSeccion(v: unknown): v is string`; `seccionesDe(catalogo): string[]` (planas, ordenadas
+  por año y letra); `nombreAnio(n) → "5.º año"`; `slugSeccion("5A") → "5a"`;
+  `seccionDeSlug(slug, catalogo) → string | null` (solo si existe en el catálogo);
+  `listaSecciones(codigos) → "4B, 5A y 5C"` (ordenadas; una sola → "5A"); `ordenarSecciones(codigos)`.
+- **Lectura, `lib/datos/secciones.ts`** (server-only): `catalogoSecciones = cache(async (): Promise<CatalogoSecciones>)`
+  detrás de `exigirSesion("profesor")`; documento ausente → `CATALOGO_INICIAL`; inválido → log +
+  `CATALOGO_INICIAL` (como `parsear`).
+- **Uso**: `type UsoSeccion = { alumnos: number; profesores: number; equipos: number; tareas: number; entregas: number; ajustes: number }`;
+  puro `seccionVacia(uso): boolean` (todo 0) y `usoTexto(uso) → "Tiene 12 alumnos, 3 equipos y 2 tareas"`.
+- **Reglas**: `match /config/{doc} { allow read: if esProfe(); allow write: if false; }`. El estudiante
+  no lee el catálogo (su sección viene en el claim, que ya es texto).
