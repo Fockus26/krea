@@ -270,38 +270,42 @@ export function ImageUpload({
       ) : null}
 
       {status === "lista" && file ? (
-        <div className="flex flex-wrap items-end gap-4">
-          <div className="relative aspect-4/3 w-55 max-w-full overflow-hidden rounded-nav bg-surface-2">
-            {previewUrl ? (
-              // biome-ignore lint/performance/noImgElement: blobs locales y remotos (D046)
-              <img
-                src={previewUrl}
-                alt={alt ?? `Vista previa: ${file.name}`}
-                className="size-full object-cover"
-              />
-            ) : null}
-            <span className="text-small-b nums absolute bottom-2 left-2 max-w-[calc(100%-1rem)] truncate rounded-sm bg-scrim-chip px-2 py-1 text-on-scrim">
-              {file.name} · {formatFileSize(file.size)}
-            </span>
-          </div>
-          <div className="flex flex-col gap-2">
+        // D296: foto a todo el ancho (4:3); «Cambiar» y «Quitar» flotan arriba a la derecha sobre scrim
+        <div className="relative aspect-4/3 w-full overflow-hidden rounded-nav bg-surface-2">
+          {previewUrl ? (
+            // biome-ignore lint/performance/noImgElement: blobs locales y remotos (D046)
+            <img
+              src={previewUrl}
+              alt={alt ?? `Vista previa: ${file.name}`}
+              className="size-full object-cover"
+            />
+          ) : null}
+          <span className="text-small-b nums absolute bottom-2 left-2 max-w-[calc(100%-1rem)] truncate rounded-sm bg-scrim-chip px-2 py-1 text-on-scrim">
+            {file.name} · {formatFileSize(file.size)}
+          </span>
+          <div className="absolute top-2 right-2 flex gap-2">
             <Button
-              variant="secondary"
+              variant="ghost"
               size="sm"
+              icon
+              aria-label="Cambiar imagen"
+              title="Cambiar imagen"
+              className="h-11 w-11 bg-scrim-chip text-on-scrim hover:not-disabled:not-aria-disabled:bg-accent hover:not-disabled:not-aria-disabled:text-on-accent"
               onClick={openPicker}
               disabled={preparing}
             >
               <Upload aria-hidden="true" />
-              Cambiar imagen
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="text-error"
+              icon
+              aria-label="Quitar imagen"
+              title="Quitar imagen"
+              className="h-11 w-11 bg-scrim-chip text-on-scrim hover:not-disabled:not-aria-disabled:bg-error hover:not-disabled:not-aria-disabled:text-on-error"
               onClick={onRemove}
             >
               <Trash2 aria-hidden="true" />
-              Quitar
             </Button>
           </div>
         </div>
