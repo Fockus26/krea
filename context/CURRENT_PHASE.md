@@ -9,7 +9,7 @@
 Fases 01–09 cerradas · **Track:** Product · main @ 8f818b8 · versión 1 entregada. Próximo QA de versión: `git diff --name-only d50568b..origin/main` (`plans/qa-version-1.md`).
 **Build local suprimido** (César, 2026-11-05): lo corren CI y Vercel. **QA con sesión:** `qa:local` y `.env.test.local`; nunca pedirle a César que inicie sesión.
 
-**Tanda 2026-11-06** (45 pedidos, 4 olas: la 4 es W18 offline, pedido 45 del 2026-11-07): `plans/batch-2026-11-06.md` · olas 1 y 2 **cerradas** (#78–#91, main @ 9a630c3; sin QA por memoria) · **ola 3 de 4 lanzada** (2026-11-07): PRs abiertos #94 W14 (wt1) · #95 W15 (wt2) · #93 W16 (wt3) · #92 W19 (wt4); #95 se actualiza tras mergear #94 (conflicto en `students-table.tsx`) · luego ola 4: W18 `feat/offline`. Pool: wt1–wt4 ocupados, wt5–wt8 libres.
+**Tanda 2026-11-06** (53 pedidos, 5 olas): `plans/batch-2026-11-06.md` · olas 1–3 **cerradas** (#78–#95, main @ 761805f; sin QA por memoria) · **ola 4 de 5 lanzada** (2026-11-07): W18 `feat/offline` wt1 · W20 `fix/foto-premio` wt2 · W22 `feat/eliminar-en-lote` wt3 · W24 `fix/contraste-acentos` wt4 (mergear W22 antes que W18) · luego ola 5: W23 `fix/icono-texto` (pedido 48).
 
 ## Blocked (actions for César or external)
 
@@ -26,7 +26,6 @@ QA de versión hecho (2026-11-06): lo no verificado está en `plans/qa-version-1
 - Copy provisional de la fase 07: filas 121–136 del checklist.
 
 **Acciones manuales:**
-- **Desplegar reglas de Firestore** al mergear #94 (presencia): `firebase deploy --only firestore:rules --project krea-d22f7`.
 - **Rotar la clave de la cuenta de servicio** de `krea-d22f7` (se pegó en el chat). Faltan las cuentas de los demás profesores.
 - Vercel: confirmar las `B2_*` (Production y Preview) y bucket privado; el código solo lee `B2_*` (D194), no `AWS_*`; la clave necesita **lectura**, escritura y borrado (el HEAD de D229), también en `premios/` (fotos de premio, #90).
 - Brevo: `BREVO_API_KEY` y `BREVO_SENDER_EMAIL` en Vercel; probar recuperar con 38291460.

@@ -150,3 +150,16 @@ No hay script compartido de mocks. Las pruebas con Auth/Firestore van contra los
 19. **Informe final** (breve): URL del PR, slot, verificado / no verificado, decisiones
     abiertas, acciones manuales, filas de checklist, visto de paso, PHASE_LOG si no pudiste
     escribirlo, y «Kit feedback» si algo del kit te hizo tropezar.
+
+## Ola 4 (2026-11-07)
+
+| # | Rama | Qué | Decisiones · checklist |
+|---|---|---|---|
+| W18 | `feat/offline` | Navegar offline + cola de entregas y tareas (45) | D291–D295 · 156–158 |
+| W20 | `fix/foto-premio` | Disposición de la foto subida en `ImageUpload` (50) | D296 · — |
+| W22 | `feat/eliminar-en-lote` | Variante de botón eliminar con hover rojo en toda la app (49) + Eliminar junto a Editar y en lote en Alumnos y Profesores (51) | D297–D300 · 159–160 |
+| W24 | `fix/contraste-acentos` | Texto de botones en oscuro y top 3 del ranking en claro; auditoría texto/fondo por acento (52, 53) | D301–D303 · — |
+
+**Archivos con dueño en esta ola** (no toques los de otro): W18 = service worker, `app/manifest.ts`, `lib/offline/**` nuevo, `lib/acciones/entregas.ts`, `lib/acciones/tareas.ts` (`guardarTarea`), formularios de entrega (`components/sections/tareas/**`) y en `task-builder.tsx` **solo** el envío · W20 = `components/krea/image-upload.tsx` · W22 = `components/ui/button.tsx`, todo botón eliminar (excepto `image-upload.tsx`), `components/sections/alumnos/**`, `components/sections/profesores/**`, `lib/acciones/alumnos.ts`, `lib/acciones/profesores.ts`, y en `task-builder.tsx` **solo** los botones de eliminar · W24 = tokens de color en `app/globals.css`, `components/krea/podium.tsx`, `podio-confeti.tsx`, `lib/ranking-celebracion.ts` y un script de contraste nuevo en `scripts/qa/`. W24 no toca `button.tsx`: si un botón necesita otro color de texto, lo arregla con tokens (`--on-accent` y afines).
+
+**Forma compartida:** la variante nueva de `Button` se llama `variant="ghost-danger"` (W22 la crea): texto del rojo de error, hover/activo con el tinte suave del mismo rojo, foco igual que el resto.

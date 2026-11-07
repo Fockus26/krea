@@ -998,3 +998,159 @@ Decisión de César (ola 3) para **47**: rayas del **rojo de error** alternadas 
 
 ### Cierre
 PR «fix: VS en todos los empates del ranking y cinta de riesgo en rojo».
+
+---
+
+# Ola 4 (2026-11-07) — antes de empezar, lee el brief: sección «Ola 4» (dueños de archivos y la variante `ghost-danger`)
+
+## W18 — `feat/offline`
+
+D291–D295 · checklist 156–158 · `opus · high` · sin changeset · sin servidor.
+
+### Qué pidió César
+> «Navegar offline con lo ya cacheado y encolar envíos (enviar tarea, crear tarea…) que se hacen al volver internet.»
+
+Decisiones de César (2026-11-07): se encolan **la entrega del alumno (enviar/guardar) y crear/editar tarea del profe**;
+todo lo demás que escribe muestra «Sin conexión» y no deja enviar. Si al reintentar la tarea ya cerró o ya fue evaluada:
+**no se envía**, se avisa («No se pudo enviar: la tarea ya cerró») y el alumno conserva sus respuestas. **Imágenes sí**, ya
+comprimidas como hoy; si no hay espacio, se avisa.
+
+### Dónde está
+- No hay service worker (`grep -rn serviceWorker app lib components` vacío). `app/manifest.ts` existe.
+- Next 16.4 con `cacheComponents: true`; #81 (W7) cachea entre rutas en memoria, no sobrevive a recargar sin red. Lee
+  `node_modules/next/dist/docs/` (PWA / service worker / `next.config`) antes de elegir cómo servir `sw.js`.
+- Escrituras a encolar: `lib/acciones/entregas.ts:96` `enviarEntrega`, `:43` `subirImagenRespuesta`; `lib/acciones/tareas.ts:36`
+  `guardarTarea`. Formularios: `components/sections/tareas/task-answer-form.tsx` (y lo que lo llame) y en
+  `components/sections/tareas-profe/task-builder.tsx` **solo** el envío (W22 cambia sus botones de eliminar en paralelo).
+- Imagen de respuesta: `lib/image-entrada.ts` (W5) — ya comprime; guarda el Blob resultante.
+
+### Enfoque decidido
+1. **Lectura offline:** service worker propio (sin librería salvo que la doc de Next recomiende una compatible) que
+   cachea `_next/static`, las páginas HTML/RSC ya visitadas (stale-while-revalidate, por usuario: al cerrar sesión se
+   vacía la caché) y una página «Sin conexión» para lo no visitado. Nunca cachea respuestas de Server Actions ni URLs firmadas de B2.
+2. **Cola:** IndexedDB (`lib/offline/cola.ts`, lógica pura + adaptador), cada operación con `opId` (uuid) y su payload; se
+   drena con el evento `online`, al abrir la app y al volver a la pestaña (Safari iOS no tiene Background Sync). Un solo
+   drenador entre pestañas (Web Locks o `BroadcastChannel` + candado): es una carrera real.
+3. **Servidor idempotente:** `enviarEntrega` y `guardarTarea` aceptan `opId`; si ya lo procesaron devuelven el mismo
+   resultado sin duplicar (registro en Firestore con Admin, D175). Sesión vencida al reintentar → la operación queda
+   pendiente y se pide entrar de nuevo; nunca se pierde.
+4. **UI:** indicador «Sin conexión» global, «Pendiente de enviar» en la entrega o tarea encolada y el aviso de conflicto
+   (tarea cerrada o evaluada). Copy provisional → filas 156–158 (descríbelas en tu informe). Estado no solo por color.
+
+### Trampas
+- Dos pestañas drenando la misma cola; reintento tras éxito parcial (imagen subida, entrega no).
+- `refresh()` tras cada acción (regla 10), también en el drenaje.
+- La entrega grupal solo la envía el capitán (D012): la cola no puede saltarse esa regla.
+
+### Cómo verificar
+Tests puros de la cola (orden, idempotencia por `opId`, conflicto de tarea cerrada, candado entre pestañas simulado) y de
+la deduplicación del servidor contra emuladores (`bun run test:rules` si tocas reglas). Sin servidor ni navegador: deja en
+el PR un «Cómo probar» paso a paso con DevTools › Offline para el QA final.
+
+### Cierre
+PR «feat: navegar sin conexión y enviar entregas y tareas al volver la red».
+
+## W20 — `fix/foto-premio`
+
+D296 · sin checklist · `sonnet · medium`.
+
+### Qué pidió César
+> «En foto del premio, cuando se sube la foto, no me gusta la disposición en ver la foto y los botones: hay espacio que no se utiliza eficientemente.»
+
+Decisión de César: **foto a todo el ancho (4:3) con «Cambiar» y «Quitar» como botones de ícono flotando en la esquina
+superior derecha** (sobre un scrim legible), y el chip «nombre · tamaño» abajo a la izquierda (ya existe).
+
+### Dónde está
+`components/krea/image-upload.tsx:272-307` (estado `lista`: hoy foto de `w-55` + columna de dos botones). Lo usan
+`components/sections/premios/prize-dialog.tsx`, `components/sections/tareas/task-answer-form.tsx` y
+`components/krea/question-card-answer.tsx`: el cambio vale para todos (es el mismo componente); revisa que la respuesta
+del alumno siga bien.
+
+### Enfoque
+Botones de ícono de 44 px (`size="sm" icon`) con nombre accesible («Cambiar imagen», «Quitar imagen»), fondo
+`bg-scrim-chip` + `text-on-scrim` (calcula ≥ 4.5:1) y hover y foco visibles; «Quitar» con el rojo de error en el hover
+(con los tokens de error que ya existen: la variante `ghost-danger` la crea W22 en paralelo y aún no está en main).
+Cero valores mágicos. 320 px sin scroll horizontal. Tu archivo es solo `image-upload.tsx` (y su galería en
+`app/componentes/_familias/` si la tiene).
+
+### Cierre
+PR «fix: la foto subida ocupa todo el ancho con sus botones encima».
+
+## W22 — `feat/eliminar-en-lote`
+
+D297–D300 · checklist 159–160 · `opus · medium` (borrado de datos + permisos).
+
+### Qué pidió César
+> (49) «El hover en eliminar es según el accent y debería ser rojo según su propio botón, ya que es rojo por default; el botón es el de eliminar con un ícono sin bg, solo cuando se hace el hover se ve.»
+> (51) «En alumnos debería estar el botón eliminar junto al editar para una acción más rápida; además permitir acciones en lote para eliminar varios a la vez, tanto en profesores como en alumnos.»
+
+### Dónde está
+- `components/ui/button.tsx:38-49` (variantes `ghost` y `danger`). Botones de eliminar hoy: `delete-student-dialog.tsx:103,159`,
+  `team-dialogs.tsx:285,328`, `profesor-dialogs.tsx:358,387`, `question-editor.tsx:94`, `task-builder.tsx:434,473`,
+  `teacher-task-card.tsx:162`, `teacher-task-list.tsx:216`. **No** toques `image-upload.tsx` (W20).
+- Alumnos: `components/sections/alumnos/students-table.tsx` (columna Editar, ~:167), `students-directory.tsx`,
+  `delete-student-dialog.tsx`; acciones `lib/acciones/alumnos.ts:129` `resumenEliminarAlumno` y `:152` `eliminarAlumno`.
+- Profesores: `components/sections/profesores/profesores-directory.tsx:77-80`, `profesor-dialogs.tsx:317`
+  `EliminarProfesorDialog`; `lib/acciones/profesores.ts:66` `eliminarProfesor`. `lib/cuentas.ts` `eliminarCuenta` (W1).
+
+### Enfoque
+1. **49:** variante `ghost-danger` (forma en el brief); todos los botones de eliminar sin fondo la usan. El `danger` lleno se queda.
+2. **51:** en la fila de Alumnos, Eliminar (ícono, `ghost-danger`) junto a Editar, abriendo el diálogo de confirmación que ya
+   existe (con su resumen de lo que se borra). Selección en lote: casilla por fila + «Seleccionar todos (visibles)» con estado
+   indeterminado, barra «N seleccionados · Eliminar» y confirmación que dice cuántos y qué se borra. Igual en Profesores
+   (solo el admin; el admin no puede seleccionarse a sí mismo).
+3. **Servidor:** `eliminarAlumnos(cedulas[])` y `eliminarProfesores(cedulas[])`: `exigirSesion` con el rol, tope razonable por
+   llamada, cada borrado idempotente (repetir no falla), resultado por cédula (ok / error) y la UI dice cuáles fallaron.
+   Reutiliza la lógica de borrar uno, sin duplicarla. `refresh()` al terminar.
+4. Teclado y lector: casillas con nombre («Seleccionar a <nombre>») y anuncio del número seleccionado (`aria-live`).
+
+### Trampas
+- Presencia en vivo (#94) en la ficha del alumno: si se borra a un alumno que otro profe está editando, su diálogo se cierra
+  con aviso, no se rompe.
+- Filtros por URL (#83): la selección se limpia al cambiar de filtro o de sección.
+- En `task-builder.tsx` toca **solo** los botones de eliminar (W18 toca el envío en paralelo).
+
+### Cierre
+PR «feat: eliminar junto a editar, en lote, y botones de eliminar en rojo».
+
+## W24 — `fix/contraste-acentos`
+
+D301–D303 · sin checklist · `sonnet · medium`.
+
+### Qué pidió César
+> (52) «Agrega texto blanco en el modo oscuro de algunos textos que no se leen bien en botones, por ejemplo el botón agregar alumno; botones así se me dificultan de leer.»
+> (53) «En el modo claro no se ve bien el texto de los top 3 del ranking, sobre todo el número 1, independientemente del color que se escoja. Realiza bien estas pruebas con los colores del bg y texto según cada color accent, ya que no todos se ven muy bien.»
+
+### Dónde está
+- `--on-accent`: `app/globals.css:79` (claro, #fff) y `:146`, `:202` (oscuro, #14121a: por eso el texto oscuro en modo
+  oscuro). «Agregar alumno»: `components/sections/alumnos/add-student-dialog.tsx:87` (botón primario).
+- Top 3: `components/krea/podium.tsx`, `components/krea/podio-confeti.tsx`, `lib/ranking-celebracion.ts` (brillo del podio, #89/#92).
+- Guardián existente: `tests/unit/contraste-tokens.test.ts`.
+
+### Enfoque
+1. **Auditoría medida, no a ojo:** script versionado `scripts/qa/contraste-acentos.ts` (o ampliar el test) que resuelve los
+   tokens de los **4 acentos × claro/oscuro** y calcula cada par texto/fondo de: botones (primario, secundario, ghost, con
+   hover y activo), chips y píldoras de acento, y podio (número, nombre y puntos sobre cada escalón y su brillo). Umbral
+   4.5:1 para texto (3:1 para texto grande ≥ 24 px o ≥ 19 px en negrita, y para gráficos).
+2. **52:** en oscuro, el texto sobre el acento lleno pasa a blanco **donde el blanco da ≥ 4.5:1**; donde no, oscurece el
+   relleno del acento en oscuro (token) hasta que el blanco pase. César quiere blanco: priorízalo y dilo por acento en D301.
+3. **53:** podio en claro: número y texto legibles sobre cada escalón (oro, plata, bronce y el brillo), con cualquier acento.
+4. Todo par corregido entra al test para que no vuelva. No toques `button.tsx` (W22): solo tokens y el podio.
+
+### Cierre
+PR «fix: texto legible en botones (oscuro) y en el top 3 (claro) con los 4 acentos». En el cuerpo, la tabla de contrastes
+antes/después por acento.
+
+# Ola 5 (después de mergear la ola 4)
+
+## W23 — `fix/icono-texto`
+
+D304–D305 · sin checklist · `sonnet · medium`.
+
+> (48) «Cuando hay un ícono y una línea de texto, este texto esté en align vertical center; cuando es más de una línea, entonces esté en text vertical start.»
+
+Enfoque decidido: una utilidad CSS única (p. ej. `.icono-linea`: el contenedor `items-start` y el ícono dentro de una caja
+de altura `1lh`, centrado en esa primera línea) → con una línea queda centrado y con varias el ícono queda arriba, junto a
+la primera. Barrido de **toda** pieza ícono + texto (avisos, chips, listas, botones con texto que puede partirse, ítems de
+menú): `grep -rn "items-center" components app` como pista; decide la medida (texto a 200 % partiéndose).
+Cierre: PR «fix: ícono centrado con una línea y arriba con varias».
