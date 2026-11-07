@@ -29,10 +29,12 @@ import {
   compartidoChipTexto,
   type DecisionEmpate,
   darPremioLabel,
+  decisionDar,
+  editarPremioLabel,
   empateChipTexto,
   ganoTexto,
   menuPremioLabel,
-  nombreCortoEquipo,
+  nombreCortoTitular,
   notaFechaTexto,
   subtituloPremio,
   type TarjetaPremio,
@@ -47,22 +49,27 @@ const CUADRO =
  * h3 con el premio, "{tarea} · {sección}" y el estado en un chip con texto. "Por definir" es una
  * tarjeta punteada con el enlace "Agregar premio". Con empate, el menú de la tarjeta deja al profe
  * elegir (HANDOFF §9 #3). Tras decidir, el menú desaparece: el foco pasa al h3 (`tabIndex={-1}`).
+ * Individual (D263): los empatados y el ganador son alumnos. Con foto (D265) la tarjeta la
+ * muestra firmada, con `alt` = el premio. Con `onEditar` (página real, D266), «Agregar premio» y
+ * «Editar premio» abren el diálogo en vez de ir al constructor.
  */
 export function PrizeCardTeacher({
   tarjeta,
   nombres,
   onDecidir,
+  onEditar,
 }: {
   tarjeta: TarjetaPremio;
-  /** Nombre completo de cada equipo por id. */
+  /** Nombre completo de cada equipo (grupales) y de cada alumno (individuales) por id. */
   nombres: Readonly<Record<string, string>>;
   onDecidir: (id: string, decision: DecisionEmpate) => void;
+  onEditar?: (tarjeta: TarjetaPremio) => void;
 }) {
   const { estado } = tarjeta;
   const titulo = useRef<HTMLHeadingElement>(null);
   const nombre = (id: string) => nombres[id] ?? id;
   const cortos = (ids: readonly string[]) =>
-    ids.map((id) => nombreCortoEquipo(nombre(id)));
+    ids.map((id) => nombreCortoTitular(tarjeta.tipoTarea, nombre(id)));
 
   const porDefinir = estado.tipo === "por-definir";
   const titular = tarjeta.premio ?? "Premio por definir";
@@ -130,11 +137,14 @@ export function PrizeCardTeacher({
                   titulo.current?.focus();
                 }}
               >
-                {estado.equipoIds.map((id) => (
+                {estado.titularIds.map((id) => (
                   <DropdownMenuItem
                     key={id}
                     onSelect={() =>
-                      onDecidir(tarjeta.id, { tipo: "dar", equipoId: id })
+                      onDecidir(
+                        tarjeta.id,
+                        decisionDar(tarjeta.tipoTarea ?? "grupal", id),
+                      )
                     }
                   >
                     <Crown aria-hidden="true" />
@@ -152,6 +162,17 @@ export function PrizeCardTeacher({
           ) : null}
         </div>
 
+        {tarjeta.fotoUrl && tarjeta.premio ? (
+          // biome-ignore lint/performance/noImgElement: URL firmada de B2 de vida corta (D046, D212)
+          <img
+            src={tarjeta.fotoUrl}
+            alt={tarjeta.premio}
+            loading="lazy"
+            decoding="async"
+            className="aspect-video w-full rounded-md bg-surface-2 object-cover"
+          />
+        ) : null}
+
         {estado.tipo === "ganado" ? (
           <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
             <Badge
@@ -159,7 +180,7 @@ export function PrizeCardTeacher({
               className="h-auto min-h-7 py-1 whitespace-normal"
             >
               <Crown aria-hidden="true" />
-              {ganoTexto(nombre(estado.equipoId))}
+              {ganoTexto(nombre(estado.titularId))}
             </Badge>
             <span className="nums text-small text-text-2">
               {notaFechaTexto(estado.nota, estado.fecha)}
@@ -174,7 +195,7 @@ export function PrizeCardTeacher({
               className="h-auto min-h-7 py-1 whitespace-normal"
             >
               <Users aria-hidden="true" />
-              {compartidoChipTexto(cortos(estado.equipoIds))}
+              {compartidoChipTexto(cortos(estado.titularIds))}
             </Badge>
             <span className="nums text-small text-text-2">
               {notaFechaTexto(estado.nota, estado.fecha)}
@@ -189,7 +210,7 @@ export function PrizeCardTeacher({
               className="h-auto min-h-7 py-1 whitespace-normal"
             >
               <Scale aria-hidden="true" />
-              {empateChipTexto(cortos(estado.equipoIds))}
+              {empateChipTexto(cortos(estado.titularIds))}
             </Badge>
             <span className="nums text-small text-text-2">
               {notaFechaTexto(estado.nota, estado.fecha)}
@@ -207,12 +228,33 @@ export function PrizeCardTeacher({
               En juego
             </Badge>
             <span className="nums text-small text-text-2">
-              {avancePremioTexto(estado.entregaron, estado.total, estado.vence)}
+              {avancePremioTexto(
+                estado.entregaron,
+                estado.total,
+                estado.vence,
+                tarjeta.tipoTarea,
+              )}
             </span>
           </div>
         ) : null}
 
-        {porDefinir ? (
+        {onEditar && tarjeta.editable ? (
+          // Diálogo de premio (D266): con premio, «Editar premio»; sin él, «Agregar premio»
+          <Button
+            variant="secondary"
+            size="sm"
+            className="self-start"
+            aria-label={
+              tarjeta.premio
+                ? editarPremioLabel(tarjeta.premio)
+                : agregarPremioLabel(tarjeta.tarea)
+            }
+            onClick={() => onEditar(tarjeta)}
+          >
+            <Pencil aria-hidden="true" className="size-4" />
+            {tarjeta.premio ? "Editar premio" : "Agregar premio"}
+          </Button>
+        ) : porDefinir ? (
           <Button asChild variant="secondary" size="sm" className="self-start">
             <Link
               href={agregarPremioHref(tarjeta.tareaId)}

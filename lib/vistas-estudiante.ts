@@ -693,7 +693,10 @@ export type CabeceraEntrega = {
   titulo: string;
   vence: string;
   puntos: string;
+  /** Grupal o individual (D263). */
   premio: string | null;
+  /** Clave B2 de la foto del premio (D265): la página la firma. */
+  premioFoto: string | null;
   preguntas: PreguntaEntrega[];
 };
 
@@ -754,7 +757,8 @@ export function entregaVista(
     titulo: t.titulo,
     vence: t.fechaEntrega ? venceTexto(t.fechaEntrega) : SIN_FECHA_ENTREGA,
     puntos: puntosPreguntasTexto(t.preguntas.map((p) => p.valor)),
-    premio: t.tipo === "grupal" ? t.premio : null,
+    premio: t.premio,
+    premioFoto: t.premio ? (t.premioFoto ?? null) : null,
     preguntas: t.preguntas.map((p) => ({
       id: p.id,
       enunciado: p.enunciado,

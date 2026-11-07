@@ -48,14 +48,15 @@ export default async function TareaPage({ params }: Props) {
   const d = entregaVista(datos, id, companeros);
   if (d.estado === "no-existe") notFound();
 
-  const urls =
-    d.estado === "entregada"
-      ? await urlsFirmadas(
-          d.respuestas.flatMap((r) =>
-            r?.tipo === "imagen" ? [r.imagenPath] : [],
-          ),
+  // Respuestas en imagen (ya enviada) y la foto del premio (D265), en una sola pasada
+  const urls = await urlsFirmadas([
+    ...(d.estado === "entregada"
+      ? d.respuestas.flatMap((r) =>
+          r?.tipo === "imagen" ? [r.imagenPath] : [],
         )
-      : new Map<string, string>();
+      : []),
+    ...(d.premioFoto ? [d.premioFoto] : []),
+  ]);
 
   return (
     <>
@@ -68,7 +69,13 @@ export default async function TareaPage({ params }: Props) {
         puntos={d.puntos}
         entregada={d.estado === "entregada"}
       />
-      {d.premio ? <PrizeCard premio={d.premio} /> : null}
+      {d.premio ? (
+        <PrizeCard
+          premio={d.premio}
+          tipo={d.tipo}
+          fotoUrl={d.premioFoto ? urls.get(d.premioFoto) : null}
+        />
+      ) : null}
       {d.estado === "lector" && d.capitan ? (
         <CaptainNotice capitan={d.capitan} />
       ) : null}

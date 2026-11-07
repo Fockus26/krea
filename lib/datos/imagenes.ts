@@ -3,7 +3,15 @@ import "server-only";
 // pintar (la capa gratuita de B2 corta a 2.500 descargas al día). Quien llama responde por el
 // permiso: pasa solo rutas de entregas que el usuario de la sesión puede ver (el alumno
 // integrante, que las recibe por `datosAlumno`; el profesor, en W7).
+// Fotos de premio (`premios/`, D265): las ve el profe en Premios y el alumno en su tarea.
 import { almacenB2 } from "@/lib/almacen/b2";
+
+const PREFIJOS = ["entregas/", "equipos/", "premios/"] as const;
+
+/** ¿Hay almacén de B2 configurado? Sin él no se ofrece subir fotos (D265). */
+export function hayAlmacen(): boolean {
+  return almacenB2() !== null;
+}
 
 /** Ruta → URL GET de vida corta; las que no se pudieron firmar no aparecen. */
 export async function urlsFirmadas(
@@ -13,7 +21,7 @@ export async function urlsFirmadas(
   const out = new Map<string, string>();
   if (!almacen) return out;
   for (const ruta of new Set(rutas)) {
-    if (!ruta.startsWith("entregas/") && !ruta.startsWith("equipos/")) continue;
+    if (!PREFIJOS.some((p) => ruta.startsWith(p))) continue;
     try {
       out.set(ruta, await almacen.urlFirmada(ruta));
     } catch {

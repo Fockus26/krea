@@ -3,6 +3,7 @@
 // llaman a B2. Sin `server-only` para poder probarlo; el enlace con el entorno está en
 // `lib/almacen/b2.ts` (ese sí es solo servidor). Nunca registra claves ni URLs firmadas.
 import { AwsClient } from "aws4fetch";
+import { esClaveValida } from "@/lib/almacen/clave";
 
 export type ConfigS3 = {
   keyId: string;
@@ -40,13 +41,7 @@ export type ResultadoExiste =
 /** Vida de las URLs firmadas de lectura: 5 minutos (la imagen se pide al pintar la página). */
 export const URL_FIRMADA_SEGUNDOS = 300;
 
-/** Clave de objeto segura: segmentos `[A-Za-z0-9._-]`, sin `..` ni barras sueltas. */
-export function esClaveValida(clave: string): boolean {
-  if (clave.length === 0 || clave.length > 512) return false;
-  return clave
-    .split("/")
-    .every((s) => /^[A-Za-z0-9._-]+$/.test(s) && s !== "." && s !== "..");
-}
+export { esClaveValida };
 
 /** URL de estilo ruta: `{endpoint}/{bucket}/{clave}`. */
 export function urlObjeto(config: ConfigS3, clave: string): string {

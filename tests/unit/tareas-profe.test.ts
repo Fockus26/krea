@@ -248,11 +248,11 @@ describe("constructor: reducer", () => {
     expect(t.seccion).toBe("5C");
   });
 
-  test("pasar a Individual oculta el premio sin perderlo; no se guarda", () => {
+  test("pasar a Individual conserva el premio y se guarda (D263)", () => {
     let t = borradorReducer(lista, { tipo: "premio", valor: "Salida al cine" });
     t = borradorReducer(t, { tipo: "tipo", valor: "individual" });
     expect(t.premio).toBe("Salida al cine");
-    expect(tareaAGuardar(t).premio).toBeNull();
+    expect(tareaAGuardar(t).premio).toBe("Salida al cine");
     t = borradorReducer(t, { tipo: "tipo", valor: "grupal" });
     expect(tareaAGuardar(t).premio).toBe("Salida al cine");
   });

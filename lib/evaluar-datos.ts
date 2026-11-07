@@ -426,8 +426,7 @@ export function vistaEvaluar({
         entrega.tipo === "grupal"
           ? BASE_GRUPAL_CHIP
           : `Base ${formatNota(baseAlumno)}`,
-      premio:
-        entrega.tipo === "grupal" && tarea.premio ? tarea.premio : undefined,
+      premio: tarea.premio ? tarea.premio : undefined,
     },
     base: baseEfectiva(entrega.tipo, baseAlumno),
     preguntas,

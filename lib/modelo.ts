@@ -5,6 +5,7 @@
 // Escrituras: SOLO el servidor (Server Actions + Admin SDK, D175). Las reglas niegan toda
 // escritura del cliente; el cliente solo lee lo que su rol le deja (firebase/firestore.rules).
 import { z } from "zod";
+import { esClaveValida } from "@/lib/almacen/clave";
 import { esDiaValido } from "@/lib/fecha";
 import { BASE_MAX, BASE_MIN, NOTA_MAX } from "@/lib/grades";
 
@@ -165,12 +166,39 @@ export const zPregunta = z.object({
 });
 export type Pregunta = z.infer<typeof zPregunta>;
 
-/** Decisión del profe ante un empate en la mejor nota de una sección (D123, D124, D201). */
+/**
+ * Decisión del profe ante un empate en la mejor nota de una sección (D123, D124, D201): «dar» a
+ * un equipo (grupal), «darAlumno» a un alumno (individual, D263) o «compartir».
+ */
 export const zDecisionPremio = z.discriminatedUnion("tipo", [
   z.object({ tipo: z.literal("dar"), equipoId: z.string().min(1) }),
+  z.object({ tipo: z.literal("darAlumno"), alumnoId: zCedula }),
   z.object({ tipo: z.literal("compartir") }),
 ]);
 export type DecisionPremio = z.infer<typeof zDecisionPremio>;
+
+/** A quién da el premio la decisión (equipo o alumno); `null` si lo comparte. */
+export function idDeDecision(d: DecisionPremio): string | null {
+  switch (d.tipo) {
+    case "dar":
+      return d.equipoId;
+    case "darAlumno":
+      return d.alumnoId;
+    case "compartir":
+      return null;
+  }
+}
+
+/** Prefijo de las fotos de premio en B2 (D265). */
+export const PREFIJO_FOTO_PREMIO = "premios/";
+
+/** Clave B2 de la foto del premio: `premios/{tareaId}/{uuid}.{ext}` (D265). */
+export const zClaveFotoPremio = z
+  .string()
+  .refine(
+    (c) => c.startsWith(PREFIJO_FOTO_PREMIO) && esClaveValida(c),
+    "Clave de foto inválida",
+  );
 
 /** Por sección: el premio se disputa entre los equipos de cada sección (D201). */
 export const zDecisionesPremio = z.object({
@@ -179,15 +207,13 @@ export const zDecisionesPremio = z.object({
 });
 export type DecisionesPremio = z.infer<typeof zDecisionesPremio>;
 
-const premioSoloGrupal = (
-  t: { tipo: TipoTareaId; premio: string | null },
+/** Sin premio no hay foto del premio (D265). */
+const fotoConPremio = (
+  t: { premio: string | null; premioFoto?: string | null | undefined },
   ctx: z.RefinementCtx,
 ) => {
-  if (t.tipo === "individual" && t.premio !== null) {
-    ctx.addIssue({
-      code: "custom",
-      message: "Solo las grupales llevan premio",
-    });
+  if (t.premio === null && t.premioFoto) {
+    ctx.addIssue({ code: "custom", message: "La foto va con un premio" });
   }
 };
 
@@ -199,8 +225,13 @@ export const zTarea = z
     estado: z.enum(ESTADOS_TAREA),
     /** Fecha de entrega; `null` en un borrador sin fecha. */
     fechaEntrega: zDia.nullable(),
-    /** Solo grupales (D012). */
+    /**
+     * Opcional en grupales (D012) y en individuales (D263): lo gana la mejor nota de cada
+     * sección, el equipo o el alumno.
+     */
     premio: texto(200).nullable(),
+    /** Clave B2 de la foto del premio (D265); ausente o `null` = sin foto. */
+    premioFoto: zClaveFotoPremio.nullable().optional(),
     preguntas: z.array(zPregunta),
     /** Notas traídas del Excel sin preguntas ni desglose (D174): no exige la suma de 20. */
     importada: z.boolean().default(false),
@@ -210,7 +241,7 @@ export const zTarea = z
     decisionesPremio: zDecisionesPremio.optional(),
   })
   .superRefine((t, ctx) => {
-    premioSoloGrupal(t, ctx);
+    fotoConPremio(t, ctx);
     // Publicada (abierta/evaluada) = suma exacta de 20 (D004). Un borrador puede no sumar.
     if (
       !t.importada &&
@@ -243,12 +274,13 @@ export const zTareaBorrador = z
     estado: z.literal("borrador"),
     fechaEntrega: zDia.nullable(),
     premio: texto(200).nullable(),
+    premioFoto: zClaveFotoPremio.nullable().optional(),
     preguntas: z.array(zPreguntaBorrador).min(1).max(20),
     importada: z.literal(false).default(false),
     autorId: zCedula.nullable(),
     actualizadoEn: zInstante,
   })
-  .superRefine(premioSoloGrupal);
+  .superRefine(fotoConPremio);
 export type TareaBorrador = z.infer<typeof zTareaBorrador>;
 
 /**

@@ -10,13 +10,18 @@ import { escribirRankingEnTx, leerSeccionEnTx } from "@/lib/firebase/ranking";
 import {
   COL,
   type DecisionPremio,
+  idDeDecision,
   type SeccionId,
   zEntrega,
   zEquipo,
   zTareaDoc,
+  zUsuario,
 } from "@/lib/modelo";
 import {
+  armarPremio,
   armarTarea,
+  type CambioFoto,
+  decisionEncaja,
   estadoPremioSeccion,
   type GuardarTarea,
   MAX_ESCRITURAS_TX,
@@ -35,37 +40,42 @@ export async function guardarTareaEnTransaccion(
   envio: GuardarTarea,
   hoy: string,
   ahora: number,
-): Promise<ResultadoTarea> {
+): Promise<ResultadoTarea & { fotoSuelta?: string }> {
   const tareas = db.collection(COL.tareas);
-  return db.runTransaction(async (tx): Promise<ResultadoTarea> => {
-    const ref = envio.id ? tareas.doc(envio.id) : tareas.doc();
-    let previa = null;
-    let conEntregas = false;
-    if (envio.id) {
-      const snap = await tx.get(ref);
-      if (!snap.exists) return { ok: false, error: "no-existe" };
-      const p = zTareaDoc.safeParse(snap.data());
-      // Un documento que no valida no se pisa
-      if (!p.success) return { ok: false, error: "invalida" };
-      previa = p.data;
-      const q = await tx.get(
-        db.collection(COL.entregas).where("tareaId", "==", envio.id).limit(1),
-      );
-      conEntregas = !q.empty;
-    }
-    const r = armarTarea({
-      entrada: envio.tarea,
-      accion: envio.accion,
-      previa,
-      conEntregas,
-      autorId,
-      hoy,
-      ahora,
-    });
-    if (!r.ok) return r;
-    tx.set(ref, r.tarea);
-    return { ok: true, id: ref.id };
-  });
+  return db.runTransaction(
+    async (tx): Promise<ResultadoTarea & { fotoSuelta?: string }> => {
+      const ref = envio.id ? tareas.doc(envio.id) : tareas.doc();
+      let previa = null;
+      let conEntregas = false;
+      if (envio.id) {
+        const snap = await tx.get(ref);
+        if (!snap.exists) return { ok: false, error: "no-existe" };
+        const p = zTareaDoc.safeParse(snap.data());
+        // Un documento que no valida no se pisa
+        if (!p.success) return { ok: false, error: "invalida" };
+        previa = p.data;
+        const q = await tx.get(
+          db.collection(COL.entregas).where("tareaId", "==", envio.id).limit(1),
+        );
+        conEntregas = !q.empty;
+      }
+      const r = armarTarea({
+        entrada: envio.tarea,
+        accion: envio.accion,
+        previa,
+        conEntregas,
+        autorId,
+        hoy,
+        ahora,
+      });
+      if (!r.ok) return r;
+      tx.set(ref, r.tarea);
+      // Se quitó el premio: su foto ya no la usa nadie (se borra tras el commit, D265)
+      return r.fotoSuelta
+        ? { ok: true, id: ref.id, fotoSuelta: r.fotoSuelta }
+        : { ok: true, id: ref.id };
+    },
+  );
 }
 
 /**
@@ -97,6 +107,9 @@ export async function eliminarTareaEnTransaccion(
       return e.success ? [e.data] : [];
     });
     const plan = planEliminar(entregas);
+    // La foto del premio se va con la tarea (D265)
+    const foto = zTareaDoc.safeParse(snap.data());
+    const fotoPremio = foto.success ? (foto.data.premioFoto ?? null) : null;
     const escrituras = plan.escrituras + (ents.size - entregas.length);
     if (escrituras > MAX_ESCRITURAS_TX) {
       return {
@@ -126,7 +139,7 @@ export async function eliminarTareaEnTransaccion(
     });
     return {
       resultado: { ok: true, id } as ResultadoTarea,
-      imagenes: plan.imagenes,
+      imagenes: fotoPremio ? [...plan.imagenes, fotoPremio] : plan.imagenes,
     };
   });
 }
@@ -150,8 +163,9 @@ export async function cerrarTareaEnTransaccion(
 }
 
 /**
- * Decide el empate del premio de una sección (D123, D124): solo si la tarea está cerrada, tiene
- * premio y hay empate ahora mismo entre los equipos de esa sección; «dar» solo a un empatado.
+ * Decide el empate del premio de una sección (D123, D124, D263): solo si la tarea está cerrada,
+ * tiene premio y hay empate ahora mismo entre los equipos (grupal) o los alumnos (individual) de
+ * esa sección; «dar» / «darAlumno» solo a un empatado y según el tipo de tarea.
  */
 export async function decidirPremioEnTransaccion(
   db: Firestore,
@@ -162,17 +176,17 @@ export async function decidirPremioEnTransaccion(
 ): Promise<ResultadoTarea> {
   const ref = db.collection(COL.tareas).doc(tareaId);
   return db.runTransaction(async (tx): Promise<ResultadoTarea> => {
-    const [snap, eqs, ents] = await Promise.all([
+    const [snap, eqs, ents, usrs] = await Promise.all([
       tx.get(ref),
       tx.get(db.collection(COL.equipos).where("seccion", "==", seccion)),
       tx.get(db.collection(COL.entregas).where("tareaId", "==", tareaId)),
+      tx.get(db.collection(COL.usuarios).where("seccion", "==", seccion)),
     ]);
     if (!snap.exists) return { ok: false, error: "no-existe" };
     const p = zTareaDoc.safeParse(snap.data());
     if (!p.success) return { ok: false, error: "invalida" };
     const t = p.data;
     if (
-      t.tipo !== "grupal" ||
       !t.premio ||
       t.estado !== "evaluada" ||
       !t.secciones.includes(seccion)
@@ -187,18 +201,23 @@ export async function decidirPremioEnTransaccion(
       const e = zEntrega.safeParse(d.data());
       return e.success ? [e.data] : [];
     });
+    const alumnos = usrs.docs.flatMap((d) => {
+      const u = zUsuario.safeParse(d.data());
+      return u.success ? [u.data] : [];
+    });
+    if (!decisionEncaja(t.tipo, decision))
+      return { ok: false, error: "invalida" };
     // Estado sin la decisión anterior: se puede cambiar de opinión mientras siga el empate
     const actual = estadoPremioSeccion(
       { ...t, id: tareaId, decisionesPremio: undefined },
       seccion,
       equipos,
       entregas,
+      alumnos,
     );
     if (actual.tipo !== "empate") return { ok: false, error: "sin-empate" };
-    if (
-      decision.tipo === "dar" &&
-      !actual.equipoIds.includes(decision.equipoId)
-    ) {
+    const id = idDeDecision(decision);
+    if (id !== null && !actual.titularIds.includes(id)) {
       return { ok: false, error: "invalida" };
     }
     // `FieldPath`: «5A» empieza por cifra y no va en una ruta con puntos
@@ -210,5 +229,34 @@ export async function decidirPremioEnTransaccion(
       ahora,
     );
     return { ok: true, id: tareaId };
+  });
+}
+
+export type PremioGuardado =
+  | { ok: true; anterior: string | null }
+  | { ok: false; error: "no-existe" | "cerrada" | "invalida" };
+
+/**
+ * Pone o cambia el premio de una tarea y su foto (D266) en UNA transacción: lee la tarea, arma
+ * los campos con `armarPremio` y los escribe. La foto nueva ya está en B2 (la sube la acción
+ * antes); la anterior sale en `anterior` para borrarla después del commit (best effort).
+ */
+export async function guardarPremioEnTransaccion(
+  db: Firestore,
+  tareaId: string,
+  premio: string,
+  foto: CambioFoto,
+  ahora: number,
+): Promise<PremioGuardado> {
+  const ref = db.collection(COL.tareas).doc(tareaId);
+  return db.runTransaction(async (tx): Promise<PremioGuardado> => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) return { ok: false, error: "no-existe" };
+    const p = zTareaDoc.safeParse(snap.data());
+    if (!p.success) return { ok: false, error: "invalida" };
+    const r = armarPremio(p.data, premio, foto);
+    if (!r.ok) return r;
+    tx.update(ref, { ...r.campos, actualizadoEn: ahora });
+    return { ok: true, anterior: r.anterior };
   });
 }

@@ -41,6 +41,7 @@ import { toast } from "@/components/ui/sonner";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { DESHACER_MS } from "@/lib/evaluar";
 import { METER_TEXT_CLASSES, SUM_STATE_TONE, sumMeterInfo } from "@/lib/meters";
+import { ayudaPremio } from "@/lib/premios";
 import {
   type AccionTarea,
   AVISO_CERRADA,
@@ -580,34 +581,32 @@ export function TaskBuilder({
                     </SelectContent>
                   </Select>
                 </Field>
-                {/* Solo grupal; al pasar a Individual se oculta sin perder lo escrito (D116) */}
-                {tarea.tipo === "grupal" ? (
-                  <Field
-                    label={
-                      <>
-                        Premio{" "}
-                        <span className="font-normal text-text-2">
-                          (solo grupal, opcional)
-                        </span>
-                      </>
+                {/* Grupal o individual (D263): lo gana la mejor nota de cada sección */}
+                <Field
+                  label={
+                    <>
+                      Premio{" "}
+                      <span className="font-normal text-text-2">
+                        (opcional)
+                      </span>
+                    </>
+                  }
+                  help={ayudaPremio(tarea.tipo)}
+                >
+                  <Input
+                    autoComplete="off"
+                    placeholder="Ej. Cuenta Canva Pro por 3 meses"
+                    readOnly={cerrada}
+                    leading={<Gift aria-hidden="true" />}
+                    value={tarea.premio}
+                    onChange={(e) =>
+                      dispatch({
+                        tipo: "premio",
+                        valor: e.currentTarget.value,
+                      })
                     }
-                    help="Lo gana el equipo con mejor nota."
-                  >
-                    <Input
-                      autoComplete="off"
-                      placeholder="Ej. Cuenta Canva Pro por 3 meses"
-                      readOnly={cerrada}
-                      leading={<Gift aria-hidden="true" />}
-                      value={tarea.premio}
-                      onChange={(e) =>
-                        dispatch({
-                          tipo: "premio",
-                          valor: e.currentTarget.value,
-                        })
-                      }
-                    />
-                  </Field>
-                ) : null}
+                  />
+                </Field>
               </div>
             </Card>
           </section>
