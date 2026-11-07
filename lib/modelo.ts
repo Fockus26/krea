@@ -36,6 +36,11 @@ export const COL = {
    * (`{ nombre, desde, latido }`). Efímera; la escribe el navegador del profe (D275).
    */
   presencia: "presencia",
+  /**
+   * `operaciones/{opId}`: envíos ya procesados de la cola sin conexión (entrega o tarea), para
+   * que un reintento devuelva el mismo resultado sin duplicar (D293). Solo servidor; vence a los 30 días.
+   */
+  operaciones: "operaciones",
 } as const;
 
 /** Subcolección de `presencia/{cedulaAlumno}` (una entrada por profe). */

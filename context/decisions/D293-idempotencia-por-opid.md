@@ -1,0 +1,5 @@
+# D293 · Data · Servidor idempotente por opId: registro operaciones/{opId} en la misma transacción · Implemented
+
+**Decision:** `enviarEntrega` y `guardarTarea` aceptan `opId` (uuid) opcional. Su transacción lee primero `operaciones/{opId}` (`lib/firebase/operaciones.ts`): si ya existe con el mismo uid y tipo devuelve el mismo resultado sin escribir (`{ ok: true }` / `{ ok: true, id }`); si es de otro uid o tipo, rechaza (`incompleta` / `invalida`). Al escribir la entrega o la tarea deja `{ uid, tipo, id, creadaEn, expiraEn }` en la misma transacción. Solo el Admin SDK (D175): las reglas ya niegan todo lo no listado. `expiraEn` = +30 días para una política TTL.
+**Why:** la cola reintenta lo que quizá ya entró (la respuesta se perdió, dos pestañas). Sin registro, la entrega reintentada saldría «ya entregada» (falso conflicto) y la tarea nueva se crearía dos veces.
+**Discarded alternative:** id de la tarea derivado del `opId` — cada guardado tiene su `opId`, así que el segundo guardado de la misma tarea nueva crearía otra. Guardar el registro también para los errores — un error se vuelve a calcular igual; no hace falta.

@@ -11,6 +11,7 @@ import {
   type Usuario,
   zRespuesta,
 } from "@/lib/modelo";
+import { zOpId } from "@/lib/offline/operacion";
 import { ANSWER_MAX_LENGTH } from "@/lib/question";
 
 type ConId<T> = { id: string } & T;
@@ -21,10 +22,14 @@ const zIdSeguro = z.string().regex(/^[A-Za-z0-9_-]{1,120}$/, "Id inválido");
 export const zIdTarea = zIdSeguro;
 export const zIdPregunta = zIdSeguro.max(40);
 
-/** Lo que manda el teléfono al tocar «Entregar»: la tarea y una respuesta por pregunta. */
+/**
+ * Lo que manda el teléfono al tocar «Entregar»: la tarea y una respuesta por pregunta. `opId`: el
+ * del intento (D293); si el mismo llega dos veces (la cola reintenta), la segunda no duplica.
+ */
 export const zEnvioEntrega = z.object({
   tareaId: zIdTarea,
   respuestas: z.record(zIdPregunta, zRespuesta),
+  opId: zOpId.optional(),
 });
 export type EnvioEntrega = z.infer<typeof zEnvioEntrega>;
 

@@ -7,7 +7,7 @@
 import { refresh } from "next/cache";
 import { almacenB2 } from "@/lib/almacen/b2";
 import { validarImagenSubida } from "@/lib/almacen/imagen";
-import { exigirSesion } from "@/lib/dal";
+import { exigirSesion, sesionDeCola } from "@/lib/dal";
 import {
   carpetaEntrega,
   claveImagen,
@@ -24,10 +24,19 @@ import {
   permisoSubida,
   type ResultadoEnvio,
 } from "@/lib/firebase/entregas";
+import { zOpId, zQuien } from "@/lib/offline/operacion";
 
 export type ResultadoSubida =
   | { ok: true; imagenPath: string }
   | { ok: false; error: ErrorSubida };
+
+/** Desde la cola: además, `sesion` (no es la de quien la encoló o venció, D294). */
+export type ResultadoSubidaCola =
+  | ResultadoSubida
+  | { ok: false; error: "sesion" };
+export type ResultadoEnvioCola =
+  | ResultadoEnvio
+  | { ok: false; error: "sesion" };
 
 export type { ResultadoEnvio };
 
@@ -44,6 +53,31 @@ export async function subirImagenRespuesta(
   form: FormData,
 ): Promise<ResultadoSubida> {
   const sesion = await exigirSesion("estudiante");
+  return subir(sesion.uid, form, crypto.randomUUID());
+}
+
+/**
+ * La misma subida desde la cola sin conexión (D294, D295). FormData con `usuario` (quien la
+ * encoló) e `imagenId` (uuid del teléfono): la clave sale de él, así un reintento pisa el mismo
+ * objeto en vez de dejar otro. Sin la sesión de ese alumno: `sesion`, sin redirigir.
+ */
+export async function subirImagenPendiente(
+  form: FormData,
+): Promise<ResultadoSubidaCola> {
+  const usuario = form.get("usuario");
+  const imagenId = zOpId.safeParse(form.get("imagenId"));
+  if (typeof usuario !== "string" || !imagenId.success)
+    return { ok: false, error: "incompleta" };
+  const sesion = await sesionDeCola("estudiante", usuario);
+  if (!sesion) return { ok: false, error: "sesion" };
+  return subir(sesion.uid, form, imagenId.data);
+}
+
+async function subir(
+  uid: string,
+  form: FormData,
+  uuid: string,
+): Promise<ResultadoSubida> {
   const admin = firebaseAdmin();
   const almacen = almacenB2();
   if (!admin) return { ok: false, error: "red" };
@@ -57,12 +91,7 @@ export async function subirImagenRespuesta(
   }
 
   try {
-    const p = await permisoSubida(
-      admin.db,
-      sesion.uid,
-      tareaId.data,
-      preguntaId.data,
-    );
+    const p = await permisoSubida(admin.db, uid, tareaId.data, preguntaId.data);
     if (!p.ok) return p;
 
     const bytes = new Uint8Array(await imagen.arrayBuffer());
@@ -77,7 +106,7 @@ export async function subirImagenRespuesta(
     const clave = claveImagen(
       tareaId.data,
       await carpetaEntrega(p.permiso.entregaId),
-      crypto.randomUUID(),
+      uuid,
     );
     const r = await almacen.subir(clave, bytes, "image/jpeg");
     // B2 falló del lado del servidor: no es la conexión del alumno (D229)
@@ -95,6 +124,29 @@ export async function subirImagenRespuesta(
 /** Envía la entrega (D012: en grupal solo el capitán). Después no se puede cambiar. */
 export async function enviarEntrega(entrada: unknown): Promise<ResultadoEnvio> {
   const sesion = await exigirSesion("estudiante");
+  const r = await enviar(sesion.uid, entrada);
+  if (r.ok) refresh();
+  return r;
+}
+
+/**
+ * El mismo envío desde la cola sin conexión (D292–D294): `entrada` lleva `usuario` (quien lo
+ * encoló) y `opId`. Sin la sesión de ese alumno devuelve `sesion` y la operación queda pendiente.
+ * El permiso (tarea abierta, capitán en grupal, D012) se comprueba igual que en línea.
+ */
+export async function enviarEntregaPendiente(
+  entrada: unknown,
+): Promise<ResultadoEnvioCola> {
+  const quien = zQuien.safeParse(entrada);
+  if (!quien.success) return { ok: false, error: "incompleta" };
+  const sesion = await sesionDeCola("estudiante", quien.data.usuario);
+  if (!sesion) return { ok: false, error: "sesion" };
+  const r = await enviar(sesion.uid, entrada);
+  if (r.ok) refresh();
+  return r;
+}
+
+async function enviar(uid: string, entrada: unknown): Promise<ResultadoEnvio> {
   const admin = firebaseAdmin();
   if (!admin) return { ok: false, error: "red" };
   const envio = zEnvioEntrega.safeParse(entrada);
@@ -105,14 +157,7 @@ export async function enviarEntrega(entrada: unknown): Promise<ResultadoEnvio> {
       return sinAlmacen("enviarEntrega");
     const faltan = await comprobarImagenes(almacen, envio.data.respuestas);
     if (faltan) return { ok: false, error: faltan };
-    const r = await enviarEnTransaccion(
-      admin.db,
-      sesion.uid,
-      envio.data,
-      Date.now(),
-    );
-    if (r.ok) refresh();
-    return r;
+    return await enviarEnTransaccion(admin.db, uid, envio.data, Date.now());
   } catch (e) {
     console.error("[enviarEntrega]", (e as { code?: string }).code ?? "error");
     return { ok: false, error: "red" };

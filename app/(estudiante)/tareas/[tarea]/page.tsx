@@ -153,6 +153,7 @@ export default async function TareaPage({ params }: Props) {
       ) : (
         <TaskAnswerForm
           tareaId={id}
+          titulo={d.titulo}
           preguntas={d.preguntas}
           bloqueadaPor={
             d.estado === "lector"
