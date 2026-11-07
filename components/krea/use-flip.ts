@@ -1,15 +1,32 @@
 import { useCallback, useLayoutEffect, useRef } from "react";
-import { flipDeltas, type PosicionesY, parseCssTime } from "@/lib/flip";
+import {
+  flipDeltas,
+  idsNuevos,
+  type PosicionesY,
+  parseCssTime,
+} from "@/lib/flip";
 
 /*
  * FLIP del ranking (HANDOFF §6): First (posición anterior) · Last (la nueva, ya reordenada)
  * · Invert (translateY inverso) · Play (a 0). Solo anima `transform`, con `--d-rank` y `--ease`
- * leídos de :root. Con prefers-reduced-motion (o `--d-rank` a 0) reordena al instante.
+ * leídos de :root. Con prefers-reduced-motion (o la duración a 0) reordena al instante.
  * Cada commit mide las filas registradas; la primera medición solo guarda posiciones.
+ * Listas de gestión (D281): `duracion: "--d-normal"` (filtrar no es un cambio de puesto) y
+ * `entrada`: las filas que aparecen después de la primera medición (alta, quitar un filtro)
+ * entran con opacidad (`k-fade-in`, `--d-normal`). Sin opciones, el ranking queda igual.
  */
-export function useFlip<T extends HTMLElement = HTMLElement>() {
+export function useFlip<T extends HTMLElement = HTMLElement>({
+  duracion: variable = "--d-rank",
+  entrada = false,
+}: {
+  /** Variable CSS de la duración del viaje. */
+  duracion?: "--d-rank" | "--d-normal";
+  /** Animar la aparición de filas nuevas (solo opacidad). */
+  entrada?: boolean;
+} = {}) {
   const nodos = useRef(new Map<string, T>());
   const anterior = useRef<PosicionesY>(new Map());
+  const medido = useRef(false);
 
   /** `ref={registrar(id)}` en cada fila (el elemento que se traslada). */
   const registrar = useCallback(
@@ -27,14 +44,18 @@ export function useFlip<T extends HTMLElement = HTMLElement>() {
       nueva.set(id, el.getBoundingClientRect().top + window.scrollY);
     }
     const previa = anterior.current;
+    const primera = !medido.current;
     anterior.current = nueva;
-    if (previa.size === 0) return;
+    medido.current = true;
+    if (primera) return;
+    const nuevos = entrada ? idsNuevos(previa, nueva) : [];
+    if (previa.size === 0 && nuevos.length === 0) return;
 
     const reducido = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
     const estilo = getComputedStyle(document.documentElement);
-    const duracion = parseCssTime(estilo.getPropertyValue("--d-rank"), 0);
+    const duracion = parseCssTime(estilo.getPropertyValue(variable), 0);
     if (reducido || duracion <= 0) return;
     const easing = estilo.getPropertyValue("--ease").trim() || "ease";
 
@@ -45,6 +66,14 @@ export function useFlip<T extends HTMLElement = HTMLElement>() {
           [{ transform: `translateY(${d}px)` }, { transform: "translateY(0)" }],
           { duration: duracion, easing },
         );
+    }
+    if (nuevos.length === 0) return;
+    const fundido = parseCssTime(estilo.getPropertyValue("--d-normal"), 0);
+    for (const id of nuevos) {
+      nodos.current.get(id)?.animate([{ opacity: 0 }, { opacity: 1 }], {
+        duration: fundido,
+        easing,
+      });
     }
   });
 

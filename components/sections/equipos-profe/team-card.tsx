@@ -4,6 +4,7 @@ import { CircleAlert, Pencil, Upload } from "lucide-react";
 import { type ReactNode, useId, useRef, useState } from "react";
 import { CaptainBadge } from "@/components/krea/status-badge";
 import { TeamLogo } from "@/components/krea/team-logo";
+import { useFlip } from "@/components/krea/use-flip";
 import { UserAvatar } from "@/components/krea/user-avatar";
 import { MemberMenu } from "@/components/sections/equipos-profe/member-menu";
 import { Badge } from "@/components/ui/badge";
@@ -95,6 +96,11 @@ export function TeamCard({
   const dragDepth = useRef(0);
   const accion = logoSrc ? "Cambiar" : "Subir logo";
   const Icono = logoSrc ? Pencil : Upload;
+  // Cambiar el capitán reordena (va primero) y mover a alguien aquí lo suma: viaje y entrada (D281)
+  const { registrar } = useFlip<HTMLLIElement>({
+    duracion: "--d-normal",
+    entrada: true,
+  });
 
   return (
     <Card className="flex flex-col gap-4">
@@ -238,6 +244,7 @@ export function TeamCard({
           {miembros.map((m) => (
             <li
               key={m.cedula}
+              ref={registrar(m.cedula)}
               className="flex min-h-11 flex-wrap items-center gap-3 border-b border-divider py-1 last:border-b-0"
             >
               <UserAvatar

@@ -1,5 +1,8 @@
+"use client";
+
 import type { ReactNode } from "react";
 import { GradePill } from "@/components/krea/grade-pill";
+import { useFlip } from "@/components/krea/use-flip";
 import { UserAvatar } from "@/components/krea/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -34,6 +37,8 @@ const COLUMNAS = 7;
  * individual · Puntos · Editar. La región desplazable, el `position: relative` para el `sr-only` y
  * la pista bajo 1024 los pone `Table` (D044). Nota `null` = Pendiente (D003); Raspado = ícono
  * con nombre accesible (`GradePill table`). Base ≠ 20 con chip, no solo con un número distinto.
+ * Al filtrar, buscar o dar de alta, las filas que quedan viajan a su sitio y las que aparecen
+ * entran con opacidad (`useFlip`, D281); con reduced motion, cambio directo.
  */
 export function StudentsTable({
   seccion,
@@ -62,6 +67,10 @@ export function StudentsTable({
   /** «Eliminar alumno» de la ficha de cada fila (D268). */
   eliminar?: (a: FilaAlumno) => ReactNode;
 }) {
+  const { registrar } = useFlip<HTMLTableRowElement>({
+    duracion: "--d-normal",
+    entrada: true,
+  });
   return (
     <Table label={tablaLabel(seccion)}>
       <TableHeader>
@@ -87,7 +96,7 @@ export function StudentsTable({
         {filas.length === 0 ? (
           <TableRow className="hover:bg-transparent">
             <TableCell colSpan={COLUMNAS} className="h-auto py-8 text-center">
-              <span className="text-body text-text-2">
+              <span className="animate-fade-in text-body text-text-2">
                 {vacioTexto ??
                   `${contadorTexto(0, consulta, seccion)}. Prueba con otro nombre, apellido o cédula.`}
               </span>
@@ -95,7 +104,7 @@ export function StudentsTable({
           </TableRow>
         ) : (
           filas.map((a) => (
-            <TableRow key={a.cedula}>
+            <TableRow key={a.cedula} ref={registrar(a.cedula)}>
               <TableCell>
                 <span className="flex items-center gap-3">
                   <UserAvatar
