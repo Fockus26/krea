@@ -298,3 +298,5 @@ export function mensajeErrorPremio(error: ErrorPremio): string {
       return "No se guardó: revisa tu conexión e inténtalo otra vez.";
   }
 }
+
+export const PREMIO_GUARDADO = "Premio guardado";

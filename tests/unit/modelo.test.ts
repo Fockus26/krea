@@ -37,9 +37,9 @@ describe("zTarea", () => {
     expect(zTarea.safeParse(mal).success).toBe(false);
     expect(zTarea.safeParse({ ...mal, estado: "borrador" }).success).toBe(true);
   });
-  test("solo las grupales llevan premio; títulos con solo espacios no pasan", () => {
+  test("premio también en individuales (D263); títulos con solo espacios no pasan", () => {
     expect(zTarea.safeParse({ ...tareaBase, premio: "Cine" }).success).toBe(
-      false,
+      true,
     );
     expect(
       zTarea.safeParse({ ...tareaBase, tipo: "grupal", premio: "Cine" })

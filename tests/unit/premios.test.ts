@@ -31,7 +31,12 @@ describe("estadoPremio", () => {
         { estado: "evaluada", premio: "P", fecha: "2026-10-17" },
         notas,
       ),
-    ).toEqual({ tipo: "ganado", titularId: "a", nota: 19, fecha: "2026-10-17" });
+    ).toEqual({
+      tipo: "ganado",
+      titularId: "a",
+      nota: 19,
+      fecha: "2026-10-17",
+    });
   });
   test("empate: todos los de la mejor nota", () => {
     expect(

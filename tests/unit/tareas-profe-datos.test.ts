@@ -161,10 +161,10 @@ describe("armarTarea: nueva o borrador", () => {
     ).toBe(false);
   });
 
-  test("individual: el premio no se guarda", () => {
+  test("individual: el premio también se guarda (D263)", () => {
     const r = armar({ entrada: entrada({ tipo: "individual" }) });
     if (!r.ok) throw new Error(r.error);
-    expect(r.tarea.premio).toBeNull();
+    expect(r.tarea.premio).toBe("Salida al cine");
   });
 
   test("ids de pregunta repetidos o «guardar» sin publicar: inválida", () => {
