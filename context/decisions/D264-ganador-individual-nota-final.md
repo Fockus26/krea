@@ -1,0 +1,5 @@
+# D264 · Grading · Ganador del premio individual: la mejor nota final (puntaje × base / 20) entre los alumnos actuales de la sección · Implemented
+
+**Decision:** `notasPremioIndividual` (`lib/equipo.ts`, junto a `ganadorPremio`) da a cada estudiante de la sección su nota final de la entrega evaluada (`notaFinal(puntaje, base vigente)`, D006/D176) o `null` (Pendiente, no compite); el ganador, el empate y el compartido salen de las mismas `ganadorPremio`/`ganadoresPremio`/`estadoPremio` que la grupal. Compiten los usuarios que existen hoy: un alumno eliminado (W12) no está, y una decisión «darAlumno» que apunte a él deja de contar — vuelve el empate entre los que quedan o, si queda uno solo con la mejor nota, lo gana él. El avance de una abierta cuenta alumnos («3 de 35 alumnos entregaron»).
+**Why:** la «nota» que ve el alumno es la final con base; el ganador tiene que ser el que se ve como mejor nota. Si la base cambia, la nota cambia y el ganador con ella (como cualquier nota derivada, D013).
+**Discarded alternative:** comparar el puntaje sin base — un alumno con base 15 y 20/20 «ganaría» con un 15 visible frente a un 18 de otro.
