@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Rol } from "@/lib/layout";
 import { PERFIL_HREF } from "@/lib/nav";
+import { tiposTransicion } from "@/lib/transicion";
 
 /**
  * Contenido de la barra superior (< lg; HANDOFF §2.7). El `<header>` sticky, el alto 56/64 y el
@@ -74,6 +75,7 @@ export function TopBar({
         <>
           <Link
             href={inicio}
+            transitionTypes={tiposTransicion(rol, pathname, inicio)}
             // Con texto del sistema grande no caben logo, chip y avatar/Menú: el logo cede (Inicio sigue en la barra inferior)
             className="rounded-nav focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus @max-estrecho:hidden"
           >
@@ -93,6 +95,7 @@ export function TopBar({
       ) : (
         <Link
           href={PERFIL_HREF}
+          transitionTypes={tiposTransicion(rol, pathname, PERFIL_HREF)}
           aria-label="Tu perfil"
           className="grid size-11 shrink-0 place-items-center rounded-pill focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
         >

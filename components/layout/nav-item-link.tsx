@@ -2,14 +2,17 @@ import Link from "next/link";
 import type * as React from "react";
 import type { ReactNode } from "react";
 import { NavIcon } from "@/components/layout/nav-icon";
+import type { Rol } from "@/lib/layout";
 import { isActive, type NavItem } from "@/lib/nav";
+import { tiposTransicion } from "@/lib/transicion";
 import { cn } from "@/lib/utils";
 
 /*
  * Ítem de la barra lateral y de la hoja Menú (HANDOFF §2.7 / §2.13): mismo aspecto, distinta
  * altura (44 / 48). El activo lleva `aria-current="page"`, peso 700 y fondo --accent-soft-2:
  * el fondo es una capa que cambia de opacidad en 150 ms (§6, no se desliza); con reduced
- * motion `--d-fast` vale 0 y el cambio es inmediato.
+ * motion `--d-fast` vale 0 y el cambio es inmediato. El enlace lleva el tipo de transición de
+ * página según el lado de la pestaña (D278).
  */
 const SIZES = {
   side: "h-11",
@@ -21,6 +24,7 @@ type NavItemLinkProps = Omit<
   "href" | "children"
 > & {
   item: NavItem;
+  rol: Rol;
   pathname: string | null;
   size: keyof typeof SIZES;
   /** Contador a la derecha (solo Evaluar en la lateral). */
@@ -30,6 +34,7 @@ type NavItemLinkProps = Omit<
 
 export function NavItemLink({
   item,
+  rol,
   pathname,
   size,
   trailing,
@@ -41,6 +46,7 @@ export function NavItemLink({
     <Link
       {...rest}
       href={item.href}
+      transitionTypes={tiposTransicion(rol, pathname, item.href)}
       aria-current={active ? "page" : undefined}
       className={cn(
         "group/nav relative isolate flex items-center gap-3 rounded-nav px-3 text-nav text-text-2 no-underline",

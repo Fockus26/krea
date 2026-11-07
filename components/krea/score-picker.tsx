@@ -135,6 +135,7 @@ function ScorePicker({
     // biome-ignore lint/a11y/noStaticElementInteractions: recoge las teclas 0–9 y `,` de sus radios
     <div ref={rootRef} onKeyDown={onKeyDown} className={className}>
       <ToggleGroup
+        indicador={false}
         aria-labelledby={labelledBy}
         value={value === null ? "" : String(value)}
         onValueChange={(v) => onChange(Number(v))}

@@ -1733,3 +1733,98 @@ html:has([data-slot="action-bar"]) {
     left: calc(var(--w-side) + var(--offline-gap));
   }
 }
+
+/* ---------- Transición entre páginas (pedido 40; D278) ----------
+   View Transitions de React (`components/layout/transicion-pagina.tsx`, en los `template.tsx`).
+   Ir a una pestaña a la derecha → la página nueva entra desde la derecha y la vieja sale hacia la
+   izquierda (`pagina-desliz-der`); a la izquierda, al revés. Sin tipo (detalle, volver, atrás del
+   navegador): fundido. Solo opacity y transform. Las barras tienen nombre propio y no se mueven;
+   la raíz no anima (el resto de la página cambia en seco). Con reduced motion no hay animación:
+   la página cambia directo. Sin View Transitions en el navegador, cambio directo (no rompe). */
+:root {
+  --d-pagina: 250ms; /* entrada de la página nueva (= --d-normal, HANDOFF §6) */
+  --d-pagina-salida: 150ms; /* salida de la vieja: rápida, no compite con la nueva */
+  --desliz-pagina: 2.5rem; /* 40 px: dice el lado sin hacer seguir con la vista */
+}
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --d-pagina: 0ms;
+    --d-pagina-salida: 0ms;
+  }
+}
+@keyframes k-pagina-entra {
+  from {
+    opacity: 0;
+    transform: translateX(var(--desliz, 0));
+  }
+}
+@keyframes k-pagina-sale {
+  to {
+    opacity: 0;
+    transform: translateX(var(--desliz, 0));
+  }
+}
+/* Los clics durante la transición llegan a la página viva */
+::view-transition {
+  pointer-events: none;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+::view-transition-new(.pagina-desliz-der) {
+  --desliz: var(--desliz-pagina);
+  animation: k-pagina-entra var(--d-pagina) var(--ease) both;
+}
+::view-transition-old(.pagina-desliz-der) {
+  --desliz: calc(-1 * var(--desliz-pagina));
+  animation: k-pagina-sale var(--d-pagina-salida) var(--ease) both;
+}
+::view-transition-new(.pagina-desliz-izq) {
+  --desliz: calc(-1 * var(--desliz-pagina));
+  animation: k-pagina-entra var(--d-pagina) var(--ease) both;
+}
+::view-transition-old(.pagina-desliz-izq) {
+  --desliz: var(--desliz-pagina);
+  animation: k-pagina-sale var(--d-pagina-salida) var(--ease) both;
+}
+::view-transition-new(.pagina-fundido) {
+  animation: k-pagina-entra var(--d-pagina) var(--ease) both;
+}
+::view-transition-old(.pagina-fundido) {
+  animation: k-pagina-sale var(--d-pagina-salida) var(--ease) both;
+}
+/* Barras quietas y por encima del contenido que se desliza (el viejo no se pinta: sin doble barra) */
+@utility vt-barra-lateral {
+  view-transition-name: barra-lateral;
+}
+@utility vt-barra-superior {
+  view-transition-name: barra-superior;
+}
+@utility vt-barra-inferior {
+  view-transition-name: barra-inferior;
+}
+::view-transition-group(barra-lateral),
+::view-transition-group(barra-superior),
+::view-transition-group(barra-inferior) {
+  animation: none;
+  z-index: var(--z-topbar);
+}
+::view-transition-old(barra-lateral),
+::view-transition-old(barra-superior),
+::view-transition-old(barra-inferior) {
+  display: none;
+}
+::view-transition-new(barra-lateral),
+::view-transition-new(barra-superior),
+::view-transition-new(barra-inferior) {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    /* biome-ignore lint/complexity/noImportantStyles: reduced motion manda sobre cada clase de transición (y la animación por defecto del navegador) */
+    animation: none !important;
+  }
+}

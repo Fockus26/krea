@@ -58,7 +58,12 @@ export function MenuSheet({
           {navItems("profesor", "menu", { admin }).map((item) => (
             <li key={item.id}>
               <SheetClose asChild>
-                <NavItemLink item={item} pathname={pathname} size="sheet" />
+                <NavItemLink
+                  item={item}
+                  rol="profesor"
+                  pathname={pathname}
+                  size="sheet"
+                />
               </SheetClose>
             </li>
           ))}

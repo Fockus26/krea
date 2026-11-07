@@ -8,7 +8,8 @@ import { type Ancho, mainClass, type Rol } from "@/lib/layout";
 // En un layout de grupo (fase 05) el shell no sabe qué página monta: `anchoPorRuta` elige el
 // ancho por `pathname` en el cliente (`RouteMain`, D129) en lugar de `width`; y si la ruta no
 // lleva barra inferior, `RouteBottomNav` deja `[data-sin-barra-inferior]` y el `<nav>` se esconde
-// (D131).
+// (D131). Las tres barras tienen nombre de View Transition propio (`vt-barra-*`): en la
+// transición entre páginas se quedan quietas y por encima del contenido que se desliza (D278).
 type AppShellProps = {
   role: Rol;
   width?: Ancho;
@@ -32,7 +33,7 @@ export function AppShell({
   return (
     <div className="flex min-h-dvh flex-col lg:flex-row" data-role={role}>
       {sidebar ? (
-        <div className="hidden shrink-0 self-start lg:sticky lg:top-0 lg:block">
+        <div className="vt-barra-lateral hidden shrink-0 self-start lg:sticky lg:top-0 lg:block">
           <nav
             aria-label="Principal"
             className="h-screen-side w-side overflow-y-auto border-r border-divider bg-surface px-4 py-6"
@@ -43,7 +44,7 @@ export function AppShell({
       ) : null}
       <div className="flex min-w-0 flex-1 flex-col">
         {topbar ? (
-          <header className="@container h-topbar sticky top-0 z-topbar flex items-center gap-3 border-b border-divider bg-topbar px-(--page-px) bajo:static lg:hidden">
+          <header className="vt-barra-superior @container h-topbar sticky top-0 z-topbar flex items-center gap-3 border-b border-divider bg-topbar px-(--page-px) bajo:static lg:hidden">
             {topbar}
           </header>
         ) : null}
@@ -58,7 +59,7 @@ export function AppShell({
         {bottomNav ? (
           <nav
             aria-label="Principal"
-            className="h-bnav shadow-bnav sticky bottom-0 z-topbar grid grid-cols-5 border-t border-divider bg-surface px-1 has-data-sin-barra-inferior:hidden bajo:static lg:hidden"
+            className="vt-barra-inferior h-bnav shadow-bnav sticky bottom-0 z-topbar grid grid-cols-5 border-t border-divider bg-surface px-1 has-data-sin-barra-inferior:hidden bajo:static lg:hidden"
           >
             {bottomNav}
           </nav>

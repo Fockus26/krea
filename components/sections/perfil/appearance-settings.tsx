@@ -68,6 +68,7 @@ export function AppearanceSettings({
           Color de acento
         </p>
         <ToggleGroup
+          indicador={false}
           aria-labelledby={acentoId}
           value={acento}
           onValueChange={(v) => {

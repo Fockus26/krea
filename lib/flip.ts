@@ -27,6 +27,14 @@ export function flipDeltas(
   return out;
 }
 
+/**
+ * Filas que aparecen en esta medición y no estaban en la anterior (alta, quitar un filtro): las
+ * que `useFlip({ entrada: true })` hace entrar con opacidad. En el orden de la lista nueva.
+ */
+export function idsNuevos(anterior: PosicionesY, nueva: PosicionesY): string[] {
+  return [...nueva.keys()].filter((id) => !anterior.has(id));
+}
+
 /** "600ms" → 600, "0.6s" → 600, "0ms" → 0; lo que no sea un tiempo CSS → `fallback`. */
 export function parseCssTime(valor: string, fallback = 0): number {
   const m = /^\s*(-?\d*\.?\d+)\s*(ms|s)\s*$/.exec(valor);

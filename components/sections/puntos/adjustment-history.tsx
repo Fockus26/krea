@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import { useId } from "react";
 import { EmptyState } from "@/components/krea/empty-state";
+import { useFlip } from "@/components/krea/use-flip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardList, CardListItem } from "@/components/ui/card";
@@ -75,6 +76,11 @@ export function AdjustmentHistory({
   onAnular: (id: string) => void;
 }) {
   const tituloId = useId();
+  // Ajuste nuevo o filtro: las filas viajan y la que aparece entra con opacidad (D281)
+  const { registrar } = useFlip<HTMLLIElement>({
+    duracion: "--d-normal",
+    entrada: true,
+  });
   // D260: los ajustes del Excel no se listan ni cuentan en el filtro (sí en los puntos)
   const mostrables = historialMostrable(filas);
   const visibles = filtrarHistorial(mostrables, filtro);
@@ -202,7 +208,11 @@ export function AdjustmentHistory({
               const bloqueo = motivoNoAnulable(f);
               const destino = rutaDestinoHistorial(f);
               return (
-                <CardListItem key={f.id} className="items-start">
+                <CardListItem
+                  key={f.id}
+                  ref={registrar(f.id)}
+                  className="items-start"
+                >
                   <Badge
                     variant={chip.signo === "mas" ? "ok" : "err"}
                     className="min-w-13 justify-center nums"

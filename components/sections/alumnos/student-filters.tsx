@@ -1,6 +1,7 @@
 "use client";
 
 import { Search, X } from "lucide-react";
+import { useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,8 @@ const SECCIONES: readonly SeccionAlumnos[] = ["5A", "5C"];
  * contador. El segmentado es un radiogroup (D090); la etiqueta de la búsqueda es `sr-only` (el
  * placeholder repite el texto, como el lienzo) y el contador es la única región `role="status"`:
  * frase completa y estable, no un número suelto.
+ * Buscador animado (pedido 41, D280): «Borrar la búsqueda» aparece con opacidad y escala cuando
+ * hay texto y devuelve el foco al campo; las filas que entran o se van las anima la tabla.
  */
 export function StudentFilters({
   seccion,
@@ -43,6 +46,8 @@ export function StudentFilters({
     onQuitar: () => void;
   };
 }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const hayConsulta = consulta.length > 0;
   return (
     <section aria-label="Filtros" className="flex flex-wrap items-center gap-3">
       <ToggleGroup
@@ -61,6 +66,7 @@ export function StudentFilters({
           Buscar por nombre o cédula
         </Label>
         <Input
+          ref={inputRef}
           id="buscar-alumno"
           type="search"
           autoComplete="off"
@@ -68,6 +74,28 @@ export function StudentFilters({
           leading={<Search aria-hidden="true" />}
           value={consulta}
           onChange={(e) => onConsulta(e.currentTarget.value)}
+          // La X nativa de `type="search"` cede a la propia (misma en todos los navegadores)
+          inputClassName="[&::-webkit-search-cancel-button]:appearance-none"
+          trailing={
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              icon
+              // PROVISIONAL (sin fila: W15 no tiene filas de checklist; ver el PR)
+              aria-label="Borrar la búsqueda"
+              // Vacía: no se ve ni se alcanza con Tab (inert); aparece con opacidad y escala
+              inert={!hayConsulta}
+              data-visible={hayConsulta || undefined}
+              className="-mr-2 scale-75 opacity-0 transition-[opacity,scale] duration-fast ease-krea data-visible:scale-100 data-visible:opacity-100"
+              onClick={() => {
+                onConsulta("");
+                inputRef.current?.focus();
+              }}
+            >
+              <X aria-hidden="true" />
+            </Button>
+          }
         />
       </div>
       <output
