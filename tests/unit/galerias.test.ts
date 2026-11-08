@@ -7,7 +7,7 @@ import { galeriaVisible } from "@/lib/galerias";
  * del seed. Cada galería tiene un layout que responde 404 fuera de desarrollo y de las vistas
  * previas, como /estados (D162).
  */
-const GALERIAS = ["secciones", "componentes", "tokens"] as const;
+const GALERIAS = ["secciones", "componentes", "tokens", "correos"] as const;
 const ENV_ORIGINAL = { ...process.env };
 const env = process.env as Record<string, string | undefined>;
 
