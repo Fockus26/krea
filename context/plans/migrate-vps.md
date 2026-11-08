@@ -34,8 +34,8 @@ Hecho en `feat/migrate-vps` (D327):
 Falta:
 - [x] Variables en Vercel (2026-11-08): `DATABASE_URL` (prod `krea`, preview `krea_preview`), `BETTER_AUTH_SECRET` (prod y preview), `BETTER_AUTH_URL` (prod), `FIREBASE_HASH_SIGNER_KEY` y `_SALT_SEPARATOR` (prod; rounds/mem_cost por defecto 8/14), B2_* y BREVO_* copiadas a Preview. Las de Firebase se quedan hasta 30 días después del cutover (rollback).
 - [ ] `qa:local --postgres` pide Docker y crea las cuentas por sign-up (aquí desactivado): adaptar para el QA final (KIT_FEEDBACK 77).
-- [ ] `functional-qa` sobre el build real (login, recuperar, crear contraseña, evaluar, ajustes, entregas, ranking en vivo).
-- [ ] Cutover con César (§5 de la guía): exportar Auth y perfiles de profesores, ensayo con `--ensayo`, `db:migrate` en `krea`, importar, marcar el PR listo y merge.
+- [x] `functional-qa` sobre el preview (2026-11-08): 2 críticos (login 307 por el proxy, rate limit por IP) y 1 bajo (endpoints abiertos) arreglados en 6baf280; falta re-verificar y probar B2/Brevo tras el redeploy, y el correo de recuperación a mano (César).
+- [ ] Cutover: `krea` ya migrada (2026-11-08). César corre el exportador de profesores (scratchpad export-fb/exportar.ts); luego ensayo, importación, prueba de login con hash de Firebase, borrar JSON, PR listo, merge (César).
 
 ## Pasos
 
