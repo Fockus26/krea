@@ -41,19 +41,13 @@ export function reservarEnvio(
 }
 
 /**
- * El enlace de Firebase (`…/__/auth/action?mode=resetPassword&oobCode=…`) → el de la app
- * (`/recuperar/nueva?mode=resetPassword&oobCode=…`, HANDOFF §5c). Sin `oobCode` → `null`.
+ * Código de Better Auth → enlace de la app (`/recuperar/nueva?mode=resetPassword&oobCode=…`,
+ * HANDOFF §5c; el parámetro conserva el nombre de Firebase). Sin código → `null`.
  */
 export function enlaceRestablecer(
-  enlaceFirebase: string,
+  codigo: string | null,
   sitio: URL,
 ): string | null {
-  let codigo: string | null;
-  try {
-    codigo = new URL(enlaceFirebase).searchParams.get("oobCode");
-  } catch {
-    return null;
-  }
   if (!codigo) return null;
   const url = new URL("/recuperar/nueva", sitio);
   url.searchParams.set("mode", "resetPassword");
@@ -69,7 +63,8 @@ export type DepsRecuperacion = {
   /** Transacción sobre `recuperaciones/{cedula}`: `false` si el límite lo impide. */
   reservar: (cedula: string, ahora: number) => Promise<boolean>;
   /** `auth.generatePasswordResetLink(emailInterno(cedula))`. */
-  generarEnlace: (cedula: string) => Promise<string>;
+  /** Código de un solo uso para restablecer; `null` si la cuenta no existe. */
+  generarCodigo: (cedula: string) => Promise<string | null>;
   enviar: (correo: Correo) => Promise<ResultadoEnvio>;
   sitio: URL;
   ahora: () => number;
@@ -94,11 +89,11 @@ export async function procesarRecuperacion(
   const email = await deps.leerEmail(cedula);
   if (!email) return "sin-email";
   if (!(await deps.reservar(cedula, deps.ahora()))) return "limite";
-  const [nombres, enlaceFb] = await Promise.all([
+  const [nombres, codigo] = await Promise.all([
     deps.leerNombres(cedula),
-    deps.generarEnlace(cedula),
+    deps.generarCodigo(cedula),
   ]);
-  const enlace = enlaceRestablecer(enlaceFb, deps.sitio);
+  const enlace = enlaceRestablecer(codigo, deps.sitio);
   if (!enlace) return "sin-enlace";
   const nombre = primerNombre(nombres);
   const correo = correoRestablecer({ nombre, cedula, enlace });
@@ -123,13 +118,16 @@ export const zRestablecer = z.object({
 
 export type ErrorRestablecer = "vencido" | "invalida" | "bloqueado" | "red";
 
-/** Mensaje de `accounts:resetPassword` → error de la app (D188). Lo desconocido: vencido. */
+/**
+ * Error de `/reset-password` de Better Auth → error de la app (D188, D327). `status` es el HTTP y
+ * `codigo` su `code` (`INVALID_TOKEN`, `PASSWORD_TOO_SHORT`…). Lo desconocido: vencido.
+ */
 export function errorRestablecerDe(
-  mensaje: string | undefined,
+  status: number | undefined,
+  codigo: string | undefined,
 ): ErrorRestablecer {
-  const m = mensaje ?? "";
-  if (m.startsWith("TOO_MANY_ATTEMPTS")) return "bloqueado";
-  if (m.startsWith("WEAK_PASSWORD")) return "invalida";
+  if (status === 429) return "bloqueado";
+  if (codigo?.startsWith("PASSWORD_TOO")) return "invalida";
   return "vencido";
 }
 

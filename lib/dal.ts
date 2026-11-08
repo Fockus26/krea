@@ -1,26 +1,24 @@
 import "server-only";
 // Data Access Layer de la sesión (D180): toda página o Server Action que lea o escriba datos
 // pregunta aquí, cerca del dato. El proxy solo hace la comprobación rápida.
-import { cookies } from "next/headers";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { cache } from "react";
-import { sesionDeCookie } from "@/lib/firebase/sesion-servidor";
+import { sesionDeHeaders } from "@/lib/data/sesion";
 import type { RolUsuario } from "@/lib/modelo";
 import {
-  COOKIE_SESION,
   inicioDe,
   RUTA_CREAR_PASSWORD,
   RUTA_INGRESAR,
   type Sesion,
 } from "@/lib/sesion";
 
-/** Sesión del request (con chequeo de revocación), una vez por render. */
+/** Sesión del request (validada en la base, D327), una vez por render. */
 export const verificarSesion = cache(async (): Promise<Sesion | null> => {
-  // verifySessionCookie usa Date.now(): sin esto, Next lo rechaza durante el prerender (D219)
+  // La sesión depende del request y de Date.now(): nunca en el prerender (D219)
   await connection();
-  const valor = (await cookies()).get(COOKIE_SESION)?.value;
-  return sesionDeCookie(valor, { revocadas: true });
+  return sesionDeHeaders(await headers());
 });
 
 /**

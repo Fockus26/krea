@@ -1,14 +1,12 @@
 "use client";
-// Cierra la sesión al montar (D182): Firebase Auth del navegador + cookie y revocación en el
-// servidor, y vuelve a Ingresar. Es una página (no un GET que borre la cookie): el prefetch de un
+// Cierra la sesión al montar (D182, D327): revoca las sesiones y borra la cookie en el servidor,
+// y vuelve a Ingresar. Es una página (no un GET que borre la cookie): el prefetch de un
 // enlace a /salir no ejecuta este efecto.
 // Ingresar se abre con una carga completa, no con el router (D251): así no quedan en memoria la
 // caché del router ni las rutas que `<Activity>` conserva ocultas con lo de la cuenta que salió.
-import { signOut } from "firebase/auth";
 import { useEffect, useRef } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import { cerrarSesion } from "@/lib/acciones/sesion";
-import { firebaseCliente } from "@/lib/firebase/cliente";
 import { vaciarPaginasGuardadas } from "@/lib/offline/sw-cliente";
 import { RUTA_INGRESAR } from "@/lib/sesion";
 
@@ -19,9 +17,7 @@ export function CerrarSesion() {
     if (hecho.current) return;
     hecho.current = true;
     (async () => {
-      const fb = firebaseCliente();
       try {
-        if (fb) await signOut(fb.auth);
         await cerrarSesion();
       } finally {
         // Las páginas guardadas para leer sin conexión son de quien sale (D291). La cola de

@@ -13,7 +13,6 @@ import {
   escaparHtml,
   primerNombre,
 } from "@/lib/correo/restablecer";
-import { resetConCodigo, urlIdentityToolkit } from "@/lib/firebase/password";
 import {
   type DepsRecuperacion,
   enlaceRestablecer,
@@ -170,20 +169,15 @@ describe("límite por cédula (D187)", () => {
 describe("enlace de la app", () => {
   const sitio = new URL("https://krea.test");
 
-  test("toma el oobCode del enlace de Firebase", () => {
-    expect(
-      enlaceRestablecer(
-        "https://krea-d22f7.firebaseapp.com/__/auth/action?mode=resetPassword&oobCode=Q2x0&apiKey=k&lang=es",
-        sitio,
-      ),
-    ).toBe("https://krea.test/recuperar/nueva?mode=resetPassword&oobCode=Q2x0");
+  test("el código va como oobCode a /recuperar/nueva", () => {
+    expect(enlaceRestablecer("Q2x0", sitio)).toBe(
+      "https://krea.test/recuperar/nueva?mode=resetPassword&oobCode=Q2x0",
+    );
   });
 
-  test("sin oobCode o URL rota → null", () => {
-    expect(
-      enlaceRestablecer("https://x.test/?mode=resetPassword", sitio),
-    ).toBeNull();
-    expect(enlaceRestablecer("no es url", sitio)).toBeNull();
+  test("sin código → null", () => {
+    expect(enlaceRestablecer(null, sitio)).toBeNull();
+    expect(enlaceRestablecer("", sitio)).toBeNull();
   });
 });
 
@@ -198,9 +192,9 @@ describe("procesarRecuperacion (D186)", () => {
         llamadas.push("reservar");
         return true;
       },
-      generarEnlace: async () => {
+      generarCodigo: async () => {
         llamadas.push("enlace");
-        return "https://p.firebaseapp.com/__/auth/action?mode=resetPassword&oobCode=XYZ";
+        return "XYZ";
       },
       enviar: async (c) => {
         enviados.push(c);
@@ -263,69 +257,10 @@ describe("contraseña nueva (D188)", () => {
     ).toBe(false);
   });
 
-  test("errores de la REST", () => {
-    expect(errorRestablecerDe("EXPIRED_OOB_CODE")).toBe("vencido");
-    expect(errorRestablecerDe("INVALID_OOB_CODE")).toBe("vencido");
-    expect(
-      errorRestablecerDe(
-        "WEAK_PASSWORD : Password should be at least 6 characters",
-      ),
-    ).toBe("invalida");
-    expect(errorRestablecerDe("TOO_MANY_ATTEMPTS_TRY_LATER")).toBe("bloqueado");
-    expect(errorRestablecerDe(undefined)).toBe("vencido");
-  });
-
-  test("resetConCodigo: verificar (sin newPassword) y confirmar", async () => {
-    const cuerpos: unknown[] = [];
-    let url = "";
-    const pedir = (async (u: string, i: RequestInit) => {
-      url = u;
-      cuerpos.push(JSON.parse(i.body as string));
-      return new Response('{"email":"33272397@alumnos.krea.app"}', {
-        status: 200,
-      });
-    }) as unknown as typeof fetch;
-    const destino = { apiKey: "k" };
-    expect(await resetConCodigo("C", null, destino, pedir)).toEqual({
-      ok: true,
-      email: "33272397@alumnos.krea.app",
-    });
-    expect(await resetConCodigo("C", "nueva-clave", destino, pedir)).toEqual({
-      ok: true,
-      email: "33272397@alumnos.krea.app",
-    });
-    expect(cuerpos).toEqual([
-      { oobCode: "C" },
-      { oobCode: "C", newPassword: "nueva-clave" },
-    ]);
-    expect(url).toBe(urlIdentityToolkit("resetPassword", "k"));
-  });
-
-  test("resetConCodigo: error de la REST, 5xx y red", async () => {
-    const con = (status: number, cuerpo: unknown) =>
-      (async () =>
-        new Response(JSON.stringify(cuerpo), {
-          status,
-        })) as unknown as typeof fetch;
-    const destino = { apiKey: "k" };
-    expect(
-      await resetConCodigo(
-        "C",
-        null,
-        destino,
-        con(400, { error: { message: "EXPIRED_OOB_CODE" } }),
-      ),
-    ).toEqual({ ok: false, mensaje: "EXPIRED_OOB_CODE" });
-    expect(await resetConCodigo("C", null, destino, con(503, {}))).toEqual({
-      ok: false,
-      red: true,
-    });
-    const lanza = (async () => {
-      throw new Error("x");
-    }) as unknown as typeof fetch;
-    expect(await resetConCodigo("C", null, destino, lanza)).toEqual({
-      ok: false,
-      red: true,
-    });
+  test("errores de Better Auth", () => {
+    expect(errorRestablecerDe(400, "INVALID_TOKEN")).toBe("vencido");
+    expect(errorRestablecerDe(400, "PASSWORD_TOO_SHORT")).toBe("invalida");
+    expect(errorRestablecerDe(429, undefined)).toBe("bloqueado");
+    expect(errorRestablecerDe(undefined, undefined)).toBe("vencido");
   });
 });

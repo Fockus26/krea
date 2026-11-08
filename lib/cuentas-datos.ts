@@ -1,6 +1,6 @@
 // Cuentas nuevas y pantalla Profesores (D231–D233). Puro (sin Firebase ni reloj): la contraseña
 // temporal, lo que mandan los formularios, el perfil que se crea y las filas de la lista. Lo usan
-// `lib/cuentas.ts` (servidor), `lib/firebase/cuentas.ts` (Admin SDK), la UI y las pruebas.
+// `lib/cuentas.ts` (servidor), `lib/data/cuentas.ts` (Postgres), la UI y las pruebas.
 import { z } from "zod";
 import { APELLIDOS_VACIO, EMAIL_INVALIDO, NOMBRES_VACIO } from "@/lib/alumnos";
 import { zEmailEntrada } from "@/lib/alumnos-datos";

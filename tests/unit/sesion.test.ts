@@ -1,11 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { errorIngresoDeCodigo } from "@/lib/auth";
+import { errorIngresoDeEstado } from "@/lib/auth";
 import {
   accesoDeRuta,
   destinoDe,
   inicioDe,
-  LOGIN_RECIENTE_MS,
-  loginReciente,
   RUTA_CREAR_PASSWORD,
   redireccion,
   type Sesion,
@@ -188,23 +186,14 @@ describe("sesionDeClaims", () => {
   });
 });
 
-describe("loginReciente y errores", () => {
-  test("ventana de 5 minutos", () => {
-    const ahora = 1_000_000_000_000;
-    expect(loginReciente(ahora / 1000 - 60, ahora)).toBe(true);
-    expect(loginReciente((ahora - LOGIN_RECIENTE_MS) / 1000, ahora)).toBe(
-      false,
-    );
-  });
-  test("códigos de Firebase → error sin revelar el campo", () => {
-    expect(errorIngresoDeCodigo("auth/invalid-credential")).toBe(
-      "credenciales",
-    );
-    expect(errorIngresoDeCodigo("auth/user-not-found")).toBe("credenciales");
-    expect(errorIngresoDeCodigo("auth/wrong-password")).toBe("credenciales");
-    expect(errorIngresoDeCodigo("auth/too-many-requests")).toBe("bloqueado");
-    expect(errorIngresoDeCodigo("auth/network-request-failed")).toBe("red");
-    expect(errorIngresoDeCodigo("auth/invalid-api-key")).toBe("no-disponible");
-    expect(errorIngresoDeCodigo(undefined)).toBe("credenciales");
+describe("errores de ingreso", () => {
+  test("estados de Better Auth → error sin revelar el campo", () => {
+    expect(errorIngresoDeEstado(401)).toBe("credenciales");
+    expect(errorIngresoDeEstado(400)).toBe("credenciales");
+    expect(errorIngresoDeEstado(403)).toBe("credenciales");
+    expect(errorIngresoDeEstado(429)).toBe("bloqueado");
+    expect(errorIngresoDeEstado(undefined)).toBe("red");
+    expect(errorIngresoDeEstado(0)).toBe("red");
+    expect(errorIngresoDeEstado(503)).toBe("no-disponible");
   });
 });

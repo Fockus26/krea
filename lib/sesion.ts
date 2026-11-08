@@ -2,12 +2,8 @@
 import type { RolUsuario, SeccionId } from "@/lib/modelo";
 import { esCodigoSeccion } from "@/lib/secciones";
 
-/** Cookie de sesión de Firebase (httpOnly, la crea el Admin SDK). */
-export const COOKIE_SESION = "__session";
-/** Duración de la sesión: 5 días (Firebase permite hasta 14). */
+/** Duración de la sesión de Better Auth (cookie httpOnly `krea.session_token`): 5 días. */
 export const SESION_MS = 5 * 24 * 60 * 60 * 1000;
-/** El idToken para crear la sesión tiene que venir de un login de hace menos de 5 minutos. */
-export const LOGIN_RECIENTE_MS = 5 * 60 * 1000;
 
 export const RUTA_INGRESAR = "/ingresar";
 
@@ -87,7 +83,10 @@ export function destinoDe(sesion: Sesion): string {
     : inicioDe(sesion.rol);
 }
 
-/** Claims del token → sesión; `null` si faltan o no son válidos (cuenta sin rol = sin acceso). */
+/**
+ * Perfil (`usuarios`: rol, sección, equipo y marcas; antes custom claims, D174) → sesión; `null`
+ * si faltan o no son válidos (cuenta sin rol = sin acceso).
+ */
 export function sesionDeClaims(
   uid: string,
   claims: Record<string, unknown>,
@@ -107,9 +106,4 @@ export function sesionDeClaims(
     ...(rol === "profesor" && admin === true ? { admin: true } : {}),
     ...(debeCambiarPassword === true ? { debeCambiarPassword: true } : {}),
   };
-}
-
-/** ¿El login del token es reciente? `authTime` en segundos (claim `auth_time`). */
-export function loginReciente(authTimeSeg: number, ahora: number): boolean {
-  return ahora - authTimeSeg * 1000 < LOGIN_RECIENTE_MS;
 }
