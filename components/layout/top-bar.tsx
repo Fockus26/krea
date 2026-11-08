@@ -97,7 +97,7 @@ export function TopBar({
           href={PERFIL_HREF}
           transitionTypes={tiposTransicion(rol, pathname, PERFIL_HREF)}
           aria-label="Tu perfil"
-          className="grid size-11 shrink-0 place-items-center rounded-pill focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          className="grid size-11 shrink-0 place-items-center rounded-pill transition-colors duration-fast ease-krea hover:bg-accent-soft hover:ring-1 hover:ring-accent-ink active:bg-accent-soft-2 active:ring-1 active:ring-accent-ink motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
         >
           {usuario ? (
             <UserAvatar
