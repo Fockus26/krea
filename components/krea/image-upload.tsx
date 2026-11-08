@@ -302,7 +302,7 @@ export function ImageUpload({
               icon
               aria-label="Quitar imagen"
               title="Quitar imagen"
-              className="h-11 w-11 bg-scrim-chip text-on-scrim hover:not-disabled:not-aria-disabled:bg-error hover:not-disabled:not-aria-disabled:text-on-error"
+              className="h-11 w-11 bg-scrim-chip text-on-scrim hover:not-disabled:not-aria-disabled:bg-error-fill hover:not-disabled:not-aria-disabled:text-on-error"
               onClick={onRemove}
             >
               <Trash2 aria-hidden="true" />

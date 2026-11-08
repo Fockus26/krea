@@ -50,7 +50,7 @@ const buttonCva = cva(
         ],
         // Hover y activo de danger salen de la lámina (Componentes.dc.html), no de §2.1
         danger: [
-          "bg-error text-on-error",
+          "bg-error-fill text-on-error",
           "hover:not-disabled:not-aria-disabled:brightness-92",
           "active:not-disabled:not-aria-disabled:translate-y-px",
         ],

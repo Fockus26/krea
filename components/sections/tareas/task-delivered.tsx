@@ -30,7 +30,7 @@ export function TaskDelivered({
 }) {
   return (
     <Card className="shadow-done dark:shadow-done flex flex-col items-start gap-3">
-      <span className="grid size-14 place-items-center rounded-done bg-success text-surface">
+      <span className="grid size-14 place-items-center rounded-done bg-success-fill text-on-success">
         <Check aria-hidden="true" className="size-7" />
       </span>
       <h2 className="text-h2 text-text">¡Tarea entregada!</h2>
