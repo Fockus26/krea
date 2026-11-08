@@ -1,19 +1,19 @@
 "use server";
 // Server Actions de Evaluar (fase 07 W7, D175, D204–D205). El autor sale SIEMPRE de la sesión
 // (`exigirSesion("profesor")`), nunca del body. Cada una valida con zod y escribe la entrega y
-// `ranking/{seccion}` en UNA transacción del Admin SDK (`lib/firebase/evaluar.ts`).
+// `ranking/{seccion}` en UNA transacción de Postgres (`lib/data/evaluar.ts`).
 import { refresh } from "next/cache";
 import { exigirSesion } from "@/lib/dal";
+import {
+  deshacerEvaluacionEnTransaccion,
+  evaluarEnTransaccion,
+} from "@/lib/data/evaluar";
+import { baseDeDatos } from "@/lib/db";
 import {
   type ResultadoEvaluar,
   zDeshacerEvaluacion,
   zGuardarEvaluacion,
 } from "@/lib/evaluar-datos";
-import { baseDeDatos } from "@/lib/db";
-import {
-  deshacerEvaluacionEnTransaccion,
-  evaluarEnTransaccion,
-} from "@/lib/data/evaluar";
 
 export type { ResultadoEvaluar };
 

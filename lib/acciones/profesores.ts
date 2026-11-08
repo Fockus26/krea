@@ -12,9 +12,9 @@ import {
   zEditarProfesor,
 } from "@/lib/cuentas-datos";
 import { exigirAdmin } from "@/lib/dal";
-import { baseDeDatos, type Db } from "@/lib/db";
-import { leerUsuario } from "@/lib/data/usuarios";
 import { editarProfesorEnTransaccion } from "@/lib/data/cuentas";
+import { leerUsuario } from "@/lib/data/usuarios";
+import { baseDeDatos, type Db } from "@/lib/db";
 import { borrarEnLote, type ResultadoLote, zCedulasLote } from "@/lib/lote";
 import { zCedula } from "@/lib/modelo";
 

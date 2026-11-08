@@ -1,38 +1,39 @@
-// Evaluar y Ajustes de puntos contra el emulador de Firestore (W7, D204–D207): las transacciones
-// reales del Admin SDK que usan las Server Actions. Comprueba que el ranking se recalcula en la
+// Evaluar y Ajustes de puntos sobre Postgres en memoria (W7, D204–D207, D327): las transacciones
+// reales que usan las Server Actions. Comprueba que el ranking se recalcula en la
 // misma transacción, que un ajuste y su anulación mueven puntos y nunca la nota (D007), y que dos
 // profes escribiendo a la vez en la misma sección no pierden escrituras.
 import { beforeAll, describe, expect, test } from "bun:test";
-import {
-  getApps as getAdminApps,
-  initializeApp as initAdmin,
-} from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
 import { idAnulacion } from "@/lib/ajustes-datos";
 import {
   anularAjusteEnTransaccion,
   aplicarAjusteEnTransaccion,
-} from "@/lib/firebase/ajustes";
+} from "@/lib/data/ajustes";
 import {
   deshacerEvaluacionEnTransaccion,
   evaluarEnTransaccion,
-} from "@/lib/firebase/evaluar";
+} from "@/lib/data/evaluar";
+import type { Db } from "@/lib/db";
 import { notaFinal } from "@/lib/grades";
 import {
-  COL,
   type Entrega,
   type Equipo,
   idEntrega,
   type Tarea,
   type Usuario,
-  zAjuste,
-  zEntrega,
-  zRankingSeccion,
 } from "@/lib/modelo";
+import { baseNueva } from "./base";
+import {
+  ajuste,
+  entrega as leerEntrega,
+  ponerEntrega,
+  ponerEquipo,
+  ponerTarea,
+  ponerUsuario,
+  rankingDe,
+} from "./docs";
 
-const PROYECTO = process.env.GCLOUD_PROJECT ?? "demo-krea";
-const app = () => getAdminApps()[0] ?? initAdmin({ projectId: PROYECTO });
-const db = () => getFirestore(app());
+let base: Db;
+const db = () => base;
 
 const AHORA = Date.UTC(2026, 10, 5, 15);
 const PROFE = "30262232";
@@ -101,56 +102,47 @@ const E3 = idEntrega(T_IND, A3);
 const EG = idEntrega(T_GRU, EQ);
 
 async function ranking() {
-  const snap = await db().collection(COL.ranking).doc("5C").get();
-  return zRankingSeccion.parse(snap.data());
+  const r = await rankingDe(db(), "5C");
+  if (!r) throw new Error("sin ranking");
+  return r;
 }
 
 async function entrega(id: string) {
-  const snap = await db().collection(COL.entregas).doc(id).get();
-  return zEntrega.parse(snap.data());
+  const e = await leerEntrega(db(), id);
+  if (!e) throw new Error("sin entrega");
+  return e;
 }
 
 const puntosDe = async (c: string) => (await ranking()).alumnos[c]?.puntos;
 
 beforeAll(async () => {
-  const b = db().batch();
-  b.set(db().collection(COL.usuarios).doc(A1), alumno(A1, 15));
-  b.set(db().collection(COL.usuarios).doc(A2), alumno(A2, 20));
-  b.set(db().collection(COL.usuarios).doc(A3), alumno(A3, 20));
-  b.set(db().collection(COL.equipos).doc(EQ), equipo);
-  b.set(
-    db().collection(COL.tareas).doc(T_IND),
+  base = await baseNueva();
+  await ponerUsuario(db(), alumno(A1, 15));
+  await ponerUsuario(db(), alumno(A2, 20));
+  await ponerUsuario(db(), alumno(A3, 20));
+  await ponerEquipo(db(), EQ, equipo);
+  await ponerTarea(
+    db(),
+    T_IND,
     tarea("individual", [
       { id: "p1", enunciado: "Uno", formato: "texto", valor: 12 },
       { id: "p2", enunciado: "Dos", formato: "texto", valor: 8 },
     ]),
   );
-  b.set(
-    db().collection(COL.tareas).doc(T_GRU),
+  await ponerTarea(
+    db(),
+    T_GRU,
     tarea("grupal", [
       { id: "p1", enunciado: "Uno", formato: "texto", valor: 20 },
     ]),
   );
-  b.set(
-    db().collection(COL.entregas).doc(E1),
-    entregada(T_IND, "individual", A1, [A1]),
-  );
-  b.set(
-    db().collection(COL.entregas).doc(E2),
-    entregada(T_IND, "individual", A2, [A2]),
-  );
-  b.set(
-    db().collection(COL.entregas).doc(E3),
-    entregada(T_IND, "individual", A3, [A3]),
-  );
-  b.set(
-    db().collection(COL.entregas).doc(EG),
-    entregada(T_GRU, "grupal", EQ, [A1, A2]),
-  );
-  await b.commit();
+  await ponerEntrega(db(), E1, entregada(T_IND, "individual", A1, [A1]));
+  await ponerEntrega(db(), E2, entregada(T_IND, "individual", A2, [A2]));
+  await ponerEntrega(db(), E3, entregada(T_IND, "individual", A3, [A3]));
+  await ponerEntrega(db(), EG, entregada(T_GRU, "grupal", EQ, [A1, A2]));
 });
 
-describe("evaluar (emulador)", () => {
+describe("evaluar (Postgres)", () => {
   test("rechaza puntajes fuera del máximo, incompletos o de otra pregunta", async () => {
     const intentar = (puntos: Record<string, number>) =>
       evaluarEnTransaccion(
@@ -291,7 +283,7 @@ describe("evaluar (emulador)", () => {
   });
 });
 
-describe("ajustes de puntos (emulador)", () => {
+describe("ajustes de puntos (Postgres)", () => {
   test("ajuste + anulación: el ranking vuelve y la nota no cambia (D007, D121)", async () => {
     const antes = await puntosDe(A1);
     const notaAntes = (await entrega(E1)).evaluacion;
@@ -309,9 +301,7 @@ describe("ajustes de puntos (emulador)", () => {
       AHORA + 40,
     );
     if (!r.ok) throw new Error(r.error);
-    const aj = zAjuste.parse(
-      (await db().collection(COL.ajustes).doc(r.id).get()).data(),
-    );
+    const aj = await ajuste(db(), r.id);
     expect(aj).toMatchObject({
       seccion: "5C",
       motivo: "Participación destacada",
@@ -324,9 +314,8 @@ describe("ajustes de puntos (emulador)", () => {
 
     const an = await anularAjusteEnTransaccion(db(), PROFE_2, r.id, AHORA + 41);
     expect(an).toEqual({ ok: true, id: idAnulacion(r.id) });
-    const inversa = zAjuste.parse(
-      (await db().collection(COL.ajustes).doc(idAnulacion(r.id)).get()).data(),
-    );
+    const inversa = await ajuste(db(), idAnulacion(r.id));
+    if (!inversa) throw new Error("sin anulación");
     expect(inversa).toMatchObject({
       valor: -2,
       motivo: "Anulación",
@@ -336,9 +325,7 @@ describe("ajustes de puntos (emulador)", () => {
     });
     expect(inversa.nota).toStartWith("«Participación destacada» del ");
     // El original no se borra
-    expect((await db().collection(COL.ajustes).doc(r.id).get()).exists).toBe(
-      true,
-    );
+    expect(await ajuste(db(), r.id)).not.toBeNull();
     expect(await puntosDe(A1)).toBe(antes ?? -1);
     expect((await entrega(E1)).evaluacion).toEqual(notaAntes);
 
@@ -410,7 +397,7 @@ describe("ajustes de puntos (emulador)", () => {
   });
 });
 
-describe("concurrencia: dos profes a la vez (emulador)", () => {
+describe("concurrencia: dos profes a la vez (Postgres)", () => {
   test("en la misma sección no se pierde ninguna escritura del ranking", async () => {
     const a2 = await puntosDe(A2);
     const [r1, r2, r3] = await Promise.all([

@@ -10,8 +10,8 @@ import {
   ErrorCuenta,
   zEntradaCuenta,
 } from "@/lib/cuentas-datos";
-import { baseDeDatos } from "@/lib/db";
 import { crearCuentaCon, eliminarCuentaCon } from "@/lib/data/cuentas";
+import { baseDeDatos } from "@/lib/db";
 import { zCedula } from "@/lib/modelo";
 
 export { ErrorCuenta };

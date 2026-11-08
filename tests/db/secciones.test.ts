@@ -1,25 +1,27 @@
-// Catálogo de años y secciones contra el emulador de Firestore (D317, D318): la transacción real
+// Catálogo de años y secciones sobre Postgres en memoria (D327) (D317, D318): la transacción real
 // del Admin SDK que usan las Server Actions de lib/acciones/secciones.ts.
 import { beforeAll, describe, expect, test } from "bun:test";
-import {
-  getApps as getAdminApps,
-  initializeApp as initAdmin,
-} from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
-import { operarSeccionesEnTransaccion } from "@/lib/firebase/secciones";
-import { COL, DOC_SECCIONES, zCatalogoSecciones } from "@/lib/modelo";
+import { operarSeccionesEnTransaccion } from "@/lib/data/secciones";
+import type { Db } from "@/lib/db";
+import { DOC_SECCIONES, zCatalogoSecciones } from "@/lib/modelo";
 import type { OperacionSecciones } from "@/lib/secciones";
+import { baseNueva } from "./base";
+import * as docs from "./docs";
 
-const PROYECTO = process.env.GCLOUD_PROJECT ?? "demo-krea";
-const app = () => getAdminApps()[0] ?? initAdmin({ projectId: PROYECTO });
-const db = () => getFirestore(app());
+let base: Db;
+const db = () => base;
 
 const AHORA = Date.UTC(2026, 10, 7, 15);
 // Años que no usa ninguna otra prueba (las demás viven en 5A/5C)
 const ALUMNO_3A = "30300001";
 const TAREA_3B = "x5a-tarea-3b";
 
-const config = () => db().collection(COL.config).doc(DOC_SECCIONES);
+const config = () => ({
+  get: () => docs.snap(db(), "config", DOC_SECCIONES),
+  set: (v: Record<string, unknown>) =>
+    docs.ponerDoc(db(), "config", DOC_SECCIONES, v),
+  delete: () => docs.borrarDoc(db(), "config", DOC_SECCIONES),
+});
 const operar = (op: OperacionSecciones) =>
   operarSeccionesEnTransaccion(db(), op, AHORA);
 const leer = async () => {
@@ -28,9 +30,10 @@ const leer = async () => {
 };
 
 beforeAll(async () => {
+  base = await baseNueva();
   await config().delete();
-  await db().collection(COL.usuarios).doc(ALUMNO_3A).delete();
-  await db().collection(COL.tareas).doc(TAREA_3B).delete();
+  await docs.borrarDoc(db(), "usuarios", ALUMNO_3A);
+  await docs.borrarDoc(db(), "tareas", TAREA_3B);
 }, 30_000);
 
 describe("catálogo de secciones (D317)", () => {
@@ -60,7 +63,7 @@ describe("catálogo de secciones (D317)", () => {
   });
 
   test("renombrar una sección vacía (4B → 4D) borra su ranking viejo", async () => {
-    await db().collection(COL.ranking).doc("4B").set({
+    await docs.ponerDoc(db(), "ranking", "4B", {
       alumnos: {},
       equipos: {},
       actualizadoEn: 1,
@@ -69,9 +72,7 @@ describe("catálogo de secciones (D317)", () => {
       await operar({ tipo: "editarSeccion", codigo: "4B", letra: "D" }),
     ).toEqual({ ok: true });
     expect((await leer())?.[0]).toEqual({ numero: 4, letras: ["A", "D"] });
-    expect((await db().collection(COL.ranking).doc("4B").get()).exists).toBe(
-      false,
-    );
+    expect((await docs.snap(db(), "ranking", "4B")).exists).toBe(false);
     expect(await operar({ tipo: "eliminarSeccion", codigo: "4D" })).toEqual({
       ok: true,
     });
@@ -88,14 +89,29 @@ describe("catálogo de secciones (D317)", () => {
     ).toEqual({
       ok: true,
     });
-    await db().collection(COL.usuarios).doc(ALUMNO_3A).set({
+    await docs.ponerDoc(db(), "usuarios", ALUMNO_3A, {
+      cedula: ALUMNO_3A,
       rol: "estudiante",
+      nombres: "Alumno",
+      apellidos: "Tercero",
       seccion: "3A",
+      equipoId: null,
+      base: 20,
+      avatar: { estilo: "lorelei", semilla: ALUMNO_3A },
+      actualizadoEn: 1,
     });
-    await db()
-      .collection(COL.tareas)
-      .doc(TAREA_3B)
-      .set({ estado: "borrador", secciones: ["5A", "3B"] });
+    await docs.ponerDoc(db(), "tareas", TAREA_3B, {
+      titulo: "Borrador 3B",
+      tipo: "individual",
+      secciones: ["5A", "3B"],
+      estado: "borrador",
+      fechaEntrega: null,
+      premio: null,
+      preguntas: [],
+      importada: false,
+      autorId: null,
+      actualizadoEn: 1,
+    });
 
     expect(await operar({ tipo: "eliminarSeccion", codigo: "3A" })).toEqual({
       ok: false,
@@ -114,8 +130,8 @@ describe("catálogo de secciones (D317)", () => {
     });
     expect((await leer())?.[0]).toEqual({ numero: 3, letras: ["A", "B"] });
 
-    await db().collection(COL.usuarios).doc(ALUMNO_3A).delete();
-    await db().collection(COL.tareas).doc(TAREA_3B).delete();
+    await docs.borrarDoc(db(), "usuarios", ALUMNO_3A);
+    await docs.borrarDoc(db(), "tareas", TAREA_3B);
     expect(await operar({ tipo: "editarAnio", de: 3, a: 2 })).toEqual({
       ok: true,
     });

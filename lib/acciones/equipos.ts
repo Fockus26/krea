@@ -8,7 +8,16 @@ import { refresh } from "next/cache";
 import { almacenB2 } from "@/lib/almacen/b2";
 import { claveLogo, validarLogoSubido } from "@/lib/almacen/imagen";
 import { exigirSesion } from "@/lib/dal";
+import {
+  cambiarCapitanEnTransaccion,
+  cambiarLogoEnTransaccion,
+  crearEquipoEnTransaccion,
+  editarEquipoEnTransaccion,
+  eliminarEquipoEnTransaccion,
+  moverAlumnoEnTransaccion,
+} from "@/lib/data/equipos";
 import { catalogoSecciones } from "@/lib/datos/secciones";
+import { baseDeDatos, type Db } from "@/lib/db";
 import {
   type ResultadoEquipos,
   type ResultadoLogo,
@@ -22,17 +31,6 @@ import {
   zEditarEquipo,
 } from "@/lib/equipos-gestion";
 import { zIdDocumento } from "@/lib/evaluar-datos";
-import { baseDeDatos, type Db } from "@/lib/db";
-import {
-  cambiarCapitanEnTransaccion,
-  cambiarLogoEnTransaccion,
-  moverAlumnoEnTransaccion,
-} from "@/lib/data/equipos";
-import {
-  crearEquipoEnTransaccion,
-  editarEquipoEnTransaccion,
-  eliminarEquipoEnTransaccion,
-} from "@/lib/data/equipos";
 import { borrarEnLote, type ResultadoLote, zIdsLote } from "@/lib/lote";
 import { seccionEnCatalogo } from "@/lib/secciones";
 

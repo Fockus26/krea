@@ -36,7 +36,7 @@ grep -rhi "^# D.*modal\|^# D.*ranking" context/decisions/   # already decided? D
 ```
 
 **The kit's `reference/…`** = `~/.claude/kit-reference/…` (or `.claude/kit-reference/…`).
-**Tech refs:** firebase, vercel → its `tech/<name>.md` when the task touches it; only these.
+**Tech refs:** migrate-firebase-vps, vps-postgres, vercel → its `tech/<name>.md` when the task touches it; only these.
 
 ---
 
@@ -45,7 +45,7 @@ grep -rhi "^# D.*modal\|^# D.*ranking" context/decisions/   # already decided? D
 - Next.js (App Router) + strict **TypeScript**
 - **Component library:** shadcn/ui · **Styling:** Tailwind — only one
 - **bun** for everything — never npm, yarn or pnpm
-- Firebase: Firestore (ranking en vivo con `onSnapshot`) · Auth (cédula → email interno, D008) · Storage · sin pagos
+- Postgres en el VPS + Drizzle (ranking en vivo por sondeo) · Better Auth (cédula → email interno, D008) · Backblaze B2 · sin pagos (D327; migración desde Firebase en curso)
 - Seed: `data/seed/` (`scripts/import-excel.py`) · prototipo: `design/prototype/`
 
 ```bash
@@ -62,8 +62,8 @@ bun run context:backup       # local context/ → branch context-state (restore:
 **Dev server:** César starts it. Exceptions: the QA agents (`wave-qa`, `functional-qa`),
 and the workers if César authorizes it for a batch (each on its port). Build, typecheck, lint and tests run without asking.
 
-**QA against a local database:** `bun run qa:local -- --port <p>` starts the Firebase
-emulators (Java, no Docker), creates the `.env.test.local` accounts
+**QA against a local database:** `bun run qa:local -- --port <p> --postgres` starts Postgres
+for QA, creates the `.env.test.local` accounts
 (`EMAIL_TEST`/`PASSWORD_TEST`, `ADMIN_…`, `<ROLE>_…`) and starts the server on it. Never the
 real database. Without it: `--offline` (guest only).
 
@@ -96,7 +96,7 @@ reviewable in two minutes. One unit = one branch = one PR.
 
 ### What goes in the repo and what is local
 
-In git: `.kit-version`, `firebase/` (rules, indexes, functions), `data/seed/` and the fixed documents
+In git: `.kit-version`, `drizzle/` (migrations), `data/seed/` and the fixed documents
 of `context/`: PROJECT_CONTEXT, DESIGN_RULES, COLORS, DESIGN_TOKENS, TYPOGRAPHY, decisions/.
 Local (gitignored): CURRENT_PHASE, CONTENT_CHECKLIST, KIT_FEEDBACK, GIT_STATE, inventories, PHASE_LOG/,
 plans/ — backed up to `context-state` with `bun run context:backup`. `.env.local` is

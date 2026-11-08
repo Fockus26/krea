@@ -121,7 +121,9 @@ export const usuarios = pgTable(
     seccion: text("seccion"),
     equipoId: text("equipo_id"),
     base: doublePrecision("base").notNull(),
-    avatar: jsonb("avatar").$type<{ estilo: string; semilla: string }>().notNull(),
+    avatar: jsonb("avatar")
+      .$type<{ estilo: string; semilla: string }>()
+      .notNull(),
     apariencia: jsonb("apariencia").$type<Apariencia>(),
     admin: boolean("admin").default(false).notNull(),
     debeCambiarPassword: boolean("debe_cambiar_password")
@@ -140,9 +142,7 @@ export const usuarios = pgTable(
 export const historialBase = pgTable(
   "historial_base",
   {
-    id: text("id")
-      .primaryKey()
-      .default(sql`gen_random_uuid()::text`),
+    id: text("id").primaryKey().default(sql`gen_random_uuid()::text`),
     alumnoId: text("alumno_id").notNull(),
     de: doublePrecision("de").notNull(),
     a: doublePrecision("a").notNull(),
@@ -171,7 +171,9 @@ export const tareas = pgTable("tareas", {
   titulo: text("titulo").notNull(),
   tipo: text("tipo", { enum: ["individual", "grupal"] }).notNull(),
   secciones: text("secciones").array().notNull(),
-  estado: text("estado", { enum: ["borrador", "abierta", "evaluada"] }).notNull(),
+  estado: text("estado", {
+    enum: ["borrador", "abierta", "evaluada"],
+  }).notNull(),
   fechaEntrega: text("fecha_entrega"),
   premio: text("premio"),
   premioFoto: text("premio_foto"),
@@ -218,9 +220,7 @@ export const entregas = pgTable(
 export const ajustes = pgTable(
   "ajustes",
   {
-    id: text("id")
-      .primaryKey()
-      .default(sql`gen_random_uuid()::text`),
+    id: text("id").primaryKey().default(sql`gen_random_uuid()::text`),
     destino: text("destino", { enum: ["alumno", "equipo"] }).notNull(),
     destinoId: text("destino_id").notNull(),
     seccion: text("seccion").notNull(),

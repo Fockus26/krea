@@ -1,18 +1,13 @@
-// Tareas del profe contra el emulador de Firestore (D199–D202): las transacciones reales del
+// Tareas del profe sobre Postgres en memoria (D327) (D199–D202): las transacciones reales del
 // Admin SDK que usan las Server Actions de lib/acciones/tareas.ts.
 import { beforeAll, describe, expect, test } from "bun:test";
-import {
-  getApps as getAdminApps,
-  initializeApp as initAdmin,
-} from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
 import {
   cerrarTareaEnTransaccion,
   decidirPremioEnTransaccion,
   guardarTareaEnTransaccion,
-} from "@/lib/firebase/tareas";
+} from "@/lib/data/tareas";
+import type { Db } from "@/lib/db";
 import {
-  COL,
   type Entrega,
   type Equipo,
   idEntrega,
@@ -21,10 +16,11 @@ import {
   zTareaDoc,
 } from "@/lib/modelo";
 import type { EntradaTarea } from "@/lib/tareas-profe-datos";
+import { baseNueva } from "./base";
+import * as docs from "./docs";
 
-const PROYECTO = process.env.GCLOUD_PROJECT ?? "demo-krea";
-const app = () => getAdminApps()[0] ?? initAdmin({ projectId: PROYECTO });
-const db = () => getFirestore(app());
+let base: Db;
+const db = () => base;
 
 const HOY = "2026-11-05";
 const AHORA = Date.UTC(2026, 10, 5, 15);
@@ -98,27 +94,30 @@ const tareaPremio: Tarea = {
 };
 
 async function leer(id: string) {
-  const snap = await db().collection(COL.tareas).doc(id).get();
+  const snap = await docs.snap(db(), "tareas", id);
   return zTareaDoc.parse(snap.data());
 }
 
 beforeAll(async () => {
-  const b = db().batch();
-  b.set(db().collection(COL.equipos).doc(G1), equipo("5C-G1 Prueba"));
-  b.set(db().collection(COL.equipos).doc(G2), equipo("5C-G2 Prueba"));
-  b.set(db().collection(COL.tareas).doc(CON_PREMIO), tareaPremio);
-  b.set(
-    db().collection(COL.entregas).doc(idEntrega(CON_PREMIO, G1)),
+  base = await baseNueva();
+  await docs.ponerDoc(db(), "equipos", G1, equipo("5C-G1 Prueba"));
+  await docs.ponerDoc(db(), "equipos", G2, equipo("5C-G2 Prueba"));
+  await docs.ponerDoc(db(), "tareas", CON_PREMIO, tareaPremio);
+  await docs.ponerDoc(
+    db(),
+    "entregas",
+    idEntrega(CON_PREMIO, G1),
     evaluada(CON_PREMIO, G1, 18.5),
   );
-  b.set(
-    db().collection(COL.entregas).doc(idEntrega(CON_PREMIO, G2)),
+  await docs.ponerDoc(
+    db(),
+    "entregas",
+    idEntrega(CON_PREMIO, G2),
     evaluada(CON_PREMIO, G2, 18.5),
   );
-  await b.commit();
 });
 
-describe("guardar, publicar y cerrar (emulador)", () => {
+describe("guardar, publicar y cerrar (Postgres)", () => {
   test("borrador nuevo → publicar → editar con entregas → cerrar", async () => {
     const nuevo = await guardarTareaEnTransaccion(
       db(),
@@ -159,10 +158,11 @@ describe("guardar, publicar y cerrar (emulador)", () => {
     expect((await leer(id)).estado).toBe("abierta");
 
     // Con una entrega, las preguntas quedan como estaban
-    await db()
-      .collection(COL.entregas)
-      .doc(idEntrega(id, G1))
-      .set({ ...evaluada(id, G1, 10), estado: "entregada", evaluacion: null });
+    await docs.ponerDoc(db(), "entregas", idEntrega(id, G1), {
+      ...evaluada(id, G1, 10),
+      estado: "entregada",
+      evaluacion: null,
+    });
     const editada = await guardarTareaEnTransaccion(
       db(),
       PROFE,
@@ -221,7 +221,7 @@ describe("guardar, publicar y cerrar (emulador)", () => {
   });
 });
 
-describe("decidir el premio (emulador)", () => {
+describe("decidir el premio (Postgres)", () => {
   test("empate en 5C: dar a un empatado, no a otro; cambiar a compartir", async () => {
     expect(
       await decidirPremioEnTransaccion(
@@ -243,7 +243,7 @@ describe("decidir el premio (emulador)", () => {
     ).toEqual({ ok: true, id: CON_PREMIO });
     expect((await leer(CON_PREMIO)).estado).toBe("evaluada");
     const t = zTarea.parse(
-      (await db().collection(COL.tareas).doc(CON_PREMIO).get()).data(),
+      (await docs.snap(db(), "tareas", CON_PREMIO)).data(),
     );
     expect(t.decisionesPremio).toEqual({ "5C": { tipo: "dar", equipoId: G2 } });
     expect(
@@ -267,10 +267,12 @@ describe("decidir el premio (emulador)", () => {
         AHORA,
       ),
     ).toEqual({ ok: false, error: "sin-empate" });
-    await db()
-      .collection(COL.entregas)
-      .doc(idEntrega(CON_PREMIO, G1))
-      .set(evaluada(CON_PREMIO, G1, 19));
+    await docs.ponerDoc(
+      db(),
+      "entregas",
+      idEntrega(CON_PREMIO, G1),
+      evaluada(CON_PREMIO, G1, 19),
+    );
     expect(
       await decidirPremioEnTransaccion(
         db(),

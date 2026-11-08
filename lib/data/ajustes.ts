@@ -13,19 +13,16 @@ import {
   idAnulacion,
   type ResultadoAjuste,
 } from "@/lib/ajustes-datos";
+import { ajusteDeFila, equipoDeFila, filaDeAjuste } from "@/lib/data/filas";
+import { conAjuste, escribirRanking, leerSeccion } from "@/lib/data/ranking";
+import { leerUsuario } from "@/lib/data/usuarios";
 import type { Db } from "@/lib/db";
 import { ajustes, equipos } from "@/lib/db/schema";
-import { ajusteDeFila, equipoDeFila, filaDeAjuste } from "@/lib/data/filas";
-import {
-  conAjuste,
-  escribirRanking,
-  leerSeccion,
-} from "@/lib/data/ranking";
-import { leerUsuario } from "@/lib/data/usuarios";
 import type { SeccionId } from "@/lib/modelo";
 
 /** Id nuevo para un documento sin id propio (lo que era `collection().doc()`). */
-export const idNuevo = () => crypto.randomUUID().replaceAll("-", "").slice(0, 20);
+export const idNuevo = () =>
+  crypto.randomUUID().replaceAll("-", "").slice(0, 20);
 
 /**
  * Aplica un ajuste a un alumno o a un equipo y recalcula el ranking de su sección. Con
@@ -96,7 +93,11 @@ export async function anularAjusteEnTransaccion(
     if (datos.ajustes.some((x) => x.id === inversaId || x.anulaA === ajusteId))
       return { ok: false, error: "anulado" };
     const { id: _, ...original } = a;
-    const r = armarAnulacion({ original: { id: ajusteId, ...original }, autorId, ahora });
+    const r = armarAnulacion({
+      original: { id: ajusteId, ...original },
+      autorId,
+      ahora,
+    });
     if (!r.ok) return r;
     await tx.insert(ajustes).values(filaDeAjuste(inversaId, r.ajuste));
     await escribirRanking(

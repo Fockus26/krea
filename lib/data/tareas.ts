@@ -6,8 +6,6 @@
 // ranking (D007) y un premio no da puntos. Eliminar sí (se van sus notas): recalcula en la
 // misma transacción (D206, D242). Cada operación bloquea la fila de la tarea (`FOR UPDATE`).
 import { eq, sql } from "drizzle-orm";
-import type { Db, Tx } from "@/lib/db";
-import { entregas, equipos, tareas, usuarios } from "@/lib/db/schema";
 import { idNuevo } from "@/lib/data/ajustes";
 import {
   entregaDeFila,
@@ -16,10 +14,19 @@ import {
   tareaDeFila,
   validas,
 } from "@/lib/data/filas";
-import { leerOperacionEnTx, registrarOperacionEnTx } from "@/lib/data/operaciones";
+import {
+  leerOperacionEnTx,
+  registrarOperacionEnTx,
+} from "@/lib/data/operaciones";
 import { escribirRanking, leerSeccion } from "@/lib/data/ranking";
 import { usuarioDeFila } from "@/lib/data/usuarios";
-import { type DecisionPremio, idDeDecision, type SeccionId } from "@/lib/modelo";
+import { type Db, enSerie, type Tx } from "@/lib/db";
+import { entregas, equipos, tareas, usuarios } from "@/lib/db/schema";
+import {
+  type DecisionPremio,
+  idDeDecision,
+  type SeccionId,
+} from "@/lib/modelo";
 import {
   armarPremio,
   armarTarea,
@@ -34,7 +41,11 @@ import {
 
 /** La tarea `id` con bloqueo; `undefined` si no existe, `null` si existe pero no valida. */
 async function tareaParaActualizar(tx: Tx, id: string) {
-  const [f] = await tx.select().from(tareas).where(eq(tareas.id, id)).for("update");
+  const [f] = await tx
+    .select()
+    .from(tareas)
+    .where(eq(tareas.id, id))
+    .for("update");
   if (!f) return undefined;
   return tareaDeFila(f);
 }
@@ -118,7 +129,10 @@ export async function eliminarTareaEnTransaccion(
         imagenes: [],
       };
     }
-    const ents = await tx.select().from(entregas).where(eq(entregas.tareaId, id));
+    const ents = await tx
+      .select()
+      .from(entregas)
+      .where(eq(entregas.tareaId, id));
     // Las que no validan también se borran; para el plan solo cuentan las válidas
     const plan = planEliminar(validas(ents.map(entregaDeFila)));
     // La foto del premio se va con la tarea (D265)
@@ -182,10 +196,14 @@ export async function decidirPremioEnTransaccion(
     const t = await tareaParaActualizar(tx, tareaId);
     if (t === undefined) return { ok: false, error: "no-existe" };
     if (t === null) return { ok: false, error: "invalida" };
-    if (!t.premio || t.estado !== "evaluada" || !t.secciones.includes(seccion)) {
+    if (
+      !t.premio ||
+      t.estado !== "evaluada" ||
+      !t.secciones.includes(seccion)
+    ) {
       return { ok: false, error: "sin-empate" };
     }
-    const [eqs, ents, usrs] = await Promise.all([
+    const [eqs, ents, usrs] = await enSerie([
       tx.select().from(equipos).where(eq(equipos.seccion, seccion)),
       tx.select().from(entregas).where(eq(entregas.tareaId, tareaId)),
       tx.select().from(usuarios).where(eq(usuarios.seccion, seccion)),

@@ -2,12 +2,18 @@
 // Server Actions de la entrega (fase 07 W5, D175, D195–D197). La cédula sale SIEMPRE de la
 // sesión (`exigirSesion`), nunca del body. Subir: valida permiso e imagen y la guarda privada en
 // B2; devuelve solo la ruta. Enviar: zod + permiso + respuestas en UNA transacción, que crea la
-// entrega `entregada` (`lib/firebase/entregas.ts`). Enviar no cambia puntos (solo una entrega
+// entrega `entregada` (`lib/data/entregas.ts`). Enviar no cambia puntos (solo una entrega
 // evaluada aporta, D007), así que `ranking/{seccion}` no se recalcula aquí: lo hará W7 al evaluar.
 import { refresh } from "next/cache";
 import { almacenB2 } from "@/lib/almacen/b2";
 import { validarImagenSubida } from "@/lib/almacen/imagen";
 import { exigirSesion, sesionDeCola } from "@/lib/dal";
+import {
+  enviarEnTransaccion,
+  permisoSubida,
+  type ResultadoEnvio,
+} from "@/lib/data/entregas";
+import { baseDeDatos } from "@/lib/db";
 import {
   carpetaEntrega,
   claveImagen,
@@ -18,12 +24,6 @@ import {
   zIdPregunta,
   zIdTarea,
 } from "@/lib/entregas";
-import { baseDeDatos } from "@/lib/db";
-import {
-  enviarEnTransaccion,
-  permisoSubida,
-  type ResultadoEnvio,
-} from "@/lib/data/entregas";
 import { zOpId, zQuien } from "@/lib/offline/operacion";
 
 export type ResultadoSubida =

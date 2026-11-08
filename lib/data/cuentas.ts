@@ -16,9 +16,9 @@ import {
   type MisDatos,
   usuarioNuevo,
 } from "@/lib/cuentas-datos";
+import { filaDeUsuario, leerUsuarioParaActualizar } from "@/lib/data/usuarios";
 import type { Db, Tx } from "@/lib/db";
 import { account, session, user, usuarios } from "@/lib/db/schema";
-import { filaDeUsuario, leerUsuarioParaActualizar } from "@/lib/data/usuarios";
 import { emailInterno } from "@/lib/modelo";
 
 /** Proveedor de Better Auth para email + contraseña. */
@@ -148,7 +148,8 @@ export async function hacerAdminCon(
   return db.transaction(async (tx) => {
     const u = await leerUsuarioParaActualizar(tx, cedula);
     if (!u) return { ok: false, error: "no-existe" } as const;
-    if (u.rol !== "profesor") return { ok: false, error: "no-profesor" } as const;
+    if (u.rol !== "profesor")
+      return { ok: false, error: "no-profesor" } as const;
     if (u.admin !== true)
       await tx
         .update(usuarios)

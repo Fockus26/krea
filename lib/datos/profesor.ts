@@ -5,9 +5,6 @@ import "server-only";
 import { and, eq, isNotNull } from "drizzle-orm";
 import { cache } from "react";
 import { exigirSesion } from "@/lib/dal";
-import { db } from "@/lib/datos/comun";
-import { catalogoSecciones } from "@/lib/datos/secciones";
-import { ajustes, entregas, equipos, tareas, usuarios } from "@/lib/db/schema";
 import {
   ajusteDeFila,
   entregaDeFila,
@@ -17,6 +14,9 @@ import {
 } from "@/lib/data/filas";
 import { leerRanking } from "@/lib/data/ranking";
 import { leerUsuario, usuarioDeFila } from "@/lib/data/usuarios";
+import { db } from "@/lib/datos/comun";
+import { catalogoSecciones } from "@/lib/datos/secciones";
+import { ajustes, entregas, equipos, tareas, usuarios } from "@/lib/db/schema";
 import {
   colaPorEvaluar,
   type MapasEvaluar,
@@ -165,7 +165,9 @@ export const rankingsTodos = cache(
   async (): Promise<Partial<Record<SeccionId, RankingSeccion | null>>> => {
     await exigirSesion("profesor");
     const secciones = seccionesDe(await catalogoSecciones());
-    const leidos = await Promise.all(secciones.map((s) => leerRanking(db(), s)));
+    const leidos = await Promise.all(
+      secciones.map((s) => leerRanking(db(), s)),
+    );
     const r: Partial<Record<SeccionId, RankingSeccion | null>> = {};
     secciones.forEach((s, i) => {
       r[s] = leidos[i] ?? null;

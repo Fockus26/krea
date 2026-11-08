@@ -1,26 +1,26 @@
-// Envío de entregas contra el emulador de Firestore (D196): la transacción real del Admin SDK.
+// Envío de entregas sobre Postgres en memoria (D327) (D196): la transacción real del Admin SDK.
 // La subida a B2 no se prueba aquí (dobles en tests/unit/almacen.test.ts); las rutas de imagen
 // se arman igual que la Server Action.
 import { beforeAll, describe, expect, test } from "bun:test";
 import {
-  getApps as getAdminApps,
-  initializeApp as initAdmin,
-} from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
+  entregasDeIntegrante,
+  enviarEnTransaccion,
+  permisoSubida,
+} from "@/lib/data/entregas";
+import type { Db } from "@/lib/db";
 import { carpetaEntrega, claveImagen } from "@/lib/entregas";
-import { enviarEnTransaccion, permisoSubida } from "@/lib/firebase/entregas";
 import {
-  COL,
   type Equipo,
   idEntrega,
   type Tarea,
   type Usuario,
   zEntrega,
 } from "@/lib/modelo";
+import { baseNueva } from "./base";
+import * as docs from "./docs";
 
-const PROYECTO = process.env.GCLOUD_PROJECT ?? "demo-krea";
-const app = () => getAdminApps()[0] ?? initAdmin({ projectId: PROYECTO });
-const db = () => getFirestore(app());
+let base: Db;
+const db = () => base;
 
 const AHORA = Date.UTC(2026, 10, 5, 20, 12);
 const UUID = "0b5c3a52-7d0e-4f53-9d0b-0f1e2d3c4b5a";
@@ -78,42 +78,44 @@ async function respuestas(tareaId: string, titular: string) {
 }
 
 beforeAll(async () => {
-  const b = db().batch();
-  b.set(db().collection(COL.usuarios).doc(CAPITAN), usuario(CAPITAN, EQUIPO));
-  b.set(
-    db().collection(COL.usuarios).doc(INTEGRANTE),
+  base = await baseNueva();
+  await docs.ponerDoc(db(), "usuarios", CAPITAN, usuario(CAPITAN, EQUIPO));
+  await docs.ponerDoc(
+    db(),
+    "usuarios",
+    INTEGRANTE,
     usuario(INTEGRANTE, EQUIPO),
   );
-  b.set(db().collection(COL.usuarios).doc(SOLO), usuario(SOLO, null));
-  b.set(db().collection(COL.equipos).doc(EQUIPO), equipo);
-  b.set(
-    db().collection(COL.usuarios).doc(CAPITAN_2),
+  await docs.ponerDoc(db(), "usuarios", SOLO, usuario(SOLO, null));
+  await docs.ponerDoc(db(), "equipos", EQUIPO, equipo);
+  await docs.ponerDoc(
+    db(),
+    "usuarios",
+    CAPITAN_2,
     usuario(CAPITAN_2, EQUIPO_2),
   );
-  b.set(db().collection(COL.usuarios).doc(MOVIDO), usuario(MOVIDO, EQUIPO));
-  b.set(db().collection(COL.equipos).doc(EQUIPO_2), {
+  await docs.ponerDoc(db(), "usuarios", MOVIDO, usuario(MOVIDO, EQUIPO));
+  await docs.ponerDoc(db(), "equipos", EQUIPO_2, {
     ...equipo,
     nombre: "W5 Equipo 2",
     capitanId: CAPITAN_2,
   });
-  b.set(
-    db().collection(COL.tareas).doc("w5-ind"),
-    tarea("individual", "abierta"),
-  );
-  b.set(db().collection(COL.tareas).doc("w5-gru"), tarea("grupal", "abierta"));
-  b.set(
-    db().collection(COL.tareas).doc("w5-cerrada"),
+  await docs.ponerDoc(db(), "tareas", "w5-ind", tarea("individual", "abierta"));
+  await docs.ponerDoc(db(), "tareas", "w5-gru", tarea("grupal", "abierta"));
+  await docs.ponerDoc(
+    db(),
+    "tareas",
+    "w5-cerrada",
     tarea("individual", "evaluada"),
   );
   for (const id of ["w5-ind", "w5-gru", "w5-cerrada"]) {
     for (const t of [SOLO, CAPITAN, EQUIPO, EQUIPO_2]) {
-      b.delete(db().collection(COL.entregas).doc(idEntrega(id, t)));
+      await docs.borrarDoc(db(), "entregas", idEntrega(id, t));
     }
   }
-  await b.commit();
 });
 
-describe("enviarEnTransaccion (emulador)", () => {
+describe("enviarEnTransaccion (Postgres)", () => {
   test("individual: crea la entrega `entregada` y no se puede enviar dos veces", async () => {
     const envio = {
       tareaId: "w5-ind",
@@ -122,10 +124,7 @@ describe("enviarEnTransaccion (emulador)", () => {
     expect(await enviarEnTransaccion(db(), SOLO, envio, AHORA)).toEqual({
       ok: true,
     });
-    const snap = await db()
-      .collection(COL.entregas)
-      .doc(idEntrega("w5-ind", SOLO))
-      .get();
+    const snap = await docs.snap(db(), "entregas", idEntrega("w5-ind", SOLO));
     const e = zEntrega.parse(snap.data());
     expect(e).toMatchObject({
       tipo: "individual",
@@ -168,20 +167,14 @@ describe("enviarEnTransaccion (emulador)", () => {
     expect(await enviarEnTransaccion(db(), CAPITAN, envio, AHORA)).toEqual({
       ok: true,
     });
-    const snap = await db()
-      .collection(COL.entregas)
-      .doc(idEntrega("w5-gru", EQUIPO))
-      .get();
+    const snap = await docs.snap(db(), "entregas", idEntrega("w5-gru", EQUIPO));
     expect(snap.get("integrantes")).toEqual([CAPITAN, INTEGRANTE, MOVIDO]);
     expect(snap.get("titularId")).toBe(EQUIPO);
   });
 
   test("grupal: el alumno movido tras la entrega se queda con su equipo viejo (F-A2, D221)", async () => {
     // Depende del test anterior: EQUIPO ya entregó w5-gru con MOVIDO dentro.
-    await db()
-      .collection(COL.usuarios)
-      .doc(MOVIDO)
-      .update({ equipoId: EQUIPO_2 });
+    await docs.actualizarDoc(db(), "usuarios", MOVIDO, { equipoId: EQUIPO_2 });
     const envio = {
       tareaId: "w5-gru",
       respuestas: await respuestas("w5-gru", EQUIPO_2),
@@ -189,19 +182,16 @@ describe("enviarEnTransaccion (emulador)", () => {
     expect(await enviarEnTransaccion(db(), CAPITAN_2, envio, AHORA)).toEqual({
       ok: true,
     });
-    const nueva = await db()
-      .collection(COL.entregas)
-      .doc(idEntrega("w5-gru", EQUIPO_2))
-      .get();
+    const nueva = await docs.snap(
+      db(),
+      "entregas",
+      idEntrega("w5-gru", EQUIPO_2),
+    );
     expect(nueva.get("integrantes")).toEqual([CAPITAN_2]);
-    const conMovido = await db()
-      .collection(COL.entregas)
-      .where("tareaId", "==", "w5-gru")
-      .where("integrantes", "array-contains", MOVIDO)
-      .get();
-    expect(conMovido.docs.map((d) => d.id)).toEqual([
-      idEntrega("w5-gru", EQUIPO),
-    ]);
+    const conMovido = (await entregasDeIntegrante(db(), MOVIDO)).filter(
+      (e) => e.tareaId === "w5-gru",
+    );
+    expect(conMovido.map((d) => d.id)).toEqual([idEntrega("w5-gru", EQUIPO)]);
   });
 
   test("sin equipo, tarea cerrada, imagen ajena o inexistente: no escribe nada", async () => {
@@ -242,10 +232,7 @@ describe("enviarEnTransaccion (emulador)", () => {
       ["w5-cerrada", SOLO],
       ["w5-ind", CAPITAN],
     ] as const) {
-      const s = await db()
-        .collection(COL.entregas)
-        .doc(idEntrega(t, tit))
-        .get();
+      const s = await docs.snap(db(), "entregas", idEntrega(t, tit));
       expect(s.exists).toBe(false);
     }
   });

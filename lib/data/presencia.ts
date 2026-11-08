@@ -49,7 +49,9 @@ export async function quitarPresencia(
 ): Promise<void> {
   await db
     .delete(presencia)
-    .where(and(eq(presencia.alumnoId, alumnoId), eq(presencia.profeId, profeId)));
+    .where(
+      and(eq(presencia.alumnoId, alumnoId), eq(presencia.profeId, profeId)),
+    );
 }
 
 /** Al eliminar un alumno (D268): fuera sus entradas. Devuelve cuántas había. */

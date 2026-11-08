@@ -6,9 +6,6 @@ import "server-only";
 import { and, arrayContains, eq } from "drizzle-orm";
 import { cache } from "react";
 import { exigirSesion } from "@/lib/dal";
-import { db } from "@/lib/datos/comun";
-import { urlsFirmadas } from "@/lib/datos/imagenes";
-import { ajustes, entregas, equipos, tareas, usuarios } from "@/lib/db/schema";
 import { entregasDeIntegrante } from "@/lib/data/entregas";
 import {
   ajusteDeFila,
@@ -19,6 +16,9 @@ import {
 } from "@/lib/data/filas";
 import { leerRanking } from "@/lib/data/ranking";
 import { leerUsuario, usuarioDeFila } from "@/lib/data/usuarios";
+import { db } from "@/lib/datos/comun";
+import { urlsFirmadas } from "@/lib/datos/imagenes";
+import { ajustes, entregas, equipos, tareas, usuarios } from "@/lib/db/schema";
 import type {
   Entrega,
   Equipo,
@@ -78,7 +78,9 @@ export const integrantesDe = cache(
     const filas = await db()
       .select()
       .from(usuarios)
-      .where(and(eq(usuarios.equipoId, equipoId), eq(usuarios.rol, "estudiante")));
+      .where(
+        and(eq(usuarios.equipoId, equipoId), eq(usuarios.rol, "estudiante")),
+      );
     return validas(filas.map(usuarioDeFila));
   },
 );
@@ -95,7 +97,10 @@ export const datosAlumno = cache(async (): Promise<DatosAlumno> => {
         .select()
         .from(ajustes)
         .where(
-          and(eq(ajustes.destino, "alumno"), eq(ajustes.destinoId, usuario.cedula)),
+          and(
+            eq(ajustes.destino, "alumno"),
+            eq(ajustes.destinoId, usuario.cedula),
+          ),
         )
         .then((filas) => validas(filas.map(ajusteDeFila))),
       rankingDeSeccion(seccion),

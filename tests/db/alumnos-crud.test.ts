@@ -1,26 +1,22 @@
-// Alta y baja de alumnos y gestión de equipos contra los emuladores (W12, D267–D270, D307): las
+// Alta y baja de alumnos y gestión de equipos sobre Postgres en memoria (D327) (W12, D267–D270, D307): las
 // transacciones reales del Admin SDK que usan las Server Actions de Alumnos y Equipos. Datos
 // propios en 5A (cédulas 3975xxxx, equipos `w12-…`) para no cruzarse con las demás pruebas.
 import { beforeAll, describe, expect, test } from "bun:test";
 import {
-  getApps as getAdminApps,
-  initializeApp as initAdmin,
-} from "firebase-admin/app";
-import { getAuth } from "firebase-admin/auth";
-import { getFirestore } from "firebase-admin/firestore";
-import {
-  borrarAuthAlumno,
   eliminarAlumnoEnTransaccion,
   equipoValidoPara,
   incorporarAlumnoEnTransaccion,
   resumenBorradoCon,
-} from "@/lib/firebase/alumnos-alta";
-import { crearCuentaCon } from "@/lib/firebase/cuentas";
+} from "@/lib/data/alumnos-alta";
+import { crearCuentaCon } from "@/lib/data/cuentas";
+import { entregasDeIntegrante } from "@/lib/data/entregas";
 import {
   crearEquipoEnTransaccion,
   editarEquipoEnTransaccion,
   eliminarEquipoEnTransaccion,
-} from "@/lib/firebase/equipos-gestion";
+} from "@/lib/data/equipos";
+import type { Db } from "@/lib/db";
+import { historialBase } from "@/lib/db/schema";
 import {
   type Ajuste,
   COL,
@@ -34,11 +30,11 @@ import {
   zUsuario,
 } from "@/lib/modelo";
 import { notaDeIntegrante } from "@/lib/ranking-datos";
+import { baseNueva } from "./base";
+import * as docs from "./docs";
 
-const PROYECTO = process.env.GCLOUD_PROJECT ?? "demo-krea";
-const app = () => getAdminApps()[0] ?? initAdmin({ projectId: PROYECTO });
-const db = () => getFirestore(app());
-const auth = () => getAuth(app());
+let base: Db;
+const db = () => base;
 
 const AHORA = Date.UTC(2026, 10, 6, 18);
 const PROFE = "39759999";
@@ -128,51 +124,69 @@ const ajuste = (
 });
 
 const ranking = async () =>
-  zRankingSeccion.parse(
-    (await db().collection(COL.ranking).doc("5A").get()).data(),
-  );
+  zRankingSeccion.parse((await docs.snap(db(), "ranking", "5A")).data());
 const existe = async (col: string, id: string) =>
-  (await db().collection(col).doc(id).get()).exists;
+  (await docs.snap(db(), col as Parameters<typeof docs.snap>[1], id)).exists;
 
 beforeAll(async () => {
-  if (!process.env.FIRESTORE_EMULATOR_HOST)
-    throw new Error("Sin emulador de Firestore");
-  await auth()
-    .deleteUser(NUEVO)
-    .catch(() => {});
-  const b = db().batch();
+  base = await baseNueva();
   const set = (col: string, id: string, data: object) =>
-    b.set(db().collection(col).doc(id), data);
-  b.delete(db().collection(COL.usuarios).doc(NUEVO));
-  b.delete(db().collection(COL.privados).doc(NUEVO));
-  set(COL.usuarios, PROFE, {
+    docs.ponerDoc(db(), col as Parameters<typeof docs.ponerDoc>[1], id, data);
+  await docs.borrarDoc(db(), "usuarios", NUEVO);
+  await docs.borrarDoc(db(), "privados", NUEVO);
+  await set(COL.usuarios, PROFE, {
     ...alumno(PROFE, null),
     rol: "profesor",
     seccion: null,
   });
-  set(COL.usuarios, CAP, alumno(CAP, E_LLENO));
-  set(COL.usuarios, OTRO, alumno(OTRO, E_LLENO));
-  set(COL.privados, CAP, { email: "cap@example.com" });
-  set(COL.equipos, E_VACIO, equipo("W12 Vacío", null));
-  set(COL.equipos, E_LLENO, equipo("W12 Lleno", CAP));
-  set(COL.equipos, E_CON_ENTREGA, equipo("W12 Con entrega", null));
-  set(COL.equipos, E_CON_AJUSTE, equipo("W12 Con ajuste", null));
-  set(COL.equipos, E_OTRA, equipo("W12 Otra sección", null, "5C"));
-  set(COL.entregas, idEntrega("w12-t1", CAP), individual("w12-t1", CAP, 18));
-  set(COL.entregas, idEntrega("w12-t2", CAP), individual("w12-t2", CAP, 12));
-  set(COL.entregas, idEntrega("w12-t3", CAP), individual("w12-t3", CAP, null));
-  set(COL.entregas, idEntrega("w12-t1", OTRO), individual("w12-t1", OTRO, 15));
-  set(COL.entregas, idEntrega("w12-g1", E_LLENO), grupal("w12-g1", E_LLENO));
-  set(
+  await set(COL.usuarios, CAP, alumno(CAP, E_LLENO));
+  await set(COL.usuarios, OTRO, alumno(OTRO, E_LLENO));
+  await set(COL.privados, CAP, { email: "cap@example.com" });
+  await set(COL.equipos, E_VACIO, equipo("W12 Vacío", null));
+  await set(COL.equipos, E_LLENO, equipo("W12 Lleno", CAP));
+  await set(COL.equipos, E_CON_ENTREGA, equipo("W12 Con entrega", null));
+  await set(COL.equipos, E_CON_AJUSTE, equipo("W12 Con ajuste", null));
+  await set(COL.equipos, E_OTRA, equipo("W12 Otra sección", null, "5C"));
+  await set(
+    COL.entregas,
+    idEntrega("w12-t1", CAP),
+    individual("w12-t1", CAP, 18),
+  );
+  await set(
+    COL.entregas,
+    idEntrega("w12-t2", CAP),
+    individual("w12-t2", CAP, 12),
+  );
+  await set(
+    COL.entregas,
+    idEntrega("w12-t3", CAP),
+    individual("w12-t3", CAP, null),
+  );
+  await set(
+    COL.entregas,
+    idEntrega("w12-t1", OTRO),
+    individual("w12-t1", OTRO, 15),
+  );
+  await set(
+    COL.entregas,
+    idEntrega("w12-g1", E_LLENO),
+    grupal("w12-g1", E_LLENO),
+  );
+  await set(
     COL.entregas,
     idEntrega("w12-g1", E_CON_ENTREGA),
     grupal("w12-g1", E_CON_ENTREGA),
   );
-  set(COL.ajustes, "w12-aj-cap", ajuste("alumno", CAP));
-  set(COL.ajustes, "w12-aj-cap-anula", ajuste("alumno", CAP, "w12-aj-cap"));
-  set(COL.ajustes, "w12-aj-otro", ajuste("alumno", OTRO));
-  set(COL.ajustes, "w12-aj-equipo", ajuste("equipo", E_CON_AJUSTE));
-  set(COL.historialBase, "w12-hist-cap", {
+  await set(COL.ajustes, "w12-aj-cap", ajuste("alumno", CAP));
+  await set(
+    COL.ajustes,
+    "w12-aj-cap-anula",
+    ajuste("alumno", CAP, "w12-aj-cap"),
+  );
+  await set(COL.ajustes, "w12-aj-otro", ajuste("alumno", OTRO));
+  await set(COL.ajustes, "w12-aj-equipo", ajuste("equipo", E_CON_AJUSTE));
+  await db().insert(historialBase).values({
+    id: "w12-hist-cap",
     alumnoId: CAP,
     de: 20,
     a: 18,
@@ -180,7 +194,6 @@ beforeAll(async () => {
     autorId: PROFE,
     en: 1,
   });
-  await b.commit();
 }, 30_000);
 
 describe("agregar alumno (D267)", () => {
@@ -192,7 +205,6 @@ describe("agregar alumno (D267)", () => {
 
   test("crea la cuenta, entra en un equipo vacío como capitán y en el ranking", async () => {
     const { passwordTemporal } = await crearCuentaCon(
-      auth(),
       db(),
       {
         rol: "estudiante",
@@ -207,14 +219,10 @@ describe("agregar alumno (D267)", () => {
     expect(passwordTemporal.length).toBeGreaterThanOrEqual(12);
     const r = await incorporarAlumnoEnTransaccion(db(), NUEVO, E_VACIO, AHORA);
     expect(r).toEqual({ ok: true, afectados: [NUEVO] });
-    const u = zUsuario.parse(
-      (await db().collection(COL.usuarios).doc(NUEVO).get()).data(),
-    );
+    const u = zUsuario.parse((await docs.snap(db(), "usuarios", NUEVO)).data());
     expect(u.equipoId).toBe(E_VACIO);
     expect(u.debeCambiarPassword).toBe(true);
-    const e = zEquipo.parse(
-      (await db().collection(COL.equipos).doc(E_VACIO).get()).data(),
-    );
+    const e = zEquipo.parse((await docs.snap(db(), "equipos", E_VACIO)).data());
     expect(e.capitanId).toBe(NUEVO);
     const rk = await ranking();
     expect(rk.alumnos[NUEVO]).toMatchObject({ equipoId: E_VACIO, puntos: 0 });
@@ -225,8 +233,8 @@ describe("agregar alumno (D267)", () => {
       await incorporarAlumnoEnTransaccion(db(), NUEVO, E_OTRA, AHORA),
     ).toEqual({ ok: false, error: "otra-seccion" });
     // Dejar al nuevo fuera para las pruebas de eliminar equipo
-    await db().collection(COL.usuarios).doc(NUEVO).update({ equipoId: null });
-    await db().collection(COL.equipos).doc(E_VACIO).update({ capitanId: null });
+    await docs.actualizarDoc(db(), "usuarios", NUEVO, { equipoId: null });
+    await docs.actualizarDoc(db(), "equipos", E_VACIO, { capitanId: null });
     const r = await incorporarAlumnoEnTransaccion(db(), NUEVO, null, AHORA + 1);
     expect(r).toEqual({ ok: true, afectados: [] });
     const rk = await ranking();
@@ -297,18 +305,13 @@ describe("eliminar alumno (D268, D269)", () => {
     expect(await existe(COL.entregas, idEntrega("w12-t1", OTRO))).toBe(true);
     expect(await existe(COL.ajustes, "w12-aj-otro")).toBe(true);
     const g = (
-      await db()
-        .collection(COL.entregas)
-        .doc(idEntrega("w12-g1", E_LLENO))
-        .get()
+      await docs.snap(db(), "entregas", idEntrega("w12-g1", E_LLENO))
     ).data() as Entrega;
     expect(g.integrantes).toEqual([CAP, OTRO]);
     expect(g.evaluacion?.puntaje).toBe(16);
 
     // El cargo pasa al siguiente integrante
-    const e = zEquipo.parse(
-      (await db().collection(COL.equipos).doc(E_LLENO).get()).data(),
-    );
+    const e = zEquipo.parse((await docs.snap(db(), "equipos", E_LLENO)).data());
     expect(e.capitanId).toBe(OTRO);
 
     const despues = await ranking();
@@ -325,28 +328,14 @@ describe("eliminar alumno (D268, D269)", () => {
     });
   });
 
-  test("borrarAuthAlumno borra al alumno, no a un profe, y es idempotente", async () => {
-    await borrarAuthAlumno(auth(), NUEVO);
-    expect(
-      await auth()
-        .getUser(NUEVO)
-        .then(() => "sigue")
-        .catch((e: { code?: string }) => e.code),
-    ).toBe("auth/user-not-found");
-    await borrarAuthAlumno(auth(), NUEVO);
-
-    await auth()
-      .deleteUser(PROFE)
-      .catch(() => {});
-    await auth().createUser({ uid: PROFE, password: "Prueba-W12-ok" });
-    await auth().setCustomUserClaims(PROFE, {
-      rol: "profesor",
-      seccion: null,
-      equipoId: null,
+  test("al borrar al alumno se va también su cuenta (no puede volver a entrar)", async () => {
+    expect(await docs.existeCuenta(db(), CAP)).toBe(false);
+    // Un profesor no se borra por aquí (D234)
+    expect(await eliminarAlumnoEnTransaccion(db(), PROFE, AHORA)).toEqual({
+      ok: false,
+      error: "no-alumno",
     });
-    await borrarAuthAlumno(auth(), PROFE);
-    expect((await auth().getUser(PROFE)).uid).toBe(PROFE);
-    await auth().deleteUser(PROFE);
+    expect(await docs.existeCuenta(db(), PROFE)).toBe(true);
   });
 });
 
@@ -362,9 +351,7 @@ describe("equipos (D270, D307–D309)", () => {
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     creado = r.id;
-    const e = zEquipo.parse(
-      (await db().collection(COL.equipos).doc(creado).get()).data(),
-    );
+    const e = zEquipo.parse((await docs.snap(db(), "equipos", creado)).data());
     expect(e).toEqual({
       nombre: "W12 Nuevo",
       seccion: "5A",
@@ -403,9 +390,7 @@ describe("equipos (D270, D307–D309)", () => {
       AHORA,
     );
     expect(r).toEqual({ ok: true, id: creado });
-    const e = zEquipo.parse(
-      (await db().collection(COL.equipos).doc(creado).get()).data(),
-    );
+    const e = zEquipo.parse((await docs.snap(db(), "equipos", creado)).data());
     expect(e.nombre).toBe("W12 Renombrado");
     expect(e.tema).toBeNull();
     expect((await ranking()).equipos[creado]?.nombre).toBe("W12 Renombrado");
@@ -413,24 +398,26 @@ describe("equipos (D270, D307–D309)", () => {
 
   test("con integrantes, entregas y ajustes también se elimina: se deshace todo (D307)", async () => {
     // Datos propios: 2 integrantes, 1 grupal evaluada, 1 ajuste del equipo y 1 de un alumno
-    const b = db().batch();
-    b.set(db().collection(COL.usuarios).doc(D1), alumno(D1, E_DISOLVER));
-    b.set(db().collection(COL.usuarios).doc(D2), alumno(D2, E_DISOLVER));
-    b.set(
-      db().collection(COL.equipos).doc(E_DISOLVER),
+    await docs.ponerDoc(db(), "usuarios", D1, alumno(D1, E_DISOLVER));
+    await docs.ponerDoc(db(), "usuarios", D2, alumno(D2, E_DISOLVER));
+    await docs.ponerDoc(
+      db(),
+      "equipos",
+      E_DISOLVER,
       equipo("W12 Disolver", D1),
     );
-    b.set(db().collection(COL.entregas).doc(idEntrega("w12-g2", E_DISOLVER)), {
+    await docs.ponerDoc(db(), "entregas", idEntrega("w12-g2", E_DISOLVER), {
       ...grupal("w12-g2", E_DISOLVER),
       integrantes: [D1, D2],
       enviadaPor: D1,
     });
-    b.set(
-      db().collection(COL.ajustes).doc("w12-aj-disolver"),
+    await docs.ponerDoc(
+      db(),
+      "ajustes",
+      "w12-aj-disolver",
       ajuste("equipo", E_DISOLVER),
     );
-    b.set(db().collection(COL.ajustes).doc("w12-aj-d1"), ajuste("alumno", D1));
-    await b.commit();
+    await docs.ponerDoc(db(), "ajustes", "w12-aj-d1", ajuste("alumno", D1));
     await incorporarAlumnoEnTransaccion(db(), D2, E_DISOLVER, AHORA);
     const antes = await ranking();
     expect(antes.equipos[E_DISOLVER]?.puntos).toBeGreaterThan(0);
@@ -444,9 +431,7 @@ describe("equipos (D270, D307–D309)", () => {
 
     // Integrantes «Sin equipo»
     for (const c of [D1, D2]) {
-      const u = zUsuario.parse(
-        (await db().collection(COL.usuarios).doc(c).get()).data(),
-      );
+      const u = zUsuario.parse((await docs.snap(db(), "usuarios", c)).data());
       expect(u.equipoId).toBeNull();
       expect(u.actualizadoEn).toBe(AHORA + 9);
     }
@@ -454,10 +439,7 @@ describe("equipos (D270, D307–D309)", () => {
     // La entrega se queda intacta con el nombre del equipo
     const g = zEntrega.parse(
       (
-        await db()
-          .collection(COL.entregas)
-          .doc(idEntrega("w12-g2", E_DISOLVER))
-          .get()
+        await docs.snap(db(), "entregas", idEntrega("w12-g2", E_DISOLVER))
       ).data(),
     );
     expect(g.titularNombre).toBe("W12 Disolver");
@@ -479,11 +461,7 @@ describe("equipos (D270, D307–D309)", () => {
     });
 
     // Su nota en la grupal sigue saliendo: la busca por `integrantes`, como el DAL
-    const suyas = await db()
-      .collection(COL.entregas)
-      .where("integrantes", "array-contains", D2)
-      .get();
-    const deD2 = suyas.docs.map((d) => zEntrega.parse(d.data()));
+    const deD2 = await entregasDeIntegrante(db(), D2);
     const nota = deD2.find((e) => e.tareaId === "w12-g2");
     expect(nota && notaDeIntegrante(nota, 20)).toBe(16);
   });
@@ -496,10 +474,7 @@ describe("equipos (D270, D307–D309)", () => {
       expect(await existe(COL.equipos, id)).toBe(false);
     }
     const g = (
-      await db()
-        .collection(COL.entregas)
-        .doc(idEntrega("w12-g1", E_CON_ENTREGA))
-        .get()
+      await docs.snap(db(), "entregas", idEntrega("w12-g1", E_CON_ENTREGA))
     ).data() as Entrega;
     expect(g.titularNombre).toBe("W12 Con entrega");
     expect(g.evaluacion?.puntaje).toBe(16);

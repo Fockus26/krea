@@ -1,10 +1,10 @@
-// Modelo de datos de Firestore (fase 07, D174–D177). Tipos, nombres de colecciones y esquemas
-// zod de cada documento. Sin Firebase: se usa igual en el servidor (Admin SDK), en el cliente
-// (lecturas con onSnapshot), en el seed del emulador y en las pruebas.
+// Modelo de datos (fase 07, D174–D177; en Postgres desde D327). Tipos, nombres de colecciones y
+// esquemas zod de cada documento. Cada colección es hoy una tabla (`lib/db/schema.ts`) y cada fila
+// se valida con estos esquemas al leerla (`lib/data/filas.ts`); se usan igual en el servidor, en el
+// cliente (lo que llega por las rutas de sondeo), en el seed y en las pruebas.
 //
-// Escrituras: SOLO el servidor (Server Actions + Admin SDK, D175). Las reglas niegan toda
-// escritura del cliente; el cliente solo lee lo que su rol le deja (firebase/firestore.rules).
-// Única excepción: la presencia efímera de `presencia/` (D275), que escribe el navegador del profe.
+// Escrituras: SOLO el servidor (Server Actions, D175). El navegador no toca la base: lee por
+// /api/ranking y /api/presencia, y marca su presencia por /api/presencia (D275, D327).
 import { z } from "zod";
 import { esClaveValida } from "@/lib/almacen/clave";
 import { esDiaValido } from "@/lib/fecha";
@@ -480,7 +480,7 @@ export type Claims = {
 /**
  * Claims que salen del perfil. `admin` y `debeCambiarPassword` solo van cuando son `true` (un
  * perfil sin ellas deja las claims como antes); quien las mezcla con las que ya tiene la cuenta
- * y quiere quitarlas las borra antes (`lib/firebase/cuentas.ts`).
+ * y quiere quitarlas las borra antes (`lib/data/cuentas.ts`).
  */
 export function claimsDe(
   u: Pick<Usuario, "rol" | "seccion" | "equipoId"> &

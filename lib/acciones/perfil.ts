@@ -9,9 +9,9 @@ import { headers } from "next/headers";
 import { authKrea } from "@/lib/better-auth";
 import { zMisDatos } from "@/lib/cuentas-datos";
 import { verificarSesion } from "@/lib/dal";
+import { crearPasswordPropia, guardarMisDatosCon } from "@/lib/data/cuentas";
 import { baseDeDatos } from "@/lib/db";
 import { ranking, usuarios } from "@/lib/db/schema";
-import { crearPasswordPropia, guardarMisDatosCon } from "@/lib/data/cuentas";
 import { emailInterno, zApariencia } from "@/lib/modelo";
 import {
   type ErrorCambioPassword,
@@ -202,12 +202,7 @@ export async function guardarMisDatos(
   const datos = zMisDatos.safeParse(entrada);
   if (!datos.success) return { ok: false };
   try {
-    const r = await guardarMisDatosCon(
-      db,
-      sesion.uid,
-      datos.data,
-      Date.now(),
-    );
+    const r = await guardarMisDatosCon(db, sesion.uid, datos.data, Date.now());
     if (!r.ok) return { ok: false };
     refresh();
     return { ok: true };

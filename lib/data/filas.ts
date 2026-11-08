@@ -68,7 +68,7 @@ export function tareaDeFila(f: FilaTarea): ConId<TareaDoc> | null {
     zTareaDoc,
     "tareas",
     id,
-    sinNull(resto, ["premioFoto", "decisionesPremio"]),
+    sinNull(resto, ["decisionesPremio"]),
   );
   return t ? { id, ...t } : null;
 }
@@ -100,7 +100,9 @@ export function entregaDeFila(f: FilaEntrega): ConId<Entrega> | null {
   const { id, evaluacionAnterior, ...resto } = f;
   const e = validar(zEntrega, "entregas", id, {
     ...sinNull(resto, ["titularNombre"]),
-    ...(evaluacionAnterior ? { evaluacionAnterior: evaluacionAnterior.previa } : {}),
+    ...(evaluacionAnterior
+      ? { evaluacionAnterior: evaluacionAnterior.previa }
+      : {}),
   });
   return e ? { id, ...e } : null;
 }
@@ -120,7 +122,9 @@ export function filaDeEntrega(id: string, e: Entrega): FilaEntrega {
     enviadaEn: e.enviadaEn,
     evaluacion: e.evaluacion,
     evaluacionAnterior:
-      e.evaluacionAnterior === undefined ? null : { previa: e.evaluacionAnterior },
+      e.evaluacionAnterior === undefined
+        ? null
+        : { previa: e.evaluacionAnterior },
   };
 }
 

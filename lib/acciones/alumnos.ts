@@ -21,8 +21,6 @@ import {
 import { type ResultadoAlumno, zEditarAlumno } from "@/lib/alumnos-datos";
 import { crearCuenta, ErrorCuenta } from "@/lib/cuentas";
 import { exigirSesion } from "@/lib/dal";
-import { catalogoSecciones } from "@/lib/datos/secciones";
-import { baseDeDatos } from "@/lib/db";
 import { editarAlumnoEnTransaccion } from "@/lib/data/alumnos";
 import {
   eliminarAlumnoEnTransaccion,
@@ -30,7 +28,9 @@ import {
   incorporarAlumnoEnTransaccion,
   resumenBorradoCon,
 } from "@/lib/data/alumnos-alta";
+import { catalogoSecciones } from "@/lib/datos/secciones";
 import type { Db } from "@/lib/db";
+import { baseDeDatos } from "@/lib/db";
 import { borrarEnLote, type ResultadoLote, zCedulasLote } from "@/lib/lote";
 import { zCedula } from "@/lib/modelo";
 import { seccionEnCatalogo } from "@/lib/secciones";

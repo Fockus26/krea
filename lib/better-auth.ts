@@ -10,7 +10,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { hashPassword, verifyPassword } from "better-auth/crypto";
 import { nextCookies } from "better-auth/next-js";
 import { FirebaseScrypt } from "firebase-scrypt";
-import { baseDeDatos } from "@/lib/db";
+import { baseDeDatos, type Db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { SESION_MS } from "@/lib/sesion";
 
@@ -58,13 +58,15 @@ export async function verificarHash({
  */
 const tokens = new Map<string, string>();
 
-function crear() {
-  const db = baseDeDatos();
-  if (!db) return null;
+/** Better Auth sobre una base dada (la del VPS en la app, PGlite en las pruebas). */
+export function crearAuth(
+  db: Db,
+  opciones: { secret?: string; baseURL?: string } = {},
+) {
   return betterAuth({
     database: drizzleAdapter(db, { provider: "pg", schema }),
-    secret: process.env.BETTER_AUTH_SECRET,
-    baseURL: process.env.BETTER_AUTH_URL,
+    secret: opciones.secret ?? process.env.BETTER_AUTH_SECRET,
+    baseURL: opciones.baseURL ?? process.env.BETTER_AUTH_URL,
     emailAndPassword: {
       enabled: true,
       disableSignUp: true,
@@ -95,13 +97,15 @@ function crear() {
   });
 }
 
-export type AuthKrea = NonNullable<ReturnType<typeof crear>>;
+export type AuthKrea = ReturnType<typeof crearAuth>;
 
 let instancia: AuthKrea | null = null;
 
 /** `null` sin base de datos configurada: nadie entra (D181, «proteger siempre»). */
 export function authKrea(): AuthKrea | null {
-  if (!instancia) instancia = crear();
+  if (instancia) return instancia;
+  const db = baseDeDatos();
+  instancia = db ? crearAuth(db) : null;
   return instancia;
 }
 
@@ -109,8 +113,8 @@ export function authKrea(): AuthKrea | null {
 export async function tokenRecuperacion(
   cedula: string,
   emailInternoCuenta: string,
+  auth: AuthKrea | null = authKrea(),
 ): Promise<string | null> {
-  const auth = authKrea();
   if (!auth) return null;
   tokens.delete(cedula);
   await auth.api.requestPasswordReset({

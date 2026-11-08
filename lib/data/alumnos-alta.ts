@@ -15,21 +15,25 @@ import {
   planBorradoAlumno,
   type ResumenBorrado,
 } from "@/lib/alumnos-alta";
-import type { Db, Tx } from "@/lib/db";
+import type { ResultadoMover } from "@/lib/data/equipos";
+import { entregaDeFila, equipoDeFila } from "@/lib/data/filas";
 import {
-  ajustes as tAjustes,
-  entregas as tEntregas,
+  type DatosSeccion,
+  escribirRanking,
+  leerSeccion,
+} from "@/lib/data/ranking";
+import { leerUsuario } from "@/lib/data/usuarios";
+import { type Db, enSerie, type Tx } from "@/lib/db";
+import {
   equipos,
   historialBase,
   presencia,
   recuperaciones,
+  ajustes as tAjustes,
+  entregas as tEntregas,
   user,
   usuarios,
 } from "@/lib/db/schema";
-import type { ResultadoMover } from "@/lib/data/equipos";
-import { entregaDeFila, equipoDeFila } from "@/lib/data/filas";
-import { type DatosSeccion, escribirRanking, leerSeccion } from "@/lib/data/ranking";
-import { leerUsuario } from "@/lib/data/usuarios";
 import { cambiosEntre, conCambios, estadoDeDatos } from "@/lib/equipos-datos";
 import { equipoDeCedula, moverAlumno } from "@/lib/equipos-profe";
 import { type SeccionId, type Usuario, zAjuste } from "@/lib/modelo";
@@ -66,7 +70,10 @@ export async function incorporarAlumnoEnTransaccion(
       return { ok: false, error: "invalida" };
     const seccion = u.seccion;
     if (equipoId) {
-      const [f] = await tx.select().from(equipos).where(eq(equipos.id, equipoId));
+      const [f] = await tx
+        .select()
+        .from(equipos)
+        .where(eq(equipos.id, equipoId));
       const e = f ? equipoDeFila(f) : null;
       if (!e) return { ok: false, error: "no-existe" };
       if (e.seccion !== seccion) return { ok: false, error: "otra-seccion" };
@@ -74,7 +81,12 @@ export async function incorporarAlumnoEnTransaccion(
     const datos = await leerSeccion(tx, seccion);
     const antes = estadoDeDatos(seccion, datos.usuarios, datos.equipos);
     const despues = equipoId ? moverAlumno(antes, cedula, equipoId) : antes;
-    const cambios = cambiosEntre(despues, datos.usuarios, datos.equipos, seccion);
+    const cambios = cambiosEntre(
+      despues,
+      datos.usuarios,
+      datos.equipos,
+      seccion,
+    );
     for (const c of cambios.usuarios) {
       await tx
         .update(usuarios)
@@ -87,7 +99,12 @@ export async function incorporarAlumnoEnTransaccion(
         .set({ capitanId: c.capitanId })
         .where(eq(equipos.id, c.id));
     }
-    await escribirRanking(tx, seccion, conCambios(datos, cambios, ahora), ahora);
+    await escribirRanking(
+      tx,
+      seccion,
+      conCambios(datos, cambios, ahora),
+      ahora,
+    );
     return { ok: true, afectados: cambios.usuarios.map((c) => c.cedula) };
   });
 }
@@ -112,7 +129,10 @@ async function leerAlumno(
 ): Promise<
   { ok: true; l: Lecturas } | { ok: false; error: "no-existe" | "no-alumno" }
 > {
-  const [f] = await tx.select().from(usuarios).where(eq(usuarios.cedula, cedula));
+  const [f] = await tx
+    .select()
+    .from(usuarios)
+    .where(eq(usuarios.cedula, cedula));
   if (!f) return { ok: false, error: "no-existe" };
   const u = await leerUsuario(tx, cedula);
   // Un profe (o un perfil que no valida) no se borra por aquí (D234)
@@ -120,7 +140,7 @@ async function leerAlumno(
     return { ok: false, error: "no-alumno" };
   const seccion = u.seccion;
   const datos = await leerSeccion(tx, seccion);
-  const [entregas, ajustes, historial] = await Promise.all([
+  const [entregas, ajustes, historial] = await enSerie([
     tx.select().from(tEntregas).where(eq(tEntregas.titularId, cedula)),
     tx.select().from(tAjustes).where(eq(tAjustes.destinoId, cedula)),
     tx
@@ -154,7 +174,8 @@ function planear(l: Lecturas) {
     })),
     l.ajustes.map((d) => ({
       id: d.id,
-      destino: d.destino === "equipo" ? ("equipo" as const) : ("alumno" as const),
+      destino:
+        d.destino === "equipo" ? ("equipo" as const) : ("alumno" as const),
       destinoId: d.destinoId,
       anulaA: zAjuste.safeParse(d).data?.anulaA ?? null,
     })),
@@ -174,7 +195,12 @@ function planear(l: Lecturas) {
   const antes = estadoDeDatos(usuario.seccion, datos.usuarios, datos.equipos);
   const equipo = equipoDeCedula(antes, cedula);
   const despues = moverAlumno(antes, cedula, null);
-  const cambios = cambiosEntre(despues, datos.usuarios, datos.equipos, usuario.seccion);
+  const cambios = cambiosEntre(
+    despues,
+    datos.usuarios,
+    datos.equipos,
+    usuario.seccion,
+  );
   // Su propio perfil se borra: no se actualiza
   cambios.usuarios = cambios.usuarios.filter((c) => c.cedula !== cedula);
 
@@ -190,7 +216,11 @@ function planear(l: Lecturas) {
       sucesor: sucesor ? nombre(sucesor) : null,
     };
   }
-  const escrituras = escriturasBorrado(plan, l.historial, cambios.equipos.length);
+  const escrituras = escriturasBorrado(
+    plan,
+    l.historial,
+    cambios.equipos.length,
+  );
   return { plan, imagenes: [...imagenes], cambios, capitania, escrituras };
 }
 

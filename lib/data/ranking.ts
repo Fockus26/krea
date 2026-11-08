@@ -6,8 +6,6 @@
 // (en Firestore lo hacía el reintento de la transacción). Quien llama aplica sus cambios a esos
 // datos en memoria (la entrega evaluada, el ajuste nuevo) y escribe con `escribirRanking`.
 import { eq, sql } from "drizzle-orm";
-import type { Tx } from "@/lib/db";
-import { ajustes, entregas, equipos, ranking, usuarios } from "@/lib/db/schema";
 import {
   ajusteDeFila,
   type ConId,
@@ -16,6 +14,8 @@ import {
   validas,
 } from "@/lib/data/filas";
 import { usuarioDeFila } from "@/lib/data/usuarios";
+import { enSerie, type Tx } from "@/lib/db";
+import { ajustes, entregas, equipos, ranking, usuarios } from "@/lib/db/schema";
 import type {
   Ajuste,
   Entrega,
@@ -34,7 +34,10 @@ export type DatosSeccion = {
 };
 
 /** Toma el turno de la sección: hasta el commit, nadie más recalcula su ranking. */
-export async function bloquearSeccion(tx: Tx, seccion: SeccionId): Promise<void> {
+export async function bloquearSeccion(
+  tx: Tx,
+  seccion: SeccionId,
+): Promise<void> {
   await tx
     .insert(ranking)
     .values({ seccion, alumnos: {}, equipos: {}, actualizadoEn: 0 })
@@ -50,7 +53,7 @@ export async function leerSeccion(
   seccion: SeccionId,
 ): Promise<DatosSeccion> {
   await bloquearSeccion(tx, seccion);
-  const [us, eqs, ents, ajs] = await Promise.all([
+  const [us, eqs, ents, ajs] = await enSerie([
     tx.select().from(usuarios).where(eq(usuarios.seccion, seccion)),
     tx.select().from(equipos).where(eq(equipos.seccion, seccion)),
     tx.select().from(entregas).where(eq(entregas.seccion, seccion)),

@@ -1,15 +1,12 @@
 "use server";
 // Server Actions de las tareas del profe (fase 07 W6, D175, D199–D202). El autor sale SIEMPRE de
 // la sesión (`exigirSesion("profesor")`), nunca del body. Cada una valida con zod y escribe en UNA
-// transacción del Admin SDK (`lib/firebase/tareas.ts`). Guardar, cerrar y el premio no cambian
+// transacción de Postgres (`lib/data/tareas.ts`). Guardar, cerrar y el premio no cambian
 // puntos (D007); eliminar sí, y recalcula el ranking en su transacción (D206, D242).
 import { refresh } from "next/cache";
 import { almacenB2 } from "@/lib/almacen/b2";
 import { claveFotoPremio, validarFotoPremio } from "@/lib/almacen/imagen";
 import { exigirSesion, sesionDeCola } from "@/lib/dal";
-import { catalogoSecciones } from "@/lib/datos/secciones";
-import { diaDeInstante } from "@/lib/fecha";
-import { baseDeDatos, type Db } from "@/lib/db";
 import {
   cerrarTareaEnTransaccion,
   decidirPremioEnTransaccion,
@@ -17,6 +14,9 @@ import {
   guardarPremioEnTransaccion,
   guardarTareaEnTransaccion,
 } from "@/lib/data/tareas";
+import { catalogoSecciones } from "@/lib/datos/secciones";
+import { baseDeDatos, type Db } from "@/lib/db";
+import { diaDeInstante } from "@/lib/fecha";
 import { borrarEnLote, type ResultadoLote, zIdsLote } from "@/lib/lote";
 import { zQuien } from "@/lib/offline/operacion";
 import type { ResultadoPremio } from "@/lib/premios";
@@ -104,11 +104,7 @@ export async function cerrarTarea(id: unknown): Promise<ResultadoTarea> {
   const tareaId = zIdTareaProfe.safeParse(id);
   if (!tareaId.success) return { ok: false, error: "invalida" };
   try {
-    const r = await cerrarTareaEnTransaccion(
-      db,
-      tareaId.data,
-      Date.now(),
-    );
+    const r = await cerrarTareaEnTransaccion(db, tareaId.data, Date.now());
     if (r.ok) refresh();
     return r;
   } catch (e) {
@@ -162,10 +158,7 @@ export async function eliminarTareas(
  * El borrado de una, sin sesión ni `refresh()` (lo ponen `eliminarTarea` y `eliminarTareas`):
  * la transacción y, después, sus imágenes de B2. No lanza: cualquier fallo vuelve como error.
  */
-async function borrarUnaTarea(
-  db: Db,
-  id: string,
-): Promise<ResultadoTarea> {
+async function borrarUnaTarea(db: Db, id: string): Promise<ResultadoTarea> {
   let imagenes: string[];
   try {
     const r = await eliminarTareaEnTransaccion(db, id, Date.now());

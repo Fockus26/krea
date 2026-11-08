@@ -5,8 +5,8 @@ import "server-only";
 // de cada sección con los loaders del profe, ya cacheados.
 import { cache } from "react";
 import { exigirAdmin, exigirSesion } from "@/lib/dal";
-import { db } from "@/lib/datos/comun";
 import { leerCatalogo } from "@/lib/data/secciones";
+import { db } from "@/lib/datos/comun";
 import {
   ajustesTodos,
   entregasTodas,

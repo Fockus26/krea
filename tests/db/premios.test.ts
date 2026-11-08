@@ -1,29 +1,25 @@
-// Premios de W11 contra el emulador de Firestore (D263–D266): empate de una individual decidido
+// Premios de W11 sobre Postgres en memoria (D327) (D263–D266): empate de una individual decidido
 // con «darAlumno» y «Crear / Editar premio» (`guardarPremioEnTransaccion`), con las transacciones
 // reales del Admin SDK que usan las Server Actions de lib/acciones/tareas.ts.
 import { beforeAll, describe, expect, test } from "bun:test";
 import {
-  getApps as getAdminApps,
-  initializeApp as initAdmin,
-} from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
-import {
   decidirPremioEnTransaccion,
   eliminarTareaEnTransaccion,
   guardarPremioEnTransaccion,
-} from "@/lib/firebase/tareas";
+} from "@/lib/data/tareas";
+import type { Db } from "@/lib/db";
 import {
-  COL,
   type Entrega,
   idEntrega,
   type Tarea,
   type Usuario,
   zTareaDoc,
 } from "@/lib/modelo";
+import { baseNueva } from "./base";
+import * as docs from "./docs";
 
-const PROYECTO = process.env.GCLOUD_PROJECT ?? "demo-krea";
-const app = () => getAdminApps()[0] ?? initAdmin({ projectId: PROYECTO });
-const db = () => getFirestore(app());
+let base: Db;
+const db = () => base;
 
 const AHORA = Date.UTC(2026, 10, 6, 15);
 const PROFE = "30262232";
@@ -79,31 +75,36 @@ const tarea = (o: Partial<Tarea>): Tarea => ({
 });
 
 async function leer(id: string) {
-  const snap = await db().collection(COL.tareas).doc(id).get();
+  const snap = await docs.snap(db(), "tareas", id);
   return zTareaDoc.parse(snap.data());
 }
 
 beforeAll(async () => {
-  const b = db().batch();
-  b.set(db().collection(COL.usuarios).doc(ANA), usuario(ANA));
-  b.set(db().collection(COL.usuarios).doc(LUIS), usuario(LUIS));
-  b.set(db().collection(COL.tareas).doc(INDIVIDUAL), tarea({}));
-  b.set(
-    db().collection(COL.tareas).doc(ABIERTA),
+  base = await baseNueva();
+  await docs.ponerDoc(db(), "usuarios", ANA, usuario(ANA));
+  await docs.ponerDoc(db(), "usuarios", LUIS, usuario(LUIS));
+  await docs.ponerDoc(db(), "tareas", INDIVIDUAL, tarea({}));
+  await docs.ponerDoc(
+    db(),
+    "tareas",
+    ABIERTA,
     tarea({ estado: "abierta", premio: null, fechaEntrega: "2026-11-20" }),
   );
-  b.set(
-    db().collection(COL.entregas).doc(idEntrega(INDIVIDUAL, ANA)),
+  await docs.ponerDoc(
+    db(),
+    "entregas",
+    idEntrega(INDIVIDUAL, ANA),
     evaluada(ANA, 18),
   );
-  b.set(
-    db().collection(COL.entregas).doc(idEntrega(INDIVIDUAL, LUIS)),
+  await docs.ponerDoc(
+    db(),
+    "entregas",
+    idEntrega(INDIVIDUAL, LUIS),
     evaluada(LUIS, 18),
   );
-  await b.commit();
 });
 
-describe("premio individual (emulador)", () => {
+describe("premio individual (Postgres)", () => {
   test("empate entre alumnos: «darAlumno» a un empatado; «dar» a equipo no", async () => {
     expect(
       await decidirPremioEnTransaccion(

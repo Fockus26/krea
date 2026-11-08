@@ -7,12 +7,12 @@
 // cambian junto con el ranking de la sección en UNA transacción (D175). Ya no hay claims que
 // sincronizar: la sesión lee el equipo de `usuarios` en cada request.
 import { and, eq, inArray, ne } from "drizzle-orm";
-import type { Db, Tx } from "@/lib/db";
-import { ajustes, entregas, equipos, usuarios } from "@/lib/db/schema";
 import { idNuevo } from "@/lib/data/ajustes";
 import { equipoDeFila, filaDeEquipo } from "@/lib/data/filas";
 import { escribirRanking, leerSeccion } from "@/lib/data/ranking";
 import { leerUsuarioParaActualizar } from "@/lib/data/usuarios";
+import type { Db, Tx } from "@/lib/db";
+import { ajustes, entregas, equipos, usuarios } from "@/lib/db/schema";
 import {
   type CambiarCapitan,
   cambiosEntre,
@@ -37,7 +37,11 @@ export type ResultadoMover =
   | Extract<ResultadoEquipos, { ok: false }>;
 
 async function equipoParaActualizar(tx: Tx, id: string) {
-  const [f] = await tx.select().from(equipos).where(eq(equipos.id, id)).for("update");
+  const [f] = await tx
+    .select()
+    .from(equipos)
+    .where(eq(equipos.id, id))
+    .for("update");
   if (!f) return undefined;
   return equipoDeFila(f);
 }
@@ -86,10 +90,20 @@ export async function moverAlumnoEnTransaccion(
     const datos = await leerSeccion(tx, seccion);
     const antes = estadoDeDatos(seccion, datos.usuarios, datos.equipos);
     const despues = moverAlumno(antes, entrada.cedula, entrada.destino);
-    const cambios = cambiosEntre(despues, datos.usuarios, datos.equipos, seccion);
+    const cambios = cambiosEntre(
+      despues,
+      datos.usuarios,
+      datos.equipos,
+      seccion,
+    );
     await escribirCambios(tx, cambios, ahora);
     if (cambios.usuarios.length || cambios.equipos.length) {
-      await escribirRanking(tx, seccion, conCambios(datos, cambios, ahora), ahora);
+      await escribirRanking(
+        tx,
+        seccion,
+        conCambios(datos, cambios, ahora),
+        ahora,
+      );
     }
     return { ok: true, afectados: cambios.usuarios.map((c) => c.cedula) };
   });
@@ -111,10 +125,20 @@ export async function cambiarCapitanEnTransaccion(
     if (!antes.equipos[entrada.equipoId]?.miembros.includes(entrada.cedula))
       return { ok: false, error: "invalida" };
     const despues = cambiarCapitan(antes, entrada.equipoId, entrada.cedula);
-    const cambios = cambiosEntre(despues, datos.usuarios, datos.equipos, seccion);
+    const cambios = cambiosEntre(
+      despues,
+      datos.usuarios,
+      datos.equipos,
+      seccion,
+    );
     await escribirCambios(tx, cambios, ahora);
     if (cambios.usuarios.length || cambios.equipos.length) {
-      await escribirRanking(tx, seccion, conCambios(datos, cambios, ahora), ahora);
+      await escribirRanking(
+        tx,
+        seccion,
+        conCambios(datos, cambios, ahora),
+        ahora,
+      );
     }
     return { ok: true, afectados: cambios.usuarios.map((c) => c.cedula) };
   });
@@ -242,20 +266,29 @@ export async function eliminarEquipoEnTransaccion(
     const borrar = await tx
       .select({ id: ajustes.id })
       .from(ajustes)
-      .where(and(eq(ajustes.destinoId, equipoId), ne(ajustes.destino, "alumno")));
+      .where(
+        and(eq(ajustes.destinoId, equipoId), ne(ajustes.destino, "alumno")),
+      );
 
     // Cada integrante sale con la regla del tablero; el equipo se borra: su capitán no se escribe
     let estado = estadoDeDatos(seccion, datos.usuarios, datos.equipos);
     for (const c of estado.equipos[equipoId]?.miembros ?? [])
       estado = moverAlumno(estado, c, null);
-    const cambios = cambiosEntre(estado, datos.usuarios, datos.equipos, seccion);
+    const cambios = cambiosEntre(
+      estado,
+      datos.usuarios,
+      datos.equipos,
+      seccion,
+    );
     cambios.equipos = cambios.equipos.filter((c) => c.id !== equipoId);
 
     await escribirCambios(tx, cambios, ahora);
     await tx
       .update(entregas)
       .set({ titularNombre: e.nombre })
-      .where(and(eq(entregas.titularId, equipoId), ne(entregas.tipo, "individual")));
+      .where(
+        and(eq(entregas.titularId, equipoId), ne(entregas.tipo, "individual")),
+      );
     const borrados = new Set(borrar.map((a) => a.id));
     if (borrados.size)
       await tx.delete(ajustes).where(inArray(ajustes.id, [...borrados]));

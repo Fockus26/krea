@@ -5,10 +5,10 @@ import { eq } from "drizzle-orm";
 import { cache } from "react";
 import { type FilaProfesor, filasProfesores } from "@/lib/cuentas-datos";
 import { exigirAdmin } from "@/lib/dal";
-import { db } from "@/lib/datos/comun";
-import { usuarios } from "@/lib/db/schema";
 import { validas } from "@/lib/data/filas";
 import { usuarioDeFila } from "@/lib/data/usuarios";
+import { db } from "@/lib/datos/comun";
+import { usuarios } from "@/lib/db/schema";
 
 export const profesoresTodos = cache(async (): Promise<FilaProfesor[]> => {
   const sesion = await exigirAdmin();

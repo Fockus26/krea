@@ -1,5 +1,5 @@
 // Del seed del Excel (`data/seed/`, scripts/import-excel.py) a los documentos de Firestore
-// (D174). Puro: lo usan `scripts/seed-emulator.ts` y las pruebas. Solo datos reales del Excel,
+// (D174). Puro: lo usan `scripts/seed-db.ts` y las pruebas. Solo datos reales del Excel,
 // salvo lo marcado PLACEHOLDER.
 import { NOTA_MAX } from "@/lib/grades";
 import {

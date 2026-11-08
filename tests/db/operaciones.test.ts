@@ -1,20 +1,19 @@
 // Idempotencia por `opId` contra el emulador (D293): la cola sin conexión reintenta una entrega o
 // un guardado de tarea que quizá ya entró; el segundo intento devuelve lo mismo sin duplicar.
 import { beforeAll, describe, expect, test } from "bun:test";
-import {
-  getApps as getAdminApps,
-  initializeApp as initAdmin,
-} from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
+import { eq } from "drizzle-orm";
+import { enviarEnTransaccion } from "@/lib/data/entregas";
+import { guardarTareaEnTransaccion } from "@/lib/data/tareas";
+import type { Db } from "@/lib/db";
+import { tareas as tareasTabla } from "@/lib/db/schema";
 import { carpetaEntrega, claveImagen } from "@/lib/entregas";
-import { enviarEnTransaccion } from "@/lib/firebase/entregas";
-import { guardarTareaEnTransaccion } from "@/lib/firebase/tareas";
-import { COL, idEntrega, type Tarea, type Usuario } from "@/lib/modelo";
+import { idEntrega, type Tarea, type Usuario } from "@/lib/modelo";
 import type { EntradaTarea } from "@/lib/tareas-profe-datos";
+import { baseNueva } from "./base";
+import * as docs from "./docs";
 
-const PROYECTO = process.env.GCLOUD_PROJECT ?? "demo-krea";
-const app = () => getAdminApps()[0] ?? initAdmin({ projectId: PROYECTO });
-const db = () => getFirestore(app());
+let base: Db;
+const db = () => base;
 
 const AHORA = Date.UTC(2026, 10, 7, 14);
 const HOY = "2026-11-07";
@@ -77,15 +76,14 @@ async function envio(titular: string, opId: string) {
 }
 
 beforeAll(async () => {
-  const b = db().batch();
-  b.set(db().collection(COL.usuarios).doc(ALUMNO), usuario(ALUMNO));
-  b.set(db().collection(COL.usuarios).doc(OTRO), usuario(OTRO));
-  b.set(db().collection(COL.tareas).doc(TAREA), tarea);
+  base = await baseNueva();
+  await docs.ponerDoc(db(), "usuarios", ALUMNO, usuario(ALUMNO));
+  await docs.ponerDoc(db(), "usuarios", OTRO, usuario(OTRO));
+  await docs.ponerDoc(db(), "tareas", TAREA, tarea);
   for (const t of [ALUMNO, OTRO])
-    b.delete(db().collection(COL.entregas).doc(idEntrega(TAREA, t)));
+    await docs.borrarDoc(db(), "entregas", idEntrega(TAREA, t));
   for (const op of [OP_ENTREGA, OP_AJENA, OP_TAREA])
-    b.delete(db().collection(COL.operaciones).doc(op));
-  await b.commit();
+    await docs.borrarDoc(db(), "operaciones", op);
 });
 
 describe("operaciones/{opId} (emulador, D293)", () => {
@@ -98,19 +96,16 @@ describe("operaciones/{opId} (emulador, D293)", () => {
     expect(await enviarEnTransaccion(db(), ALUMNO, e, AHORA + 5)).toEqual({
       ok: true,
     });
-    const doc = await db()
-      .collection(COL.entregas)
-      .doc(idEntrega(TAREA, ALUMNO))
-      .get();
+    const doc = await docs.snap(db(), "entregas", idEntrega(TAREA, ALUMNO));
     expect(doc.get("enviadaEn")).toBe(AHORA);
-    const op = await db().collection(COL.operaciones).doc(OP_ENTREGA).get();
+    const op = await docs.snap(db(), "operaciones", OP_ENTREGA);
     expect(op.data()).toMatchObject({
       uid: ALUMNO,
       tipo: "entrega",
       id: null,
       creadaEn: AHORA,
     });
-    expect(op.get("expiraEn").toMillis()).toBeGreaterThan(AHORA);
+    expect(op.get("expiraEn") as number).toBeGreaterThan(AHORA);
   });
 
   test("entrega: un opId nuevo sobre una entrega ya enviada sigue siendo «ya entregada»", async () => {
@@ -119,7 +114,7 @@ describe("operaciones/{opId} (emulador, D293)", () => {
       ok: false,
       error: "ya-entregada",
     });
-    const op = await db().collection(COL.operaciones).doc(OP_AJENA).get();
+    const op = await docs.snap(db(), "operaciones", OP_AJENA);
     expect(op.exists).toBe(false);
   });
 
@@ -129,10 +124,7 @@ describe("operaciones/{opId} (emulador, D293)", () => {
       ok: false,
       error: "incompleta",
     });
-    const doc = await db()
-      .collection(COL.entregas)
-      .doc(idEntrega(TAREA, OTRO))
-      .get();
+    const doc = await docs.snap(db(), "entregas", idEntrega(TAREA, OTRO));
     expect(doc.exists).toBe(false);
   });
 
@@ -160,10 +152,10 @@ describe("operaciones/{opId} (emulador, D293)", () => {
     if (!a.ok || !b.ok) throw new Error("no se guardó");
     expect(b.id).toBe(a.id);
     const iguales = await db()
-      .collection(COL.tareas)
-      .where("titulo", "==", borrador.titulo)
-      .get();
-    expect(iguales.size).toBe(1);
+      .select()
+      .from(tareasTabla)
+      .where(eq(tareasTabla.titulo, borrador.titulo));
+    expect(iguales.length).toBe(1);
     // Otro profe con el mismo opId no lo reutiliza
     expect(
       await guardarTareaEnTransaccion(
@@ -174,6 +166,6 @@ describe("operaciones/{opId} (emulador, D293)", () => {
         AHORA + 2,
       ),
     ).toEqual({ ok: false, error: "invalida" });
-    await db().collection(COL.tareas).doc(a.id).delete();
+    await docs.borrarDoc(db(), "tareas", a.id);
   });
 });

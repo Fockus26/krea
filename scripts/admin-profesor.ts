@@ -1,7 +1,8 @@
 /**
  * Profesores desde la terminal (D235): crear una cuenta de profesor y marcar al admin (D231).
- * Usa el Admin SDK con las credenciales del entorno (`.env.local` / `.env`, como la app): OJO,
- * sin emuladores eso es la base REAL. Idempotente: repetirlo no duplica ni pisa nada.
+ * Usa DATABASE_URL del entorno (`.env.development.local` si no está puesta): OJO, con la URL de
+ * producción (`ssh kit-vps kit-db url krea`) eso es la base REAL (D327). Idempotente: repetirlo no
+ * duplica ni pisa nada.
  *
  *   bun scripts/admin-profesor.ts --crear-profesor <cédula> --nombres "…" --apellidos "…" [--email …]
  *       Crea la cuenta con una contraseña temporal y la imprime UNA vez (no se guarda en ningún
@@ -9,14 +10,16 @@
  *       tiene cuenta, lo dice y no toca nada.
  *
  *   bun scripts/admin-profesor.ts --hacer-admin <cédula>
- *       Marca a ese profesor como admin (perfil + claims) y cierra sus sesiones: la próxima vez
+ *       Marca a ese profesor como admin (perfil) y cierra sus sesiones: la próxima vez
  *       que entre ve «Profesores».
  *
  * Se pueden combinar: `--crear-profesor 30262232 --nombres … --apellidos … --hacer-admin 30262232`.
  */
+
+import { existsSync } from "node:fs";
 import { ErrorCuenta, zEntradaCuenta } from "@/lib/cuentas-datos";
-import { firebaseAdmin } from "@/lib/firebase/admin-base";
-import { crearCuentaCon, hacerAdminCon } from "@/lib/firebase/cuentas";
+import { crearCuentaCon, hacerAdminCon } from "@/lib/data/cuentas";
+import { baseDeDatos } from "@/lib/db";
 
 function valor(nombre: string): string | undefined {
   const i = process.argv.indexOf(nombre);
@@ -39,17 +42,16 @@ if (!crear && !hacerAdmin) {
   process.exit(1);
 }
 
-const admin = firebaseAdmin();
-if (!admin) {
-  console.error(
-    "✗ Sin credenciales del Admin SDK en el entorno (o emulador sin proyecto demo-*).",
-  );
+if (!process.env.DATABASE_URL && existsSync(".env.development.local"))
+  process.loadEnvFile(".env.development.local");
+const db = baseDeDatos();
+if (!db) {
+  console.error("✗ Sin DATABASE_URL en el entorno.");
   process.exit(1);
 }
-const destino = process.env.FIRESTORE_EMULATOR_HOST
-  ? `emuladores (${process.env.GCLOUD_PROJECT ?? "demo-krea"})`
-  : `proyecto ${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}`;
-console.log(`→ ${destino}`);
+console.log(
+  `→ base «${new URL(process.env.DATABASE_URL ?? "").pathname.slice(1)}»`,
+);
 
 if (crear) {
   const cuenta = zEntradaCuenta.safeParse({
@@ -67,8 +69,7 @@ if (crear) {
   }
   try {
     const { passwordTemporal } = await crearCuentaCon(
-      admin.auth,
-      admin.db,
+      db,
       cuenta.data,
       Date.now(),
     );
@@ -80,14 +81,14 @@ if (crear) {
     if (e instanceof ErrorCuenta && e.codigo === "existe") {
       console.log(`• ${crear} ya tiene cuenta: no se tocó.`);
     } else {
-      console.error("✗ No se pudo crear:", (e as { code?: string }).code ?? e);
+      console.error("✗ No se pudo crear:", (e as Error).message);
       process.exit(1);
     }
   }
 }
 
 if (hacerAdmin) {
-  const r = await hacerAdminCon(admin.auth, admin.db, hacerAdmin, Date.now());
+  const r = await hacerAdminCon(db, hacerAdmin, Date.now());
   if (!r.ok) {
     console.error(
       r.error === "no-existe"

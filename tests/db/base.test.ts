@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { user, usuarios } from "@/lib/db/schema";
 import { leerUsuario } from "@/lib/data/usuarios";
+import { user, usuarios } from "@/lib/db/schema";
 import { baseNueva } from "./base";
 
 describe("base en memoria", () => {

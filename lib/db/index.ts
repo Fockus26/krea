@@ -3,7 +3,11 @@
 // VPS: nada de estado de sesión entre consultas (`SET`, advisory locks, `LISTEN`).
 import type { ExtractTablesWithRelations } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
-import type { PgDatabase, PgQueryResultHKT, PgTransaction } from "drizzle-orm/pg-core";
+import type {
+  PgDatabase,
+  PgQueryResultHKT,
+  PgTransaction,
+} from "drizzle-orm/pg-core";
 import { Pool } from "pg";
 import * as schema from "@/lib/db/schema";
 
@@ -13,7 +17,11 @@ export type Db = PgDatabase<PgQueryResultHKT, Esquema>;
 /** La base o una transacción abierta: las funciones de `lib/data` aceptan las dos. */
 export type Tx =
   | Db
-  | PgTransaction<PgQueryResultHKT, Esquema, ExtractTablesWithRelations<Esquema>>;
+  | PgTransaction<
+      PgQueryResultHKT,
+      Esquema,
+      ExtractTablesWithRelations<Esquema>
+    >;
 
 let db: Db | null = null;
 
@@ -34,4 +42,18 @@ export function bd(): Db {
   const d = baseDeDatos();
   if (!d) throw new Error("DATABASE_URL no configurada");
   return d;
+}
+
+/**
+ * Espera las consultas una tras otra. Dentro de una transacción todas van por UNA conexión, y `pg`
+ * no admite consultas en paralelo sobre la misma (las encola con un aviso; pg@9 lo quitará). Las
+ * consultas de Drizzle son perezosas: no corren hasta que se esperan, así que pasarlas sin `await`
+ * aquí es seguro. No sirve para promesas ya en marcha (llamadas a funciones `async`).
+ */
+export async function enSerie<T extends readonly unknown[]>(
+  consultas: readonly [...T],
+): Promise<{ -readonly [K in keyof T]: Awaited<T[K]> }> {
+  const r: unknown[] = [];
+  for (const q of consultas) r.push(await q);
+  return r as { -readonly [K in keyof T]: Awaited<T[K]> };
 }

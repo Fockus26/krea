@@ -1,14 +1,10 @@
-// Eliminar una tarea contra el emulador de Firestore (D242): la transacción real del Admin SDK que
+// Eliminar una tarea sobre Postgres en memoria (D327) (D242): la transacción real del Admin SDK que
 // usa la Server Action `eliminarTarea`. Borra la tarea y sus entregas, recalcula el ranking de las
 // secciones sin esas notas y deja los ajustes (D007). Datos propios en 5A para no cruzarse con
 // las pruebas de 5C.
 import { beforeAll, describe, expect, test } from "bun:test";
-import {
-  getApps as getAdminApps,
-  initializeApp as initAdmin,
-} from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
-import { eliminarTareaEnTransaccion } from "@/lib/firebase/tareas";
+import { eliminarTareaEnTransaccion } from "@/lib/data/tareas";
+import type { Db } from "@/lib/db";
 import {
   type Ajuste,
   COL,
@@ -18,10 +14,11 @@ import {
   type Usuario,
   zRankingSeccion,
 } from "@/lib/modelo";
+import { baseNueva } from "./base";
+import * as docs from "./docs";
 
-const PROYECTO = process.env.GCLOUD_PROJECT ?? "demo-krea";
-const app = () => getAdminApps()[0] ?? initAdmin({ projectId: PROYECTO });
-const db = () => getFirestore(app());
+let base: Db;
+const db = () => base;
 
 const AHORA = Date.UTC(2026, 11, 6, 15);
 const PROFE = "30262232";
@@ -96,37 +93,42 @@ const ajuste: Ajuste = {
 };
 
 async function puntosDe(cedula: string) {
-  const snap = await db().collection(COL.ranking).doc("5A").get();
+  const snap = await docs.snap(db(), "ranking", "5A");
   return zRankingSeccion.parse(snap.data()).alumnos[cedula]?.puntos;
 }
 
 const existe = async (col: string, id: string) =>
-  (await db().collection(col).doc(id).get()).exists;
+  (await docs.snap(db(), col as Parameters<typeof docs.snap>[1], id)).exists;
 
 beforeAll(async () => {
-  const b = db().batch();
-  b.set(db().collection(COL.usuarios).doc(A1), alumno(A1));
-  b.set(db().collection(COL.usuarios).doc(A2), alumno(A2));
-  b.set(db().collection(COL.tareas).doc(T_BORRAR), tarea("Se borra"));
-  b.set(db().collection(COL.tareas).doc(T_QUEDA), tarea("Se queda"));
-  b.set(
-    db().collection(COL.entregas).doc(idEntrega(T_BORRAR, A1)),
+  base = await baseNueva();
+  await docs.ponerDoc(db(), "usuarios", A1, alumno(A1));
+  await docs.ponerDoc(db(), "usuarios", A2, alumno(A2));
+  await docs.ponerDoc(db(), "tareas", T_BORRAR, tarea("Se borra"));
+  await docs.ponerDoc(db(), "tareas", T_QUEDA, tarea("Se queda"));
+  await docs.ponerDoc(
+    db(),
+    "entregas",
+    idEntrega(T_BORRAR, A1),
     evaluada(T_BORRAR, A1, 18),
   );
-  b.set(
-    db().collection(COL.entregas).doc(idEntrega(T_BORRAR, A2)),
+  await docs.ponerDoc(
+    db(),
+    "entregas",
+    idEntrega(T_BORRAR, A2),
     evaluada(T_BORRAR, A2, null),
   );
-  b.set(
-    db().collection(COL.entregas).doc(idEntrega(T_QUEDA, A1)),
+  await docs.ponerDoc(
+    db(),
+    "entregas",
+    idEntrega(T_QUEDA, A1),
     evaluada(T_QUEDA, A1, 15),
   );
-  b.set(db().collection(COL.ajustes).doc(AJUSTE), ajuste);
-  await b.commit();
+  await docs.ponerDoc(db(), "ajustes", AJUSTE, ajuste);
   // El primer archivo paga el arranque en frío del emulador
 }, 30_000);
 
-describe("eliminar una tarea (emulador)", () => {
+describe("eliminar una tarea (Postgres)", () => {
   test("borra la tarea y sus entregas, recalcula el ranking y deja los ajustes", async () => {
     const r = await eliminarTareaEnTransaccion(db(), T_BORRAR, AHORA);
     expect(r.resultado).toEqual({ ok: true, id: T_BORRAR });
@@ -157,14 +159,12 @@ describe("eliminar una tarea (emulador)", () => {
   });
 
   test("sin entregas: borra la tarea y no escribe el ranking", async () => {
-    const antes = (await db().collection(COL.ranking).doc("5A").get()).data();
+    const antes = (await docs.snap(db(), "ranking", "5A")).data();
     const vacia = "w4-vacia";
-    await db().collection(COL.tareas).doc(vacia).set(tarea("Sin entregas"));
+    await docs.ponerDoc(db(), "tareas", vacia, tarea("Sin entregas"));
     const r = await eliminarTareaEnTransaccion(db(), vacia, AHORA + 2);
     expect(r).toEqual({ resultado: { ok: true, id: vacia }, imagenes: [] });
     expect(await existe(COL.tareas, vacia)).toBe(false);
-    expect((await db().collection(COL.ranking).doc("5A").get()).data()).toEqual(
-      antes,
-    );
+    expect((await docs.snap(db(), "ranking", "5A")).data()).toEqual(antes);
   });
 });

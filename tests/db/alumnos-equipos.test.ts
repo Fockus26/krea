@@ -1,23 +1,16 @@
-// Alumnos y Equipos del profesor contra los emuladores (W8, D209–D212): las transacciones reales
+// Alumnos y Equipos del profesor sobre Postgres en memoria (D327) (W8, D209–D212): las transacciones reales
 // del Admin SDK que usan las Server Actions. Mover de equipo → perfil, capitán, ranking y custom
 // claims + tokens revocados; cambiar capitán; base con historial (D176) y email de recuperación;
 // ruta del logo en el equipo y en el ranking.
 import { beforeAll, describe, expect, test } from "bun:test";
-import {
-  getApps as getAdminApps,
-  initializeApp as initAdmin,
-} from "firebase-admin/app";
-import { getAuth } from "firebase-admin/auth";
-import { getFirestore } from "firebase-admin/firestore";
-import { editarAlumnoEnTransaccion } from "@/lib/firebase/alumnos";
+import { editarAlumnoEnTransaccion } from "@/lib/data/alumnos";
 import {
   cambiarCapitanEnTransaccion,
   cambiarLogoEnTransaccion,
   moverAlumnoEnTransaccion,
-  sincronizarClaims,
-} from "@/lib/firebase/equipos";
+} from "@/lib/data/equipos";
+import type { Db } from "@/lib/db";
 import {
-  COL,
   type Entrega,
   type Equipo,
   idEntrega,
@@ -27,11 +20,12 @@ import {
   zRankingSeccion,
   zUsuario,
 } from "@/lib/modelo";
+import { sesionDeClaims } from "@/lib/sesion";
+import { baseNueva } from "./base";
+import * as docs from "./docs";
 
-const PROYECTO = process.env.GCLOUD_PROJECT ?? "demo-krea";
-const app = () => getAdminApps()[0] ?? initAdmin({ projectId: PROYECTO });
-const db = () => getFirestore(app());
-const auth = () => getAuth(app());
+let base: Db;
+const db = () => base;
 
 const AHORA = Date.UTC(2026, 11, 1, 15);
 const PROFE = "30262232";
@@ -93,53 +87,33 @@ const evaluada: Entrega = {
 };
 
 async function usuario(cedula: string) {
-  const snap = await db().collection(COL.usuarios).doc(cedula).get();
+  const snap = await docs.snap(db(), "usuarios", cedula);
   return zUsuario.parse(snap.data());
 }
 async function equipoDoc(id: string) {
-  const snap = await db().collection(COL.equipos).doc(id).get();
+  const snap = await docs.snap(db(), "equipos", id);
   return zEquipo.parse(snap.data());
 }
 async function ranking(seccion: "5A" | "5C" = "5A") {
-  const snap = await db().collection(COL.ranking).doc(seccion).get();
+  const snap = await docs.snap(db(), "ranking", seccion);
   return zRankingSeccion.parse(snap.data());
 }
 
 beforeAll(async () => {
-  if (!process.env.FIREBASE_AUTH_EMULATOR_HOST)
-    throw new Error("Corre con `bun run test:rules` (emuladores)");
-  const b = db().batch();
-  b.set(db().collection(COL.usuarios).doc(A1), alumno(A1, G1));
-  b.set(db().collection(COL.usuarios).doc(A2), alumno(A2, G1));
-  b.set(db().collection(COL.usuarios).doc(A3), alumno(A3, G2));
-  b.set(db().collection(COL.usuarios).doc(A4), alumno(A4, null));
-  b.set(db().collection(COL.usuarios).doc(A5), alumno(A5, G9, "5C"));
-  b.set(db().collection(COL.equipos).doc(G1), equipo("5A-G8 Prueba", A1));
-  b.set(db().collection(COL.equipos).doc(G2), equipo("5A-G9 Prueba", A3));
-  b.set(db().collection(COL.equipos).doc(G9), equipo("5C-G9 Prueba", A5, "5C"));
-  b.set(db().collection(COL.entregas).doc(idEntrega(T_IND, A4)), evaluada);
-  await b.commit();
-  // Cuentas de Auth con los claims del seed (uid = cédula, D174); A4 no tiene cuenta todavía
-  for (const [cedula, equipoId] of [
-    [A1, G1],
-    [A2, G1],
-    [A3, G2],
-  ] as const) {
-    await auth()
-      .deleteUser(cedula)
-      .catch(() => {});
-    await auth().createUser({ uid: cedula });
-    await auth().setCustomUserClaims(cedula, {
-      rol: "estudiante",
-      seccion: "5A",
-      equipoId,
-    });
-  }
+  base = await baseNueva();
+  await docs.ponerDoc(db(), "usuarios", A1, alumno(A1, G1));
+  await docs.ponerDoc(db(), "usuarios", A2, alumno(A2, G1));
+  await docs.ponerDoc(db(), "usuarios", A3, alumno(A3, G2));
+  await docs.ponerDoc(db(), "usuarios", A4, alumno(A4, null));
+  await docs.ponerDoc(db(), "usuarios", A5, alumno(A5, G9, "5C"));
+  await docs.ponerDoc(db(), "equipos", G1, equipo("5A-G8 Prueba", A1));
+  await docs.ponerDoc(db(), "equipos", G2, equipo("5A-G9 Prueba", A3));
+  await docs.ponerDoc(db(), "equipos", G9, equipo("5C-G9 Prueba", A5, "5C"));
+  await docs.ponerDoc(db(), "entregas", idEntrega(T_IND, A4), evaluada);
 });
 
 describe("mover de equipo (D210)", () => {
   test("el capitán pasa a otro equipo: perfil, cargo, ranking y claims", async () => {
-    const antes = Date.now();
     const r = await moverAlumnoEnTransaccion(
       db(),
       { cedula: A1, destino: G2 },
@@ -154,20 +128,8 @@ describe("mover de equipo (D210)", () => {
     expect(rk.alumnos[A1]?.equipoId).toBe(G2);
     expect(rk.actualizadoEn).toBe(AHORA);
 
-    if (!r.ok) return;
-    expect(await sincronizarClaims(auth(), db(), [A1, ...r.afectados])).toEqual(
-      [],
-    );
-    const cuenta = await auth().getUser(A1);
-    expect(cuenta.customClaims).toEqual({
-      rol: "estudiante",
-      seccion: "5A",
-      equipoId: G2,
-    });
-    // Tokens revocados: la cookie de sesión anterior deja de valer (D180)
-    expect(
-      new Date(cuenta.tokensValidAfterTime ?? 0).getTime(),
-    ).toBeGreaterThanOrEqual(Math.floor(antes / 1000) * 1000);
+    // La sesión lee el equipo de `usuarios` en cada request (D327): no hay claims que poner
+    expect(sesionDeClaims(A1, (await usuario(A1)) ?? {})?.equipoId).toBe(G2);
   });
 
   test("quitar del equipo: equipoId null y claims sin equipo", async () => {
@@ -181,8 +143,7 @@ describe("mover de equipo (D210)", () => {
     // G1 queda vacío: sin capitán (D112)
     expect((await equipoDoc(G1)).capitanId).toBeNull();
     expect((await ranking()).alumnos[A2]?.equipoId).toBeNull();
-    await sincronizarClaims(auth(), db(), [A2]);
-    expect((await auth().getUser(A2)).customClaims?.equipoId).toBeNull();
+    expect(sesionDeClaims(A2, (await usuario(A2)) ?? {})?.equipoId).toBeNull();
   });
 
   test("el primero que llega a un equipo vacío es su capitán", async () => {
@@ -193,8 +154,6 @@ describe("mover de equipo (D210)", () => {
     );
     expect(r).toEqual({ ok: true, afectados: [A4] });
     expect((await equipoDoc(G1)).capitanId).toBe(A4);
-    // Sin cuenta de Auth todavía: no hay sesión que cerrar, no es un fallo
-    expect(await sincronizarClaims(auth(), db(), [A4])).toEqual([]);
   });
 
   test("a un equipo de otra sección: no", async () => {
@@ -272,12 +231,9 @@ describe("editar alumno: base con historial (D176, D209)", () => {
     expect(u.base).toBe(15);
     expect(u.nombres).toBe("Alumno Editado");
 
-    const hist = await db()
-      .collection(COL.historialBase)
-      .where("alumnoId", "==", A4)
-      .get();
-    expect(hist.size).toBe(1);
-    expect(zCambioBase.parse(hist.docs[0]?.data())).toEqual({
+    const hist = await docs.historialDe(db(), A4);
+    expect(hist.length).toBe(1);
+    expect(zCambioBase.parse(hist[0])).toEqual({
       alumnoId: A4,
       de: 20,
       a: 15,
@@ -286,7 +242,7 @@ describe("editar alumno: base con historial (D176, D209)", () => {
       en: AHORA + 6,
     });
 
-    const privado = await db().collection(COL.privados).doc(A4).get();
+    const privado = await docs.snap(db(), "privados", A4);
     expect(privado.data()).toEqual({ email: "alumno.w8@gmail.com" });
 
     // Nota 16 × 15 / 20 = 12 (D013): los puntos de su nota bajan con la base
@@ -294,11 +250,8 @@ describe("editar alumno: base con historial (D176, D209)", () => {
     expect(rk.alumnos[A4]?.nombres).toBe("Alumno Editado");
     expect(rk.alumnos[A4]?.puntos).toBeLessThan(antes ?? 0);
     // La entrega no se toca: la nota se deriva (D013)
-    const e = await db()
-      .collection(COL.entregas)
-      .doc(idEntrega(T_IND, A4))
-      .get();
-    expect(e.data()?.evaluacion?.puntaje).toBe(16);
+    const e = await docs.entrega(db(), idEntrega(T_IND, A4));
+    expect(e?.evaluacion?.puntaje).toBe(16);
   });
 
   test("cambiar la base sin motivo: no se guarda nada", async () => {
@@ -335,13 +288,10 @@ describe("editar alumno: base con historial (D176, D209)", () => {
         AHORA + 8,
       ),
     ).toEqual({ ok: true });
-    const privado = await db().collection(COL.privados).doc(A4).get();
+    const privado = await docs.snap(db(), "privados", A4);
     expect(privado.data()).toEqual({ email: null });
-    const hist = await db()
-      .collection(COL.historialBase)
-      .where("alumnoId", "==", A4)
-      .get();
-    expect(hist.size).toBe(1);
+    const hist = await docs.historialDe(db(), A4);
+    expect(hist.length).toBe(1);
   });
 
   test("un alumno que no existe", async () => {

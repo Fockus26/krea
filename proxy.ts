@@ -15,5 +15,5 @@ export async function proxy(req: NextRequest) {
 
 export const config = {
   // Todo menos los archivos de Next, la API y los estáticos con extensión (iconos, imágenes, manifest).
-  matcher: ["/((?!_next/static|_next/image|api/|.*\.[a-zA-Z0-9]+$).*)"],
+  matcher: ["/((?!_next/static|_next/image|api/|.*\\.[a-zA-Z0-9]+$).*)"],
 };

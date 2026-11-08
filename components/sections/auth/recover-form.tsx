@@ -13,7 +13,7 @@ import { VolverLink } from "./volver-link";
 
 /**
  * Recuperar contraseña (HANDOFF §3): cédula y "Enviar enlace". Valida al enviar; `onSubmit`
- * recibe la cédula (la fase 07 genera el enlace con el Admin SDK, §9 #9). La respuesta no dice
+ * recibe la cédula (el servidor genera el enlace con Better Auth, §9 #9, D327). La respuesta no dice
  * si la cédula existe: la pantalla siguiente es siempre "Revisa tu correo". `error`: el pedido no
  * llegó al servidor (red), alerta sobre el botón.
  */

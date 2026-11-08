@@ -2,8 +2,6 @@ import { describe, expect, test } from "bun:test";
 import alumnosJson from "@/data/seed/alumnos.json";
 import gruposJson from "@/data/seed/grupos.json";
 import tareaJson from "@/data/seed/tarea-identidad-marca.json";
-import { leerConfig, PROYECTO_DEMO } from "@/lib/firebase/config";
-import { credencialesAdmin } from "@/lib/firebase/credenciales";
 import {
   claimsDe,
   emailInterno,
@@ -169,39 +167,5 @@ describe("docsDesdeSeed", () => {
       .filter((a) => a.grupoId === "5a-g2")
       .map((a) => a.cedula);
     expect(g?.data.integrantes).toEqual(esperados);
-  });
-});
-
-describe("config de Firebase", () => {
-  test("sin variables y sin emuladores → null (no inventa claves)", () => {
-    expect(leerConfig({})).toBeNull();
-    expect(credencialesAdmin({})).toBeNull();
-  });
-  test("con emuladores completa el proyecto demo", () => {
-    expect(leerConfig({ NEXT_PUBLIC_USE_EMULATORS: "true" })?.projectId).toBe(
-      PROYECTO_DEMO,
-    );
-    expect(
-      credencialesAdmin({ FIRESTORE_EMULATOR_HOST: "127.0.0.1:8080" }),
-    ).toEqual({
-      tipo: "emulador",
-      projectId: PROYECTO_DEMO,
-    });
-  });
-  test("emulador con un proyecto real → null (nunca la base real)", () => {
-    expect(
-      credencialesAdmin({
-        FIRESTORE_EMULATOR_HOST: "x",
-        GCLOUD_PROJECT: "krea-prod",
-      }),
-    ).toBeNull();
-  });
-  test("cuenta de servicio: la clave con \\n literales se normaliza", () => {
-    const c = credencialesAdmin({
-      NEXT_PUBLIC_FIREBASE_PROJECT_ID: "krea",
-      FIREBASE_CLIENT_EMAIL: "a@b.iam.gserviceaccount.com",
-      FIREBASE_PRIVATE_KEY: "-----BEGIN-----\\nabc\\n-----END-----",
-    });
-    expect(c?.tipo === "servicio" && c.privateKey.includes("\n")).toBe(true);
   });
 });

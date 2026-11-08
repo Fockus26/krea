@@ -14,10 +14,10 @@ import {
   type ResultadoAlumno,
   versionDe,
 } from "@/lib/alumnos-datos";
-import type { Db } from "@/lib/db";
-import { historialBase, usuarios } from "@/lib/db/schema";
 import { escribirRanking, leerSeccion } from "@/lib/data/ranking";
 import { filaDeUsuario, leerUsuario, usuarioDeFila } from "@/lib/data/usuarios";
+import type { Db } from "@/lib/db";
+import { historialBase, usuarios } from "@/lib/db/schema";
 
 export async function editarAlumnoEnTransaccion(
   db: Db,

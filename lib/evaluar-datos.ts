@@ -1,7 +1,7 @@
 // Evaluar con datos de Firestore (fase 07 W7, D204–D206). Puro (sin Firebase ni reloj): qué
 // manda el formulario, qué evaluación se escribe (`armarEvaluacion`), qué devuelve «Deshacer»
 // (`deshacerEvaluacion`), la cola «Por evaluar» y las props de la pantalla. Lo usan los
-// adaptadores del Admin SDK (`lib/firebase/evaluar.ts`), las páginas del profe y las pruebas.
+// adaptadores de Postgres (`lib/data/evaluar.ts`), las páginas del profe y las pruebas.
 //
 // La nota NO se guarda: se deriva de `puntaje × base / 20` (D013, D176). Aquí solo se valida y se
 // suma el puntaje por pregunta en medios enteros (D004); la nota de la vista sale de `lib/grades`.

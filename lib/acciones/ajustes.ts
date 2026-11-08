@@ -2,7 +2,7 @@
 // Server Actions de Ajustes de puntos (fase 07 W7, D175, D207). El autor sale SIEMPRE de la sesión
 // (`exigirSesion("profesor")`), nunca del body; la sección, del documento del destino. Cada una
 // valida con zod y escribe el ajuste y `ranking/{seccion}` en UNA transacción
-// (`lib/firebase/ajustes.ts`). Nunca tocan una nota (D007).
+// (`lib/data/ajustes.ts`). Nunca tocan una nota (D007).
 import { refresh } from "next/cache";
 import {
   type ResultadoAjuste,
@@ -10,12 +10,12 @@ import {
   zAplicarAjuste,
 } from "@/lib/ajustes-datos";
 import { exigirSesion } from "@/lib/dal";
-import { catalogoSecciones } from "@/lib/datos/secciones";
-import { baseDeDatos } from "@/lib/db";
 import {
   anularAjusteEnTransaccion,
   aplicarAjusteEnTransaccion,
 } from "@/lib/data/ajustes";
+import { catalogoSecciones } from "@/lib/datos/secciones";
+import { baseDeDatos } from "@/lib/db";
 import { seccionesDe } from "@/lib/secciones";
 
 export type { ResultadoAjuste };

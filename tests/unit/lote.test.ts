@@ -282,12 +282,12 @@ describe("servidor (D298)", () => {
     );
     expect(lote).toMatch(/await exigirSesion\("profesor"\)/);
     expect(lote).toContain("zCedulasLote.safeParse");
-    expect(lote).toContain("borrarUnAlumno(admin, cedula)");
+    expect(lote).toContain("borrarUnAlumno(db, cedula)");
     const profes = leer("lib/acciones/profesores.ts");
     const loteP = profes.slice(
       profes.indexOf("export async function eliminarProfesores"),
     );
     expect(loteP).toContain("await exigirAdmin()");
-    expect(loteP).toContain("borrarUnProfesor(admin, sesion.uid, cedula)");
+    expect(loteP).toContain("borrarUnProfesor(db, sesion.uid, cedula)");
   });
 });

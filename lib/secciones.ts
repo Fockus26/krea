@@ -1,5 +1,5 @@
 // Catálogo de años y secciones (D317–D319). Puro: sin Firebase ni reloj; lo usan el servidor
-// (`lib/datos/secciones.ts`, `lib/firebase/secciones.ts`), la pantalla Años y secciones y las
+// (`lib/datos/secciones.ts`, `lib/data/secciones.ts`), la pantalla Años y secciones y las
 // pruebas. El código de una sección es el número del año + su letra: «5A». El catálogo vive en
 // `config/secciones`; si el documento no existe vale `CATALOGO_INICIAL` (lo que hay en producción).
 //

@@ -6,8 +6,16 @@
 // primera escritura la materializa). Renombrar o eliminar exige que los códigos que se van estén
 // vacíos: se comprueba dentro de la transacción, con la fila bloqueada. Al irse, su ranking se borra.
 import { arrayOverlaps, eq, inArray } from "drizzle-orm";
-import type { Db, Tx } from "@/lib/db";
-import { ajustes, config, entregas, equipos, ranking, tareas, usuarios } from "@/lib/db/schema";
+import { type Db, enSerie, type Tx } from "@/lib/db";
+import {
+  ajustes,
+  config,
+  entregas,
+  equipos,
+  ranking,
+  tareas,
+  usuarios,
+} from "@/lib/db/schema";
 import { DOC_SECCIONES } from "@/lib/modelo";
 import {
   anioDoc,
@@ -32,12 +40,32 @@ export async function leerCatalogo(
 /** ¿Hay algo guardado con alguno de estos códigos? */
 async function hayDatos(tx: Tx, codigos: readonly string[]): Promise<boolean> {
   const lista = [...codigos];
-  const consultas = await Promise.all([
-    tx.select({ x: usuarios.cedula }).from(usuarios).where(inArray(usuarios.seccion, lista)).limit(1),
-    tx.select({ x: equipos.id }).from(equipos).where(inArray(equipos.seccion, lista)).limit(1),
-    tx.select({ x: tareas.id }).from(tareas).where(arrayOverlaps(tareas.secciones, lista)).limit(1),
-    tx.select({ x: entregas.id }).from(entregas).where(inArray(entregas.seccion, lista)).limit(1),
-    tx.select({ x: ajustes.id }).from(ajustes).where(inArray(ajustes.seccion, lista)).limit(1),
+  const consultas = await enSerie([
+    tx
+      .select({ x: usuarios.cedula })
+      .from(usuarios)
+      .where(inArray(usuarios.seccion, lista))
+      .limit(1),
+    tx
+      .select({ x: equipos.id })
+      .from(equipos)
+      .where(inArray(equipos.seccion, lista))
+      .limit(1),
+    tx
+      .select({ x: tareas.id })
+      .from(tareas)
+      .where(arrayOverlaps(tareas.secciones, lista))
+      .limit(1),
+    tx
+      .select({ x: entregas.id })
+      .from(entregas)
+      .where(inArray(entregas.seccion, lista))
+      .limit(1),
+    tx
+      .select({ x: ajustes.id })
+      .from(ajustes)
+      .where(inArray(ajustes.seccion, lista))
+      .limit(1),
   ]);
   return consultas.some((r) => r.length > 0);
 }
@@ -57,7 +85,10 @@ export async function operarSeccionesEnTransaccion(
     if (inicial)
       await tx
         .insert(config)
-        .values({ id: DOC_SECCIONES, datos: { anios: anioDoc(inicial), actualizadoEn: ahora } })
+        .values({
+          id: DOC_SECCIONES,
+          datos: { anios: anioDoc(inicial), actualizadoEn: ahora },
+        })
         .onConflictDoNothing();
     const actual = await leerCatalogo(tx, true);
     if (!actual) {
