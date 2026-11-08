@@ -6,6 +6,7 @@ import { Escenario } from "./_familias/escenario";
 import { Evaluacion } from "./_familias/evaluacion";
 import { Formularios } from "./_familias/formularios";
 import { Identidad } from "./_familias/identidad";
+import { MatrizContraste } from "./_familias/matriz-contraste";
 import { Navegacion } from "./_familias/navegacion";
 import { Overlays } from "./_familias/overlays";
 import { Preguntas } from "./_familias/preguntas";
@@ -30,6 +31,7 @@ const FAMILIES = [
   ["overlays", "Diálogos, hojas y menús"],
   ["preguntas", "Preguntas"],
   ["navegacion", "Navegación"],
+  ["matriz-contraste", "Matriz de contraste"],
 ] as const;
 
 export default function ComponentesPage() {
@@ -75,6 +77,9 @@ export default function ComponentesPage() {
         <Preguntas />
         <Navegacion />
       </Escenario>
+
+      {/* Fuera del escenario: trae sus 8 combinaciones de tema y acento */}
+      <MatrizContraste />
     </main>
   );
 }
