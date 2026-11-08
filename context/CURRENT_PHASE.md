@@ -36,7 +36,7 @@ QA de versión hecho (2026-11-06): lo no verificado está en `plans/qa-version-1
 
 ## Next
 
-- **Migrar al VPS** (César, 2026-11-07): Firebase → Postgres del VPS (`tech/migrate-firebase-vps.md`). Sin migrar datos: se borran todos **menos los profesores**.
+- **Migración al VPS** (D327, `plans/migrate-vps.md`): rama `feat/migrate-vps`, PR en **draft** hasta el cutover. Código listo (Postgres + Better Auth, sin Firebase; 1484 pruebas). Bases `krea`, `krea_preview` (migrada), `krea_dev` (migrada + seed). Falta: variables en Vercel, parámetros de hash, `functional-qa` sobre el build y el cutover con César.
 
 - Lanzamiento: contenido real (CONTENT_CHECKLIST filas 2–11, 14, 21, 64) y acciones de César de arriba.
 - Pendientes chicos: capitán movido tras una entrega (D221) · Editar alumno «el último gana».
