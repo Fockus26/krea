@@ -1,0 +1,5 @@
+# D339 · Auth · La suscripción es de ESTE navegador y de la cuenta de la sesión; cerrar sesión la cancela · Implemented
+
+**Decision:** `suscribirPush` / `desuscribirPush` exigen `exigirSesion("estudiante")`, validan el JSON con zod (endpoint https, claves base64url) y toman la cédula de la sesión. Guardar el mismo endpoint desde otra cuenta lo pasa a esa cuenta (upsert por endpoint); quitar solo borra si la fila es de quien lo pide. El interruptor refleja la suscripción del navegador (`pushManager.getSubscription()`), no la de la base. Al cerrar sesión (`/salir`) el navegador cancela su suscripción (`cancelarAvisoLocal`); la fila del servidor se borra con el 410 del próximo envío.
+**Why:** en un equipo compartido del liceo, quien entra después no debe recibir los avisos de otra cuenta (mismo criterio que vaciar las páginas guardadas, D291). Los avisos solo llevan el título de la tarea.
+**Discarded alternative:** llamar a `desuscribirPush` antes de `cerrarSesion` (otra ida al servidor en la salida; el 410 ya lo limpia).

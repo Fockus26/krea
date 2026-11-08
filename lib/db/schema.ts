@@ -271,6 +271,24 @@ export const operaciones = pgTable("operaciones", {
   datos: jsonb("datos").$type<Record<string, unknown>>().notNull(),
 });
 
+/**
+ * Suscripciones Web Push del aviso de tarea nueva (D335): una por navegador (`endpoint`), varias
+ * por alumno. Se van con el alumno y cuando el servicio de push responde 404/410.
+ */
+export const pushSuscripciones = pgTable(
+  "push_suscripciones",
+  {
+    endpoint: text("endpoint").primaryKey(),
+    cedula: text("cedula")
+      .notNull()
+      .references(() => usuarios.cedula, { onDelete: "cascade" }),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    creadoEn: ms("creado_en").notNull(),
+  },
+  (t) => [index("push_suscripciones_cedula_idx").on(t.cedula)],
+);
+
 /** `config/{doc}`: hoy solo `secciones` (D317). */
 export const config = pgTable("config", {
   id: text("id").primaryKey(),

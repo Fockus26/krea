@@ -1,0 +1,5 @@
+# D335 · Data · Aviso de tarea nueva por Web Push (VAPID, `web-push`), activado por el alumno en Perfil · Implemented
+
+**Decision:** cuando un profe publica una tarea, los alumnos de sus secciones que lo activaron reciben una notificación del navegador. Tabla `push_suscripciones` (`endpoint` pk, `cedula` → `usuarios` en cascada con índice, `p256dh`, `auth`, `creado_en` en ms): una fila por navegador, varias por alumno. Envío con `web-push` solo en el servidor (`lib/push-envio.ts`); lo puro en `lib/push.ts`, la base en `lib/data/push.ts` (probado sobre PGlite con el envío inyectado). El service worker propio (D291) suma los listeners `push` y `notificationclick`, sin librería.
+**Why:** pedido de César (2026-11-08), que eligió push del navegador frente a correo o aviso dentro de la app. Web Push no necesita cuenta en ningún servicio: solo un par VAPID.
+**Discarded alternative:** Firebase Cloud Messaging (KREA ya salió de Firebase, D327); OneSignal u otro SaaS (otra cuenta y datos de alumnos menores fuera del VPS).

@@ -154,7 +154,12 @@ describe("guardar, publicar y cerrar (Postgres)", () => {
         HOY,
         AHORA + 1,
       ),
-    ).toEqual({ ok: true, id });
+      // Recién publicada: lleva el aviso push para sus secciones (D336)
+    ).toEqual({
+      ok: true,
+      id,
+      aviso: { id, titulo: "Prueba W6", secciones: ["5C"] },
+    });
     expect((await leer(id)).estado).toBe("abierta");
 
     // Con una entrega, las preguntas quedan como estaban

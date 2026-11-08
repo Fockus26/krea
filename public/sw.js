@@ -83,6 +83,72 @@ self.addEventListener("fetch", (event) => {
   }
 });
 
+/* ---------- Aviso de tarea nueva (Web Push, D335–D340) ---------- */
+
+// El servidor manda `{ titulo, cuerpo, url, etiqueta }` (lib/push.ts, `avisoTareaNueva`). Solo se
+// abren rutas propias: una `url` que no empiece por "/" (o que sea "//otro") va a /tareas.
+const AVISO_ICONO = "/icons/icon-192.png";
+const AVISO_URL_POR_DEFECTO = "/tareas";
+
+function urlPropia(url) {
+  return typeof url === "string" && url.startsWith("/") && !url.startsWith("//")
+    ? url
+    : AVISO_URL_POR_DEFECTO;
+}
+
+self.addEventListener("push", (event) => {
+  let datos = {};
+  try {
+    datos = event.data ? event.data.json() : {};
+  } catch {
+    datos = {};
+  }
+  const titulo =
+    typeof datos.titulo === "string" && datos.titulo
+      ? datos.titulo
+      : "Nueva tarea";
+  event.waitUntil(
+    self.registration.showNotification(titulo, {
+      body: typeof datos.cuerpo === "string" ? datos.cuerpo : "",
+      icon: AVISO_ICONO,
+      tag: typeof datos.etiqueta === "string" ? datos.etiqueta : undefined,
+      lang: "es-VE",
+      data: { url: urlPropia(datos.url) },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const destino = new URL(
+    urlPropia(event.notification.data?.url),
+    self.location.origin,
+  ).href;
+  event.waitUntil(
+    (async () => {
+      const abiertas = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
+      // Una pestaña de KREA ya abierta: se enfoca y va a la tarea; si no, una nueva
+      const propia = abiertas.find(
+        (c) => new URL(c.url).origin === self.location.origin,
+      );
+      if (propia) {
+        await propia.focus();
+        if (propia.url === destino) return;
+        // `navigate` solo vale en pestañas que este SW controla; si no, una nueva
+        const ok = await propia
+          .navigate(destino)
+          .then(() => true)
+          .catch(() => false);
+        if (ok) return;
+      }
+      await self.clients.openWindow(destino);
+    })(),
+  );
+});
+
 /* ---------- Estrategias ---------- */
 
 async function primeroCache(req) {

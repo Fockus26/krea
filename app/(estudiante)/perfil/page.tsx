@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import {
   AparienciaConectada,
   AvatarPickerConectado,
+  AvisoTareasConectado,
   SeguridadConectada,
 } from "@/components/sections/perfil/perfil-conectado";
 import { ProfileData } from "@/components/sections/perfil/profile-data";
 import { ProfileIdentity } from "@/components/sections/perfil/profile-identity";
 import { alumnoActual, equipoPorId } from "@/lib/datos/estudiante";
+import { clavePublicaPush } from "@/lib/push";
 import { perfilVista } from "@/lib/vistas-estudiante";
 
 export const metadata: Metadata = { title: "Perfil" };
@@ -37,6 +39,8 @@ export default async function PerfilPage() {
         base={usuario.cedula}
       />
       <AparienciaConectada inicial={usuario.apariencia ?? null} />
+      {/* Aviso de tarea nueva (D335): solo con las tres variables de VAPID */}
+      <AvisoTareasConectado clavePublica={clavePublicaPush(process.env)} />
       <SeguridadConectada salirHref="/salir" />
     </>
   );

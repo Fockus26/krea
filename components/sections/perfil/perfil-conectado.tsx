@@ -9,12 +9,14 @@ import {
   guardarApariencia,
   guardarAvatar,
 } from "@/lib/acciones/perfil";
+import { desuscribirPush, suscribirPush } from "@/lib/acciones/push";
 import type { DicebearEstilo } from "@/lib/dicebear";
 import type { Apariencia } from "@/lib/modelo";
 import { ERROR_CAMBIO_PASSWORD } from "@/lib/perfil";
 import { RUTA_INGRESAR } from "@/lib/sesion";
 import { AppearanceSettings } from "./appearance-settings";
 import { AvatarPicker } from "./avatar-picker";
+import { AvisoTareas } from "./aviso-tareas";
 import { SecuritySettings } from "./security-settings";
 
 // PLACEHOLDER de copy (CONTENT_CHECKLIST fila 127): no están en el lienzo
@@ -67,6 +69,22 @@ export function AparienciaConectada({
         const r = await guardarApariencia(pref);
         if (!r.ok) toast(TOAST_APARIENCIA_NO);
       }}
+    />
+  );
+}
+
+/** El aviso de tarea nueva llevado a las Server Actions (D335). Sin VAPID no se pinta. */
+export function AvisoTareasConectado({
+  clavePublica,
+}: {
+  clavePublica: string | null;
+}) {
+  if (!clavePublica) return null;
+  return (
+    <AvisoTareas
+      clavePublica={clavePublica}
+      onSuscribir={async (sub) => (await suscribirPush(sub)).ok}
+      onDesuscribir={async (endpoint) => (await desuscribirPush(endpoint)).ok}
     />
   );
 }
