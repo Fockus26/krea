@@ -13,6 +13,10 @@ Fases 01–09 cerradas · **Track:** Product · main @ 8f818b8 · versión 1 ent
 
 **Tanda 2026-11-07** (pedidos 54–58) **cerrada**: olas 1–3, #102–#107, D307–D326 · main @ dec92d3 · sin QA de ola (memoria): el flujo de años y secciones (crear 4B y usarla en alumnos, equipos, tareas, puntos y ranking) va al QA final. `plans/batch-2026-11-07.md`.
 
+**Migración al VPS mergeada** (#108, main @ 6847dae). Recuperación por correo OK tras cambiar `BREVO_API_KEY` por una clave API (`xkeysib-`, no SMTP).
+
+**Tanda 2026-11-08** (pedidos 59–64, una ola Y1–Y6, D328–D345, filas 171–175) · PRs abiertos esperando revisión: #109 tarjeta Ingresar · #110 matriz contraste · #111 hover perfil · #112 texto blanco rellenos oscuro · #113 push tarea nueva (acciones VAPID + migración) · #114 variantes correo (elegir `VARIANTE_CORREO`). Slots wt1–wt6. Brief `plans/orchestration-2026-11-08.md`.
+
 ## Blocked (actions for César or external)
 
 QA de versión hecho (2026-11-06): lo no verificado está en `plans/qa-version-1.md` › Sin verificar.
