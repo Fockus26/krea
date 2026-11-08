@@ -1,7 +1,7 @@
 // Tareas del profesor con datos de Firestore (fase 07 W6, D199–D202). Puro (sin Firebase ni
 // reloj): qué se escribe al guardar, publicar o editar una tarea (`armarTarea`), cómo se ve en la
-// lista y en el constructor, y las tarjetas de Premios. Lo usan los adaptadores del Admin SDK
-// (`lib/firebase/tareas.ts`), las páginas del profe y las pruebas.
+// lista y en el constructor, y las tarjetas de Premios. Lo usan los adaptadores de Postgres
+// (`lib/data/tareas.ts`), las páginas del profe y las pruebas.
 import { z } from "zod";
 import { notasPremioIndividual } from "@/lib/equipo";
 import {

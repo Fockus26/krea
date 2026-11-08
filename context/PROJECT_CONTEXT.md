@@ -64,11 +64,11 @@ una red social ruidosa.
 - Styling: Tailwind CSS — only one, never both
 - Package manager: **bun**
 - Documentation: **Context7** before using any library's API
-- Database / ORM: Firebase Firestore (tiempo real con `onSnapshot` para el ranking)
-- Authentication: Firebase Auth (cédula → email interno + email real para recuperación; D008)
+- Database / ORM: **Postgres en el VPS** con Drizzle (D327): `krea` producción, `krea_preview` Preview, `krea_dev` desarrollo; migraciones en `drizzle/` (kit `tech/vps-postgres.md`). Ranking y presencia «en vivo» por sondeo cada 5 s
+- Authentication: **Better Auth** en la app (D327; cédula → email interno + email real para recuperación, D008). Sin registro público: las cuentas las crea el profe
 - Payments: N/A
-- Email: Firebase Auth (restablecer contraseña). Sin otros correos en v1 (D009).
-- Storage: **Backblaze B2** por su API S3 (D194; Firebase Storage exige el plan Blaze): bucket privado, subida por Server Action, lectura con URLs firmadas de vida corta (`lib/almacen/`). `firebase/storage.rules` queda cerrado
+- Email: API de Brevo desde la app (restablecer contraseña, D185, D327). Sin otros correos en v1 (D009).
+- Storage: **Backblaze B2** por su API S3 (D194; Firebase Storage exige el plan Blaze): bucket privado, subida por Server Action, lectura con URLs firmadas de vida corta (`lib/almacen/`)
 - Avatares: DiceBear HTTP API 9.x (`https://api.dicebear.com/9.x/<estilo>/svg?seed=<semilla>`)
 - Deployment: Vercel
 - Domain: PENDING
@@ -97,9 +97,9 @@ una red social ruidosa.
 
 | Email | Sent by | Recipient | Status |
 |---|---|---|---|
-| Restablecer contraseña | Firebase Auth | estudiante / profesor | design pending |
+| Restablecer contraseña | La app (Brevo API) | estudiante / profesor | implemented (D185, D327) |
 
-Sending provider: Firebase Auth (plantilla de la consola; D009) · Sender: PENDING ·
+Sending provider: Brevo (API transaccional; D185) · Sender: `BREVO_SENDER_EMAIL` ·
 Verified domain: pending — action for César.
 
 ## Page scope

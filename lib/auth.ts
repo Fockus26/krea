@@ -24,22 +24,15 @@ export const ERROR_INGRESO: Record<ErrorIngreso, string> = {
 };
 
 /**
- * Código de error de Firebase Auth → error que ve el usuario (fase 07, D180). Nunca dice cuál de
- * los dos campos falló. Lo que no se reconoce cuenta como credenciales: no revela nada más.
+ * Respuesta de Better Auth al entrar → error que ve el usuario (D180, D327). `status` es el HTTP
+ * de `/api/auth/sign-in/email`; `undefined` = no hubo respuesta (sin red). Nunca dice cuál de los
+ * dos campos falló: lo que no se reconoce cuenta como credenciales.
  */
-export function errorIngresoDeCodigo(codigo: string | undefined): ErrorIngreso {
-  switch (codigo) {
-    case "auth/too-many-requests":
-      return "bloqueado";
-    case "auth/network-request-failed":
-      return "red";
-    case "auth/configuration-not-found":
-    case "auth/invalid-api-key":
-    case "auth/operation-not-allowed":
-      return "no-disponible";
-    default:
-      return "credenciales";
-  }
+export function errorIngresoDeEstado(status: number | undefined): ErrorIngreso {
+  if (status === undefined || status === 0) return "red";
+  if (status === 429) return "bloqueado";
+  if (status >= 500) return "no-disponible";
+  return "credenciales";
 }
 
 /** Contraseña vacía al entrar. PLACEHOLDER de copy (CONTENT_CHECKLIST fila 56). */

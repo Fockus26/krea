@@ -12,10 +12,11 @@ import {
   zEditarProfesor,
 } from "@/lib/cuentas-datos";
 import { exigirAdmin } from "@/lib/dal";
-import { firebaseAdmin } from "@/lib/firebase/admin";
-import { editarProfesorEnTransaccion } from "@/lib/firebase/cuentas";
+import { editarProfesorEnTransaccion } from "@/lib/data/cuentas";
+import { leerUsuario } from "@/lib/data/usuarios";
+import { baseDeDatos, type Db } from "@/lib/db";
 import { borrarEnLote, type ResultadoLote, zCedulasLote } from "@/lib/lote";
-import { COL, zCedula, zUsuario } from "@/lib/modelo";
+import { zCedula } from "@/lib/modelo";
 
 const log = (donde: string, e: unknown) =>
   console.error(donde, (e as { code?: string }).code ?? "error");
@@ -47,12 +48,12 @@ export async function editarProfesor(
   entrada: unknown,
 ): Promise<ResultadoProfesor> {
   await exigirAdmin();
-  const admin = firebaseAdmin();
-  if (!admin) return { ok: false, error: "red" };
+  const db = baseDeDatos();
+  if (!db) return { ok: false, error: "red" };
   const d = zEditarProfesor.safeParse(entrada);
   if (!d.success) return { ok: false, error: "invalida" };
   try {
-    const r = await editarProfesorEnTransaccion(admin.db, d.data, Date.now());
+    const r = await editarProfesorEnTransaccion(db, d.data, Date.now());
     if (r.ok) refresh();
     return r;
   } catch (e) {
@@ -69,11 +70,11 @@ export async function eliminarProfesor(
   cedula: unknown,
 ): Promise<ResultadoProfesor> {
   const sesion = await exigirAdmin();
-  const admin = firebaseAdmin();
-  if (!admin) return { ok: false, error: "red" };
+  const db = baseDeDatos();
+  if (!db) return { ok: false, error: "red" };
   const c = zCedula.safeParse(cedula);
   if (!c.success) return { ok: false, error: "invalida" };
-  const r = await borrarUnProfesor(admin, sesion.uid, c.data);
+  const r = await borrarUnProfesor(db, sesion.uid, c.data);
   if (r.ok) refresh();
   return r;
 }
@@ -87,13 +88,13 @@ export async function eliminarProfesores(
   cedulas: unknown,
 ): Promise<ResultadoLote<ErrorProfesor>> {
   const sesion = await exigirAdmin();
-  const admin = firebaseAdmin();
-  if (!admin) return { ok: false, error: "red" };
+  const db = baseDeDatos();
+  if (!db) return { ok: false, error: "red" };
   const d = zCedulasLote.safeParse(cedulas);
   if (!d.success) return { ok: false, error: "invalida" };
   const resultados = await borrarEnLote<ErrorProfesor>(
     d.data,
-    (cedula) => borrarUnProfesor(admin, sesion.uid, cedula),
+    (cedula) => borrarUnProfesor(db, sesion.uid, cedula),
     "red",
   );
   refresh();
@@ -102,18 +103,16 @@ export async function eliminarProfesores(
 
 /** El borrado de uno, sin sesión ni `refresh()`. No lanza: cualquier fallo vuelve como error. */
 async function borrarUnProfesor(
-  admin: NonNullable<ReturnType<typeof firebaseAdmin>>,
+  db: Db,
   yo: string,
   cedula: string,
 ): Promise<ResultadoProfesor> {
   if (cedula === yo) return { ok: false, error: "tu-cuenta" };
   try {
-    const snap = await admin.db.collection(COL.usuarios).doc(cedula).get();
-    // Sin perfil no hay qué comprobar ni borrar (eliminarCuenta borra Auth antes que el perfil)
-    if (!snap.exists) return { ok: true };
-    const u = zUsuario.safeParse(snap.data());
-    if (!u.success || u.data.rol !== "profesor")
-      return { ok: false, error: "no-profesor" };
+    const u = await leerUsuario(db, cedula);
+    // Sin perfil no hay qué comprobar ni borrar (ya se eliminó)
+    if (!u) return { ok: true };
+    if (u.rol !== "profesor") return { ok: false, error: "no-profesor" };
     await eliminarCuenta(cedula);
     return { ok: true };
   } catch (e) {

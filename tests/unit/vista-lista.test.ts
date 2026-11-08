@@ -135,7 +135,7 @@ describe("servidor en lote (D314, D315)", () => {
     );
     expect(lote).toMatch(/await exigirSesion\("profesor"\)/);
     expect(lote).toContain("zIdsLote(zIdTareaProfe).safeParse");
-    expect(lote).toContain("borrarUnaTarea(admin, id)");
+    expect(lote).toContain("borrarUnaTarea(db, id)");
     expect(lote).toContain('r.error === "no-existe" ? { ok: true }');
     expect(lote).toContain("refresh()");
   });
@@ -144,7 +144,7 @@ describe("servidor en lote (D314, D315)", () => {
     const lote = desde(codigo, "export async function eliminarEquipos");
     expect(lote).toMatch(/await exigirSesion\("profesor"\)/);
     expect(lote).toContain("zIdsLote(zIdDocumento).safeParse");
-    expect(lote).toContain("borrarUnEquipo(admin, id)");
+    expect(lote).toContain("borrarUnEquipo(db, id)");
     expect(lote).toContain('r.error === "no-existe" ? { ok: true }');
     expect(lote).toContain("refresh()");
     // La transacción la abre el borrado de uno, no el lote
@@ -154,7 +154,7 @@ describe("servidor en lote (D314, D315)", () => {
     );
     expect(soloLote).not.toContain("eliminarEquipoEnTransaccion");
     expect(desde(codigo, "async function borrarUnEquipo")).toContain(
-      "eliminarEquipoEnTransaccion(admin.db, id,",
+      "eliminarEquipoEnTransaccion(db, id,",
     );
   });
 });

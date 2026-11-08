@@ -16,7 +16,8 @@
       "!**/.claude/worktrees",
       "!.claude/kit-reference",
       "!design/prototype",
-      "!design/canvas"
+      "!design/canvas",
+      "!drizzle/meta"
     ]
   },
   "formatter": {

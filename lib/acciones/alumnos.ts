@@ -5,7 +5,7 @@
 // Editar: perfil, historial de base (D176), email y `ranking/{seccion}` en UNA transacción; con la
 // versión que vio el diálogo, un guardado de otro profe en medio responde `conflicto` (W14, D276).
 // Agregar: `crearCuenta` (contraseña temporal, D232) + equipo y ranking en una transacción.
-// Eliminar: Auth primero (ya no puede entrar), luego sus datos y el ranking en una transacción.
+// Eliminar: cuenta, sesiones, datos y ranking en una transacción (D327).
 import { refresh } from "next/cache";
 import { almacenB2 } from "@/lib/almacen/b2";
 import {
@@ -21,18 +21,16 @@ import {
 import { type ResultadoAlumno, zEditarAlumno } from "@/lib/alumnos-datos";
 import { crearCuenta, ErrorCuenta } from "@/lib/cuentas";
 import { exigirSesion } from "@/lib/dal";
-import { catalogoSecciones } from "@/lib/datos/secciones";
-import { firebaseAdmin } from "@/lib/firebase/admin";
-import { editarAlumnoEnTransaccion } from "@/lib/firebase/alumnos";
+import { editarAlumnoEnTransaccion } from "@/lib/data/alumnos";
 import {
-  borrarAuthAlumno,
   eliminarAlumnoEnTransaccion,
   equipoValidoPara,
   incorporarAlumnoEnTransaccion,
   resumenBorradoCon,
-} from "@/lib/firebase/alumnos-alta";
-import { sincronizarClaims } from "@/lib/firebase/equipos";
-import { borrarPresenciaAlumno } from "@/lib/firebase/presencia";
+} from "@/lib/data/alumnos-alta";
+import { catalogoSecciones } from "@/lib/datos/secciones";
+import type { Db } from "@/lib/db";
+import { baseDeDatos } from "@/lib/db";
 import { borrarEnLote, type ResultadoLote, zCedulasLote } from "@/lib/lote";
 import { zCedula } from "@/lib/modelo";
 import { seccionEnCatalogo } from "@/lib/secciones";
@@ -50,13 +48,13 @@ const registrar = (accion: string, e: unknown) =>
 
 export async function editarAlumno(entrada: unknown): Promise<ResultadoAlumno> {
   const sesion = await exigirSesion("profesor");
-  const admin = firebaseAdmin();
-  if (!admin) return { ok: false, error: "red" };
+  const db = baseDeDatos();
+  if (!db) return { ok: false, error: "red" };
   const d = zEditarAlumno.safeParse(entrada);
   if (!d.success) return { ok: false, error: "invalida" };
   try {
     const r = await editarAlumnoEnTransaccion(
-      admin.db,
+      db,
       sesion.uid,
       d.data,
       Date.now(),
@@ -79,8 +77,8 @@ export async function crearAlumno(
   entrada: unknown,
 ): Promise<ResultadoCrearAlumno> {
   await exigirSesion("profesor");
-  const admin = firebaseAdmin();
-  if (!admin) return { ok: false, error: "red" };
+  const db = baseDeDatos();
+  if (!db) return { ok: false, error: "red" };
   const d = zCrearAlumno.safeParse(entrada);
   if (!d.success) return { ok: false, error: "invalida" };
   const { equipoId, ...cuenta } = d.data;
@@ -91,7 +89,7 @@ export async function crearAlumno(
       return { ok: false, error: "seccion" };
     if (
       equipoId !== null &&
-      !(await equipoValidoPara(admin.db, equipoId, cuenta.seccion))
+      !(await equipoValidoPara(db, equipoId, cuenta.seccion))
     )
       return { ok: false, error: "equipo" };
     ({ passwordTemporal } = await crearCuenta({
@@ -107,22 +105,12 @@ export async function crearAlumno(
   let sinEquipo = false;
   try {
     const r = await incorporarAlumnoEnTransaccion(
-      admin.db,
+      db,
       cuenta.cedula,
       equipoId,
       Date.now(),
     );
     if (!r.ok) sinEquipo = true;
-    // Sus claims nacieron con `equipoId: null`; si falla aquí, «Crea tu contraseña» las rehace
-    // desde el perfil en su primer ingreso (D232)
-    else if (r.afectados.length) {
-      const fallidas = await sincronizarClaims(
-        admin.auth,
-        admin.db,
-        r.afectados,
-      );
-      if (fallidas.length) console.error("[crearAlumno] claims sin poner");
-    }
   } catch (e) {
     registrar("crearAlumno", e);
     sinEquipo = true;
@@ -141,12 +129,12 @@ export async function resumenEliminarAlumno(
   cedula: unknown,
 ): Promise<ResultadoResumenBorrado> {
   await exigirSesion("profesor");
-  const admin = firebaseAdmin();
-  if (!admin) return { ok: false, error: "red" };
+  const db = baseDeDatos();
+  if (!db) return { ok: false, error: "red" };
   const c = zCedula.safeParse(cedula);
   if (!c.success) return { ok: false, error: "invalida" };
   try {
-    return await resumenBorradoCon(admin.db, c.data);
+    return await resumenBorradoCon(db, c.data);
   } catch (e) {
     registrar("resumenEliminarAlumno", e);
     return { ok: false, error: "red" };
@@ -164,13 +152,12 @@ export async function eliminarAlumno(
   cedula: unknown,
 ): Promise<ResultadoBorrarAlumno> {
   await exigirSesion("profesor");
-  const admin = firebaseAdmin();
-  if (!admin) return { ok: false, error: "red" };
+  const db = baseDeDatos();
+  if (!db) return { ok: false, error: "red" };
   const c = zCedula.safeParse(cedula);
   if (!c.success) return { ok: false, error: "invalida" };
-  const r = await borrarUnAlumno(admin, c.data);
-  // `a-medias`: Auth ya no está, la lista tiene que dejar de ofrecerle entrar
-  if (r.ok || r.error === "a-medias") refresh();
+  const r = await borrarUnAlumno(db, c.data);
+  if (r.ok) refresh();
   return r;
 }
 
@@ -184,14 +171,14 @@ export async function eliminarAlumnos(
   cedulas: unknown,
 ): Promise<ResultadoLote<ErrorBorrarAlumno>> {
   await exigirSesion("profesor");
-  const admin = firebaseAdmin();
-  if (!admin) return { ok: false, error: "red" };
+  const db = baseDeDatos();
+  if (!db) return { ok: false, error: "red" };
   const d = zCedulasLote.safeParse(cedulas);
   if (!d.success) return { ok: false, error: "invalida" };
   const resultados = await borrarEnLote<ErrorBorrarAlumno>(
     d.data,
     async (cedula) => {
-      const r = await borrarUnAlumno(admin, cedula);
+      const r = await borrarUnAlumno(db, cedula);
       return !r.ok && r.error === "no-existe" ? { ok: true } : r;
     },
     "red",
@@ -208,15 +195,15 @@ export async function resumenEliminarAlumnos(
   cedulas: unknown,
 ): Promise<ResultadoResumenLote> {
   await exigirSesion("profesor");
-  const admin = firebaseAdmin();
-  if (!admin) return { ok: false, error: "red" };
+  const db = baseDeDatos();
+  if (!db) return { ok: false, error: "red" };
   const d = zCedulasLote.safeParse(cedulas);
   if (!d.success) return { ok: false, error: "invalida" };
   try {
     const resumenes: ResumenBorrado[] = [];
     for (const c of d.data) {
       // Un fallo de red lanza (y cae en el catch); los demás errores no suman
-      const r = await resumenBorradoCon(admin.db, c);
+      const r = await resumenBorradoCon(db, c);
       if (r.ok) resumenes.push(r.resumen);
     }
     return { ok: true, resumen: sumarResumenes(resumenes) };
@@ -228,36 +215,24 @@ export async function resumenEliminarAlumnos(
 
 /**
  * El borrado de uno, sin sesión ni `refresh()` (lo ponen `eliminarAlumno` y `eliminarAlumnos`).
- * No lanza: cualquier fallo vuelve como error.
+ * Cuenta, sesiones, perfil, datos y presencia se van en UNA transacción (D327); las imágenes de B2
+ * después. No lanza: cualquier fallo vuelve como error.
  */
 async function borrarUnAlumno(
-  admin: NonNullable<ReturnType<typeof firebaseAdmin>>,
+  db: Db,
   cedula: string,
 ): Promise<ResultadoBorrarAlumno> {
-  // Antes de tocar Auth: que exista, que sea un alumno y que quepa en una transacción
-  try {
-    const previo = await resumenBorradoCon(admin.db, cedula);
-    if (!previo.ok) return previo;
-    await borrarAuthAlumno(admin.auth, cedula);
-  } catch (e) {
-    registrar("eliminarAlumno", e);
-    return { ok: false, error: "red" };
-  }
   let imagenes: string[];
   try {
-    const r = await eliminarAlumnoEnTransaccion(admin.db, cedula, Date.now());
+    const r = await eliminarAlumnoEnTransaccion(db, cedula, Date.now());
     if (!r.ok) return r;
     imagenes = r.imagenes;
   } catch (e) {
     registrar("eliminarAlumno", e);
-    return { ok: false, error: "a-medias" };
+    return { ok: false, error: "red" };
   }
   await borrarImagenes(imagenes).catch((e) =>
     registrar("eliminarAlumno:imagenes", e),
-  );
-  // Su presencia (D275): si falla, queda huérfana e inofensiva (nadie edita a un alumno que no está)
-  await borrarPresenciaAlumno(admin.db, cedula).catch((e) =>
-    registrar("eliminarAlumno:presencia", e),
   );
   return { ok: true };
 }

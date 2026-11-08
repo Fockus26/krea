@@ -1,14 +1,9 @@
 "use client";
 
-import { onAuthStateChanged, signInWithCustomToken } from "firebase/auth";
-import { doc, onSnapshot } from "firebase/firestore";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ErrorEnPantalla, SesionVencida } from "@/components/estados/errores";
 import { RankAnnouncer } from "@/components/krea/rank-announcer";
-import { tokenEnVivo } from "@/lib/acciones/en-vivo";
-import { firebaseCliente } from "@/lib/firebase/cliente";
 import {
-  COL,
   type RankingSeccion,
   type SeccionId,
   zRankingSeccion,
@@ -24,20 +19,20 @@ import {
   type Tu,
 } from "@/lib/ranking-en-vivo";
 import type { Movimiento, Vista } from "@/lib/ranking-vista";
+import { SONDEO_MS, useSondeo } from "@/lib/sondeo";
 import { Ranking } from "./ranking";
 
 /** Cada cuánto se refresca «hace N min» del feed. */
 const RELOJ_MS = 30_000;
 
 /**
- * Ranking en vivo (D011, D190): pinta primero lo que leyó el servidor y se suscribe con
- * `onSnapshot` a `ranking/{seccion}` con el SDK del navegador. Si el navegador no tiene la sesión
- * de Firebase de esta cuenta (otra pestaña cerró, contraseña cambiada), pide un token propio al
- * servidor (`tokenEnVivo`). Los chips de puesto son lo que cambió desde que se abrió la página;
- * el feed (≥ 1024) y `RankAnnouncer` (< 1024, D096) salen de la diferencia entre instantáneas.
+ * Ranking en vivo (D011, D190, D327): pinta primero lo que leyó el servidor y pregunta cada
+ * SONDEO_MS a /api/ranking/{seccion} (con la cookie de la sesión) si cambió. 401 = la sesión se
+ * cerró o se revocó (D171); otro fallo = sin red. Los chips de puesto son lo que cambió desde que
+ * se abrió la página; el feed (≥ 1024) y `RankAnnouncer` (< 1024, D096) salen de la diferencia
+ * entre instantáneas.
  */
 export function RankingEnVivo({
-  uid,
   rol = "estudiante",
   seccion,
   vista,
@@ -46,7 +41,6 @@ export function RankingEnVivo({
   info,
   enlaces,
 }: {
-  uid: string;
   /** El profesor: sin fila «tú» (`tu` vacío) y con el selector de sección (`enlaces.seccion`, D322). */
   rol?: "estudiante" | "profesor";
   seccion: SeccionId;
@@ -98,58 +92,35 @@ export function RankingEnVivo({
     setAhora(t);
   }, [items]);
 
-  useEffect(() => {
-    const fb = firebaseCliente();
-    if (!fb) {
-      setCortado(true);
-      return;
-    }
-    let fin = false;
-    let pedido = false;
-    let dejar: (() => void) | null = null;
-    const dejarAuth = onAuthStateChanged(fb.auth, async (user) => {
-      if (fin) return;
-      dejar?.();
-      dejar = null;
-      if (!user || user.uid !== uid) {
-        // Un solo intento por montaje: si falla, el aviso y lo del servidor
-        if (pedido) {
-          setCortado(true);
+  const version = useRef(inicial.actualizadoEn);
+  useSondeo(
+    async (senal) => {
+      try {
+        const res = await fetch(
+          `/api/ranking/${encodeURIComponent(seccion)}?desde=${version.current}`,
+          { cache: "no-store", signal: senal },
+        );
+        if (res.status === 401) {
+          setSesionCerrada(true);
           return;
         }
-        pedido = true;
-        try {
-          const r = await tokenEnVivo();
-          if (fin) return;
-          if (!r.ok) {
-            // Sin sesión en el servidor: no es la red, hay que entrar de nuevo (D171)
-            if (r.error === "sin-sesion") setSesionCerrada(true);
-            else setCortado(true);
-            return;
-          }
-          await signInWithCustomToken(fb.auth, r.token);
-        } catch {
-          if (!fin) setCortado(true);
-        }
-        return;
-      }
-      dejar = onSnapshot(
-        doc(fb.db, COL.ranking, seccion),
-        (snap) => {
-          const r = zRankingSeccion.safeParse(snap.data());
-          if (!r.success) return;
+        if (res.status === 204) {
           setCortado(false);
-          setRanking(r.data);
-        },
-        () => setCortado(true),
-      );
-    });
-    return () => {
-      fin = true;
-      dejarAuth();
-      dejar?.();
-    };
-  }, [uid, seccion]);
+          return;
+        }
+        if (!res.ok) throw new Error(String(res.status));
+        const r = zRankingSeccion.safeParse(await res.json());
+        if (!r.success) return;
+        version.current = r.data.actualizadoEn;
+        setCortado(false);
+        setRanking(r.data);
+      } catch {
+        if (!senal.aborted) setCortado(true);
+      }
+    },
+    SONDEO_MS,
+    !sesionCerrada,
+  );
 
   return (
     <div className="flex flex-col gap-6">

@@ -1,14 +1,23 @@
 "use server";
 // Server Actions de Equipos del profesor (fase 07 W8, D175, D210, D212). Todo detrás de
-// `exigirSesion("profesor")`; la sección sale de los documentos, nunca del body. Mover y capitán:
-// una transacción con el ranking (`lib/firebase/equipos.ts`) y, tras el commit, los claims de
-// Auth del alumno movido + revocar sus tokens. Logo: firma de bytes + peso en el servidor, B2
+// `exigirSesion("profesor")`; la sección sale de las filas, nunca del body. Mover y capitán:
+// una transacción con el ranking (`lib/data/equipos.ts`); la sesión del alumno lee su equipo
+// nuevo en el siguiente request, sin cerrarla (D327). Logo: firma de bytes + peso en el servidor, B2
 // (`equipos/{equipoId}/{uuid}.webp`), la ruta en el equipo y el ranking, y se borra el anterior.
 import { refresh } from "next/cache";
 import { almacenB2 } from "@/lib/almacen/b2";
 import { claveLogo, validarLogoSubido } from "@/lib/almacen/imagen";
 import { exigirSesion } from "@/lib/dal";
+import {
+  cambiarCapitanEnTransaccion,
+  cambiarLogoEnTransaccion,
+  crearEquipoEnTransaccion,
+  editarEquipoEnTransaccion,
+  eliminarEquipoEnTransaccion,
+  moverAlumnoEnTransaccion,
+} from "@/lib/data/equipos";
 import { catalogoSecciones } from "@/lib/datos/secciones";
+import { baseDeDatos, type Db } from "@/lib/db";
 import {
   type ResultadoEquipos,
   type ResultadoLogo,
@@ -22,18 +31,6 @@ import {
   zEditarEquipo,
 } from "@/lib/equipos-gestion";
 import { zIdDocumento } from "@/lib/evaluar-datos";
-import { firebaseAdmin } from "@/lib/firebase/admin";
-import {
-  cambiarCapitanEnTransaccion,
-  cambiarLogoEnTransaccion,
-  moverAlumnoEnTransaccion,
-  sincronizarClaims,
-} from "@/lib/firebase/equipos";
-import {
-  crearEquipoEnTransaccion,
-  editarEquipoEnTransaccion,
-  eliminarEquipoEnTransaccion,
-} from "@/lib/firebase/equipos-gestion";
 import { borrarEnLote, type ResultadoLote, zIdsLote } from "@/lib/lote";
 import { seccionEnCatalogo } from "@/lib/secciones";
 
@@ -48,41 +45,35 @@ export async function moverAlumnoDeEquipo(
   entrada: unknown,
 ): Promise<ResultadoEquipos> {
   await exigirSesion("profesor");
-  const admin = firebaseAdmin();
-  if (!admin) return { ok: false, error: "red" };
+  const db = baseDeDatos();
+  if (!db) return { ok: false, error: "red" };
   const d = zMoverAlumno.safeParse(entrada);
   if (!d.success) return { ok: false, error: "invalida" };
   try {
-    const r = await moverAlumnoEnTransaccion(admin.db, d.data, Date.now());
+    const r = await moverAlumnoEnTransaccion(db, d.data, Date.now());
     if (!r.ok) return r;
     refresh();
-    // Siempre el alumno pedido, aunque no haya cambiado nada: reintentar repara un fallo a medias
-    const fallidas = await sincronizarClaims(admin.auth, admin.db, [
-      d.data.cedula,
-      ...r.afectados,
-    ]);
-    return fallidas.length ? { ok: false, error: "sesiones" } : { ok: true };
+    return { ok: true };
   } catch (e) {
     registrar("moverAlumnoDeEquipo", e);
     return { ok: false, error: "red" };
   }
 }
 
-/** Cambia el capitán (D012). Los claims no llevan el capitán: no hay sesiones que cerrar. */
+/** Cambia el capitán (D012). */
 export async function cambiarCapitanDeEquipo(
   entrada: unknown,
 ): Promise<ResultadoEquipos> {
   await exigirSesion("profesor");
-  const admin = firebaseAdmin();
-  if (!admin) return { ok: false, error: "red" };
+  const db = baseDeDatos();
+  if (!db) return { ok: false, error: "red" };
   const d = zCambiarCapitan.safeParse(entrada);
   if (!d.success) return { ok: false, error: "invalida" };
   try {
-    const r = await cambiarCapitanEnTransaccion(admin.db, d.data, Date.now());
+    const r = await cambiarCapitanEnTransaccion(db, d.data, Date.now());
     if (!r.ok) return r;
     refresh();
-    const fallidas = await sincronizarClaims(admin.auth, admin.db, r.afectados);
-    return fallidas.length ? { ok: false, error: "sesiones" } : { ok: true };
+    return { ok: true };
   } catch (e) {
     registrar("cambiarCapitanDeEquipo", e);
     return { ok: false, error: "red" };
@@ -92,9 +83,9 @@ export async function cambiarCapitanDeEquipo(
 /** Sube el logo ya recortado (FormData: `equipoId`, `logo`). Devuelve una URL firmada para pintarlo. */
 export async function subirLogoEquipo(form: FormData): Promise<ResultadoLogo> {
   await exigirSesion("profesor");
-  const admin = firebaseAdmin();
+  const db = baseDeDatos();
   const almacen = almacenB2();
-  if (!admin) return { ok: false, error: "red" };
+  if (!db) return { ok: false, error: "red" };
   if (!almacen) {
     console.error(
       "[subirLogoEquipo] almacén sin configurar (faltan las variables B2_*)",
@@ -122,7 +113,7 @@ export async function subirLogoEquipo(form: FormData): Promise<ResultadoLogo> {
     if (!subida.ok) return { ok: false, error: "almacen" };
 
     const r = await cambiarLogoEnTransaccion(
-      admin.db,
+      db,
       equipoId.data,
       clave,
       Date.now(),
@@ -154,15 +145,15 @@ export async function crearEquipo(
   entrada: unknown,
 ): Promise<ResultadoGestionEquipo> {
   await exigirSesion("profesor");
-  const admin = firebaseAdmin();
-  if (!admin) return { ok: false, error: "red" };
+  const db = baseDeDatos();
+  if (!db) return { ok: false, error: "red" };
   const d = zCrearEquipo.safeParse(entrada);
   if (!d.success) return { ok: false, error: "invalida" };
   try {
     // `zSeccion` valida la forma; la sección además tiene que existir en el catálogo (D323)
     if (!seccionEnCatalogo(d.data.seccion, await catalogoSecciones()))
       return { ok: false, error: "seccion" };
-    const r = await crearEquipoEnTransaccion(admin.db, d.data, Date.now());
+    const r = await crearEquipoEnTransaccion(db, d.data, Date.now());
     if (r.ok) refresh();
     return r;
   } catch (e) {
@@ -176,12 +167,12 @@ export async function editarEquipo(
   entrada: unknown,
 ): Promise<ResultadoGestionEquipo> {
   await exigirSesion("profesor");
-  const admin = firebaseAdmin();
-  if (!admin) return { ok: false, error: "red" };
+  const db = baseDeDatos();
+  if (!db) return { ok: false, error: "red" };
   const d = zEditarEquipo.safeParse(entrada);
   if (!d.success) return { ok: false, error: "invalida" };
   try {
-    const r = await editarEquipoEnTransaccion(admin.db, d.data, Date.now());
+    const r = await editarEquipoEnTransaccion(db, d.data, Date.now());
     if (r.ok) refresh();
     return r;
   } catch (e) {
@@ -192,21 +183,19 @@ export async function editarEquipo(
 
 /**
  * Elimina un equipo (D307): sus integrantes quedan «Sin equipo», sus entregas grupales se quedan
- * con `titularNombre` y sus ajustes se borran, en una transacción. Después del commit: los claims
- * de los integrantes (su sesión se cierra, como al moverlos; si falla, `sesiones`: el equipo ya
- * no existe) y su logo de B2 (si B2 falla, se registra: queda huérfano, sin dueño).
+ * con `titularNombre` y sus ajustes se borran, en una transacción. Después del commit, su logo de
+ * B2 (si B2 falla, se registra: queda huérfano, sin dueño).
  */
 export async function eliminarEquipo(
   equipoId: unknown,
 ): Promise<ResultadoGestionEquipo> {
   await exigirSesion("profesor");
-  const admin = firebaseAdmin();
-  if (!admin) return { ok: false, error: "red" };
+  const db = baseDeDatos();
+  if (!db) return { ok: false, error: "red" };
   const id = zIdDocumento.safeParse(equipoId);
   if (!id.success) return { ok: false, error: "invalida" };
-  const r = await borrarUnEquipo(admin, id.data);
-  // `sesiones`: el equipo ya no existe, el tablero tiene que dejar de pintarlo
-  if (r.ok || r.error === "sesiones") refresh();
+  const r = await borrarUnEquipo(db, id.data);
+  if (r.ok) refresh();
   return r;
 }
 
@@ -220,14 +209,14 @@ export async function eliminarEquipos(
   ids: unknown,
 ): Promise<ResultadoLote<ErrorGestionEquipo>> {
   await exigirSesion("profesor");
-  const admin = firebaseAdmin();
-  if (!admin) return { ok: false, error: "red" };
+  const db = baseDeDatos();
+  if (!db) return { ok: false, error: "red" };
   const d = zIdsLote(zIdDocumento).safeParse(ids);
   if (!d.success) return { ok: false, error: "invalida" };
   const resultados = await borrarEnLote<ErrorGestionEquipo>(
     d.data,
     async (id) => {
-      const r = await borrarUnEquipo(admin, id);
+      const r = await borrarUnEquipo(db, id);
       return !r.ok && r.error === "no-existe" ? { ok: true } : r;
     },
     "red",
@@ -242,17 +231,17 @@ export async function eliminarEquipos(
  * No lanza: cualquier fallo vuelve como error.
  */
 async function borrarUnEquipo(
-  admin: NonNullable<ReturnType<typeof firebaseAdmin>>,
+  db: Db,
   id: string,
 ): Promise<ResultadoGestionEquipo> {
   let tx: Awaited<ReturnType<typeof eliminarEquipoEnTransaccion>>;
   try {
-    tx = await eliminarEquipoEnTransaccion(admin.db, id, Date.now());
+    tx = await eliminarEquipoEnTransaccion(db, id, Date.now());
   } catch (e) {
     registrar("eliminarEquipo", e);
     return { ok: false, error: "red" };
   }
-  const { resultado, logo, afectados } = tx;
+  const { resultado, logo } = tx;
   if (!resultado.ok) return resultado;
   if (logo) {
     const b = await almacenB2()
@@ -260,15 +249,5 @@ async function borrarUnEquipo(
       .catch(() => null);
     if (!b?.ok) console.error("[eliminarEquipo] no se borró el logo");
   }
-  // Ya se eliminó: lo que falle desde aquí es que alguna sesión quedó abierta
-  const fallidas = await sincronizarClaims(
-    admin.auth,
-    admin.db,
-    afectados,
-  ).catch((e) => {
-    registrar("eliminarEquipo", e);
-    return afectados;
-  });
-  if (fallidas.length) return { ok: false, error: "sesiones" };
   return resultado;
 }

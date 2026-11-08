@@ -1,79 +1,46 @@
 "use server";
-// Server Actions de la sesión (D180): crear la cookie tras el login y cerrarla, y la sesión de las
-// pantallas de error (D213).
-import { cookies } from "next/headers";
-import { z } from "zod";
+// Server Actions de la sesión (D180, D327): confirmar el login recién hecho con Better Auth y
+// cerrarlo, y la sesión de las pantallas de error (D213).
+import { headers } from "next/headers";
 import type { NavUsuario } from "@/components/layout/nav-types";
 import type { ErrorIngreso } from "@/lib/auth";
+import { authKrea } from "@/lib/better-auth";
 import { verificarSesion } from "@/lib/dal";
-import { firebaseAdmin } from "@/lib/firebase/admin";
-import { sesionDeCookie } from "@/lib/firebase/sesion-servidor";
-import { COL, type RolUsuario, zUsuario } from "@/lib/modelo";
-import {
-  COOKIE_SESION,
-  destinoDe,
-  loginReciente,
-  SESION_MS,
-  sesionDeClaims,
-} from "@/lib/sesion";
+import { leerUsuario } from "@/lib/data/usuarios";
+import { baseDeDatos } from "@/lib/db";
+import type { RolUsuario } from "@/lib/modelo";
+import { destinoDe } from "@/lib/sesion";
 import { navUsuarioDe } from "@/lib/vistas-estudiante";
 
 export type ResultadoIngreso =
   | { ok: true; destino: string }
   | { ok: false; error: ErrorIngreso };
 
-const zIdToken = z.string().min(1).max(8192);
-
 /**
- * Cambia el idToken de un login recién hecho en el navegador por la cookie de sesión httpOnly.
- * Una cuenta sin rol válido (claims) no entra: «credenciales», sin decir por qué.
+ * Tras `signIn.email` en el navegador: a dónde va la sesión recién abierta. Una cuenta sin perfil
+ * válido no entra: se cierra la sesión y responde «credenciales», sin decir por qué.
  */
-export async function iniciarSesion(
-  idToken: unknown,
-): Promise<ResultadoIngreso> {
-  const token = zIdToken.safeParse(idToken);
-  if (!token.success) return { ok: false, error: "credenciales" };
-  const admin = firebaseAdmin();
-  if (!admin) return { ok: false, error: "no-disponible" };
-
-  try {
-    const t = await admin.auth.verifyIdToken(token.data, true);
-    const sesion = sesionDeClaims(t.uid, t);
-    if (!sesion || !loginReciente(t.auth_time, Date.now())) {
-      return { ok: false, error: "credenciales" };
-    }
-    const cookie = await admin.auth.createSessionCookie(token.data, {
-      expiresIn: SESION_MS,
-    });
-    (await cookies()).set(COOKIE_SESION, cookie, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: SESION_MS / 1000,
-    });
-    // Con contraseña temporal, a «Crea tu contraseña» (D232)
-    return { ok: true, destino: destinoDe(sesion) };
-  } catch (e) {
-    console.error("[iniciarSesion]", (e as { code?: string }).code ?? "error");
-    return { ok: false, error: "credenciales" };
-  }
+export async function confirmarIngreso(): Promise<ResultadoIngreso> {
+  const sesion = await verificarSesion();
+  if (sesion) return { ok: true, destino: destinoDe(sesion) };
+  await cerrarSesion();
+  return { ok: false, error: "credenciales" };
 }
 
-/** Borra la cookie y revoca los tokens de la cuenta (cierra la sesión en todos sus equipos). */
+/** Cierra todas las sesiones de la cuenta (en todos sus equipos) y borra la cookie. */
 export async function cerrarSesion(): Promise<void> {
-  const jar = await cookies();
-  const sesion = await sesionDeCookie(jar.get(COOKIE_SESION)?.value, {
-    revocadas: false,
-  });
-  jar.delete(COOKIE_SESION);
-  const admin = firebaseAdmin();
-  if (sesion && admin) {
-    try {
-      await admin.auth.revokeRefreshTokens(sesion.uid);
-    } catch (e) {
-      console.error("[cerrarSesion]", (e as { code?: string }).code ?? "error");
-    }
+  const auth = authKrea();
+  if (!auth) return;
+  const h = await headers();
+  try {
+    await auth.api.revokeSessions({ headers: h });
+  } catch {
+    // Sin sesión no hay nada que revocar
+  }
+  try {
+    await auth.api.signOut({ headers: h });
+  } catch (e) {
+    console.error("[cerrarSesion]", (e as Error).message);
   }
 }
 
@@ -84,27 +51,19 @@ export type SesionPantalla = {
 } | null;
 
 /**
- * Sesión real para la cabecera del 404 y el 500 (D213). La llaman el 404 (servidor, dentro de
- * `<Suspense>`) y el 500 (cliente, al montar). Solo lee el perfil de la propia sesión. Sin cookie
- * válida → `null` («Iniciar sesión»); si el perfil no se puede leer, el rol sin usuario.
+ * Sesión real para la cabecera del 404 y el 500 (D213). Solo lee el perfil de la propia sesión.
+ * Sin sesión válida → `null` («Iniciar sesión»); si el perfil no se puede leer, el rol sin usuario.
  */
 export async function sesionDePantalla(): Promise<SesionPantalla> {
   const sesion = await verificarSesion();
   if (!sesion) return null;
-  const admin = firebaseAdmin();
-  if (!admin) return { rol: sesion.rol, usuario: null };
+  const db = baseDeDatos();
+  if (!db) return { rol: sesion.rol, usuario: null };
   try {
-    const snap = await admin.db.collection(COL.usuarios).doc(sesion.uid).get();
-    const u = zUsuario.safeParse(snap.data());
-    return {
-      rol: sesion.rol,
-      usuario: u.success ? navUsuarioDe(u.data) : null,
-    };
+    const u = await leerUsuario(db, sesion.uid);
+    return { rol: sesion.rol, usuario: u ? navUsuarioDe(u) : null };
   } catch (e) {
-    console.error(
-      "[sesionDePantalla]",
-      (e as { code?: string }).code ?? "error",
-    );
+    console.error("[sesionDePantalla]", (e as Error).message);
     return { rol: sesion.rol, usuario: null };
   }
 }

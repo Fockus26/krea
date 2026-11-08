@@ -6,11 +6,13 @@ import nextConfig from "@/next.config";
 /**
  * D250: el router guarda las rutas ya vistas unos minutos (`staleTimes.dynamic`). Para que nadie
  * vea su propio cambio viejo, toda Server Action de `lib/acciones/` que escribe vacía esa caché
- * (`refresh()` o una revalidación), o toca la cookie de sesión, que también la vacía. Las que no
+ * (`refresh()` o una revalidación), o toca la cookie de sesión (Better Auth la pone o la borra al
+ * entrar, salir, cambiar o restablecer la contraseña, D327), que también la vacía. Las que no
  * cambian nada de lo que pintan las páginas van en la lista de abajo, con su motivo.
  */
 const SIN_INVALIDAR: Record<string, string> = {
-  tokenEnVivo: "solo emite un token para onSnapshot",
+  confirmarIngreso:
+    "solo dice a dónde ir tras el login; el navegador hace una carga completa (D251)",
   sesionDePantalla: "solo lee la sesión del 404/500",
   pedirEnlace: "manda el correo de recuperación; no hay sesión",
   comprobarCodigo: "solo valida el código del enlace",
@@ -25,7 +27,7 @@ const SIN_INVALIDAR: Record<string, string> = {
 };
 
 const INVALIDA =
-  /\brefresh\(\)|\brevalidatePath\(|\brevalidateTag\(|\bupdateTag\(|\.(set|delete)\(COOKIE_SESION/;
+  /\brefresh\(\)|\brevalidatePath\(|\brevalidateTag\(|\bupdateTag\(|\bauth\.api\.(signOut|signInEmail|changePassword|resetPassword)\(/;
 
 function acciones(): { archivo: string; nombre: string; cuerpo: string }[] {
   const dir = "lib/acciones";

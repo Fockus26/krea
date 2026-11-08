@@ -1,19 +1,19 @@
 "use server";
 // Server Actions de Evaluar (fase 07 W7, D175, D204–D205). El autor sale SIEMPRE de la sesión
 // (`exigirSesion("profesor")`), nunca del body. Cada una valida con zod y escribe la entrega y
-// `ranking/{seccion}` en UNA transacción del Admin SDK (`lib/firebase/evaluar.ts`).
+// `ranking/{seccion}` en UNA transacción de Postgres (`lib/data/evaluar.ts`).
 import { refresh } from "next/cache";
 import { exigirSesion } from "@/lib/dal";
+import {
+  deshacerEvaluacionEnTransaccion,
+  evaluarEnTransaccion,
+} from "@/lib/data/evaluar";
+import { baseDeDatos } from "@/lib/db";
 import {
   type ResultadoEvaluar,
   zDeshacerEvaluacion,
   zGuardarEvaluacion,
 } from "@/lib/evaluar-datos";
-import { firebaseAdmin } from "@/lib/firebase/admin";
-import {
-  deshacerEvaluacionEnTransaccion,
-  evaluarEnTransaccion,
-} from "@/lib/firebase/evaluar";
 
 export type { ResultadoEvaluar };
 
@@ -26,13 +26,13 @@ export async function guardarEvaluacion(
   entrada: unknown,
 ): Promise<ResultadoEvaluar> {
   const sesion = await exigirSesion("profesor");
-  const admin = firebaseAdmin();
-  if (!admin) return { ok: false, error: "red" };
+  const db = baseDeDatos();
+  if (!db) return { ok: false, error: "red" };
   const envio = zGuardarEvaluacion.safeParse(entrada);
   if (!envio.success) return { ok: false, error: "invalida" };
   try {
     const r = await evaluarEnTransaccion(
-      admin.db,
+      db,
       sesion.uid,
       envio.data,
       Date.now(),
@@ -50,13 +50,13 @@ export async function deshacerEvaluacion(
   entrada: unknown,
 ): Promise<ResultadoEvaluar> {
   const sesion = await exigirSesion("profesor");
-  const admin = firebaseAdmin();
-  if (!admin) return { ok: false, error: "red" };
+  const db = baseDeDatos();
+  if (!db) return { ok: false, error: "red" };
   const d = zDeshacerEvaluacion.safeParse(entrada);
   if (!d.success) return { ok: false, error: "invalida" };
   try {
     const r = await deshacerEvaluacionEnTransaccion(
-      admin.db,
+      db,
       sesion.uid,
       d.data.entregaId,
       d.data.evaluadaEn,

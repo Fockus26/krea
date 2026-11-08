@@ -1,22 +1,22 @@
 "use server";
 // Server Actions de las tareas del profe (fase 07 W6, D175, D199–D202). El autor sale SIEMPRE de
 // la sesión (`exigirSesion("profesor")`), nunca del body. Cada una valida con zod y escribe en UNA
-// transacción del Admin SDK (`lib/firebase/tareas.ts`). Guardar, cerrar y el premio no cambian
+// transacción de Postgres (`lib/data/tareas.ts`). Guardar, cerrar y el premio no cambian
 // puntos (D007); eliminar sí, y recalcula el ranking en su transacción (D206, D242).
 import { refresh } from "next/cache";
 import { almacenB2 } from "@/lib/almacen/b2";
 import { claveFotoPremio, validarFotoPremio } from "@/lib/almacen/imagen";
 import { exigirSesion, sesionDeCola } from "@/lib/dal";
-import { catalogoSecciones } from "@/lib/datos/secciones";
-import { diaDeInstante } from "@/lib/fecha";
-import { firebaseAdmin } from "@/lib/firebase/admin";
 import {
   cerrarTareaEnTransaccion,
   decidirPremioEnTransaccion,
   eliminarTareaEnTransaccion,
   guardarPremioEnTransaccion,
   guardarTareaEnTransaccion,
-} from "@/lib/firebase/tareas";
+} from "@/lib/data/tareas";
+import { catalogoSecciones } from "@/lib/datos/secciones";
+import { baseDeDatos, type Db } from "@/lib/db";
+import { diaDeInstante } from "@/lib/fecha";
 import { borrarEnLote, type ResultadoLote, zIdsLote } from "@/lib/lote";
 import { zQuien } from "@/lib/offline/operacion";
 import type { ResultadoPremio } from "@/lib/premios";
@@ -67,8 +67,8 @@ export async function guardarTareaPendiente(
 }
 
 async function guardar(uid: string, entrada: unknown): Promise<ResultadoTarea> {
-  const admin = firebaseAdmin();
-  if (!admin) return { ok: false, error: "red" };
+  const db = baseDeDatos();
+  if (!db) return { ok: false, error: "red" };
   const envio = zGuardarTarea.safeParse(entrada);
   if (!envio.success) return { ok: false, error: "invalida" };
   const ahora = Date.now();
@@ -82,7 +82,7 @@ async function guardar(uid: string, entrada: unknown): Promise<ResultadoTarea> {
     )
       return { ok: false, error: "seccion" };
     const { fotoSuelta, ...r } = await guardarTareaEnTransaccion(
-      admin.db,
+      db,
       uid,
       envio.data,
       diaDeInstante(ahora),
@@ -99,16 +99,12 @@ async function guardar(uid: string, entrada: unknown): Promise<ResultadoTarea> {
 /** Cierra una tarea abierta: deja de recibir entregas. */
 export async function cerrarTarea(id: unknown): Promise<ResultadoTarea> {
   await exigirSesion("profesor");
-  const admin = firebaseAdmin();
-  if (!admin) return { ok: false, error: "red" };
+  const db = baseDeDatos();
+  if (!db) return { ok: false, error: "red" };
   const tareaId = zIdTareaProfe.safeParse(id);
   if (!tareaId.success) return { ok: false, error: "invalida" };
   try {
-    const r = await cerrarTareaEnTransaccion(
-      admin.db,
-      tareaId.data,
-      Date.now(),
-    );
+    const r = await cerrarTareaEnTransaccion(db, tareaId.data, Date.now());
     if (r.ok) refresh();
     return r;
   } catch (e) {
@@ -124,11 +120,11 @@ export async function cerrarTarea(id: unknown): Promise<ResultadoTarea> {
  */
 export async function eliminarTarea(id: unknown): Promise<ResultadoTarea> {
   await exigirSesion("profesor");
-  const admin = firebaseAdmin();
-  if (!admin) return { ok: false, error: "red" };
+  const db = baseDeDatos();
+  if (!db) return { ok: false, error: "red" };
   const tareaId = zIdTareaProfe.safeParse(id);
   if (!tareaId.success) return { ok: false, error: "invalida" };
-  const r = await borrarUnaTarea(admin, tareaId.data);
+  const r = await borrarUnaTarea(db, tareaId.data);
   if (r.ok) refresh();
   return r;
 }
@@ -142,14 +138,14 @@ export async function eliminarTareas(
   ids: unknown,
 ): Promise<ResultadoLote<ErrorTarea>> {
   await exigirSesion("profesor");
-  const admin = firebaseAdmin();
-  if (!admin) return { ok: false, error: "red" };
+  const db = baseDeDatos();
+  if (!db) return { ok: false, error: "red" };
   const d = zIdsLote(zIdTareaProfe).safeParse(ids);
   if (!d.success) return { ok: false, error: "invalida" };
   const resultados = await borrarEnLote<ErrorTarea>(
     d.data,
     async (id) => {
-      const r = await borrarUnaTarea(admin, id);
+      const r = await borrarUnaTarea(db, id);
       return !r.ok && r.error === "no-existe" ? { ok: true } : r;
     },
     "red",
@@ -162,13 +158,10 @@ export async function eliminarTareas(
  * El borrado de una, sin sesión ni `refresh()` (lo ponen `eliminarTarea` y `eliminarTareas`):
  * la transacción y, después, sus imágenes de B2. No lanza: cualquier fallo vuelve como error.
  */
-async function borrarUnaTarea(
-  admin: NonNullable<ReturnType<typeof firebaseAdmin>>,
-  id: string,
-): Promise<ResultadoTarea> {
+async function borrarUnaTarea(db: Db, id: string): Promise<ResultadoTarea> {
   let imagenes: string[];
   try {
-    const r = await eliminarTareaEnTransaccion(admin.db, id, Date.now());
+    const r = await eliminarTareaEnTransaccion(db, id, Date.now());
     if (!r.resultado.ok) return r.resultado;
     imagenes = r.imagenes;
   } catch (e) {
@@ -208,13 +201,13 @@ async function borrarImagenes(claves: readonly string[]) {
 /** Decide el empate del premio de una sección: darlo a un equipo o compartirlo. */
 export async function decidirPremio(entrada: unknown): Promise<ResultadoTarea> {
   await exigirSesion("profesor");
-  const admin = firebaseAdmin();
-  if (!admin) return { ok: false, error: "red" };
+  const db = baseDeDatos();
+  if (!db) return { ok: false, error: "red" };
   const d = zDecidirPremio.safeParse(entrada);
   if (!d.success) return { ok: false, error: "invalida" };
   try {
     const r = await decidirPremioEnTransaccion(
-      admin.db,
+      db,
       d.data.tareaId,
       d.data.seccion,
       d.data.decision,
@@ -236,8 +229,8 @@ export async function decidirPremio(entrada: unknown): Promise<ResultadoTarea> {
  */
 export async function guardarPremio(form: FormData): Promise<ResultadoPremio> {
   await exigirSesion("profesor");
-  const admin = firebaseAdmin();
-  if (!admin) return { ok: false, error: "red" };
+  const db = baseDeDatos();
+  if (!db) return { ok: false, error: "red" };
   const tareaId = zIdTareaProfe.safeParse(form.get("tareaId"));
   const premio = zTextoPremio.safeParse(form.get("premio"));
   const archivo = form.get("foto");
@@ -272,7 +265,7 @@ export async function guardarPremio(form: FormData): Promise<ResultadoPremio> {
       foto = { tipo: "nueva", clave: nueva };
     }
     const r = await guardarPremioEnTransaccion(
-      admin.db,
+      db,
       tareaId.data,
       premio.data,
       foto,

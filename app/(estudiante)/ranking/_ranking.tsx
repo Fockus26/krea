@@ -42,7 +42,6 @@ export async function RankingEstudiante({ vista }: { vista: Vista }) {
   }
   return (
     <RankingEnVivo
-      uid={usuario.cedula}
       seccion={seccion}
       vista={vista}
       inicial={ranking}
