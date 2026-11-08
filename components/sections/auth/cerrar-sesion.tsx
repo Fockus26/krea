@@ -8,6 +8,7 @@ import { useEffect, useRef } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import { cerrarSesion } from "@/lib/acciones/sesion";
 import { vaciarPaginasGuardadas } from "@/lib/offline/sw-cliente";
+import { cancelarAvisoLocal } from "@/lib/push-cliente";
 import { RUTA_INGRESAR } from "@/lib/sesion";
 
 export function CerrarSesion() {
@@ -23,6 +24,8 @@ export function CerrarSesion() {
         // Las páginas guardadas para leer sin conexión son de quien sale (D291). La cola de
         // envíos no se borra: es suya y se envía cuando vuelva a entrar (D292).
         await vaciarPaginasGuardadas();
+        // Los avisos de tarea nueva de este navegador eran de quien sale (D339)
+        await cancelarAvisoLocal();
         window.location.replace(RUTA_INGRESAR);
       }
     })();
