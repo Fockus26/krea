@@ -23,6 +23,21 @@ export function accesoPresencia(sesion: Sesion | null): Acceso {
   return sesion.rol === "profesor" ? "ok" : "prohibido";
 }
 
+/**
+ * Lo único de Better Auth que el navegador puede llamar por HTTP. El resto (cambiar o restablecer
+ * la contraseña, revocar sesiones, update-user…) solo lo llaman las Server Actions con
+ * `auth.api.*`, después de sus propias comprobaciones.
+ */
+const AUTH_PUBLICA: Record<string, "GET" | "POST"> = {
+  "/api/auth/sign-in/email": "POST",
+  "/api/auth/sign-out": "POST",
+  "/api/auth/get-session": "GET",
+};
+
+export function rutaAuthPublica(metodo: string, ruta: string): boolean {
+  return AUTH_PUBLICA[ruta.replace(/\/+$/, "")] === metodo.toUpperCase();
+}
+
 export const ESTADO_HTTP: Record<Exclude<Acceso, "ok">, number> = {
   "sin-sesion": 401,
   // 404 y no 403: no se confirma que la sección exista

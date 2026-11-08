@@ -1,7 +1,12 @@
 // Quién lee qué por las rutas de sondeo (D327): lo que probaban las reglas de Firestore para las
 // lecturas del navegador de `ranking/{seccion}` y `presencia/`.
 import { describe, expect, test } from "bun:test";
-import { accesoPresencia, accesoRanking, ESTADO_HTTP } from "@/lib/acceso";
+import {
+  accesoPresencia,
+  accesoRanking,
+  ESTADO_HTTP,
+  rutaAuthPublica,
+} from "@/lib/acceso";
 import type { Sesion } from "@/lib/sesion";
 
 const alumno5A: Sesion = {
@@ -50,5 +55,28 @@ describe("accesoPresencia (D275)", () => {
   test("prohibido responde 404, sin sesión 401", () => {
     expect(ESTADO_HTTP.prohibido).toBe(404);
     expect(ESTADO_HTTP["sin-sesion"]).toBe(401);
+  });
+});
+
+describe("rutaAuthPublica (QA 2026-11-08)", () => {
+  test("el navegador solo entra, sale y lee su sesión", () => {
+    expect(rutaAuthPublica("POST", "/api/auth/sign-in/email")).toBe(true);
+    expect(rutaAuthPublica("post", "/api/auth/sign-out/")).toBe(true);
+    expect(rutaAuthPublica("GET", "/api/auth/get-session")).toBe(true);
+  });
+  test("lo demás de Better Auth queda cerrado por HTTP", () => {
+    for (const r of [
+      "/api/auth/update-user",
+      "/api/auth/change-password",
+      "/api/auth/list-sessions",
+      "/api/auth/revoke-session",
+      "/api/auth/revoke-sessions",
+      "/api/auth/request-password-reset",
+      "/api/auth/reset-password",
+      "/api/auth/sign-up/email",
+    ])
+      expect(rutaAuthPublica("POST", r)).toBe(false);
+    expect(rutaAuthPublica("GET", "/api/auth/sign-in/email")).toBe(false);
+    expect(rutaAuthPublica("POST", "/api/auth/get-session")).toBe(false);
   });
 });

@@ -6,6 +6,10 @@ import { accesoDeRuta, redireccion } from "@/lib/sesion";
 
 export async function proxy(req: NextRequest) {
   const ruta = req.nextUrl.pathname;
+  // Solo se redirige la navegación. Un POST es una Server Action (p. ej. `confirmarIngreso` en
+  // /ingresar justo después del login): redirigirla rompe su respuesta, y cada acción ya
+  // comprueba la sesión con el DAL.
+  if (req.method !== "GET" && req.method !== "HEAD") return NextResponse.next();
   if (accesoDeRuta(ruta) === null) return NextResponse.next();
   const sesion = await sesionDeHeaders(req.headers);
   const destino = redireccion(ruta, sesion);

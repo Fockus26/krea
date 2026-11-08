@@ -87,9 +87,11 @@ export function crearAuth(
       enabled: true,
       storage: "database",
       modelName: "rateLimit",
-      // «Demasiados intentos. Espera 5 minutos.» (lib/auth.ts)
+      // «Demasiados intentos. Espera 5 minutos.» (lib/auth.ts). Es por IP y cuenta también los
+      // ingresos buenos: un salón entero entra desde la misma IP del liceo, así que es holgado.
+      // El freno contra adivinar contraseñas es por cuenta y solo fallos (lib/data/intentos.ts).
       customRules: {
-        "/sign-in/email": { window: 300, max: 10 },
+        "/sign-in/email": { window: 300, max: 300 },
         "/request-password-reset": { window: 300, max: 5 },
       },
     },
