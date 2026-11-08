@@ -14,8 +14,6 @@ import { baseDeDatos } from "@/lib/db";
 import { zCedula } from "@/lib/modelo";
 import { NOMBRE_PRESENCIA_MAX } from "@/lib/presencia";
 
-export const dynamic = "force-dynamic";
-
 const zPedido = z.object({
   accion: z.enum(["marcar", "quitar"]),
   cedula: zCedula,

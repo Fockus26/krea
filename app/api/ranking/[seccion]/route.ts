@@ -7,8 +7,6 @@ import { leerRanking } from "@/lib/data/ranking";
 import { sesionDeHeaders } from "@/lib/data/sesion";
 import { baseDeDatos } from "@/lib/db";
 
-export const dynamic = "force-dynamic";
-
 const sinCache = { "Cache-Control": "no-store" };
 
 export async function GET(
