@@ -103,7 +103,7 @@ for (const tema of ["claro", "oscuro"] as const) {
           expect(contraste(t[fg], t[fondo])).toBeGreaterThanOrEqual(MIN);
         }
       }
-      expect(contraste(t["--on-error"], t["--error"])).toBeGreaterThanOrEqual(
+      expect(contraste(t["--on-error"], t["--error-fill"])).toBeGreaterThanOrEqual(
         MIN,
       );
     });

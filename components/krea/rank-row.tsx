@@ -195,7 +195,7 @@ export function RankRow({
           aria-hidden="true"
           className="pointer-events-none absolute inset-x-0 bottom-0 flex h-6 items-center justify-center"
         >
-          <span className="animate-vs text-small-b grid h-5.5 min-w-9 place-items-center rounded-pill bg-error px-2 text-on-error">
+          <span className="animate-vs text-small-b grid h-5.5 min-w-9 place-items-center rounded-pill bg-error-fill px-2 text-on-error">
             VS
           </span>
         </span>

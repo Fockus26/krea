@@ -64,6 +64,9 @@
   --error: #c80300;
   --cinta-tinte: 20%; /* % de --error en la raya suave de la cinta de riesgo (D290); igual en oscuro */
   --on-error: #ffffff; /* texto de botón danger (HANDOFF §2.1) */
+  --error-fill: #c80300; /* relleno de danger/VS: en claro igual que --error (D328) */
+  --success-fill: #157a3b; /* relleno de «entregada»: igual que --success (D328) */
+  --on-success: #ffffff;
   --secondary: #ffc23d;
   --on-secondary: #221d2b;
   --grade-ink: #111111;
@@ -137,7 +140,10 @@
   --success: #5bd68a;
   --warning: #ffc23d;
   --error: #ff6b5e;
-  --on-error: #14121a; /* 6,64:1 sobre --error (HANDOFF §2.1) */
+  --on-error: #ffffff; /* blanco sobre --error-fill (D328); --error queda como texto/borde claro */
+  --error-fill: #c24a40; /* blanco 4,83:1 (D328) */
+  --success-fill: #2d8650; /* blanco 4,53:1 (D328) */
+  --on-success: #ffffff;
   --sel-text: #f4f1f8;
   --scroll-thumb: #6e687a;
   --scroll-track: #1e1b26;
@@ -193,7 +199,10 @@
     --success: #5bd68a;
     --warning: #ffc23d;
     --error: #ff6b5e;
-    --on-error: #14121a;
+    --on-error: #ffffff;
+    --error-fill: #c24a40;
+    --success-fill: #2d8650;
+    --on-success: #ffffff;
     --sel-text: #f4f1f8;
     --scroll-thumb: #6e687a;
     --scroll-track: #1e1b26;
@@ -558,6 +567,9 @@
   --color-warning: var(--warning);
   --color-error: var(--error);
   --color-on-error: var(--on-error);
+  --color-error-fill: var(--error-fill);
+  --color-success-fill: var(--success-fill);
+  --color-on-success: var(--on-success);
   --color-secondary: var(--secondary);
   --color-on-secondary: var(--on-secondary);
   --color-grade-ink: var(--grade-ink);

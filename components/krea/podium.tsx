@@ -159,7 +159,7 @@ export function Podium({ entradas, label, className }: PodiumProps) {
                 aria-hidden="true"
                 className="pointer-events-none absolute top-10 right-0 z-10 translate-x-1/2"
               >
-                <span className="animate-vs text-small-b grid h-5.5 min-w-9 place-items-center rounded-pill bg-error px-2 text-on-error">
+                <span className="animate-vs text-small-b grid h-5.5 min-w-9 place-items-center rounded-pill bg-error-fill px-2 text-on-error">
                   VS
                 </span>
               </span>
