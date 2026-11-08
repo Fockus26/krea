@@ -1,11 +1,12 @@
 import "server-only";
-// Lecturas del catálogo de años y secciones (D317): Admin SDK detrás de `exigirSesion("profesor")`,
-// una vez por request. Sin documento `config/secciones` vale `CATALOGO_INICIAL`; si no valida, se
-// registra y también (como `parsear`). La pantalla Años y secciones (solo admin, D319) suma el uso
+// Lecturas del catálogo de años y secciones (D317, D327): Postgres detrás de
+// `exigirSesion("profesor")`, una vez por request. Sin fila `config/secciones` vale
+// `CATALOGO_INICIAL`; si no valida, se registra y también. La pantalla Años y secciones (solo admin, D319) suma el uso
 // de cada sección con los loaders del profe, ya cacheados.
 import { cache } from "react";
 import { exigirAdmin, exigirSesion } from "@/lib/dal";
 import { db } from "@/lib/datos/comun";
+import { leerCatalogo } from "@/lib/data/secciones";
 import {
   ajustesTodos,
   entregasTodas,
@@ -13,11 +14,10 @@ import {
   tareasProfe,
   usuariosTodos,
 } from "@/lib/datos/profesor";
-import { COL, DOC_SECCIONES } from "@/lib/modelo";
+import { DOC_SECCIONES } from "@/lib/modelo";
 import {
   CATALOGO_INICIAL,
   type CatalogoSecciones,
-  catalogoDeDocumento,
   type FilaAnio,
   filasSecciones,
   usoPorSeccion,
@@ -25,12 +25,9 @@ import {
 
 export const catalogoSecciones = cache(async (): Promise<CatalogoSecciones> => {
   await exigirSesion("profesor");
-  const snap = await db().collection(COL.config).doc(DOC_SECCIONES).get();
-  const catalogo = catalogoDeDocumento(snap.exists, snap.data());
+  const catalogo = await leerCatalogo(db());
   if (catalogo) return catalogo;
-  console.error(
-    `[datos] ${COL.config}/${DOC_SECCIONES} no valida con el modelo`,
-  );
+  console.error(`[datos] config/${DOC_SECCIONES} no valida con el modelo`);
   return CATALOGO_INICIAL;
 });
 

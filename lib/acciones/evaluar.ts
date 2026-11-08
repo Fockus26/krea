@@ -9,11 +9,11 @@ import {
   zDeshacerEvaluacion,
   zGuardarEvaluacion,
 } from "@/lib/evaluar-datos";
-import { firebaseAdmin } from "@/lib/firebase/admin";
+import { baseDeDatos } from "@/lib/db";
 import {
   deshacerEvaluacionEnTransaccion,
   evaluarEnTransaccion,
-} from "@/lib/firebase/evaluar";
+} from "@/lib/data/evaluar";
 
 export type { ResultadoEvaluar };
 
@@ -26,13 +26,13 @@ export async function guardarEvaluacion(
   entrada: unknown,
 ): Promise<ResultadoEvaluar> {
   const sesion = await exigirSesion("profesor");
-  const admin = firebaseAdmin();
-  if (!admin) return { ok: false, error: "red" };
+  const db = baseDeDatos();
+  if (!db) return { ok: false, error: "red" };
   const envio = zGuardarEvaluacion.safeParse(entrada);
   if (!envio.success) return { ok: false, error: "invalida" };
   try {
     const r = await evaluarEnTransaccion(
-      admin.db,
+      db,
       sesion.uid,
       envio.data,
       Date.now(),
@@ -50,13 +50,13 @@ export async function deshacerEvaluacion(
   entrada: unknown,
 ): Promise<ResultadoEvaluar> {
   const sesion = await exigirSesion("profesor");
-  const admin = firebaseAdmin();
-  if (!admin) return { ok: false, error: "red" };
+  const db = baseDeDatos();
+  if (!db) return { ok: false, error: "red" };
   const d = zDeshacerEvaluacion.safeParse(entrada);
   if (!d.success) return { ok: false, error: "invalida" };
   try {
     const r = await deshacerEvaluacionEnTransaccion(
-      admin.db,
+      db,
       sesion.uid,
       d.data.entregaId,
       d.data.evaluadaEn,

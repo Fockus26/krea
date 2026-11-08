@@ -11,11 +11,11 @@ import {
 } from "@/lib/ajustes-datos";
 import { exigirSesion } from "@/lib/dal";
 import { catalogoSecciones } from "@/lib/datos/secciones";
-import { firebaseAdmin } from "@/lib/firebase/admin";
+import { baseDeDatos } from "@/lib/db";
 import {
   anularAjusteEnTransaccion,
   aplicarAjusteEnTransaccion,
-} from "@/lib/firebase/ajustes";
+} from "@/lib/data/ajustes";
 import { seccionesDe } from "@/lib/secciones";
 
 export type { ResultadoAjuste };
@@ -29,14 +29,14 @@ export async function aplicarAjuste(
   entrada: unknown,
 ): Promise<ResultadoAjuste> {
   const sesion = await exigirSesion("profesor");
-  const admin = firebaseAdmin();
-  if (!admin) return { ok: false, error: "red" };
+  const db = baseDeDatos();
+  if (!db) return { ok: false, error: "red" };
   const d = zAplicarAjuste.safeParse(entrada);
   if (!d.success) return { ok: false, error: "invalida" };
   try {
     // La sección del destino tiene que existir en el catálogo (D323)
     const r = await aplicarAjusteEnTransaccion(
-      admin.db,
+      db,
       sesion.uid,
       d.data,
       Date.now(),
@@ -53,13 +53,13 @@ export async function aplicarAjuste(
 /** Anula un ajuste con su inverso «Anulación» (D121). */
 export async function anularAjuste(entrada: unknown): Promise<ResultadoAjuste> {
   const sesion = await exigirSesion("profesor");
-  const admin = firebaseAdmin();
-  if (!admin) return { ok: false, error: "red" };
+  const db = baseDeDatos();
+  if (!db) return { ok: false, error: "red" };
   const d = zAnularAjuste.safeParse(entrada);
   if (!d.success) return { ok: false, error: "invalida" };
   try {
     const r = await anularAjusteEnTransaccion(
-      admin.db,
+      db,
       sesion.uid,
       d.data.ajusteId,
       Date.now(),

@@ -18,12 +18,12 @@ import {
   zIdPregunta,
   zIdTarea,
 } from "@/lib/entregas";
-import { firebaseAdmin } from "@/lib/firebase/admin";
+import { baseDeDatos } from "@/lib/db";
 import {
   enviarEnTransaccion,
   permisoSubida,
   type ResultadoEnvio,
-} from "@/lib/firebase/entregas";
+} from "@/lib/data/entregas";
 import { zOpId, zQuien } from "@/lib/offline/operacion";
 
 export type ResultadoSubida =
@@ -78,9 +78,9 @@ async function subir(
   form: FormData,
   uuid: string,
 ): Promise<ResultadoSubida> {
-  const admin = firebaseAdmin();
+  const db = baseDeDatos();
   const almacen = almacenB2();
-  if (!admin) return { ok: false, error: "red" };
+  if (!db) return { ok: false, error: "red" };
   if (!almacen) return sinAlmacen("subirImagenRespuesta");
 
   const tareaId = zIdTarea.safeParse(form.get("tareaId"));
@@ -91,7 +91,7 @@ async function subir(
   }
 
   try {
-    const p = await permisoSubida(admin.db, uid, tareaId.data, preguntaId.data);
+    const p = await permisoSubida(db, uid, tareaId.data, preguntaId.data);
     if (!p.ok) return p;
 
     const bytes = new Uint8Array(await imagen.arrayBuffer());
@@ -147,8 +147,8 @@ export async function enviarEntregaPendiente(
 }
 
 async function enviar(uid: string, entrada: unknown): Promise<ResultadoEnvio> {
-  const admin = firebaseAdmin();
-  if (!admin) return { ok: false, error: "red" };
+  const db = baseDeDatos();
+  if (!db) return { ok: false, error: "red" };
   const envio = zEnvioEntrega.safeParse(entrada);
   if (!envio.success) return { ok: false, error: "incompleta" };
   try {
@@ -157,7 +157,7 @@ async function enviar(uid: string, entrada: unknown): Promise<ResultadoEnvio> {
       return sinAlmacen("enviarEntrega");
     const faltan = await comprobarImagenes(almacen, envio.data.respuestas);
     if (faltan) return { ok: false, error: faltan };
-    return await enviarEnTransaccion(admin.db, uid, envio.data, Date.now());
+    return await enviarEnTransaccion(db, uid, envio.data, Date.now());
   } catch (e) {
     console.error("[enviarEntrega]", (e as { code?: string }).code ?? "error");
     return { ok: false, error: "red" };

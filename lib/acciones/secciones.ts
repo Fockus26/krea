@@ -7,8 +7,8 @@
 import { refresh } from "next/cache";
 import { z } from "zod";
 import { exigirAdmin } from "@/lib/dal";
-import { firebaseAdmin } from "@/lib/firebase/admin";
-import { operarSeccionesEnTransaccion } from "@/lib/firebase/secciones";
+import { baseDeDatos } from "@/lib/db";
+import { operarSeccionesEnTransaccion } from "@/lib/data/secciones";
 import { zLetra, zNumeroAnio, zSeccion } from "@/lib/modelo";
 import type { OperacionSecciones, ResultadoSecciones } from "@/lib/secciones";
 
@@ -29,10 +29,10 @@ async function operar(
   op: OperacionSecciones,
   idempotente = false,
 ): Promise<ResultadoSecciones> {
-  const admin = firebaseAdmin();
-  if (!admin) return { ok: false, error: "red" };
+  const db = baseDeDatos();
+  if (!db) return { ok: false, error: "red" };
   try {
-    const r = await operarSeccionesEnTransaccion(admin.db, op, Date.now());
+    const r = await operarSeccionesEnTransaccion(db, op, Date.now());
     if (!r.ok && idempotente && r.error === "no-existe") return { ok: true };
     return r;
   } catch (e) {

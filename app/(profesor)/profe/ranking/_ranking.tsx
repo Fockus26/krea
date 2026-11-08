@@ -103,7 +103,6 @@ export async function RankingProfe({
       : new Map<string, string>();
   return (
     <RankingEnVivo
-      uid={sesion.uid}
       rol="profesor"
       seccion={seccion}
       vista={vista}
