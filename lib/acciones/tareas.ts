@@ -20,6 +20,7 @@ import { diaDeInstante } from "@/lib/fecha";
 import { borrarEnLote, type ResultadoLote, zIdsLote } from "@/lib/lote";
 import { zQuien } from "@/lib/offline/operacion";
 import type { ResultadoPremio } from "@/lib/premios";
+import { programarAvisoTarea } from "@/lib/push-envio";
 import { seccionesEnCatalogo } from "@/lib/secciones";
 import type { ErrorTarea } from "@/lib/tareas-profe";
 import {
@@ -81,7 +82,7 @@ async function guardar(uid: string, entrada: unknown): Promise<ResultadoTarea> {
       )
     )
       return { ok: false, error: "seccion" };
-    const { fotoSuelta, ...r } = await guardarTareaEnTransaccion(
+    const { fotoSuelta, aviso, ...r } = await guardarTareaEnTransaccion(
       db,
       uid,
       envio.data,
@@ -89,6 +90,8 @@ async function guardar(uid: string, entrada: unknown): Promise<ResultadoTarea> {
       ahora,
     );
     if (fotoSuelta) await borrarFoto(fotoSuelta, "guardarTarea");
+    // Recién publicada: el aviso push a sus alumnos va después de responder (D336)
+    if (aviso) programarAvisoTarea(aviso);
     return r;
   } catch (e) {
     registrar("guardarTarea", e);

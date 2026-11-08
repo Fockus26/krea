@@ -1,0 +1,5 @@
+# D338 · Data · El envío corre en `after()`, en lotes de 20, con TTL de 24 h; 404/410 borran la suscripción · Implemented
+
+**Decision:** tras publicar, `programarAvisoTarea` envía después de responder al profe (`after`, no lo retrasa ni puede deshacer la publicación). Destinatarios: suscripciones de usuarios `rol = estudiante` con `seccion` en `tareas.secciones` (join con `usuarios`). Lotes de 20 con `Promise.allSettled`, `TTL` 24 h, `urgency: normal`, `timeout` 10 s. Una respuesta 404/410 borra esa fila; otro fallo solo se cuenta. Al registro va solo el resumen (`enviados`, `vencidos`, `fallidos`) o el código del error: nunca endpoints ni cédulas.
+**Why:** una sección son ~40 alumnos con uno o más navegadores; el envío tarda segundos y depende de servicios ajenos (FCM, Mozilla, Apple). Un aviso de un día atrás ya no es «nuevo».
+**Discarded alternative:** cola con reintentos en el VPS (`systemd` timer): más piezas para un aviso que no es crítico; si falla, la tarea igual aparece en /tareas.

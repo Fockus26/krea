@@ -27,6 +27,7 @@ import {
   idDeDecision,
   type SeccionId,
 } from "@/lib/modelo";
+import { debeAvisar, type TareaPublicada } from "@/lib/push";
 import {
   armarPremio,
   armarTarea,
@@ -50,6 +51,12 @@ async function tareaParaActualizar(tx: Tx, id: string) {
   return tareaDeFila(f);
 }
 
+/** Lo que vuelve a la acción: `fotoSuelta` y `aviso` se usan tras el commit y no van al cliente. */
+export type GuardadoTarea = ResultadoTarea & {
+  fotoSuelta?: string;
+  aviso?: TareaPublicada;
+};
+
 /**
  * Guarda, publica o edita una tarea en UNA transacción: lee la tarea y si ya tiene entregas
  * (congela su estructura, D200) y escribe lo que arma `armarTarea`.
@@ -60,54 +67,59 @@ export async function guardarTareaEnTransaccion(
   envio: GuardarTarea,
   hoy: string,
   ahora: number,
-): Promise<ResultadoTarea & { fotoSuelta?: string }> {
-  return db.transaction(
-    async (tx): Promise<ResultadoTarea & { fotoSuelta?: string }> => {
-      const t = envio.id ? await tareaParaActualizar(tx, envio.id) : undefined;
-      // Reintento de un guardado que ya entró (D293): el mismo id, sin crear otra tarea
-      const op = await leerOperacionEnTx(tx, envio.opId, autorId, "tarea");
-      if (op?.previa.tipo === "repetida" && op.previa.id)
-        return { ok: true, id: op.previa.id };
-      if (op && op.previa.tipo !== "nueva")
-        return { ok: false, error: "invalida" };
-      const id = envio.id ?? idNuevo();
-      let previa = null;
-      let conEntregas = false;
-      if (envio.id) {
-        if (t === undefined) return { ok: false, error: "no-existe" };
-        // Una fila que no valida no se pisa
-        if (t === null) return { ok: false, error: "invalida" };
-        const { id: _, ...doc } = t;
-        previa = doc;
-        const [una] = await tx
-          .select({ id: entregas.id })
-          .from(entregas)
-          .where(eq(entregas.tareaId, envio.id))
-          .limit(1);
-        conEntregas = una !== undefined;
-      }
-      const r = armarTarea({
-        entrada: envio.tarea,
-        accion: envio.accion,
-        previa,
-        conEntregas,
-        autorId,
-        hoy,
-        ahora,
-      });
-      if (!r.ok) return r;
-      const fila = filaDeTarea(id, r.tarea);
-      await tx
-        .insert(tareas)
-        .values(fila)
-        .onConflictDoUpdate({ target: tareas.id, set: fila });
-      await registrarOperacionEnTx(tx, op, autorId, "tarea", id, ahora);
-      // Se quitó el premio: su foto ya no la usa nadie (se borra tras el commit, D265)
-      return r.fotoSuelta
-        ? { ok: true, id, fotoSuelta: r.fotoSuelta }
-        : { ok: true, id };
-    },
-  );
+): Promise<GuardadoTarea> {
+  return db.transaction(async (tx): Promise<GuardadoTarea> => {
+    const t = envio.id ? await tareaParaActualizar(tx, envio.id) : undefined;
+    // Reintento de un guardado que ya entró (D293): el mismo id, sin crear otra tarea
+    const op = await leerOperacionEnTx(tx, envio.opId, autorId, "tarea");
+    if (op?.previa.tipo === "repetida" && op.previa.id)
+      return { ok: true, id: op.previa.id };
+    if (op && op.previa.tipo !== "nueva")
+      return { ok: false, error: "invalida" };
+    const id = envio.id ?? idNuevo();
+    let previa = null;
+    let conEntregas = false;
+    if (envio.id) {
+      if (t === undefined) return { ok: false, error: "no-existe" };
+      // Una fila que no valida no se pisa
+      if (t === null) return { ok: false, error: "invalida" };
+      const { id: _, ...doc } = t;
+      previa = doc;
+      const [una] = await tx
+        .select({ id: entregas.id })
+        .from(entregas)
+        .where(eq(entregas.tareaId, envio.id))
+        .limit(1);
+      conEntregas = una !== undefined;
+    }
+    const r = armarTarea({
+      entrada: envio.tarea,
+      accion: envio.accion,
+      previa,
+      conEntregas,
+      autorId,
+      hoy,
+      ahora,
+    });
+    if (!r.ok) return r;
+    const fila = filaDeTarea(id, r.tarea);
+    await tx
+      .insert(tareas)
+      .values(fila)
+      .onConflictDoUpdate({ target: tareas.id, set: fila });
+    await registrarOperacionEnTx(tx, op, autorId, "tarea", id, ahora);
+    // Se acaba de publicar (no editar ni reintentar): aviso a los alumnos tras el commit (D336)
+    const aviso: TareaPublicada | undefined = debeAvisar(previa, r.tarea)
+      ? { id, titulo: r.tarea.titulo, secciones: [...r.tarea.secciones] }
+      : undefined;
+    // Se quitó el premio: su foto ya no la usa nadie (se borra tras el commit, D265)
+    return {
+      ok: true,
+      id,
+      ...(r.fotoSuelta ? { fotoSuelta: r.fotoSuelta } : {}),
+      ...(aviso ? { aviso } : {}),
+    };
+  });
 }
 
 /**
