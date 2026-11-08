@@ -5,7 +5,7 @@ import { z } from "zod";
 import { PASSWORD_MIN, validarPassword } from "@/lib/auth";
 import type { Correo, ResultadoEnvio } from "@/lib/correo/brevo";
 import { correoRestablecer, primerNombre } from "@/lib/correo/restablecer";
-import { zCedula, zInstante } from "@/lib/modelo";
+import { type Apariencia, zCedula, zInstante } from "@/lib/modelo";
 
 /* ---------- Pedido del enlace ---------- */
 
@@ -55,11 +55,17 @@ export function enlaceRestablecer(
   return url.toString();
 }
 
+/** Lo que el correo toma del perfil: el nombre y la apariencia (nunca el email ni la cédula). */
+export type PerfilCorreo = {
+  nombres: string | null;
+  apariencia: Apariencia | null;
+};
+
 export type DepsRecuperacion = {
   /** Email real de `privados/{cedula}`; `null` si no hay documento o no hay email. */
   leerEmail: (cedula: string) => Promise<string | null>;
-  /** `usuarios/{cedula}.nombres`. */
-  leerNombres: (cedula: string) => Promise<string | null>;
+  /** `usuarios.nombres` y `usuarios.apariencia` (acento y tema del correo, D342/D343). */
+  leerPerfil: (cedula: string) => Promise<PerfilCorreo>;
   /** Transacción sobre `recuperaciones/{cedula}`: `false` si el límite lo impide. */
   reservar: (cedula: string, ahora: number) => Promise<boolean>;
   /** `auth.generatePasswordResetLink(emailInterno(cedula))`. */
@@ -89,14 +95,19 @@ export async function procesarRecuperacion(
   const email = await deps.leerEmail(cedula);
   if (!email) return "sin-email";
   if (!(await deps.reservar(cedula, deps.ahora()))) return "limite";
-  const [nombres, codigo] = await Promise.all([
-    deps.leerNombres(cedula),
+  const [perfil, codigo] = await Promise.all([
+    deps.leerPerfil(cedula),
     deps.generarCodigo(cedula),
   ]);
   const enlace = enlaceRestablecer(codigo, deps.sitio);
   if (!enlace) return "sin-enlace";
-  const nombre = primerNombre(nombres);
-  const correo = correoRestablecer({ nombre, cedula, enlace });
+  const nombre = primerNombre(perfil.nombres);
+  const correo = correoRestablecer({
+    nombre,
+    cedula,
+    enlace,
+    apariencia: perfil.apariencia,
+  });
   const r = await deps.enviar({
     para: nombre ? { email, nombre } : { email },
     ...correo,

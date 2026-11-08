@@ -4,6 +4,7 @@ import { and, eq, gt } from "drizzle-orm";
 import type { Correo, ResultadoEnvio } from "@/lib/correo/brevo";
 import type { Db } from "@/lib/db";
 import { recuperaciones, usuarios, verification } from "@/lib/db/schema";
+import { zApariencia } from "@/lib/modelo";
 import { type DepsRecuperacion, reservarEnvio } from "@/lib/recuperar";
 
 /** Identificador de Better Auth para un código de restablecer (better-auth/api/routes/password). */
@@ -24,13 +25,18 @@ export function depsRecuperacion(
         .limit(1);
       return f?.email ?? null;
     },
-    async leerNombres(cedula) {
+    async leerPerfil(cedula) {
       const [f] = await db
-        .select({ nombres: usuarios.nombres })
+        .select({ nombres: usuarios.nombres, apariencia: usuarios.apariencia })
         .from(usuarios)
         .where(eq(usuarios.cedula, cedula))
         .limit(1);
-      return f?.nombres ?? null;
+      // jsonb sin garantía de forma: lo que no valide va como «sin apariencia» (azul en claro).
+      const apariencia = zApariencia.safeParse(f?.apariencia);
+      return {
+        nombres: f?.nombres ?? null,
+        apariencia: apariencia.success ? apariencia.data : null,
+      };
     },
     async reservar(cedula, ahora) {
       return db.transaction(async (tx) => {

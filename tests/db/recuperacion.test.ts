@@ -14,8 +14,8 @@ import type { Correo } from "@/lib/correo/brevo";
 import { ponerHash } from "@/lib/data/cuentas";
 import { codigoVigente, depsRecuperacion } from "@/lib/data/recuperacion";
 import type { Db } from "@/lib/db";
-import { account } from "@/lib/db/schema";
-import { emailInterno, type Usuario } from "@/lib/modelo";
+import { account, usuarios } from "@/lib/db/schema";
+import { type Apariencia, emailInterno, type Usuario } from "@/lib/modelo";
 import { procesarRecuperacion } from "@/lib/recuperar";
 import { baseNueva } from "./base";
 import * as docs from "./docs";
@@ -130,6 +130,32 @@ describe("recuperar contraseña (Postgres)", () => {
     expect(await procesarRecuperacion("99999999", deps)).toBe("sin-email");
     expect(enviados).toHaveLength(0);
     expect(await docs.recuperacionDe(db(), SIN_EMAIL)).toBeNull();
+  });
+
+  test("lee nombre y apariencia del perfil; una apariencia rota no rompe el correo (D343)", async () => {
+    await cuenta(CON_EMAIL, "alumno.prueba@correo.test");
+    const { deps } = conDoble();
+    expect(await deps.leerPerfil(CON_EMAIL)).toEqual({
+      nombres: "Prueba Alumno",
+      apariencia: null,
+    });
+    await db()
+      .update(usuarios)
+      .set({ apariencia: { tema: "dark", acento: "morado" } })
+      .where(eq(usuarios.cedula, CON_EMAIL));
+    expect((await deps.leerPerfil(CON_EMAIL)).apariencia).toEqual({
+      tema: "dark",
+      acento: "morado",
+    });
+    await db()
+      .update(usuarios)
+      .set({ apariencia: { tema: "sepia" } as unknown as Apariencia })
+      .where(eq(usuarios.cedula, CON_EMAIL));
+    expect((await deps.leerPerfil(CON_EMAIL)).apariencia).toBeNull();
+    expect(await deps.leerPerfil("99999999")).toEqual({
+      nombres: null,
+      apariencia: null,
+    });
   });
 
   test("código inventado: vencido", async () => {

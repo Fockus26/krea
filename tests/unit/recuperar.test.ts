@@ -7,8 +7,10 @@ import {
   REMITENTE_NOMBRE,
   URL_BREVO,
 } from "@/lib/correo/brevo";
+import { COLORES_CORREO_POR_ACENTO } from "@/lib/correo/paleta";
 import {
   ASUNTO_RESTABLECER,
+  COLORES_CORREO,
   correoRestablecer,
   escaparHtml,
   primerNombre,
@@ -187,7 +189,10 @@ describe("procesarRecuperacion (D186)", () => {
     const llamadas: string[] = [];
     const d: DepsRecuperacion = {
       leerEmail: async () => "alumno@correo.test",
-      leerNombres: async () => "Yeilin Andreína",
+      leerPerfil: async () => ({
+        nombres: "Yeilin Andreína",
+        apariencia: null,
+      }),
       reservar: async () => {
         llamadas.push("reservar");
         return true;
@@ -218,6 +223,34 @@ describe("procesarRecuperacion (D186)", () => {
     expect(enviados[0].html).toContain(
       "https://krea.test/recuperar/nueva?mode=resetPassword&amp;oobCode=XYZ",
     );
+  });
+
+  test("sin apariencia: el correo sale en azul y claro (la presentación original)", async () => {
+    const { d, enviados } = deps();
+    await procesarRecuperacion("33272397", d);
+    expect(enviados[0].html).toBe(
+      correoRestablecer({
+        nombre: "Yeilin",
+        cedula: "33272397",
+        enlace:
+          "https://krea.test/recuperar/nueva?mode=resetPassword&oobCode=XYZ",
+      }).html,
+    );
+    expect(enviados[0].html).toContain(COLORES_CORREO.marca);
+  });
+
+  test("pasa la apariencia del perfil al correo (D343)", async () => {
+    const { d, enviados } = deps({
+      leerPerfil: async () => ({
+        nombres: "Yeilin",
+        apariencia: { tema: "dark", acento: "verde" },
+      }),
+    });
+    expect(await procesarRecuperacion("33272397", d)).toBe("enviado");
+    const verdeOscuro = COLORES_CORREO_POR_ACENTO.oscuro.verde;
+    expect(enviados[0].html).toContain(`background:${verdeOscuro.marca}`);
+    expect(enviados[0].html).toContain(`background:${verdeOscuro.fondo}`);
+    expect(enviados[0].html).not.toContain(COLORES_CORREO.marca);
   });
 
   test("sin email: no reserva, no genera enlace, no envía", async () => {
