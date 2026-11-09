@@ -92,7 +92,7 @@ describe("tokens de globals.css", () => {
     expect(dark["--tint-2"]).toBe("18%");
     // §2.1 danger: blanco en claro, #14121A en oscuro (6,64:1), no --on-accent
     expect(light["--on-error"]).toBe("#ffffff");
-    expect(dark["--on-error"]).toBe("#14121a");
+    expect(dark["--on-error"]).toBe("#ffffff"); // blanco sobre --error-fill (D328)
   });
 
   test("variante dark: = tema oscuro explícito o del sistema (D026)", () => {
