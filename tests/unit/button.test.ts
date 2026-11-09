@@ -63,7 +63,8 @@ describe("buttonVariants (HANDOFF §2.1)", () => {
 
   test("danger usa --on-error, no --on-accent", () => {
     const c = classes({ variant: "danger" });
-    expect(c).toContain("bg-error");
+    // Relleno propio, oscurecido en el tema oscuro para que el blanco pase 4,5:1 (D328)
+    expect(c).toContain("bg-error-fill");
     expect(c).toContain("text-on-error");
     expect(c).not.toContain("text-on-accent");
     expect(c).toContain("hover:not-disabled:not-aria-disabled:brightness-92");
