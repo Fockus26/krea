@@ -15,7 +15,7 @@ Fases 01–09 cerradas · **Track:** Product · main @ 8f818b8 · versión 1 ent
 
 **Migración al VPS mergeada** (#108, main @ 6847dae). Recuperación por correo OK tras cambiar `BREVO_API_KEY` por una clave API (`xkeysib-`, no SMTP).
 
-**Tanda 2026-11-08** (pedidos 59–64, una ola Y1–Y6, D328–D345, filas 171–175) · PRs abiertos esperando revisión: #109 tarjeta Ingresar · #110 matriz contraste · #111 hover perfil · #112 texto blanco rellenos oscuro · #113 push tarea nueva (acciones VAPID + migración) · #114 variantes correo (elegir `VARIANTE_CORREO`). Slots wt1–wt6. Brief `plans/orchestration-2026-11-08.md`.
+**Tanda 2026-11-08** (pedidos 59–64, una ola Y1–Y6, D328–D345, filas 171–175) **cerrada**: #109–#114 + #115 (fix import web-push que rompía el build de prod) · main @ e528d1b, prod READY · sin QA de ola (QA final). Pendiente de César: VAPID en Vercel + migración `0001_push_suscripciones` en `krea_preview`/`krea`; elegir `VARIANTE_CORREO` en `/correos`; ¿botón dorado (secundario) con texto blanco en oscuro?
 
 ## Blocked (actions for César or external)
 
