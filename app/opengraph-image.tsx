@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
+import { GRADE_SOMBRA } from "@/lib/grades";
 import {
   BRAND_BG,
   BRAND_BLUE,
@@ -68,6 +69,7 @@ const pill = (
       borderRadius: 999,
       background: bg,
       color: GRADE_INK,
+      textShadow: GRADE_SOMBRA,
       fontFamily: "Poppins",
       fontWeight: 700,
       fontSize,
