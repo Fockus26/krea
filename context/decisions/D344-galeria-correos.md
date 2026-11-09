@@ -1,0 +1,5 @@
+# D344 · Process · Galería `/correos`: 4 presentaciones × 4 acentos × claro/oscuro en `<iframe srcDoc>`, solo en desarrollo y vistas previas · Implemented
+
+**Decision:** `app/correos/page.tsx` muestra cada presentación (D341) en los 4 acentos × claro/oscuro, cada una en un `<iframe srcDoc sandbox>` con título, con datos inventados (Ana, C.I. 12345678, enlace `krea.test`) y el rótulo de cuál se envía hoy. El layout responde 404 fuera de desarrollo y de las vistas previas (`galeriaVisible`, D162), y `tests/unit/galerias.test.ts` lo vigila. La galería apaga la media query oscura (`modoOscuroDelCliente: false`) para que la columna «Claro» no cambie con el tema del sistema de quien mira.
+**Why:** César elige la variante en la vista previa sin servidor local; el iframe aísla el HTML del correo de los estilos de la app, como lo vería un cliente de correo.
+**Discarded alternative:** renderizar el HTML con `dangerouslySetInnerHTML` dentro de la página — los estilos de la app y los del correo se mezclarían.
