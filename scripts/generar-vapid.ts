@@ -13,9 +13,9 @@
  * Cambiar el par invalida las suscripciones existentes: cada alumno tendría que volver a activar
  * el aviso en Perfil. Generarlo una vez y no rotarlo sin motivo.
  */
-import webpush from "web-push";
+import { generateVAPIDKeys } from "web-push";
 
-const { publicKey, privateKey } = webpush.generateVAPIDKeys();
+const { publicKey, privateKey } = generateVAPIDKeys();
 
 console.log(`NEXT_PUBLIC_VAPID_PUBLIC_KEY=${publicKey}`);
 console.log(`VAPID_PRIVATE_KEY=${privateKey}`);
