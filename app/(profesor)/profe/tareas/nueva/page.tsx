@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { BackLink } from "@/components/sections/shared/back-link";
+import { NuevoPorVisita } from "@/components/sections/shared/nuevo-por-visita";
 import { PageHeader } from "@/components/sections/shared/page-header";
 import { SinSecciones } from "@/components/sections/shared/sin-secciones";
 import { TaskBuilder } from "@/components/sections/tareas-profe/task-builder";
@@ -48,20 +49,23 @@ export default async function NuevaTareaPage() {
       {secciones.length === 0 ? (
         <SinSecciones admin={sesion.admin === true} />
       ) : (
-        <TaskBuilder
-          inicial={{
-            secciones: seccionesDelProfe(usuario, secciones).filter((s) =>
-              secciones.includes(s),
-            ),
-          }}
-          secciones={secciones}
-          hoy={diaDeInstante(Date.now())}
-          listaHref={RUTA_TAREAS}
-          guardarEnTopbar
-          acciones={ACCIONES}
-          // Recién creada: todavía no tiene entregas
-          perdida={SIN_PERDIDA}
-        />
+        // Cada visita abre vacía (no la tarea que se creó la vez anterior)
+        <NuevoPorVisita>
+          <TaskBuilder
+            inicial={{
+              secciones: seccionesDelProfe(usuario, secciones).filter((s) =>
+                secciones.includes(s),
+              ),
+            }}
+            secciones={secciones}
+            hoy={diaDeInstante(Date.now())}
+            listaHref={RUTA_TAREAS}
+            guardarEnTopbar
+            acciones={ACCIONES}
+            // Recién creada: todavía no tiene entregas
+            perdida={SIN_PERDIDA}
+          />
+        </NuevoPorVisita>
       )}
     </>
   );
