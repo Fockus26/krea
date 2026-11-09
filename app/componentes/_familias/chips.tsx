@@ -44,7 +44,7 @@ export function Chips() {
     <Familia
       id="chips"
       title="Píldora de nota, chips y pestañas"
-      description="Hover y foco (Tab, flechas) se ven al interactuar. La píldora usa gradeColor(n) de fondo y el número en tinta oscura o clara según gradeInk(n) (clara en los extremos)."
+      description="Hover y foco (Tab, flechas) se ven al interactuar. La píldora usa gradeColor(n) de fondo y el número siempre en blanco con sombra suave (D347)."
     >
       <Muestra title="Píldora de nota (GradePill)">
         <div className="flex flex-col gap-4">

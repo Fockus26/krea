@@ -97,6 +97,16 @@ export function gradeInk(n: number): "oscura" | "clara" {
     : "oscura";
 }
 
+/**
+ * Número de la píldora: siempre blanco con sombra suave (D347, elección de César; reemplaza la
+ * tinta por contraste de D236 en la píldora). Literal para que Tailwind la vea.
+ */
+export const GRADE_NUMERO_CLASS = "text-grade-ink-on-dark text-shadow-grade";
+
+/** La misma sombra para lo que no lee CSS de Tailwind (imagen OG). Espejo de `--text-shadow-grade`. */
+export const GRADE_SOMBRA =
+  "0 1px 2px rgba(0, 0, 0, 0.55), 0 0 1px rgba(0, 0, 0, 0.6)";
+
 /** Clase de color del número según `gradeInk` (literales para que Tailwind las vea). */
 export const GRADE_INK_CLASS = {
   oscura: "text-grade-ink",
