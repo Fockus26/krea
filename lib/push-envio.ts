@@ -2,7 +2,7 @@ import "server-only";
 // Envío real del aviso con `web-push` y las claves VAPID (D337). Solo servidor: la clave privada
 // nunca sale de aquí. Sin las tres variables, `programarAvisoTarea` no hace nada.
 import { after } from "next/server";
-import webpush from "web-push";
+import { sendNotification } from "web-push";
 import { avisarTareaPublicada, type Enviar } from "@/lib/data/push";
 import { baseDeDatos } from "@/lib/db";
 import { type ConfigPush, configPush, type TareaPublicada } from "@/lib/push";
@@ -13,7 +13,7 @@ const ESPERA_MS = 10_000;
 
 function enviador(config: ConfigPush): Enviar {
   return (destino, aviso) =>
-    webpush.sendNotification(
+    sendNotification(
       {
         endpoint: destino.endpoint,
         keys: { p256dh: destino.p256dh, auth: destino.auth },
