@@ -114,8 +114,8 @@ describe("apariencia del perfil → estilo del correo", () => {
 });
 
 describe("variantes × acento × tema (D341)", () => {
-  test("la que se envía sigue siendo la actual hasta que César elija", () => {
-    expect(VARIANTE_CORREO).toBe("tarjeta");
+  test("se envía Banda de color, la que eligió César (D341)", () => {
+    expect(VARIANTE_CORREO).toBe("banda");
     expect(VARIANTES_CORREO.map((v) => v.id)).toEqual([
       "tarjeta",
       "banda",

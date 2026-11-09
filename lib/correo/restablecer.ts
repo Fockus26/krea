@@ -58,7 +58,7 @@ export type VarianteCorreo = (typeof VARIANTES_CORREO)[number]["id"];
 /**
  * La que se envía. PENDIENTE de César (D341): sigue la actual hasta que elija otra en /correos.
  */
-export const VARIANTE_CORREO: VarianteCorreo = "tarjeta";
+export const VARIANTE_CORREO: VarianteCorreo = "banda";
 
 export type DatosRestablecer = {
   /** Primer nombre; vacío → «Hola». */
