@@ -1,5 +1,7 @@
-# D341 · Email · Correo de restablecer en cuatro presentaciones (Tarjeta, Banda de color, Minimal, Lúdica); se envía Tarjeta hasta que César elija · Pending
+# D341 · Email · Correo de restablecer en cuatro presentaciones (Tarjeta, Banda de color, Minimal, Lúdica); César eligió Banda de color (2026-11-08) · Implemented
 
 **Decision:** `lib/correo/restablecer.ts` arma el mismo correo en cuatro presentaciones (`VARIANTES_CORREO`): «Tarjeta» (la de HANDOFF §5c), «Banda de color» (cabecera alta llena con el acento y el saludo grande), «Minimal» (un solo fondo, marca en color de texto, dos líneas y el botón) y «Lúdica» (píldora «KREA» + puntos de acento y splash como el logo, y la vigencia «1 hora» en una píldora). Todas: tablas, estilos en línea, ancho 560–600, botón con VML para Outlook, mismo asunto, preheader, copy y texto plano. `VARIANTE_CORREO = "tarjeta"` elige la que se envía; queda **pendiente** que César elija en `/correos` (vista previa).
 **Why:** pedido de César (2026-11-08) de ver otras presentaciones antes de cambiar la actual. Copiar el copy en las cuatro deja la comparación solo en la forma y no introduce texto nuevo sin aprobar (lo único nuevo es la reordenación «1 hora · para usar el enlace, una sola vez» y el rótulo «Escuela Creativa» en Lúdica, que ya estaban en el correo).
 **Discarded alternative:** cambiar ya la que se envía — César pidió verlas primero; un selector en el perfil del alumno — no lo pidió y añade un ajuste que nadie necesita.
+
+**Update 2026-11-08:** César eligió «Banda de color»: `VARIANTE_CORREO = "banda"`. Las otras tres quedan en la galería `/correos` por si cambia de opinión.
