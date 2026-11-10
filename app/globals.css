@@ -496,6 +496,12 @@
     flex-shrink: 0;
   }
 }
+/* Texto corto en mayúsculas o cifras («5A») centrado ópticamente junto a un ícono o casilla: la
+   caja se recorta de la altura de las mayúsculas a la línea base, sin el aire de ascendentes y
+   descendentes que lo dejaba alto. Navegador sin `text-box`: queda como antes. */
+@utility texto-cap {
+  text-box: trim-both cap alphabetic;
+}
 @utility icono-linea-caja {
   display: inline-flex;
   flex-shrink: 0;
