@@ -7,6 +7,7 @@ import {
   errorAlumnoTexto,
   filasAlumnos,
   notaIndividualVigente,
+  puntajeFinalDe,
   zEditarAlumno,
 } from "@/lib/alumnos-datos";
 import type { Entrega, Equipo, Usuario } from "@/lib/modelo";
@@ -334,5 +335,34 @@ describe("entregasDeAlumno", () => {
         nota: 15,
       },
     ]);
+  });
+});
+
+describe("puntajeFinalDe", () => {
+  test("el puntaje de su entrega evaluada; sin ella, sin nota", () => {
+    const t = { id: "identidad-de-marca", titulo: "Identidad de marca" };
+    const evaluada = {
+      tareaId: t.id,
+      tipo: "individual",
+      titularId: "1111111",
+      seccion: "5A",
+      integrantes: ["1111111"],
+      estado: "evaluada",
+      respuestas: {},
+      enviadaPor: null,
+      enviadaEn: null,
+      evaluacion: {
+        puntos: null,
+        comentarios: {},
+        puntaje: 17.5,
+        evaluadaPor: "30262232",
+        evaluadaEn: 1,
+      },
+    } satisfies Entrega;
+    expect(puntajeFinalDe("1111111", t, [evaluada])).toEqual({
+      titulo: "Identidad de marca",
+      puntaje: 17.5,
+    });
+    expect(puntajeFinalDe("2222222", t, [evaluada]).puntaje).toBeNull();
   });
 });

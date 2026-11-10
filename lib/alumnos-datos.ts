@@ -3,7 +3,11 @@
 // email de recuperación) y las filas de la tabla. La base cambia las notas derivadas (nota =
 // puntaje × base / 20, D013) y por eso el ranking; nunca toca una entrega ni un ajuste (D007).
 import { z } from "zod";
-import type { EntregaDeAlumno, FilaAlumno } from "@/lib/alumnos";
+import type {
+  EntregaDeAlumno,
+  FilaAlumno,
+  PuntajeFinalAlumno,
+} from "@/lib/alumnos";
 import { formatNota } from "@/lib/grades";
 import {
   type CambioBase,
@@ -11,6 +15,7 @@ import {
   type Equipo,
   type RankingSeccion,
   type SeccionId,
+  type Tarea,
   type Usuario,
   zBase,
   zCambioBase,
@@ -286,6 +291,21 @@ export function entregasDeAlumno(
     }));
 }
 
+/** Puntaje final de la tarea 1 para la ficha: el de su entrega evaluada, o `null`. */
+export function puntajeFinalDe(
+  cedula: string,
+  tarea: Pick<ConId<Tarea>, "id" | "titulo">,
+  entregas: ReadonlyArray<Entrega>,
+): PuntajeFinalAlumno {
+  const e = entregas.find(
+    (x) => x.tareaId === tarea.id && x.integrantes.includes(cedula),
+  );
+  return {
+    titulo: tarea.titulo,
+    puntaje: e?.estado === "evaluada" ? (e.evaluacion?.puntaje ?? null) : null,
+  };
+}
+
 /** Filas de /profe/alumnos: los estudiantes de todas las secciones, por sección y nombre. */
 export function filasAlumnos(datos: {
   usuarios: readonly Usuario[];
@@ -293,6 +313,8 @@ export function filasAlumnos(datos: {
   entregas: ReadonlyArray<Entrega & { id?: string }>;
   /** Tareas (id → título) para la lista de entregas de la ficha; sin ellas, no hay lista. */
   tareas?: ReadonlyMap<string, string>;
+  /** La tarea 1 (`lib/puntaje-final`): su puntaje final se pone desde la ficha. */
+  puntajeFinal?: Pick<ConId<Tarea>, "id" | "titulo" | "secciones"> | null;
   rankings: Readonly<Partial<Record<SeccionId, RankingSeccion | null>>>;
   /** cédula → email de `privados` (sin entrada: sin email). */
   emails: ReadonlyMap<string, string | null>;
@@ -315,6 +337,15 @@ export function filasAlumnos(datos: {
         notas: notasPorTarea(u, datos.entregas),
         ...(datos.tareas
           ? { entregas: entregasDeAlumno(u, datos.entregas, datos.tareas) }
+          : {}),
+        ...(datos.puntajeFinal?.secciones.includes(u.seccion)
+          ? {
+              puntajeFinal: puntajeFinalDe(
+                u.cedula,
+                datos.puntajeFinal,
+                datos.entregas,
+              ),
+            }
           : {}),
         puntos: datos.rankings[u.seccion]?.alumnos[u.cedula]?.puntos ?? 0,
         estilo: estiloDe(u.avatar.estilo),

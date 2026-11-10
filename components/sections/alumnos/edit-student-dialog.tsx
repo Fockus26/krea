@@ -20,13 +20,16 @@ import {
 import { Field, joinIds } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { toast } from "@/components/ui/sonner";
 import { Textarea } from "@/components/ui/textarea";
+import { ponerPuntajeFinal } from "@/lib/acciones/puntaje-final";
 import {
   BASE_PASO,
   baseCambio,
   type EntregaDeAlumno,
   editarLabel,
   type FilaAlumno,
+  type PuntajeFinalAlumno,
   subtituloEdicion,
   unirNombre,
   validarEdicion,
@@ -40,9 +43,13 @@ import {
   versionDe,
 } from "@/lib/alumnos-datos";
 import { rutaEntrega } from "@/lib/evaluar-datos";
-import { BASE_MAX, BASE_MIN } from "@/lib/grades";
+import { BASE_MAX, BASE_MIN, NOTA_MAX } from "@/lib/grades";
 import { partirNombre } from "@/lib/perfil";
 import { avisoPresencia, presenciaTexto } from "@/lib/presencia";
+import {
+  errorPuntajeFinalTexto,
+  type ResultadoPuntajeFinal,
+} from "@/lib/puntaje-final";
 import { type Presencia, useMarcarPresencia } from "./use-presencia";
 
 /** Lo que cambia en la fila al guardar. */
@@ -402,6 +409,9 @@ function EditForm({
           </Field>
         </>
       ) : null}
+      {alumno.puntajeFinal ? (
+        <PuntajeFinal cedula={alumno.cedula} tarea={alumno.puntajeFinal} />
+      ) : null}
       {alumno.entregas ? <TareasEntregadas entregas={alumno.entregas} /> : null}
       {errorServidor ? (
         <ErrorEnPantalla titulo="No se guardaron los cambios">
@@ -424,8 +434,92 @@ function EditForm({
 }
 
 /**
- * Las tareas que entregó el alumno, cada una con su nota (o Pendiente) y enlace a su entrega en
- * Evaluar: allí el profe ve las respuestas y corrige la nota.
+ * Puntaje final de la tarea 1 (`lib/puntaje-final`): la única nota que se pone desde la ficha,
+ * sin puntaje por pregunta ni respuestas, entregue o no el alumno (las respuestas las sube él).
+ * Se guarda aparte del formulario («Guardar puntaje»): cambia el ranking al momento.
+ */
+function PuntajeFinal({
+  cedula,
+  tarea,
+}: {
+  cedula: string;
+  tarea: PuntajeFinalAlumno;
+}) {
+  const uid = useId();
+  const [puntaje, setPuntaje] = useState<number | null>(tarea.puntaje);
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const enviando = useRef(false);
+  const sinCambios = puntaje === null || puntaje === tarea.puntaje;
+
+  const guardar = async () => {
+    if (enviando.current || puntaje === null) return;
+    enviando.current = true;
+    setGuardando(true);
+    setError(null);
+    const r = await ponerPuntajeFinal({ cedula, puntaje }).catch(
+      (): ResultadoPuntajeFinal => ({ ok: false, error: "red" }),
+    );
+    enviando.current = false;
+    setGuardando(false);
+    if (r.ok) toast.success("Puntaje guardado");
+    else setError(errorPuntajeFinalTexto(r.error));
+  };
+
+  return (
+    <>
+      <Separator />
+      <section
+        aria-labelledby={`${uid}-titulo`}
+        className="flex flex-col gap-2"
+      >
+        <h3 id={`${uid}-titulo`} className="text-small-b text-text">
+          Puntaje final · {tarea.titulo}
+        </h3>
+        {/* PROVISIONAL (CONTENT_CHECKLIST fila 177) */}
+        <p id={`${uid}-ayuda`} className="text-small text-text-2">
+          Sobre 20, sin puntaje por pregunta. Las respuestas las sube el alumno.
+        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <NumberStepper
+            value={puntaje}
+            onChange={setPuntaje}
+            min={0}
+            max={NOTA_MAX}
+            unit="/ 20"
+            aria-labelledby={`${uid}-titulo`}
+            aria-describedby={joinIds(
+              `${uid}-ayuda`,
+              error ? `${uid}-error` : undefined,
+            )}
+            emptyText="Sin nota"
+          />
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={guardar}
+            disabled={sinCambios}
+            loading={guardando}
+            loadingLabel="Guardando…"
+          >
+            Guardar puntaje
+          </Button>
+        </div>
+        {error ? (
+          <div id={`${uid}-error`}>
+            <ErrorEnPantalla titulo="No se guardó el puntaje">
+              {error}
+            </ErrorEnPantalla>
+          </div>
+        ) : null}
+      </section>
+    </>
+  );
+}
+
+/**
+ * Las tareas que entregó el alumno, cada una con su nota (o Pendiente) y enlace a su entrega,
+ * solo para ver las respuestas y la nota (`?ver`: sin corregir desde aquí).
  */
 function TareasEntregadas({
   entregas,
@@ -447,7 +541,7 @@ function TareasEntregadas({
             {entregas.map((e) => (
               <li key={e.id}>
                 <Link
-                  href={rutaEntrega(e.id)}
+                  href={`${rutaEntrega(e.id)}?ver`}
                   className="flex min-h-11 items-center gap-3 rounded-sm py-2 text-text hover:text-accent-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                 >
                   <span className="min-w-0 flex-1">

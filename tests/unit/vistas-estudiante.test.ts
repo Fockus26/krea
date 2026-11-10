@@ -319,6 +319,41 @@ describe("inicioVista", () => {
     expect(borrador.pendientes[0]?.avance).toBe("borrador");
   });
 
+  test("evaluada por el profe sin respuestas: sigue pendiente mientras esté abierta", () => {
+    const conNota: ConId<Entrega> = {
+      id: "presentacion__5a-g2",
+      tareaId: "presentacion",
+      tipo: "grupal",
+      titularId: "5a-g2",
+      seccion: "5A",
+      integrantes: [YEILIN],
+      estado: "evaluada",
+      respuestas: {},
+      enviadaPor: null,
+      enviadaEn: null,
+      evaluacion: {
+        puntos: null,
+        comentarios: {},
+        puntaje: 16,
+        evaluadaPor: "30262232",
+        evaluadaEn: 1,
+      },
+    };
+    const v = inicioVista(
+      datosDe(YEILIN, { tareas: [abierta], entregas: [conNota] }),
+      [],
+    );
+    expect(v.pendientes.map((p) => p.id)).toEqual(["presentacion"]);
+    const cerrada = inicioVista(
+      datosDe(YEILIN, {
+        tareas: [{ ...abierta, estado: "evaluada" }],
+        entregas: [conNota],
+      }),
+      [],
+    );
+    expect(cerrada.pendientes).toEqual([]);
+  });
+
   test("sin ranking: sin tarjeta de puntos; sin equipo: sin resumen", () => {
     const d = { ...datosDe(GABRIEL), ranking: null };
     const v = inicioVista(d, []);

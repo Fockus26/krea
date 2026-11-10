@@ -1,13 +1,16 @@
-// Carga de la tarea hecha antes de la web (2026-11-10) y el permiso temporal de editar respuestas,
-// sobre Postgres en memoria: la tarea se crea publicada, cada alumno queda evaluado sin respuestas
-// y el ranking lo cuenta; repetir no duplica; el profe pasa las respuestas sin tocar la nota.
+// Carga de la tarea hecha antes de la web (2026-11-10) y su puntaje final desde la ficha, sobre
+// Postgres en memoria: la tarea se crea publicada, cada alumno queda evaluado sin respuestas y el
+// ranking lo cuenta; repetir no duplica; el profe pone el puntaje final (entregue o no) y el
+// alumno sube sus respuestas después sin perder la nota.
 import { beforeAll, describe, expect, test } from "bun:test";
-import { editarRespuestasEnTransaccion } from "@/lib/data/respuestas-profe";
+import { enviarEnTransaccion } from "@/lib/data/entregas";
+import { ponerPuntajeFinalEnTransaccion } from "@/lib/data/puntaje-final";
 import {
   cargarTareaHistorica,
   puntosPorPregunta,
 } from "@/lib/data/tarea-historica";
 import type { Db } from "@/lib/db";
+import { faltanRespuestas } from "@/lib/entregas";
 import { idEntrega, type Tarea, type Usuario } from "@/lib/modelo";
 import { baseNueva } from "./base";
 import { entrega, tarea as leerTarea, ponerUsuario, rankingDe } from "./docs";
@@ -138,34 +141,100 @@ describe("cargarTareaHistorica", () => {
   });
 });
 
-describe("editarRespuestasEnTransaccion", () => {
-  const id = idEntrega(T, A1);
+describe("ponerPuntajeFinalEnTransaccion", () => {
+  const A3 = "39800004";
 
-  test("guarda las de texto y quita las vacías, sin tocar la nota", async () => {
-    const antes = await entrega(db(), id);
+  test("pone la nota a quien no entregó: evaluada, sin respuestas, y el ranking la cuenta", async () => {
+    await ponerUsuario(db(), alumno(A3, "5A"));
     expect(
-      await editarRespuestasEnTransaccion(db(), {
-        entregaId: id,
-        respuestas: { p1: "  Dulce Hogar  ", p2: "" },
-      }),
+      await ponerPuntajeFinalEnTransaccion(
+        db(),
+        PROFE,
+        { cedula: A3, puntaje: 15.5 },
+        AHORA + 2,
+        T,
+      ),
     ).toEqual({ ok: true });
-    const e = await entrega(db(), id);
-    expect(e?.respuestas).toEqual({ p1: { texto: "Dulce Hogar" } });
-    expect(e?.evaluacion).toEqual(antes?.evaluacion ?? null);
+    const e = await entrega(db(), idEntrega(T, A3));
+    expect(e?.estado).toBe("evaluada");
+    expect(e?.respuestas).toEqual({});
+    expect(e?.enviadaEn).toBeNull();
+    expect(e?.evaluacion).toMatchObject({ puntos: null, puntaje: 15.5 });
+    expect((await rankingDe(db(), "5A"))?.alumnos[A3]?.puntos).toBeGreaterThan(
+      0,
+    );
   });
 
-  test("rechaza preguntas que no son de la tarea y entregas que no existen", async () => {
+  test("cambia la de quien ya estaba evaluado sin puntaje por pregunta", async () => {
     expect(
-      await editarRespuestasEnTransaccion(db(), {
-        entregaId: id,
-        respuestas: { p9: "x" },
-      }),
-    ).toEqual({ ok: false, error: "invalida" });
+      await ponerPuntajeFinalEnTransaccion(
+        db(),
+        PROFE,
+        { cedula: A2, puntaje: 12 },
+        AHORA + 3,
+        T,
+      ),
+    ).toEqual({ ok: true });
+    const e = await entrega(db(), idEntrega(T, A2));
+    expect(e?.evaluacion).toMatchObject({ puntos: null, puntaje: 12 });
+    expect(e?.evaluacionAnterior?.puntaje).toBe(8.5);
+  });
+
+  test("otra sección o alguien que no existe: no escribe", async () => {
     expect(
-      await editarRespuestasEnTransaccion(db(), {
-        entregaId: idEntrega(T, "39899999"),
-        respuestas: { p1: "x" },
-      }),
+      await ponerPuntajeFinalEnTransaccion(
+        db(),
+        PROFE,
+        { cedula: C1, puntaje: 10 },
+        AHORA,
+        T,
+      ),
+    ).toEqual({ ok: false, error: "sin-tarea" });
+    expect(
+      await ponerPuntajeFinalEnTransaccion(
+        db(),
+        PROFE,
+        { cedula: "39899999", puntaje: 10 },
+        AHORA,
+        T,
+      ),
     ).toEqual({ ok: false, error: "no-existe" });
+    expect(await entrega(db(), idEntrega(T, C1))).toBeNull();
+  });
+
+  test("el alumno sube sus respuestas después y la nota se queda", async () => {
+    const id = idEntrega(T, A3);
+    const antes = await entrega(db(), id);
+    expect(faltanRespuestas(antes, tarea.preguntas)).toBe(true);
+    expect(
+      await enviarEnTransaccion(
+        db(),
+        A3,
+        {
+          tareaId: T,
+          respuestas: { p1: { texto: " Dulce Hogar " }, p2: { texto: "Azul" } },
+        },
+        AHORA + 4,
+      ),
+    ).toEqual({ ok: true });
+    const e = await entrega(db(), id);
+    expect(e?.respuestas).toEqual({
+      p1: { texto: "Dulce Hogar" },
+      p2: { texto: "Azul" },
+    });
+    expect(e?.estado).toBe("evaluada");
+    expect(e?.evaluacion).toEqual(antes?.evaluacion ?? null);
+    expect(e?.enviadaPor).toBe(A3);
+    expect(e?.enviadaEn).toBe(AHORA + 4);
+    expect(faltanRespuestas(e, tarea.preguntas)).toBe(false);
+    // Con las respuestas puestas ya no se puede volver a enviar
+    expect(
+      await enviarEnTransaccion(
+        db(),
+        A3,
+        { tareaId: T, respuestas: { p1: { texto: "x" }, p2: { texto: "y" } } },
+        AHORA + 5,
+      ),
+    ).toEqual({ ok: false, error: "ya-entregada" });
   });
 });

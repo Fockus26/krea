@@ -111,6 +111,25 @@ export function yaEnviada(existente: Pick<Entrega, "estado"> | null): boolean {
   return existente !== null && existente.estado !== "borrador";
 }
 
+/**
+ * Evaluada sin todas sus respuestas: el profe puso la nota sin que el alumno respondiera (tarea 1,
+ * `lib/puntaje-final`, o la carga de `importar-tarea-historica`). Mientras la tarea siga abierta,
+ * el alumno las sube y la nota se queda. Un envío normal siempre trae todas (`respuestasValidas`).
+ */
+export function faltanRespuestas(
+  e: {
+    estado: Entrega["estado"];
+    respuestas: Readonly<Record<string, unknown>>;
+  } | null,
+  preguntas: ReadonlyArray<Pick<Tarea["preguntas"][number], "id">>,
+): boolean {
+  return (
+    e?.estado === "evaluada" &&
+    preguntas.length > 0 &&
+    preguntas.some((p) => !e?.respuestas[p.id])
+  );
+}
+
 /* ---------- Claves de imagen (D195) ---------- */
 
 /**

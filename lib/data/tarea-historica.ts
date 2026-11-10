@@ -1,6 +1,6 @@
 // Carga de una tarea que se hizo en papel antes de la web (caso único, 2026-11-10): crea la tarea
 // publicada y deja a sus alumnos como «entregados» y evaluados con el puntaje de cada pregunta, sin
-// respuestas (el profe las pasa luego desde la ficha del alumno). Sin `server-only`: la usan
+// respuestas (las sube luego el alumno, `faltanRespuestas` en lib/entregas.ts). Sin `server-only`: la usan
 // `scripts/importar-tarea-historica.ts` y las pruebas sobre PGlite.
 //
 // La tarea y las entregas van en una transacción; cada evaluación pasa por `evaluarEnTransaccion`
@@ -127,7 +127,7 @@ export async function cargarTareaHistorica(
         seccion: u.seccion,
         integrantes: [n.cedula],
         estado: "entregada",
-        // Sin respuestas: se cargan después desde la ficha del alumno
+        // Sin respuestas: las sube después el alumno mientras la tarea siga abierta
         respuestas: {},
         enviadaPor: n.cedula,
         enviadaEn: ahora,
