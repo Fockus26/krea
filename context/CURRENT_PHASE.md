@@ -18,7 +18,7 @@ Fases 01–09 cerradas · **Track:** Product · main @ 8f818b8 · versión 1 ent
 **Tanda 2026-11-08** (pedidos 59–64, una ola Y1–Y6, D328–D345, filas 171–175) **cerrada**: #109–#114 + #115 (fix import web-push que rompía el build de prod) · main @ e528d1b, prod READY · sin QA de ola (QA final). Pendiente de César: VAPID en Vercel + migración `0001_push_suscripciones` en `krea_preview`/`krea`; elegir `VARIANTE_CORREO` en `/correos`; ¿botón dorado (secundario) con texto blanco en oscuro?
 
 **Tanda 2026-11-10** (abierta): alumnos importados a prod (69, 12 equipos, sin notas; #123; contraseñas en `.qa/contrasenas-alumnos-2026-11-10.csv`, fuera del backup) · #121 skeleton Panel · #122 años colapsables 1–6/A–F · #124 hora de entrega + selector de secciones (migración 0002 pendiente en krea_preview y krea antes del deploy). `plans/orchestration-2026-11-10-prompts.md`.
-**Tarea 1 «Identidad de marca» cargada en prod** (2026-11-10, script `importar-tarea-historica.ts`): 5A+5C, cierra 13/11 17:00, premio «Ir al Cine», 12 alumnos de 5A evaluados sin respuestas. #128 (ficha con tareas entregadas + «Editar respuestas» temporal) en revisión; revocar después con `PROFE_EDITA_RESPUESTAS = false`.
+**Tarea 1 «Identidad de marca» cargada en prod** (2026-11-10, script `importar-tarea-historica.ts`): 5A+5C, cierra 13/11 17:00, premio «Ir al Cine», 12 alumnos de 5A evaluados sin respuestas. #128 mergeado (ficha con tareas entregadas). Rama `feat/puntaje-final-tarea-1`: quita «Editar respuestas», la ficha abre la entrega solo para ver (`?ver`) y pone el puntaje final de la tarea 1 (`lib/puntaje-final`); el alumno sube sus respuestas sin perder la nota (`faltanRespuestas`).
 
 ## Blocked (actions for César or external)
 
