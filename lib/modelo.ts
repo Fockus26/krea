@@ -62,11 +62,28 @@ export function idEntrega(tareaId: string, titularId: string): string {
  * existen salen del catálogo `config/secciones` (`catalogoSecciones()` y `seccionesDe(...)`).
  */
 export type SeccionId = string;
-export const zSeccion = z.string().regex(/^[1-9][A-Z]$/, "Sección inválida");
+export const ANIO_MIN = 1;
+export const ANIO_MAX = 6;
+/** Letras de sección: de la A a la F (D349). */
+export const LETRA_MIN = "A";
+export const LETRA_MAX = "F";
+export const LETRAS: readonly string[] = Array.from(
+  { length: LETRA_MAX.charCodeAt(0) - LETRA_MIN.charCodeAt(0) + 1 },
+  (_, i) => String.fromCharCode(LETRA_MIN.charCodeAt(0) + i),
+);
+const CLASE_LETRA = `[${LETRA_MIN}-${LETRA_MAX}]`;
+export const zSeccion = z
+  .string()
+  .regex(
+    new RegExp(`^[${ANIO_MIN}-${ANIO_MAX}]${CLASE_LETRA}$`),
+    "Sección inválida",
+  );
 /** Letra de una sección dentro de su año (D317). */
-export const zLetra = z.string().regex(/^[A-Z]$/, "Letra inválida");
-/** Número de año: 1.º a 9.º (D317). */
-export const zNumeroAnio = z.number().int().min(1).max(9);
+export const zLetra = z
+  .string()
+  .regex(new RegExp(`^${CLASE_LETRA}$`), "Letra inválida");
+/** Número de año: 1.º a 6.º (D317, D348). */
+export const zNumeroAnio = z.number().int().min(ANIO_MIN).max(ANIO_MAX);
 
 export const ROLES = ["estudiante", "profesor"] as const;
 export type RolUsuario = (typeof ROLES)[number];

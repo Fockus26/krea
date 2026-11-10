@@ -9,7 +9,7 @@ import { z } from "zod";
 import { exigirAdmin } from "@/lib/dal";
 import { operarSeccionesEnTransaccion } from "@/lib/data/secciones";
 import { baseDeDatos } from "@/lib/db";
-import { zLetra, zNumeroAnio, zSeccion } from "@/lib/modelo";
+import { LETRAS, zLetra, zNumeroAnio, zSeccion } from "@/lib/modelo";
 import type { OperacionSecciones, ResultadoSecciones } from "@/lib/secciones";
 
 const log = (donde: string, e: unknown) =>
@@ -17,7 +17,7 @@ const log = (donde: string, e: unknown) =>
 
 const zCrearAnio = z.object({
   numero: zNumeroAnio,
-  letras: z.array(zLetra).max(26),
+  letras: z.array(zLetra).max(LETRAS.length),
 });
 const zEditarAnio = z.object({ de: zNumeroAnio, a: zNumeroAnio });
 const zCrearSeccion = z.object({ numero: zNumeroAnio, letra: zLetra });

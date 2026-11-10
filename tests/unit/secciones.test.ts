@@ -1,5 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { zCatalogoSecciones, zDecisionesPremio, zSeccion } from "@/lib/modelo";
+import {
+  zCatalogoSecciones,
+  zDecisionesPremio,
+  zLetra,
+  zNumeroAnio,
+  zSeccion,
+} from "@/lib/modelo";
 import {
   agregarAnio,
   agregarSeccion,
@@ -65,7 +71,11 @@ describe("códigos (D317)", () => {
       expect(partesSeccion(malo)).toBeNull();
       expect(esCodigoSeccion(malo)).toBe(false);
     }
-    expect(esCodigoSeccion("9Z")).toBe(true);
+    expect(esCodigoSeccion("6F")).toBe(true);
+    for (const fuera of ["7A", "5G", "9Z"]) {
+      expect(esCodigoSeccion(fuera)).toBe(false);
+      expect(zSeccion.safeParse(fuera).success).toBe(false);
+    }
     expect(esCodigoSeccion(5)).toBe(false);
     expect(esCodigoSeccion(null)).toBe(false);
   });
@@ -228,23 +238,29 @@ describe("transformar el catálogo", () => {
   });
 
   test("libres: números y letras sin usar", () => {
-    expect(numerosLibres(CAT)).toEqual([1, 2, 3, 6, 7, 8, 9]);
-    expect(letrasLibres(CAT, 5)).toHaveLength(24);
+    expect(numerosLibres(CAT)).toEqual([1, 2, 3, 6]);
+    expect(letrasLibres(CAT, 5)).toHaveLength(4);
     expect(letrasLibres(CAT, 5)).not.toContain("A");
-    expect(letrasLibres(CAT, 1)).toHaveLength(26);
+    expect(letrasLibres(CAT, 1)).toHaveLength(6);
     expect(seccionesDelAnio(CAT, 5)).toEqual(["5A", "5C"]);
     expect(seccionesDelAnio(CAT, 1)).toEqual([]);
   });
 
-  test("límites: 9 años y 26 letras", () => {
+  test("límites: 6 años y 6 letras (6 y F valen; 7 y G no)", () => {
     let c: CatalogoSecciones = [];
-    for (let n = 1; n <= 9; n++) c = catalogo(agregarAnio(c, n));
-    expect(c).toHaveLength(9);
+    for (let n = 1; n <= 6; n++) c = catalogo(agregarAnio(c, n));
+    expect(c).toHaveLength(6);
     expect(numerosLibres(c)).toEqual([]);
     let d: CatalogoSecciones = [{ numero: 1, letras: [] }];
     for (const l of letrasLibres(d, 1)) d = catalogo(agregarSeccion(d, 1, l));
-    expect(d[0]?.letras).toHaveLength(26);
+    expect(d[0]?.letras).toHaveLength(6);
     expect(letrasLibres(d, 1)).toEqual([]);
+    expect(agregarAnio(c, 7)).toEqual({ ok: false, error: "invalida" });
+    expect(zNumeroAnio.safeParse(6).success).toBe(true);
+    expect(zNumeroAnio.safeParse(7).success).toBe(false);
+    expect(zLetra.safeParse("F").success).toBe(true);
+    expect(zLetra.safeParse("G").success).toBe(false);
+    expect(letrasDeTexto("A, G")).toMatchObject({ ok: false });
   });
 });
 
@@ -255,7 +271,7 @@ describe("operaciones de la pantalla (D318)", () => {
         aplicarOperacion(CAT, { tipo: "crearSeccion", numero: 4, letra: "A" }),
       )[0],
     ).toEqual({ numero: 4, letras: ["A", "B"] });
-    expect(aplicarOperacion(CAT, { tipo: "eliminarAnio", numero: 7 })).toEqual({
+    expect(aplicarOperacion(CAT, { tipo: "eliminarAnio", numero: 3 })).toEqual({
       ok: false,
       error: "no-existe",
     });
