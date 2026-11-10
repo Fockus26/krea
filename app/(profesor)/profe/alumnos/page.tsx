@@ -69,6 +69,7 @@ export default async function AlumnosPage({
     entregas,
     rankings,
     emails,
+    tareas: new Map(tareas.map((t) => [t.id, t.titulo])),
   });
   if (secciones.length === 0) {
     return (
