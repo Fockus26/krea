@@ -82,17 +82,31 @@ function TimePicker({
         <div>
           <Input
             ref={campo}
-            readOnly
+            // No se escribe (la hora sale del reloj), pero tampoco es `readOnly`: el Input lo
+            // pintaría bloqueado (borde punteado y candado). Solo lo es con la tarea cerrada.
+            readOnly={readOnly}
+            inputMode="none"
             autoComplete="off"
             placeholder="Sin hora"
-            inputClassName={cn("nums", !readOnly && "cursor-pointer")}
+            inputClassName={cn(
+              "nums caret-transparent",
+              !readOnly && "cursor-pointer",
+            )}
             {...props}
             value={value ? formatHora(value) : ""}
+            onChange={() => {}}
+            onBeforeInput={(e) => e.preventDefault()}
+            onPaste={(e) => e.preventDefault()}
+            onDrop={(e) => e.preventDefault()}
             onClick={() => cambiar(true)}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
                 e.preventDefault();
                 cambiar(true);
+              } else if (e.key === "Backspace" || e.key === "Delete") {
+                // Borrar = sin hora (no se edita letra a letra)
+                e.preventDefault();
+                if (!readOnly) onValueChange("");
               }
             }}
             trailing={
