@@ -95,7 +95,8 @@ export function CargaPanel() {
     <>
       <SkEncabezado />
       <SkMetricas label="Cargando el resumen" />
-      <div className="g-home max-md:gap-6">
+      {/* Mismo estiramiento que el Panel real (`panel-view.tsx`): las dos tarjetas a la misma altura */}
+      <div className="g-home max-md:gap-6 lg:items-stretch!">
         <SkLista label="Cargando entregas por evaluar" />
         <SkLista label="Cargando ajustes recientes" pildora={false} />
       </div>
