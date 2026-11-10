@@ -131,7 +131,7 @@ export function TaskSections({
                         // El chip entero es el área táctil y lleva el anillo de foco
                         className="after:hidden focus-visible:outline-0"
                       />
-                      <span className="nums">{s}</span>
+                      <span className="nums texto-cap">{s}</span>
                     </label>
                   </li>
                 );
