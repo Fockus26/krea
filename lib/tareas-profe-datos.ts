@@ -9,6 +9,8 @@ import {
   diaDeInstante,
   diasEntre,
   FECHA_ENTREGA_MAX_DIAS,
+  hora24DeInstante,
+  horaPasada,
 } from "@/lib/fecha";
 import { NOTA_MAX } from "@/lib/grades";
 import {
@@ -23,6 +25,7 @@ import {
   type Usuario,
   zDecisionPremio,
   zDia,
+  zHora,
   zPuntaje,
   zSeccion,
   zTarea,
@@ -43,6 +46,7 @@ import {
   type DatosBorrador,
   type ErrorTarea,
   fechaCampo,
+  horaCampo,
   MAX_PREGUNTAS,
   type ModoConstructor,
   type PerdidaEliminar,
@@ -64,6 +68,8 @@ export const zEntradaTarea = z.object({
   titulo: z.string().trim().max(120),
   tipo: z.enum(TIPOS_TAREA),
   fecha: zDia.nullable(),
+  // Ausente en los envíos encolados antes de la hora (D352): cuenta como `null`, fin del día
+  hora: zHora.nullable().optional(),
   // Códigos con forma válida y sin repetir; que existan en el catálogo lo mira la acción (D323)
   secciones: z
     .array(zSeccion)
@@ -118,6 +124,7 @@ type Armar = {
   autorId: string;
   /** Día civil de Caracas: la fecha de entrega no puede ser anterior (salvo la ya guardada). */
   hoy: string;
+  /** Instante del guardado: su hora en Caracas es la que la de entrega de hoy no puede pasar (D354). */
   ahora: number;
 };
 
@@ -129,18 +136,42 @@ function idsUnicos(preguntas: ReadonlyArray<{ id: string }>): boolean {
   return new Set(preguntas.map((p) => p.id)).size === preguntas.length;
 }
 
-/** Fecha válida para publicar: de hoy a un año (D228), o la que ya tenía la tarea. */
+type Vencimiento = { fecha: string | null; hora: string | null };
+
+const vencimientoDe = (t: TareaDoc | null): Vencimiento => ({
+  fecha: t?.fechaEntrega ?? null,
+  hora: t?.horaEntrega ?? null,
+});
+
+/**
+ * Fecha válida para publicar: de hoy a un año (D228), o la que ya tenía la tarea. Si es hoy, su
+ * hora no puede haber pasado (D354), salvo que sean la fecha y la hora guardadas.
+ */
 function fechaOk(
-  fecha: string | null,
-  hoy: string,
-  guardada: string | null,
+  v: Vencimiento,
+  a: Pick<Armar, "hoy" | "ahora">,
+  guardada: Vencimiento,
 ): ErrorTarea | null {
+  const { fecha, hora } = v;
   if (fecha === null) return "invalida";
-  if (fecha !== guardada && comparaFecha(fecha, hoy) < 0) return "fecha-pasada";
-  if (fecha !== guardada && diasEntre(hoy, fecha) > FECHA_ENTREGA_MAX_DIAS)
+  if (fecha !== guardada.fecha && comparaFecha(fecha, a.hoy) < 0)
+    return "fecha-pasada";
+  if (
+    fecha !== guardada.fecha &&
+    diasEntre(a.hoy, fecha) > FECHA_ENTREGA_MAX_DIAS
+  )
     return "fecha-lejana";
+  if (
+    hora !== null &&
+    fecha === a.hoy &&
+    horaPasada(hora, hora24DeInstante(a.ahora)) &&
+    !(fecha === guardada.fecha && hora === guardada.hora)
+  )
+    return "hora-pasada";
   return null;
 }
+
+const horaDe = (e: Pick<EntradaTarea, "hora">) => e.hora ?? null;
 
 /** Tarea publicada completa (D004): todo escrito y la suma en 20 exactos. */
 function publicada(
@@ -148,8 +179,11 @@ function publicada(
   base: { estado: "abierta"; autorId: string | null },
 ): Armada {
   const { entrada } = a;
-  const guardada = a.previa?.fechaEntrega ?? null;
-  const err = fechaOk(entrada.fecha, a.hoy, a.previa ? guardada : null);
+  const err = fechaOk(
+    { fecha: entrada.fecha, hora: horaDe(entrada) },
+    a,
+    vencimientoDe(a.previa),
+  );
   if (err) return { ok: false, error: err };
   if (
     !entrada.titulo ||
@@ -165,6 +199,7 @@ function publicada(
     secciones: ordenarSecciones(entrada.secciones),
     estado: base.estado,
     fechaEntrega: entrada.fecha,
+    horaEntrega: horaDe(entrada),
     premio: premioDe(entrada),
     ...fotoDe(premioDe(entrada), a.previa),
     preguntas: entrada.preguntas,
@@ -221,7 +256,11 @@ function armarSinFoto(a: Armar): Armada {
   if (previa?.estado === "abierta") {
     if (accion !== "guardar") return { ok: false, error: "invalida" };
     if (!a.conEntregas) return publicada(a, { estado: "abierta", autorId });
-    const err = fechaOk(entrada.fecha, a.hoy, previa.fechaEntrega);
+    const err = fechaOk(
+      { fecha: entrada.fecha, hora: horaDe(entrada) },
+      a,
+      vencimientoDe(previa),
+    );
     if (err) return { ok: false, error: err };
     const { premioFoto: _foto, ...sinFoto } = previa;
     const premio = premioDe(entrada);
@@ -229,6 +268,7 @@ function armarSinFoto(a: Armar): Armada {
       ...sinFoto,
       titulo: entrada.titulo,
       fechaEntrega: entrada.fecha,
+      horaEntrega: horaDe(entrada),
       premio,
       ...fotoDe(premio, previa),
       actualizadoEn: a.ahora,
@@ -248,6 +288,7 @@ function armarSinFoto(a: Armar): Armada {
     secciones: ordenarSecciones(entrada.secciones),
     estado: "borrador",
     fechaEntrega: entrada.fecha,
+    horaEntrega: horaDe(entrada),
     premio: premioDe(entrada),
     ...fotoDe(premioDe(entrada), previa),
     preguntas: entrada.preguntas,
@@ -380,6 +421,7 @@ export function tareaProfeDe(
     tipo: t.tipo,
     estado: t.estado,
     fecha: t.fechaEntrega,
+    hora: t.horaEntrega ?? null,
     secciones: listaSecciones(t.secciones),
     premio: t.premio,
     preguntas: t.preguntas.length,
@@ -474,6 +516,7 @@ export function datosBorradorDe(t: TareaDoc): DatosBorrador {
     titulo: t.titulo,
     tipo: t.tipo,
     fecha: fechaCampo(t.fechaEntrega),
+    hora: horaCampo(t.horaEntrega ?? null),
     secciones: [...t.secciones],
     premio: t.premio ?? "",
     preguntas: t.preguntas.map(({ id, enunciado, formato, valor }) => ({

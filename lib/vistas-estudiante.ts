@@ -14,9 +14,11 @@ import type { PreguntaEntrega } from "@/components/sections/tareas/task-answer-f
 import { type DicebearEstilo, esEstiloDicebear } from "@/lib/dicebear";
 import { enJuegoTexto, ganadoresPremio, premioGanadoTexto } from "@/lib/equipo";
 import {
+  claveVencimiento,
   comparaFecha,
   diaDeInstante,
   formatFecha,
+  formatFechaHora,
   horaDeInstante,
 } from "@/lib/fecha";
 import { formatNota, puntosRanking } from "@/lib/grades";
@@ -400,12 +402,12 @@ export function tareasAbiertas(
       const e = entregaDe(t.id, d.entregas);
       return !e || e.estado === "borrador";
     })
-    .sort((a, b) =>
-      comparaFecha(
-        a.fechaEntrega ?? "9999-12-31",
-        b.fechaEntrega ?? "9999-12-31",
-      ),
-    );
+    .sort((a, b) => {
+      // La que vence antes primero; el mismo día, por hora (sin hora = al final del día, D352)
+      const va = claveVencimiento(a.fechaEntrega, a.horaEntrega) ?? "9999";
+      const vb = claveVencimiento(b.fechaEntrega, b.horaEntrega) ?? "9999";
+      return va < vb ? -1 : va > vb ? 1 : 0;
+    });
 }
 
 /** Filas «Por entregar» de Inicio y de /tareas. */
@@ -418,7 +420,9 @@ export function filasPorEntregar(
     href: `/tareas/${t.id}`,
     titulo: t.titulo,
     tipo: t.tipo,
-    vence: t.fechaEntrega ? formatFecha(t.fechaEntrega) : "sin fecha",
+    vence: t.fechaEntrega
+      ? formatFechaHora(t.fechaEntrega, t.horaEntrega)
+      : "sin fecha",
     premio: t.premio ?? undefined,
     entregasTu: t.tipo === "grupal" && capitan,
     avance:
@@ -767,7 +771,9 @@ export function entregaVista(
     tipo: t.tipo,
     eyebrow: eyebrowTarea(t.tipo, d.equipo?.nombre),
     titulo: t.titulo,
-    vence: t.fechaEntrega ? venceTexto(t.fechaEntrega) : SIN_FECHA_ENTREGA,
+    vence: t.fechaEntrega
+      ? venceTexto(t.fechaEntrega, t.horaEntrega)
+      : SIN_FECHA_ENTREGA,
     puntos: puntosPreguntasTexto(t.preguntas.map((p) => p.valor)),
     premio: t.premio,
     premioFoto: t.premio ? (t.premioFoto ?? null) : null,

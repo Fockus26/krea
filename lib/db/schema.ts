@@ -175,6 +175,8 @@ export const tareas = pgTable("tareas", {
     enum: ["borrador", "abierta", "evaluada"],
   }).notNull(),
   fechaEntrega: text("fecha_entrega"),
+  /** "HH:MM" de Caracas; `null` = al final del día (D352). */
+  horaEntrega: text("hora_entrega"),
   premio: text("premio"),
   premioFoto: text("premio_foto"),
   /** `Pregunta[]` o, en un borrador a medias, `PreguntaBorrador[]` (D199). */

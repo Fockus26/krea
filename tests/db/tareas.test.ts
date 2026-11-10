@@ -1,12 +1,14 @@
 // Tareas del profe sobre Postgres en memoria (D327) (D199–D202): las transacciones reales del
 // Admin SDK que usan las Server Actions de lib/acciones/tareas.ts.
 import { beforeAll, describe, expect, test } from "bun:test";
+import { eq } from "drizzle-orm";
 import {
   cerrarTareaEnTransaccion,
   decidirPremioEnTransaccion,
   guardarTareaEnTransaccion,
 } from "@/lib/data/tareas";
 import type { Db } from "@/lib/db";
+import { tareas } from "@/lib/db/schema";
 import {
   type Entrega,
   type Equipo,
@@ -223,6 +225,58 @@ describe("guardar, publicar y cerrar (Postgres)", () => {
     expect(await cerrarTareaEnTransaccion(db(), "w6-no-existe", AHORA)).toEqual(
       { ok: false, error: "no-existe" },
     );
+  });
+
+  // AHORA = 11:00 en Caracas (D352, D354)
+  test("hora de entrega: se guarda en la columna y vuelve; hoy ya pasada, no", async () => {
+    const hoyTarde = { ...completa, fecha: HOY, hora: "16:30" };
+    const r = await guardarTareaEnTransaccion(
+      db(),
+      PROFE,
+      { id: null, accion: "publicar", tarea: hoyTarde },
+      HOY,
+      AHORA,
+    );
+    if (!r.ok) throw new Error(r.error);
+    expect(await leer(r.id)).toMatchObject({
+      fechaEntrega: HOY,
+      horaEntrega: "16:30",
+    });
+    // La columna nueva de la migración 0002 (texto "HH:MM")
+    const columna = async () =>
+      (
+        await db()
+          .select({ hora: tareas.horaEntrega })
+          .from(tareas)
+          .where(eq(tareas.id, r.id))
+      )[0]?.hora;
+    expect(await columna()).toBe("16:30");
+
+    // Quitarle la hora: la columna queda en NULL (al final del día)
+    const sin = await guardarTareaEnTransaccion(
+      db(),
+      PROFE,
+      { id: r.id, accion: "guardar", tarea: { ...hoyTarde, hora: null } },
+      HOY,
+      AHORA + 1,
+    );
+    expect(sin.ok).toBe(true);
+    expect(await columna()).toBeNull();
+    expect((await leer(r.id)).horaEntrega).toBeNull();
+
+    expect(
+      await guardarTareaEnTransaccion(
+        db(),
+        PROFE,
+        {
+          id: null,
+          accion: "publicar",
+          tarea: { ...hoyTarde, hora: "10:45" },
+        },
+        HOY,
+        AHORA,
+      ),
+    ).toEqual({ ok: false, error: "hora-pasada" });
   });
 });
 

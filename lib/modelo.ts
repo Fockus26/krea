@@ -7,7 +7,7 @@
 // /api/ranking y /api/presencia, y marca su presencia por /api/presencia (D275, D327).
 import { z } from "zod";
 import { esClaveValida } from "@/lib/almacen/clave";
-import { esDiaValido } from "@/lib/fecha";
+import { esDiaValido, RE_HORA } from "@/lib/fecha";
 import { BASE_MAX, BASE_MIN, NOTA_MAX } from "@/lib/grades";
 
 /* ---------- Colecciones ---------- */
@@ -100,6 +100,9 @@ export const zDia = z
   .regex(/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/, "Fecha inválida")
   // El día tiene que existir: "2027-02-31" respondía `red` en vez de `invalida` (F-B2, D228)
   .refine(esDiaValido, "Fecha inválida");
+
+/** Hora de entrega "HH:MM" de 24 h, civil de Caracas (D352). */
+export const zHora = z.string().regex(RE_HORA, "Hora inválida");
 
 /** Instante en milisegundos epoch (el servidor lo pone; Firestore lo guarda como número). */
 export const zInstante = z.number().int().nonnegative();
@@ -252,6 +255,11 @@ export const zTarea = z
     /** Fecha de entrega; `null` en un borrador sin fecha. */
     fechaEntrega: zDia.nullable(),
     /**
+     * Hora de entrega del día de `fechaEntrega`, en Caracas (D352). Ausente o `null` = al final
+     * del día (las guardadas antes de la hora siguen igual).
+     */
+    horaEntrega: zHora.nullable().optional(),
+    /**
      * Opcional en grupales (D012) y en individuales (D263): lo gana la mejor nota de cada
      * sección, el equipo o el alumno.
      */
@@ -299,6 +307,7 @@ export const zTareaBorrador = z
     secciones: z.array(zSeccion).min(1),
     estado: z.literal("borrador"),
     fechaEntrega: zDia.nullable(),
+    horaEntrega: zHora.nullable().optional(),
     premio: texto(200).nullable(),
     premioFoto: zClaveFotoPremio.nullable().optional(),
     preguntas: z.array(zPreguntaBorrador).min(1).max(20),

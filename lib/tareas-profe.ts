@@ -3,10 +3,14 @@
 // `Date.now()`). El constructor es un reducer: añadir / eliminar / restaurar preguntas y editar
 // campos; la validación y la suma salen de aquí para poder probarlas sin DOM.
 import {
+  claveVencimiento,
   comparaFecha,
   diasEntre,
+  esHoraValida,
   FECHA_ENTREGA_MAX_DIAS,
   formatFecha,
+  formatFechaHora,
+  horaPasada,
 } from "@/lib/fecha";
 import { NOTA_MAX } from "@/lib/grades";
 import { percent, sumMeterInfo } from "@/lib/meters";
@@ -42,6 +46,8 @@ export type TareaProfe = {
   estado: EstadoTareaProfe;
   /** Día civil ISO de entrega; `null` = sin fecha (borrador). */
   fecha: string | null;
+  /** Hora de entrega "HH:MM" (D352); ausente o `null` = al final del día. */
+  hora?: string | null;
   /** «5A» o «4B y 5A» (`listaSecciones`; columna de la vista Lista, D313); ausente en la vista previa. */
   secciones?: string;
   /** Grupal o individual (D263); `null` = sin premio (en una grupal, por definir). */
@@ -119,10 +125,12 @@ export function ordenarTareas(tareas: readonly TareaProfe[]): TareaProfe[] {
   return [...tareas].sort((a, b) => {
     const e = ORDEN_ESTADO[a.estado] - ORDEN_ESTADO[b.estado];
     if (e !== 0) return e;
-    if (!a.fecha || !b.fecha) return a.fecha ? -1 : b.fecha ? 1 : 0;
-    return a.estado === "evaluada"
-      ? comparaFecha(b.fecha, a.fecha)
-      : comparaFecha(a.fecha, b.fecha);
+    const va = claveVencimiento(a.fecha, a.hora);
+    const vb = claveVencimiento(b.fecha, b.hora);
+    if (!va || !vb) return va ? -1 : vb ? 1 : 0;
+    // Mismo día: la de hora más temprana vence antes (D352)
+    const [x, y] = a.estado === "evaluada" ? [vb, va] : [va, vb];
+    return x < y ? -1 : x > y ? 1 : 0;
   });
 }
 
@@ -168,7 +176,7 @@ export function metaTarea(t: TareaProfe, hoy: string): string {
     if (t.fecha === null) partes.push("sin fecha");
     else
       partes.push(
-        `${comparaFecha(t.fecha, hoy) < 0 ? "venció" : "vence"} ${formatFecha(t.fecha)}`,
+        `${comparaFecha(t.fecha, hoy) < 0 ? "venció" : "vence"} ${formatFechaHora(t.fecha, t.hora)}`,
       );
   }
   if (t.avance && t.estado !== "borrador") {
@@ -183,11 +191,15 @@ export function metaTarea(t: TareaProfe, hoy: string): string {
 /* Vista Lista (D313). PROVISIONAL (CONTENT_CHECKLIST fila 164) */
 export const TABLA_TAREAS_LABEL = "Lista de tareas";
 
-/** Columna «Fecha» de la vista Lista: «Vence 30/10/2026», «Venció …», «30/10/2026» o «Sin fecha». */
+/**
+ * Columna «Fecha» de la vista Lista: «Vence 30/10/2026 · 3:30 p. m.» (con hora, D355), «Venció …»,
+ * «30/10/2026» o «Sin fecha».
+ */
 export function fechaTareaTexto(t: TareaProfe, hoy: string): string {
   if (t.fecha === null) return "Sin fecha";
-  if (t.estado !== "abierta") return formatFecha(t.fecha);
-  return `${comparaFecha(t.fecha, hoy) < 0 ? "Venció" : "Vence"} ${formatFecha(t.fecha)}`;
+  const texto = formatFechaHora(t.fecha, t.hora);
+  if (t.estado !== "abierta") return texto;
+  return `${comparaFecha(t.fecha, hoy) < 0 ? "Venció" : "Vence"} ${texto}`;
 }
 
 /** Barra de evaluadas (máx. 320): solo en abiertas con avance de evaluación (lienzo). */
@@ -232,6 +244,17 @@ export function seccionesTareaTexto(secciones: readonly SeccionId[]): string {
   return secciones.length === 0 ? "Ninguna sección" : listaSecciones(secciones);
 }
 
+/** Contador de un año en el selector (D356): «Ninguna elegida», «1 elegida», «2 elegidas». PROVISIONAL (fila 179). */
+export function elegidasTexto(n: number): string {
+  if (n === 0) return "Ninguna elegida";
+  return `${n} ${n === 1 ? "elegida" : "elegidas"}`;
+}
+
+/* Campo de hora (D352, D353). PROVISIONAL (CONTENT_CHECKLIST fila 178) */
+export const FECHA_HORA_LEYENDA = "Fecha y hora de entrega";
+export const HORA_AYUDA = "Opcional. Sin hora, vence al final del día.";
+export const QUITAR_HORA = "Quitar hora";
+
 export type FormatoPregunta = "texto" | "imagen";
 
 /** Límites de §3: de 1 a 20 preguntas; valor 0,5–20 en pasos de 0,5 (D004). */
@@ -254,6 +277,8 @@ export type TareaBorrador = {
   tipo: TipoTareaProfe;
   /** Lo escrito en el campo, "dd/mm/aaaa" (puede estar a medias). */
   fecha: string;
+  /** Hora de entrega "HH:MM" del campo de hora (D352); vacía = al final del día. */
+  hora: string;
   /** Secciones del catálogo que reciben la tarea, ordenadas (D324); al menos una para guardar. */
   secciones: readonly SeccionId[];
   /**
@@ -296,6 +321,7 @@ export function crearBorrador(datos: DatosBorrador = {}): TareaBorrador {
     titulo: datos.titulo ?? "",
     tipo: datos.tipo ?? "individual",
     fecha: datos.fecha ?? "",
+    hora: datos.hora ?? "",
     // Una tarea nueva recibe las secciones que pase quien la crea (las del profe, D324)
     secciones: ordenarSecciones(datos.secciones ?? []),
     premio: datos.premio ?? "",
@@ -305,7 +331,7 @@ export function crearBorrador(datos: DatosBorrador = {}): TareaBorrador {
 }
 
 export type AccionBorrador =
-  | { tipo: "titulo" | "fecha" | "premio"; valor: string }
+  | { tipo: "titulo" | "fecha" | "hora" | "premio"; valor: string }
   | { tipo: "tipo"; valor: TipoTareaProfe }
   | { tipo: "seccion"; codigo: SeccionId; marcada: boolean }
   | { tipo: "agregar" }
@@ -326,6 +352,8 @@ export function borradorReducer(
       return { ...estado, titulo: accion.valor };
     case "fecha":
       return { ...estado, fecha: mascaraFecha(accion.valor) };
+    case "hora":
+      return { ...estado, hora: accion.valor };
     case "premio":
       return { ...estado, premio: accion.valor };
     case "tipo":
@@ -419,11 +447,26 @@ export function fechaCampo(iso: string | null): string {
   return iso ? formatFecha(iso) : "";
 }
 
+/** "15:30" para el campo de hora; `null` (sin hora) → vacío. */
+export function horaCampo(hora: string | null): string {
+  return hora ?? "";
+}
+
+/** Lo del campo de hora → "HH:MM" o `null` (vacía o a medias = al final del día, D352). */
+export function horaValor(texto: string): string | null {
+  const h = texto.trim();
+  return esHoraValida(h) ? h : null;
+}
+
 /* Mensajes de error. PROVISIONAL (fila 90): el handoff no los define. */
 export const ERRORES = {
   titulo: "Escribe el título de la tarea.",
   fecha: "Escribe la fecha como dd/mm/aaaa.",
   fechaPasada: "La fecha de entrega ya pasó.",
+  /** PROVISIONAL (CONTENT_CHECKLIST fila 178). */
+  hora: "Escribe la hora completa o déjala vacía.",
+  /** PROVISIONAL (CONTENT_CHECKLIST fila 178): hoy con una hora que ya pasó (D354). */
+  horaPasada: "La hora de entrega de hoy ya pasó.",
   fechaLejana: "La fecha de entrega puede ser como mucho dentro de un año.",
   enunciado: "Escribe el enunciado de la pregunta.",
   valor: "Ponle un valor a la pregunta.",
@@ -435,6 +478,8 @@ export type ErroresPregunta = { enunciado?: string; valor?: string };
 export type ErroresTarea = {
   titulo?: string;
   fecha?: string;
+  /** Hora a medias, o la de hoy ya pasada (D354). */
+  hora?: string;
   /** Ninguna casilla de sección marcada (D324). */
   secciones?: string;
   /** Por id de pregunta; solo las que tienen algún error. */
@@ -454,12 +499,16 @@ export function motivoSuma(suma: number): string | null {
 /**
  * Errores por campo para publicar: título, fecha válida y no pasada, ≥ 1 pregunta, enunciados
  * no vacíos, valores puestos y suma exactamente 20 (D004). `fechaGuardada`: la de una tarea ya
- * publicada, que se puede conservar aunque haya pasado (D200).
+ * publicada, que se puede conservar aunque haya pasado (D200). Hora (D354): la de hoy no puede
+ * haber pasado ya (`horaActual`, "HH:MM" de Caracas; sin ella no se mira), salvo que sean la
+ * misma fecha y hora guardadas (`horaGuardada`).
  */
 export function validarTarea(
   t: TareaBorrador,
   hoy: string,
   fechaGuardada: string | null = null,
+  horaActual: string | null = null,
+  horaGuardada: string | null = null,
 ): ErroresTarea {
   const errores: ErroresTarea = { preguntas: {} };
   if (!t.titulo.trim()) errores.titulo = ERRORES.titulo;
@@ -473,6 +522,16 @@ export function validarTarea(
     iso !== fechaGuardada
   )
     errores.fecha = ERRORES.fechaLejana;
+  const hora = horaValor(t.hora);
+  if (t.hora.trim() && hora === null) errores.hora = ERRORES.hora;
+  else if (
+    hora !== null &&
+    iso === hoy &&
+    horaActual !== null &&
+    horaPasada(hora, horaActual) &&
+    !(iso === fechaGuardada && hora === horaGuardada)
+  )
+    errores.hora = ERRORES.horaPasada;
   for (const p of t.preguntas) {
     const e: ErroresPregunta = {};
     if (!p.enunciado.trim()) e.enunciado = ERRORES.enunciado;
@@ -488,6 +547,7 @@ export function tieneErrores(e: ErroresTarea): boolean {
   return Boolean(
     e.titulo ||
       e.fecha ||
+      e.hora ||
       e.secciones ||
       e.suma ||
       Object.keys(e.preguntas).length > 0,
@@ -508,13 +568,17 @@ export function puedePublicar(t: TareaBorrador, hoy: string): boolean {
   );
 }
 
-/** Lo que se guarda (`guardarTarea`, D199): fecha ISO o `null`, y el premio (grupal o individual, D263). */
+/**
+ * Lo que se guarda (`guardarTarea`, D199): fecha ISO o `null`, hora "HH:MM" o `null` (D352) y el
+ * premio (grupal o individual, D263).
+ */
 export function tareaAGuardar(t: TareaBorrador) {
   const premio = t.premio.trim();
   return {
     titulo: t.titulo.trim(),
     tipo: t.tipo,
     fecha: fechaIso(t.fecha),
+    hora: horaValor(t.hora),
     secciones: [...t.secciones],
     premio: premio || null,
     preguntas: t.preguntas.map(({ id, enunciado, formato, valor }) => ({
@@ -559,6 +623,8 @@ export type ErrorTarea =
   | "invalida"
   | "fecha-pasada"
   | "fecha-lejana"
+  /** Hoy con una hora que ya pasó (D354). */
+  | "hora-pasada"
   | "sin-empate"
   /** Una sección elegida ya no está en el catálogo (D323). */
   | "seccion"
@@ -577,6 +643,8 @@ export function mensajeErrorTarea(error: ErrorTarea): string {
       return ERRORES.fechaPasada;
     case "fecha-lejana":
       return ERRORES.fechaLejana;
+    case "hora-pasada":
+      return ERRORES.horaPasada;
     case "sin-empate":
       return "Ya no hay empate en esta sección: recarga la página.";
     case "seccion":
@@ -590,7 +658,7 @@ export function mensajeErrorTarea(error: ErrorTarea): string {
 export const TOAST_GUARDADA = "Cambios guardados";
 export const TOAST_CERRADA = "Tarea cerrada";
 export const AVISO_CON_ENTREGAS =
-  "Ya hay entregas: solo puedes cambiar el título, la fecha y el premio.";
+  "Ya hay entregas: solo puedes cambiar el título, la fecha, la hora y el premio.";
 export const AVISO_CERRADA =
   "Esta tarea está cerrada: ya no recibe entregas y no se puede editar.";
 export const NOTA_PUBLICADA =

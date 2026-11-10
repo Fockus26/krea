@@ -1,5 +1,6 @@
 // Fechas del portal (HANDOFF §3): siempre dd/mm/aaaa. Las fechas de entrega se guardan como
-// día civil ISO "aaaa-mm-dd", sin hora ni zona: así el 30/10 es el 30/10 en cualquier huso.
+// día civil ISO "aaaa-mm-dd", sin hora ni zona: así el 30/10 es el 30/10 en cualquier huso. La
+// hora de entrega, opcional, va aparte como "HH:MM" civil de Caracas (D352).
 
 const ISO_DIA = /^(\d{4})-(\d{2})-(\d{2})$/;
 
@@ -33,6 +34,51 @@ export function diasEntre(desde: string, hasta: string): number {
 /** Orden ascendente de días ISO (la cadena ya ordena, pero se valida). */
 export function comparaFecha(a: string, b: string): number {
   return aUtc(a) - aUtc(b);
+}
+
+/* ---------- Hora de entrega (D352) ---------- */
+
+/** Hora civil de 24 h "HH:MM" (00:00–23:59). La de entrega se guarda así, sin zona (es la de Caracas). */
+export const RE_HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+/** ¿Es una hora "HH:MM" válida? ("24:00" o "9:30" → false). */
+export function esHoraValida(hora: string): boolean {
+  return RE_HORA.test(hora);
+}
+
+/** Sin hora, la tarea vence al final del día (D352): así se ordenan las que no la tienen. */
+export const HORA_FIN_DEL_DIA = "23:59";
+
+/** "15:30" → "3:30 p. m."; "00:05" → "12:05 a. m." (D355). @throws RangeError si no es "HH:MM". */
+export function formatHora(hora: string): string {
+  if (!esHoraValida(hora)) throw new RangeError(`Hora inválida: ${hora}`);
+  const [h = 0, m = 0] = hora.split(":").map(Number);
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${String(m).padStart(2, "0")} ${h < 12 ? "a. m." : "p. m."}`;
+}
+
+/** Fecha de entrega con su hora (D355): "12/11/2026 · 3:30 p. m."; sin hora, "12/11/2026". */
+export function formatFechaHora(iso: string, hora?: string | null): string {
+  return hora ? `${formatFecha(iso)} · ${formatHora(hora)}` : formatFecha(iso);
+}
+
+/**
+ * Clave ordenable del vencimiento: "2026-11-12T15:30"; sin hora, a las 23:59 (final del día).
+ * Sin fecha, `null` (el llamador decide si va al principio o al final).
+ */
+export function claveVencimiento(
+  fecha: string | null,
+  hora?: string | null,
+): string | null {
+  return fecha === null ? null : `${fecha}T${hora ?? HORA_FIN_DEL_DIA}`;
+}
+
+/**
+ * ¿Una hora de entrega de hoy ya pasó? `horaActual`: la de Caracas ("HH:MM", `hora24DeInstante`).
+ * A la misma hora ya pasó: vence al empezar ese minuto (D354).
+ */
+export function horaPasada(hora: string, horaActual: string): boolean {
+  return hora <= horaActual;
 }
 
 function partes(iso: string): [string, string, string, string] {
