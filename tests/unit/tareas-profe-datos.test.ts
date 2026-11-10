@@ -797,7 +797,7 @@ describe("conteos por catálogo", () => {
     const grupal = publicada({ secciones: ["4B", "5A"] });
     expect(totalTitulares(grupal, c)).toBe(3);
     // Una sección que el catálogo ya no tiene cuenta 0, no rompe
-    const huerfana = publicada({ secciones: ["5A", "9Z"] });
+    const huerfana = publicada({ secciones: ["5A", "6F"] });
     expect(totalTitulares(huerfana, c)).toBe(2);
   });
 });

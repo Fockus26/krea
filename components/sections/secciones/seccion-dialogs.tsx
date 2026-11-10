@@ -25,12 +25,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  ANIO_MAX,
+  ANIO_MIN,
   bloqueoTexto,
   type CatalogoSecciones,
   codigoSeccion,
   errorSeccionesTexto,
   type FilaAnio,
   type FilaSeccion,
+  LETRA_MAX,
+  LETRA_MIN,
   letrasDeTexto,
   letrasLibres,
   listaSecciones,
@@ -302,8 +306,8 @@ function NuevoAnio({
   if (libres.length === 0) {
     return (
       <Bloqueo
-        titulo="Ya están los 9 años"
-        texto="Cada año va del 1.º al 9.º y ya existen todos. Para cambiar uno, edita su número mientras esté vacío."
+        titulo={`Ya están los ${ANIO_MAX} años`}
+        texto={`Cada año va del ${ANIO_MIN}.º al ${ANIO_MAX}.º y ya existen todos. Para cambiar uno, edita su número mientras esté vacío.`}
       />
     );
   }
@@ -392,7 +396,7 @@ function AgregarSeccion({
     return (
       <Bloqueo
         titulo={`${anio.nombre} ya tiene todas las letras`}
-        texto="Tiene una sección por cada letra de la A a la Z."
+        texto={`Tiene una sección por cada letra de la ${LETRA_MIN} a la ${LETRA_MAX}.`}
       />
     );
   }

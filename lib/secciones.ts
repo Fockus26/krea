@@ -6,7 +6,14 @@
 // Renombrar un año o una sección cambia su código, que está guardado en usuarios, claims,
 // equipos, tareas, entregas, ajustes y el ranking: por eso editar y eliminar exigen que esté
 // vacía (D318). Aquí solo se transforma el catálogo; quien escribe comprueba el uso.
-import { zCatalogoSecciones } from "@/lib/modelo";
+import {
+  ANIO_MAX,
+  ANIO_MIN,
+  LETRA_MAX,
+  LETRA_MIN,
+  LETRAS,
+  zCatalogoSecciones,
+} from "@/lib/modelo";
 
 /** Años con las letras de sus secciones, ordenados (años y letras). */
 export type CatalogoSecciones = ReadonlyArray<{
@@ -32,15 +39,16 @@ export function catalogoDeDocumento(
   return r.success ? normalizarCatalogo(r.data.anios) : null;
 }
 
-export const ANIO_MIN = 1;
-export const ANIO_MAX = 9;
-/** Las letras de la A a la Z. */
-export const LETRAS: readonly string[] = Array.from({ length: 26 }, (_, i) =>
-  String.fromCharCode(65 + i),
-);
+export { ANIO_MAX, ANIO_MIN, LETRA_MAX, LETRA_MIN, LETRAS };
 
-const RE_CODIGO = /^([1-9])([A-Z])$/;
-const RE_SLUG = /^[1-9][a-z]$/;
+const RE_CODIGO = new RegExp(
+  `^([${ANIO_MIN}-${ANIO_MAX}])([${LETRA_MIN}-${LETRA_MAX}])$`,
+);
+const RE_SLUG = new RegExp(
+  `^[${ANIO_MIN}-${ANIO_MAX}][${LETRA_MIN.toLowerCase()}-${LETRA_MAX.toLowerCase()}]$`,
+);
+const RE_LETRA = new RegExp(`^[${LETRA_MIN}-${LETRA_MAX}]$`);
+const RE_LETRAS = new RegExp(`^[${LETRA_MIN}-${LETRA_MAX}]+$`);
 
 export const esNumeroAnio = (n: unknown): n is number =>
   typeof n === "number" &&
@@ -49,7 +57,7 @@ export const esNumeroAnio = (n: unknown): n is number =>
   n <= ANIO_MAX;
 
 export const esLetra = (l: unknown): l is string =>
-  typeof l === "string" && /^[A-Z]$/.test(l);
+  typeof l === "string" && RE_LETRA.test(l);
 
 /* ---------- Códigos ---------- */
 
@@ -200,7 +208,7 @@ export type CambioCatalogo =
   | { ok: true; catalogo: CatalogoSecciones }
   | { ok: false; error: ErrorSecciones };
 
-/** Años por número y letras de la A a la Z, sin repetir. Lo que no vale se descarta. */
+/** Años por número y letras de la A a la F, sin repetir. Lo que no vale se descarta. */
 export function normalizarCatalogo(
   catalogo: CatalogoSecciones,
 ): CatalogoSecciones {
@@ -594,11 +602,11 @@ export function letrasDeTexto(
     .toUpperCase()
     .split(/[\s,;]+/)
     .filter(Boolean);
-  if (trozos.some((t) => !/^[A-Z]+$/.test(t)))
+  if (trozos.some((t) => !RE_LETRAS.test(t)))
     return {
       ok: false,
       error:
-        "Escribe solo letras de la A a la Z, separadas por comas: A, B, C.",
+        "Escribe solo letras de la A a la F, separadas por comas: A, B, C.",
     };
   const letras = trozos.flatMap((t) => [...t]);
   const repetida = letras.find((l, i) => letras.indexOf(l) !== i);
