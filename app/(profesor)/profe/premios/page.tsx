@@ -37,7 +37,13 @@ export default async function PremiosPage() {
     ...equipos.map((e) => [e.id, e.nombre]),
     ...alumnos.map((a) => [a.cedula, nombreCompleto(a)]),
   ]);
-  const tarjetas = tarjetasPremios(tareas, equipos, entregas, alumnos);
+  const tarjetas = tarjetasPremios(
+    tareas,
+    equipos,
+    entregas,
+    alumnos,
+    Date.now(),
+  );
   const fotos = await urlsFirmadas(
     tarjetas.flatMap((t) => (t.premio && t.premioFoto ? [t.premioFoto] : [])),
   );

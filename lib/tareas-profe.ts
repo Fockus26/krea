@@ -11,6 +11,8 @@ import {
   formatFecha,
   formatFechaHora,
   horaPasada,
+  vencida,
+  verboVence,
 } from "@/lib/fecha";
 import { NOTA_MAX } from "@/lib/grades";
 import { percent, sumMeterInfo } from "@/lib/meters";
@@ -168,15 +170,16 @@ export function avanceTexto(avance: AvanceTarea, tipo: TipoTareaProfe): string {
 /**
  * Meta de la tarjeta: "8 preguntas · vence 30/10/2026 · 12 de 69 evaluadas". Las evaluadas no
  * llevan fecha (lienzo); un borrador sin fecha dice "sin fecha" y, si es grupal sin premio,
- * "premio por definir". Una abierta cuya fecha ya pasó dice "venció" (PROVISIONAL, fila 89).
+ * "premio por definir". Una cuya fecha y hora ya pasaron en `ahora` dice "venció" (D357;
+ * PROVISIONAL, fila 89).
  */
-export function metaTarea(t: TareaProfe, hoy: string): string {
+export function metaTarea(t: TareaProfe, ahora: number): string {
   const partes = [preguntasTexto(t.preguntas)];
   if (t.estado !== "evaluada") {
     if (t.fecha === null) partes.push("sin fecha");
     else
       partes.push(
-        `${comparaFecha(t.fecha, hoy) < 0 ? "venció" : "vence"} ${formatFechaHora(t.fecha, t.hora)}`,
+        `${verboVence(t.fecha, t.hora, ahora)} ${formatFechaHora(t.fecha, t.hora)}`,
       );
   }
   if (t.avance && t.estado !== "borrador") {
@@ -195,11 +198,11 @@ export const TABLA_TAREAS_LABEL = "Lista de tareas";
  * Columna «Fecha» de la vista Lista: «Vence 30/10/2026 · 3:30 p. m.» (con hora, D355), «Venció …»,
  * «30/10/2026» o «Sin fecha».
  */
-export function fechaTareaTexto(t: TareaProfe, hoy: string): string {
+export function fechaTareaTexto(t: TareaProfe, ahora: number): string {
   if (t.fecha === null) return "Sin fecha";
   const texto = formatFechaHora(t.fecha, t.hora);
   if (t.estado !== "abierta") return texto;
-  return `${comparaFecha(t.fecha, hoy) < 0 ? "Venció" : "Vence"} ${texto}`;
+  return `${vencida(t.fecha, t.hora, ahora) ? "Venció" : "Vence"} ${texto}`;
 }
 
 /** Barra de evaluadas (máx. 320): solo en abiertas con avance de evaluación (lienzo). */

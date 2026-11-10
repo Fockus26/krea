@@ -81,6 +81,33 @@ export function horaPasada(hora: string, horaActual: string): boolean {
   return hora <= horaActual;
 }
 
+/**
+ * ¿La entrega ya venció en `ahora` (ms epoch)? Vence en el minuto de su día y hora en Caracas
+ * (sin hora, a las 23:59), igual que `horaPasada`: a esa misma hora ya venció (D357). La única
+ * regla de «venció» del portal: la usan la lista del profe, las del alumno, Notas, Inicio y Premios.
+ */
+export function vencida(
+  fecha: string,
+  hora: string | null | undefined,
+  ahora: number,
+): boolean {
+  return `${fecha}T${hora ?? HORA_FIN_DEL_DIA}` <= isoLocalDeInstante(ahora);
+}
+
+/**
+ * «vence» o «venció» para los textos de la fecha de entrega (D357). Sin `ahora` (vista previa
+ * sin reloj), «vence».
+ */
+export function verboVence(
+  fecha: string,
+  hora: string | null | undefined,
+  ahora?: number,
+): "vence" | "venció" {
+  return ahora !== undefined && vencida(fecha, hora, ahora)
+    ? "venció"
+    : "vence";
+}
+
 function partes(iso: string): [string, string, string, string] {
   const m = ISO_DIA.exec(iso);
   if (!m) throw new RangeError(`Fecha inválida: ${iso}`);

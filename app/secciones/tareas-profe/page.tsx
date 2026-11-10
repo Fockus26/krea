@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { TasksHeader } from "@/components/sections/tareas-profe/tasks-header";
 import { TeacherTaskList } from "@/components/sections/tareas-profe/teacher-task-list";
 import {
-  HOY_DEMO,
+  AHORA_DEMO,
   SECCIONES_PROFE,
   tareasProfeVista,
 } from "@/lib/demo/tareas-profe";
@@ -24,7 +24,7 @@ export default function TareasProfeVista() {
         eyebrow={eyebrowTareas(tareas.length, SECCIONES_PROFE)}
         nuevaHref={RUTA_NUEVA_TAREA}
       />
-      <TeacherTaskList tareas={tareas} hoy={HOY_DEMO} />
+      <TeacherTaskList tareas={tareas} ahora={AHORA_DEMO} />
     </Vista>
   );
 }

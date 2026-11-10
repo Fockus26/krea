@@ -28,13 +28,12 @@ export default async function InicioPage() {
     datos.equipo ? integrantesDe(datos.equipo.id) : [],
     logoDeEquipo(datos.equipo),
   ]);
-  const d = inicioVista(datos, companeros);
+  // Instante de la petición (tras `datosAlumno()`, nunca en el prerender): «vence» / «venció» (D357)
+  const ahora = Date.now();
+  const d = inicioVista(datos, companeros, ahora);
   // Día de Caracas leído tras `datosAlumno()` (sesión = dato de la petición, D098): nunca en el
   // prerender. Cambia cada día, no cada recarga (D274).
-  const mensaje = mensajeDelDia(
-    promedioDelAlumno(datos),
-    diaDeInstante(Date.now()),
-  );
+  const mensaje = mensajeDelDia(promedioDelAlumno(datos), diaDeInstante(ahora));
   return (
     <HomeGrid
       saludo={

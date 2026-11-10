@@ -11,7 +11,6 @@ import {
   tareasProfe,
 } from "@/lib/datos/profesor";
 import { catalogoSecciones } from "@/lib/datos/secciones";
-import { diaDeInstante } from "@/lib/fecha";
 import { seccionesDe } from "@/lib/secciones";
 import {
   eyebrowTareas,
@@ -68,7 +67,7 @@ export default async function TareasProfePage() {
       />
       <TeacherTaskList
         tareas={vista}
-        hoy={diaDeInstante(Date.now())}
+        ahora={Date.now()}
         eliminar={eliminarTarea}
         eliminarVarias={eliminarTareas}
       />

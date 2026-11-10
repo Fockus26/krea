@@ -322,8 +322,8 @@ describe("servidor: armarTarea con hora (D354)", () => {
       equipos: { "5A": [] },
     });
     expect(profe.hora).toBe("18:00");
-    expect(fechaTareaTexto(profe, HOY)).toBe("Vence 05/11/2026 · 6:00 p. m.");
-    expect(metaTarea(profe, HOY)).toBe(
+    expect(fechaTareaTexto(profe, AHORA)).toBe("Vence 05/11/2026 · 6:00 p. m.");
+    expect(metaTarea(profe, AHORA)).toBe(
       "1 pregunta · vence 05/11/2026 · 6:00 p. m. · 0 de 30 entregaron",
     );
     const { horaEntrega: _h, ...sinHora } = r.tarea;
@@ -365,10 +365,10 @@ describe("dónde se muestra y cómo ordena", () => {
   });
 
   test("columna Fecha sin hora: como antes", () => {
-    expect(fechaTareaTexto(tp("a", "2026-11-12"), HOY)).toBe(
+    expect(fechaTareaTexto(tp("a", "2026-11-12"), AHORA)).toBe(
       "Vence 12/11/2026",
     );
-    expect(fechaTareaTexto(tp("a", "2026-11-12", null), HOY)).toBe(
+    expect(fechaTareaTexto(tp("a", "2026-11-12", null), AHORA)).toBe(
       "Vence 12/11/2026",
     );
   });

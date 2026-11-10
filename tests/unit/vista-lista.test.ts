@@ -112,14 +112,16 @@ describe("columna Fecha de la Lista (D313)", () => {
     porEvaluar: 0,
     ...o,
   });
+  // Mediodía de Caracas (UTC−4) del día dado
+  const mediodia = (d: number) => Date.UTC(2026, 10, d, 16);
   test("vence / venció / fecha / sin fecha", () => {
-    expect(fechaTareaTexto(t({}), "2026-11-07")).toBe("Vence 10/11/2026");
-    expect(fechaTareaTexto(t({}), "2026-11-11")).toBe("Venció 10/11/2026");
-    expect(fechaTareaTexto(t({ estado: "evaluada" }), "2026-11-11")).toBe(
+    expect(fechaTareaTexto(t({}), mediodia(7))).toBe("Vence 10/11/2026");
+    expect(fechaTareaTexto(t({}), mediodia(11))).toBe("Venció 10/11/2026");
+    expect(fechaTareaTexto(t({ estado: "evaluada" }), mediodia(11))).toBe(
       "10/11/2026",
     );
     expect(
-      fechaTareaTexto(t({ estado: "borrador", fecha: null }), "2026-11-07"),
+      fechaTareaTexto(t({ estado: "borrador", fecha: null }), mediodia(7)),
     ).toBe("Sin fecha");
   });
 });

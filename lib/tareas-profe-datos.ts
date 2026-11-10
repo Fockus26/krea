@@ -556,12 +556,15 @@ export type AlumnoPremio = Pick<Usuario, "cedula" | "rol" | "seccion" | "base">;
 export function estadoPremioSeccion(
   t: Pick<TareaDoc, "estado" | "premio" | "fechaEntrega" | "tipo"> & {
     id: string;
+    horaEntrega?: string | null | undefined;
     decisionesPremio?: DecisionesPremio | undefined;
   },
   seccion: SeccionId,
   equipos: ReadonlyArray<ConId<Pick<Equipo, "seccion">>>,
   entregas: ReadonlyArray<EntregaPremio>,
   alumnos: ReadonlyArray<AlumnoPremio> = [],
+  /** Instante de la petición: «vence» / «venció» de una abierta por fecha y hora (D357). */
+  ahora?: number,
 ): EstadoPremio {
   const deSeccion = entregas.filter(
     (e) =>
@@ -597,6 +600,8 @@ export function estadoPremioSeccion(
       : t.fechaEntrega;
   const estado = estadoPremio(
     {
+      hora: t.horaEntrega ?? null,
+      ...(ahora !== undefined ? { ahora } : {}),
       estado: t.estado,
       premio: t.premio ?? undefined,
       fecha,
@@ -643,6 +648,8 @@ export function tarjetasPremios(
   equipos: ReadonlyArray<ConId<Pick<Equipo, "seccion">>>,
   entregas: ReadonlyArray<EntregaPremio>,
   alumnos: ReadonlyArray<AlumnoPremio> = [],
+  /** Instante de la petición (D357). */
+  ahora?: number,
 ): TarjetaPremio[] {
   const conPremio = tareas
     .filter((t) => !t.importada && (t.tipo === "grupal" || t.premio !== null))
@@ -681,7 +688,7 @@ export function tarjetasPremios(
       seccion: s,
       seccionId: s,
       borrador: false,
-      estado: estadoPremioSeccion(t, s, equipos, entregas, alumnos),
+      estado: estadoPremioSeccion(t, s, equipos, entregas, alumnos, ahora),
     }));
   });
 }

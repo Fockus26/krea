@@ -1,6 +1,6 @@
 // Textos y lógica de Tareas y entrega (HANDOFF §3 Tareas y entrega; lienzo design/canvas/Tarea.dc.html).
 // Lógica pura, sin React.
-import { formatFecha, formatFechaHora } from "@/lib/fecha";
+import { formatFecha, formatFechaHora, vencida } from "@/lib/fecha";
 import { formatNota } from "@/lib/grades";
 
 /** "20 pts · 5 preguntas". */
@@ -18,9 +18,18 @@ export function eyebrowTarea(
   return tipo === "grupal" && equipo ? `Grupal · ${equipo}` : "Individual";
 }
 
-/** "Vence 30/10/2026" o, con hora (D355), "Vence 30/10/2026 · 3:30 p. m.". */
-export function venceTexto(iso: string, hora?: string | null): string {
-  return `Vence ${formatFechaHora(iso, hora)}`;
+/**
+ * "Vence 30/10/2026" o, con hora (D355), "Vence 30/10/2026 · 3:30 p. m."; "Venció …" si en
+ * `ahora` ya pasaron su fecha y hora (D357).
+ */
+export function venceTexto(
+  iso: string,
+  hora?: string | null,
+  ahora?: number,
+): string {
+  const verbo =
+    ahora !== undefined && vencida(iso, hora, ahora) ? "Venció" : "Vence";
+  return `${verbo} ${formatFechaHora(iso, hora)}`;
 }
 
 /** "entregada el 25/10/2026" (fila de Entregadas). */

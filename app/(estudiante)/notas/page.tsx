@@ -18,7 +18,10 @@ export default async function NotasPage() {
         description="Toca una nota para ver cómo se evaluó cada pregunta."
       />
       <GradeLegend promedio={promedioDelAlumno(datos)} />
-      <GradesList filas={filasMisNotas(datos)} tareasHref="/tareas" />
+      <GradesList
+        filas={filasMisNotas(datos, Date.now())}
+        tareasHref="/tareas"
+      />
     </>
   );
 }

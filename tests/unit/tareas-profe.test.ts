@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  AHORA_DEMO,
   BORRADOR_DEMO,
   BORRADOR_ID,
   HOY_DEMO,
@@ -74,11 +75,11 @@ describe("lista", () => {
           fecha: "2026-10-30",
           avance: { tipo: "evaluadas", hechas: 12, total: 69 },
         }),
-        HOY_DEMO,
+        AHORA_DEMO,
       ),
     ).toBe("8 preguntas · vence 30/10/2026 · 12 de 69 evaluadas");
     expect(
-      metaTarea(tarea({ fecha: "2026-10-10", preguntas: 1 }), HOY_DEMO),
+      metaTarea(tarea({ fecha: "2026-10-10", preguntas: 1 }), AHORA_DEMO),
     ).toBe("1 pregunta · venció 10/10/2026");
     expect(
       metaTarea(
@@ -88,7 +89,7 @@ describe("lista", () => {
           fecha: null,
           preguntas: 10,
         }),
-        HOY_DEMO,
+        AHORA_DEMO,
       ),
     ).toBe("10 preguntas · sin fecha · premio por definir");
     expect(
@@ -99,7 +100,7 @@ describe("lista", () => {
           preguntas: 4,
           avance: { tipo: "evaluadas", hechas: 12, total: 12 },
         }),
-        HOY_DEMO,
+        AHORA_DEMO,
       ),
     ).toBe("4 preguntas · 12 de 12 equipos evaluados");
   });
@@ -171,7 +172,7 @@ describe("lista", () => {
     expect(b?.preguntas).toBe(10);
     expect(b && sumaChip(b)).toBe("Suma 14 / 20");
     const identidad = ts.find((t) => t.id === "identidad-de-marca");
-    expect(identidad && metaTarea(identidad, HOY_DEMO)).toBe(
+    expect(identidad && metaTarea(identidad, AHORA_DEMO)).toBe(
       "8 preguntas · venció 10/10/2026 · 12 de 69 evaluadas",
     );
     expect(identidad?.porEvaluar).toBe(2);
