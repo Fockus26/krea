@@ -43,6 +43,11 @@ def grade(v):
     return None if not n else n  # 0 = no entregado
 
 
+def ced(v):
+    """Cédula como texto de dígitos: el export de Google Sheets la guarda como 3.2828381E7."""
+    return None if v in (None, "", "None") else str(int(float(v)))
+
+
 def slug(s):
     s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode().lower()
     return re.sub(r"[^a-z0-9]+", "-", s).strip("-")
@@ -74,7 +79,7 @@ def main():
             "nombre": nombre,
             "seccion": seccion,
             "tema": tema,
-            "capitanCedula": al.get(f"M{r}") or None,
+            "capitanCedula": ced(al.get(f"M{r}")),
             "ajusteCapitan": num(al.get(f"P{r}")) or 0,
             "notaGrupal": grade(al.get(f"Q{r}")),
         })
@@ -82,12 +87,12 @@ def main():
 
     alumnos = []
     for r in rows(al, 3, "I"):
-        ced = al.get(f"D{r}")
-        if not ced:
+        cedula = ced(al.get(f"D{r}"))
+        if not cedula:
             continue
         g = al.get(f"H{r}")
         alumnos.append({
-            "cedula": ced,
+            "cedula": cedula,
             "anio": int(float(al[f"B{r}"])),
             "seccion": f"{int(float(al[f'B{r}']))}{al[f'C{r}']}",
             "nombres": al[f"E{r}"],
