@@ -4,3 +4,4 @@
 **Why:** pedido de César (2026-11-10): que la barra de la app instalada cambie según el acento elegido. De tres opciones (acento solo en claro, acento en ambos, fondo de la app), eligió **acento en ambos**.
 **Alcance:** Android/Chrome y PWA de escritorio respetan `theme-color` dinámico. En iOS la app instalada no pinta la barra con `theme-color` (usa `apple-mobile-web-app-status-bar-style`); no cambia. Antes, en oscuro la barra era `--bg` oscuro (`#14121a`, D024).
 **Discarded alternative:** acento solo en claro (oscuro con el fondo); barra con el fondo de la app; tabla de hex por acento (se desincroniza de `globals.css`).
+**Al navegar (2026-11-10):** Next vuelve a escribir las etiquetas `theme-color` al cambiar de ruta y la barra volvía al azul de marca. `BarraTema` también observa `<head>` y las repinta en cuanto aparecen o cambian, y al volver a la app (`visibilitychange`).

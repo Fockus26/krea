@@ -9,12 +9,12 @@ import {
   Trash2,
   User,
   Users,
-  X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { DatePicker } from "@/components/krea/date-picker";
 import { SumMeter } from "@/components/krea/sum-meter";
+import { TimePicker } from "@/components/krea/time-picker";
 import { TopBarAccion } from "@/components/layout/top-bar-accion";
 import { ActionBar } from "@/components/sections/shared/action-bar";
 import { Alert } from "@/components/ui/alert";
@@ -61,7 +61,6 @@ import {
   crearBorrador,
   type DatosBorrador,
   ELIMINAR_TAREA_BOTON,
-  ERRORES,
   type ErroresTarea,
   eliminarTareaDescripcion,
   eliminarTareaTitulo,
@@ -76,7 +75,6 @@ import {
   NOTA_PUBLICADA,
   type PerdidaEliminar,
   preguntasTitulo,
-  QUITAR_HORA,
   rutaTarea,
   sumaValores,
   TOAST_BORRADOR,
@@ -179,9 +177,6 @@ export function TaskBuilder({
   // Hora de Caracas del último «Publicar»: la de entrega de hoy no puede haber pasado (D354). Se
   // toma al pulsar (no al pintar: el render queda puro y sin desfase con el servidor)
   const [horaActual, setHoraActual] = React.useState<string | null>(null);
-  // Hora a medias (solo la hora o solo los minutos): el campo nativo da "" y `validity.badInput`
-  const [horaIncompleta, setHoraIncompleta] = React.useState(false);
-  const campoHora = React.useRef<HTMLInputElement>(null);
   const esBorrador = modo === "borrador";
   const estructuraFija = modo === "con-entregas" || modo === "cerrada";
   const cerrada = modo === "cerrada";
@@ -197,15 +192,12 @@ export function TaskBuilder({
   const suma = sumaValores(tarea.preguntas);
   const info = sumMeterInfo(suma);
   const motivo = motivoSuma(suma);
-  const validadas = intentado
+  // El reloj propio (D361) no deja horas a medias: no hace falta mirar `validity.badInput`
+  const errores = intentado
     ? validarTarea(tarea, hoy, fechaGuardada, horaActual, horaGuardada)
     : intentoBorrador
       ? validarBorrador(tarea)
       : SIN_ERRORES;
-  const errores =
-    intentado && horaIncompleta
-      ? { ...validadas, hora: ERRORES.hora }
-      : validadas;
   const lleno = tarea.preguntas.length >= MAX_PREGUNTAS;
   const textoPublicar = esBorrador ? "Publicar tarea" : "Guardar cambios";
   const textoPublicando = esBorrador ? "Publicando…" : "Guardando…";
@@ -330,11 +322,8 @@ export function TaskBuilder({
     }
     setIntentado(true);
     const ahora = hora24DeInstante(Date.now());
-    const incompleta = campoHora.current?.validity.badInput === true;
     setHoraActual(ahora);
-    setHoraIncompleta(incompleta);
     if (
-      incompleta ||
       tieneErrores(validarTarea(tarea, hoy, fechaGuardada, ahora, horaGuardada))
     ) {
       enfocarInvalido();
@@ -703,40 +692,12 @@ export function TaskBuilder({
                     error={errores.hora}
                     announce={false}
                   >
-                    {/* Hora nativa (D353): teclado por segmentos y rueda del sistema en móvil */}
-                    <Input
-                      ref={campoHora}
-                      type="time"
-                      step={60}
+                    {/* Reloj propio (D361; antes el `type="time"` nativo de D353) */}
+                    <TimePicker
                       readOnly={cerrada}
-                      inputClassName="nums"
                       value={tarea.hora}
-                      onChange={(e) => {
-                        setHoraIncompleta(e.currentTarget.validity.badInput);
-                        dispatch({
-                          tipo: "hora",
-                          valor: e.currentTarget.value,
-                        });
-                      }}
-                      trailing={
-                        tarea.hora && !cerrada ? (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            icon
-                            aria-label={QUITAR_HORA}
-                            className="-mr-2"
-                            onClick={() => {
-                              setHoraIncompleta(false);
-                              dispatch({ tipo: "hora", valor: "" });
-                              // El botón desaparece: el foco vuelve al campo
-                              campoHora.current?.focus();
-                            }}
-                          >
-                            <X aria-hidden="true" />
-                          </Button>
-                        ) : null
+                      onValueChange={(valor) =>
+                        dispatch({ tipo: "hora", valor })
                       }
                     />
                   </Field>

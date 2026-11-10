@@ -53,7 +53,7 @@ function suscribir(avisar: () => void) {
 }
 
 /** ≥ 1024. En el servidor, `true` (el calendario nace cerrado: no pinta nada). */
-function useLaptop() {
+export function useLaptop() {
   return React.useSyncExternalStore(
     suscribir,
     () => window.matchMedia(CORTE).matches,

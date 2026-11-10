@@ -102,12 +102,7 @@ export function SeccionesDirectory({
             return (
               <li key={a.numero}>
                 <Card className="overflow-hidden p-0 md:p-0">
-                  <div
-                    className={cn(
-                      "flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 md:px-5",
-                      abiertoAnio && "border-b border-divider",
-                    )}
-                  >
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 md:px-5">
                     <h2 className="flex min-w-0 flex-1 basis-48">
                       <button
                         type="button"
@@ -180,85 +175,99 @@ export function SeccionesDirectory({
                       </Button>
                     </div>
                   </div>
-                  <div id={panelId} hidden={!abiertoAnio}>
-                    {a.secciones.length === 0 ? (
-                      <p className="px-4 py-3 text-small text-text-2 md:px-5">
-                        {/* PROVISIONAL (CONTENT_CHECKLIST fila 166) */}
-                        Agrega su primera sección con «Agregar sección».
-                      </p>
-                    ) : (
-                      <ul
-                        aria-label={`Secciones de ${a.nombre}`}
-                        className="divide-y divide-divider"
-                      >
-                        {a.secciones.map((s) => (
-                          <li
-                            key={s.codigo}
-                            className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 md:px-5"
-                          >
-                            <div className="flex min-w-0 flex-1 basis-48 items-center gap-3">
-                              <Badge>
-                                <span className="sr-only">Sección </span>
-                                {s.codigo}
-                              </Badge>
-                              <p className="min-w-0 text-small break-words text-text-2">
-                                {usoTexto(s.uso)}
-                              </p>
-                            </div>
-                            <div className="flex flex-wrap items-center gap-1">
-                              <Button
-                                id={idEditarSeccion(s.codigo)}
-                                variant="ghost"
-                                size="sm"
-                                onClick={() =>
-                                  abrir(
-                                    {
-                                      tipo: "editar-seccion",
-                                      anio: a,
-                                      seccion: s,
-                                    },
-                                    [
-                                      idEditarSeccion(s.codigo),
-                                      idAgregarSeccion(a.numero),
-                                    ],
-                                  )
-                                }
-                              >
-                                <Pencil aria-hidden="true" />
-                                <span aria-hidden="true">Editar</span>
-                                <span className="sr-only">
-                                  Editar {s.codigo}
-                                </span>
-                              </Button>
-                              <Button
-                                id={idEliminarSeccion(s.codigo)}
-                                variant="ghost-danger"
-                                size="sm"
-                                onClick={() =>
-                                  abrir(
-                                    {
-                                      tipo: "eliminar-seccion",
-                                      anio: a,
-                                      seccion: s,
-                                    },
-                                    [
-                                      idEliminarSeccion(s.codigo),
-                                      idAgregarSeccion(a.numero),
-                                    ],
-                                  )
-                                }
-                              >
-                                <Trash2 aria-hidden="true" />
-                                <span aria-hidden="true">Eliminar</span>
-                                <span className="sr-only">
-                                  Eliminar {s.codigo}
-                                </span>
-                              </Button>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
+                  {/* Despliegue de altura (D360): la fila de 0fr a 1fr + opacidad; excepción a «solo
+                      transform/opacity», pedida por César. Cerrado: `inert` (fuera del teclado y
+                      del lector). Con movimiento reducido, `--d-normal` vale 0 y no anima. */}
+                  <div
+                    id={panelId}
+                    inert={!abiertoAnio}
+                    className={cn(
+                      "grid transition-[grid-template-rows,opacity] duration-normal ease-krea motion-reduce:transition-none",
+                      abiertoAnio
+                        ? "grid-rows-[1fr] opacity-100"
+                        : "grid-rows-[0fr] opacity-0",
                     )}
+                  >
+                    <div className="min-h-0 overflow-hidden border-t border-divider">
+                      {a.secciones.length === 0 ? (
+                        <p className="px-4 py-3 text-small text-text-2 md:px-5">
+                          {/* PROVISIONAL (CONTENT_CHECKLIST fila 166) */}
+                          Agrega su primera sección con «Agregar sección».
+                        </p>
+                      ) : (
+                        <ul
+                          aria-label={`Secciones de ${a.nombre}`}
+                          className="divide-y divide-divider"
+                        >
+                          {a.secciones.map((s) => (
+                            <li
+                              key={s.codigo}
+                              className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 md:px-5"
+                            >
+                              <div className="flex min-w-0 flex-1 basis-48 items-center gap-3">
+                                <Badge>
+                                  <span className="sr-only">Sección </span>
+                                  {s.codigo}
+                                </Badge>
+                                <p className="min-w-0 text-small break-words text-text-2">
+                                  {usoTexto(s.uso)}
+                                </p>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-1">
+                                <Button
+                                  id={idEditarSeccion(s.codigo)}
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() =>
+                                    abrir(
+                                      {
+                                        tipo: "editar-seccion",
+                                        anio: a,
+                                        seccion: s,
+                                      },
+                                      [
+                                        idEditarSeccion(s.codigo),
+                                        idAgregarSeccion(a.numero),
+                                      ],
+                                    )
+                                  }
+                                >
+                                  <Pencil aria-hidden="true" />
+                                  <span aria-hidden="true">Editar</span>
+                                  <span className="sr-only">
+                                    Editar {s.codigo}
+                                  </span>
+                                </Button>
+                                <Button
+                                  id={idEliminarSeccion(s.codigo)}
+                                  variant="ghost-danger"
+                                  size="sm"
+                                  onClick={() =>
+                                    abrir(
+                                      {
+                                        tipo: "eliminar-seccion",
+                                        anio: a,
+                                        seccion: s,
+                                      },
+                                      [
+                                        idEliminarSeccion(s.codigo),
+                                        idAgregarSeccion(a.numero),
+                                      ],
+                                    )
+                                  }
+                                >
+                                  <Trash2 aria-hidden="true" />
+                                  <span aria-hidden="true">Eliminar</span>
+                                  <span className="sr-only">
+                                    Eliminar {s.codigo}
+                                  </span>
+                                </Button>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                   </div>
                 </Card>
               </li>

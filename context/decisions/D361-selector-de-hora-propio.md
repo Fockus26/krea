@@ -1,0 +1,5 @@
+# D361 · Components · Selector de hora propio en lugar del campo nativo · Implemented
+
+**Decision:** la hora de entrega usa `TimePicker` (`components/krea/time-picker.tsx`): el campo muestra «3:30 p. m.» o «Sin hora» (no se escribe) y el botón del reloj abre, como el calendario (D283), un popover ≥ 1024 o una hoja inferior < 1024 con tres grupos: hora (12, 1…11), minutos de 5 en 5 (más el guardado si no cae en el paso) y a. m./p. m. (`ToggleGroup`). Cada grupo es un `radiogroup` con un solo elemento tabulable; las flechas mueven y eligen. Elegir cambia el valor al momento; «Listo» o Esc cierran y el foco vuelve al botón. Sin valor, la primera pieza completa el resto con :00 y el período probable (7–11 a. m.; el resto, p. m.). El valor sigue siendo "HH:MM" o "" (D352). Lógica pura en `lib/reloj.ts`.
+**Why:** César (2026-11-10): «la hora se ve como el native del navegador, la idea es que se vea personalizado». Reemplaza el `type="time"` de D353; ya no hay horas a medias (`validity.badInput`).
+**Discarded alternative:** estilizar el `type="time"` (los navegadores no dejan pintar su rueda ni su lista); un `select` por pieza (sigue viéndose nativo en móvil).
