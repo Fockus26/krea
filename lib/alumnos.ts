@@ -8,6 +8,15 @@ import { cedulaTexto } from "@/lib/perfil";
 import { esCodigoSeccion, ordenarSecciones } from "@/lib/secciones";
 
 /** Una fila de la tabla: lo que la pantalla necesita ya resuelto (la fuente real llega en la fase 07). */
+/** Una entrega en la ficha del alumno (Editar alumno). */
+export type EntregaDeAlumno = {
+  id: string;
+  titulo: string;
+  tipo: "individual" | "grupal";
+  /** Nota con su base; `null` = Pendiente (entregada sin evaluar, D003). */
+  nota: number | null;
+};
+
 export type FilaAlumno = {
   cedula: string;
   seccion: SeccionId;
@@ -23,6 +32,11 @@ export type FilaAlumno = {
   notas?: Readonly<Record<string, number>>;
   /** Puntos del ranking (D007). */
   puntos: number;
+  /**
+   * Tareas que entregó (individuales y grupales donde es integrante), la más reciente primero;
+   * cada una abre su entrega en Evaluar. Ausente en la vista previa.
+   */
+  entregas?: readonly EntregaDeAlumno[];
   estilo: DicebearEstilo;
   /** Semilla del avatar elegida en Perfil (D191); sin ella, la cédula (vista previa). */
   semilla?: string;

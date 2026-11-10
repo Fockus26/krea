@@ -3,11 +3,16 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { EmptyState } from "@/components/krea/empty-state";
 import type { QuestionAnswer } from "@/components/krea/question-card-detail";
+import {
+  AnswersEditor,
+  type RespuestaEditable,
+} from "@/components/sections/evaluar/answers-editor";
 import { ReviewForm } from "@/components/sections/evaluar/review-form";
 import { ReviewHeader } from "@/components/sections/evaluar/review-header";
 import { Card } from "@/components/ui/card";
 import tareaSeed from "@/data/seed/tarea-identidad-marca.json";
 import { deshacerEvaluacion, guardarEvaluacion } from "@/lib/acciones/evaluar";
+import { editarRespuestas } from "@/lib/acciones/respuestas-profe";
 import { verificarSesion } from "@/lib/dal";
 import { urlsFirmadas } from "@/lib/datos/imagenes";
 import { colaEvaluar, entregaProfe, mapasProfe } from "@/lib/datos/profesor";
@@ -18,6 +23,7 @@ import {
   vistaEvaluar,
 } from "@/lib/evaluar-datos";
 import { idEntrega } from "@/lib/modelo";
+import { PROFE_EDITA_RESPUESTAS } from "@/lib/respuestas-profe";
 
 type Props = PageProps<"/profe/evaluar/[entrega]">;
 
@@ -76,6 +82,21 @@ export default async function EvaluarEntregaPage({ params }: Props) {
     }
     return { ...p, respuesta: r };
   });
+  // Permiso temporal (lib/respuestas-profe): el profe pasa las respuestas de texto a la web
+  const editables: RespuestaEditable[] = PROFE_EDITA_RESPUESTAS
+    ? tarea.preguntas.flatMap((p, i) => {
+        if (p.formato !== "texto") return [];
+        const r = entrega.respuestas[p.id];
+        return [
+          {
+            id: p.id,
+            numero: i + 1,
+            enunciado: p.enunciado,
+            texto: r && "texto" in r ? r.texto : "",
+          },
+        ];
+      })
+    : [];
 
   return (
     <>
@@ -89,6 +110,14 @@ export default async function EvaluarEntregaPage({ params }: Props) {
         anteriorHref={v.anteriorHref}
         saltarHref={v.saltarHref}
       />
+      {editables.length > 0 ? (
+        <AnswersEditor
+          entregaId={v.entregaId}
+          titular={v.titulo}
+          preguntas={editables}
+          guardar={editarRespuestas}
+        />
+      ) : null}
       {preguntas.length === 0 ? (
         // Nota importada del Excel sin preguntas (D136): no hay nada que puntuar aquí
         <Card>

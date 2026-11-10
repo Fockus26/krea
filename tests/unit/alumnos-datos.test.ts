@@ -3,6 +3,7 @@ import { EMAIL_INVALIDO, validarEdicion } from "@/lib/alumnos";
 import {
   armarEdicion,
   type EditarAlumno,
+  entregasDeAlumno,
   errorAlumnoTexto,
   filasAlumnos,
   notaIndividualVigente,
@@ -287,5 +288,51 @@ describe("textos", () => {
     expect(validarEdicion({ ...base, email: "x@" })).toEqual({
       email: EMAIL_INVALIDO,
     });
+  });
+});
+
+describe("entregasDeAlumno", () => {
+  test("las suyas con id y tarea viva, la más reciente primero, con nota o Pendiente", () => {
+    const yo = { cedula: "1111111", base: 15 };
+    const titulos = new Map([
+      ["t-1", "Identidad de marca"],
+      ["t-5", "Logo"],
+      ["t-7", "Afiche"],
+    ]);
+    const pendiente: Entrega & { id: string } = {
+      ...evaluada("1111111", 0, 7),
+      id: "t-7__1111111",
+      estado: "entregada",
+      evaluacion: null,
+    };
+    const borrador: Entrega & { id: string } = {
+      ...pendiente,
+      id: "t-5__1111111",
+      tareaId: "t-5",
+      estado: "borrador",
+    };
+    expect(
+      entregasDeAlumno(
+        yo,
+        [
+          { ...evaluada("1111111", 20, 1), id: "t-1__1111111" },
+          pendiente,
+          borrador,
+          // Sin id (ejemplo), de otro alumno o de una tarea que ya no existe: fuera
+          evaluada("1111111", 10, 5),
+          { ...evaluada("2222222", 10, 1), id: "t-1__2222222" },
+          { ...evaluada("1111111", 10, 9), id: "t-9__1111111" },
+        ],
+        titulos,
+      ),
+    ).toEqual([
+      { id: "t-7__1111111", titulo: "Afiche", tipo: "individual", nota: null },
+      {
+        id: "t-1__1111111",
+        titulo: "Identidad de marca",
+        tipo: "individual",
+        nota: 15,
+      },
+    ]);
   });
 });

@@ -1,8 +1,10 @@
 "use client";
 
-import { Pencil, UserPen } from "lucide-react";
+import { ChevronRight, Pencil, UserPen } from "lucide-react";
+import Link from "next/link";
 import { type ReactNode, useId, useRef, useState } from "react";
 import { ErrorEnPantalla } from "@/components/estados/errores";
+import { GradePill } from "@/components/krea/grade-pill";
 import { NumberStepper } from "@/components/krea/number-stepper";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   BASE_PASO,
   baseCambio,
+  type EntregaDeAlumno,
   editarLabel,
   type FilaAlumno,
   subtituloEdicion,
@@ -36,6 +39,7 @@ import {
   type VersionAlumno,
   versionDe,
 } from "@/lib/alumnos-datos";
+import { rutaEntrega } from "@/lib/evaluar-datos";
 import { BASE_MAX, BASE_MIN } from "@/lib/grades";
 import { partirNombre } from "@/lib/perfil";
 import { avisoPresencia, presenciaTexto } from "@/lib/presencia";
@@ -398,6 +402,7 @@ function EditForm({
           </Field>
         </>
       ) : null}
+      {alumno.entregas ? <TareasEntregadas entregas={alumno.entregas} /> : null}
       {errorServidor ? (
         <ErrorEnPantalla titulo="No se guardaron los cambios">
           {errorServidor}
@@ -415,5 +420,54 @@ function EditForm({
         </Button>
       </DialogFooter>
     </form>
+  );
+}
+
+/**
+ * Las tareas que entregó el alumno, cada una con su nota (o Pendiente) y enlace a su entrega en
+ * Evaluar: allí el profe ve las respuestas y corrige la nota.
+ */
+function TareasEntregadas({
+  entregas,
+}: {
+  entregas: readonly EntregaDeAlumno[];
+}) {
+  const tituloId = useId();
+  return (
+    <>
+      <Separator />
+      <section aria-labelledby={tituloId} className="flex flex-col gap-2">
+        <h3 id={tituloId} className="text-small-b text-text">
+          Tareas entregadas
+        </h3>
+        {entregas.length === 0 ? (
+          <p className="text-small text-text-2">Todavía no entregó ninguna.</p>
+        ) : (
+          <ul className="flex flex-col divide-y divide-divider">
+            {entregas.map((e) => (
+              <li key={e.id}>
+                <Link
+                  href={rutaEntrega(e.id)}
+                  className="flex min-h-11 items-center gap-3 rounded-sm py-2 text-text hover:text-accent-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-small-b">{e.titulo}</span>
+                    <span className="block text-small text-text-2">
+                      {e.tipo === "grupal" ? "Grupal" : "Individual"} · Ver
+                      respuestas y nota
+                    </span>
+                  </span>
+                  <GradePill nota={e.nota} size="sm" />
+                  <ChevronRight
+                    aria-hidden="true"
+                    className="size-4 shrink-0"
+                  />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </>
   );
 }

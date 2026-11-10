@@ -3,7 +3,7 @@
 // email de recuperación) y las filas de la tabla. La base cambia las notas derivadas (nota =
 // puntaje × base / 20, D013) y por eso el ranking; nunca toca una entrega ni un ajuste (D007).
 import { z } from "zod";
-import type { FilaAlumno } from "@/lib/alumnos";
+import type { EntregaDeAlumno, FilaAlumno } from "@/lib/alumnos";
 import { formatNota } from "@/lib/grades";
 import {
   type CambioBase,
@@ -260,11 +260,39 @@ export function notasPorTarea(
   return notas;
 }
 
+/**
+ * Las entregas del alumno (no borradores) de las tareas que siguen existiendo, la enviada más
+ * reciente primero. Sin `id` en la entrega (datos de ejemplo) no hay a dónde enlazar: no entra.
+ */
+export function entregasDeAlumno(
+  alumno: Pick<Usuario, "cedula" | "base">,
+  entregas: ReadonlyArray<Entrega & { id?: string }>,
+  titulos: ReadonlyMap<string, string>,
+): EntregaDeAlumno[] {
+  return entregas
+    .filter(
+      (e): e is Entrega & { id: string } =>
+        e.id !== undefined &&
+        e.estado !== "borrador" &&
+        e.integrantes.includes(alumno.cedula) &&
+        titulos.has(e.tareaId),
+    )
+    .sort((a, b) => (b.enviadaEn ?? 0) - (a.enviadaEn ?? 0))
+    .map((e) => ({
+      id: e.id,
+      titulo: titulos.get(e.tareaId) ?? "",
+      tipo: e.tipo,
+      nota: e.evaluacion ? notaDeIntegrante(e, alumno.base) : null,
+    }));
+}
+
 /** Filas de /profe/alumnos: los estudiantes de todas las secciones, por sección y nombre. */
 export function filasAlumnos(datos: {
   usuarios: readonly Usuario[];
   equipos: ReadonlyArray<ConId<Equipo>>;
-  entregas: readonly Entrega[];
+  entregas: ReadonlyArray<Entrega & { id?: string }>;
+  /** Tareas (id → título) para la lista de entregas de la ficha; sin ellas, no hay lista. */
+  tareas?: ReadonlyMap<string, string>;
   rankings: Readonly<Partial<Record<SeccionId, RankingSeccion | null>>>;
   /** cédula → email de `privados` (sin entrada: sin email). */
   emails: ReadonlyMap<string, string | null>;
@@ -285,6 +313,9 @@ export function filasAlumnos(datos: {
         base: u.base,
         nota: notaIndividualVigente(u, datos.entregas),
         notas: notasPorTarea(u, datos.entregas),
+        ...(datos.tareas
+          ? { entregas: entregasDeAlumno(u, datos.entregas, datos.tareas) }
+          : {}),
         puntos: datos.rankings[u.seccion]?.alumnos[u.cedula]?.puntos ?? 0,
         estilo: estiloDe(u.avatar.estilo),
         semilla: u.avatar.semilla,

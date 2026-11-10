@@ -81,7 +81,7 @@ export const entregasDeTarea = cache(async (id: string): Promise<Entrega[]> => {
   return validas(filas.map(entregaDeFila));
 });
 
-export const entregasTodas = cache(async (): Promise<Entrega[]> => {
+export const entregasTodas = cache(async (): Promise<Array<ConId<Entrega>>> => {
   await exigirSesion("profesor");
   return validas((await db().select().from(entregas)).map(entregaDeFila));
 });
