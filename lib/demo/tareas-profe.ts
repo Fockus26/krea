@@ -18,6 +18,8 @@ import {
 
 /** "Hoy" fijo de la vista previa (el servidor no lee el reloj con `cacheComponents`). */
 export const HOY_DEMO = "2026-10-30";
+/** El mismo día a las 12:00 de Caracas (UTC−4): el instante de «vence» / «venció» (D357). */
+export const AHORA_DEMO = Date.UTC(2026, 9, 30, 16);
 export const SECCIONES_PROFE = "5A y 5C";
 /** Las secciones del seed para las casillas del constructor (D324). */
 export const SECCIONES_DEMO: readonly string[] = ["5A", "5C"];

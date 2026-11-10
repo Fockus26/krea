@@ -1,7 +1,7 @@
 // Textos y lógica de Premios del profesor (HANDOFF §3 Premios, §9 #3; lienzo design/canvas/Premios.dc.html).
 // Lógica pura, sin React. La regla del ganador es la de Mi equipo (`ganadorPremio`): no se duplica.
 import { ganadorPremio } from "@/lib/equipo";
-import { formatFecha } from "@/lib/fecha";
+import { formatFecha, formatFechaHora, vencida } from "@/lib/fecha";
 import { formatNota } from "@/lib/grades";
 import {
   type DecisionPremio,
@@ -60,7 +60,16 @@ export type EstadoPremio =
       nota: number;
       fecha: string;
     }
-  | { tipo: "en-juego"; entregaron: number; total: number; vence: string }
+  | {
+      tipo: "en-juego";
+      entregaron: number;
+      total: number;
+      vence: string;
+      /** Hora de entrega de una abierta (D352); ausente = sin hora. */
+      venceHora?: string;
+      /** Una abierta cuya fecha y hora ya pasaron (D357); ausente si no se supo el instante. */
+      vencida?: boolean;
+    }
   | { tipo: "por-definir" };
 
 export type EntradaPremio = {
@@ -72,6 +81,10 @@ export type EntradaPremio = {
   fecha: string | null;
   /** Equipos que entregaron y total (abiertas). */
   avance?: { entregaron: number; total: number };
+  /** Hora de entrega "HH:MM" de una abierta (D352). */
+  hora?: string | null;
+  /** Instante de la petición: «vence» / «venció» por fecha y hora (D357). */
+  ahora?: number;
 };
 
 /**
@@ -86,11 +99,16 @@ export function estadoPremio(
     return { tipo: "por-definir" };
   }
   if (tarea.estado === "abierta") {
+    const { fecha, hora, ahora } = tarea;
     return {
       tipo: "en-juego",
       entregaron: tarea.avance?.entregaron ?? 0,
       total: tarea.avance?.total ?? notas.length,
-      vence: tarea.fecha ?? "",
+      vence: fecha ?? "",
+      ...(hora ? { venceHora: hora } : {}),
+      ...(fecha && ahora !== undefined
+        ? { vencida: vencida(fecha, hora, ahora) }
+        : {}),
     };
   }
   const evaluadas = notas.filter(
@@ -187,14 +205,20 @@ export function notaFechaTexto(nota: number, fecha: string): string {
   return `nota ${formatNota(nota)} · ${formatFecha(fecha)}`;
 }
 
-/** "3 de 12 equipos entregaron · vence 30/10/2026" ("alumnos" en una individual). */
+/**
+ * "3 de 12 equipos entregaron · vence 30/10/2026" ("alumnos" en una individual), con la hora si
+ * la tiene (D355) y "venció" si ya pasó (D357).
+ */
 export function avancePremioTexto(
   entregaron: number,
   total: number,
   vence: string,
   tipoTarea: TipoTareaId = "grupal",
+  extra: { hora?: string | undefined; vencida?: boolean | undefined } = {},
 ): string {
-  const venceTxt = vence ? ` · vence ${formatFecha(vence)}` : "";
+  const venceTxt = vence
+    ? ` · ${extra.vencida ? "venció" : "vence"} ${formatFechaHora(vence, extra.hora)}`
+    : "";
   const quienes = tipoTarea === "individual" ? "alumnos" : "equipos";
   return `${entregaron} de ${total} ${quienes} entregaron${venceTxt}`;
 }

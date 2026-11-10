@@ -25,8 +25,10 @@ export type FilaPendiente = {
   href: string;
   titulo: string;
   tipo: "individual" | "grupal";
-  /** Ya formateada (dd/mm/aaaa). */
+  /** Ya formateada: «dd/mm/aaaa» o, con hora, «dd/mm/aaaa · 3:30 p. m.» (D355). */
   vence: string;
+  /** Ya pasó su fecha y hora (D357): la meta dice «venció» en vez de «vence». */
+  vencida?: boolean;
   premio?: string;
   /** Grupal y el alumno es el capitán: chip "Entregas tú" (D012). */
   entregasTu?: boolean;
@@ -68,7 +70,8 @@ export function PendingTasks({ filas }: { filas: readonly FilaPendiente[] }) {
                     <span className="text-small flex icono-linea gap-1.5 text-text-2">
                       <Icon aria-hidden="true" className="size-4 shrink-0" />
                       <span>
-                        {tipoTareaTexto(f.tipo)} · vence {f.vence}
+                        {tipoTareaTexto(f.tipo)} ·{" "}
+                        {f.vencida ? "venció" : "vence"} {f.vence}
                       </span>
                     </span>
                     <span className="flex flex-wrap gap-1.5">

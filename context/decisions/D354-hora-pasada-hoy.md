@@ -1,0 +1,5 @@
+# D354 · Data · Publicar hoy con una hora ya pasada es error (cliente y servidor), salvo la fecha y hora guardadas · Implemented
+
+**Decision:** si la fecha de entrega es hoy y la hora ya pasó en Caracas (a la misma hora ya cuenta como pasada: vence al empezar ese minuto), `validarTarea` marca el campo de hora con «La hora de entrega de hoy ya pasó.» y `armarTarea` responde `hora-pasada` (mismo mensaje). El cliente toma la hora actual al pulsar Publicar / Guardar cambios (`hora24DeInstante(Date.now())`), no al pintar; el servidor, del instante del guardado. Una publicada puede conservar su fecha **y** hora guardadas aunque hayan pasado (como D200 con la fecha); cambiar la hora de hoy a otra ya pasada, no. Otro día no mira la hora; sin hora (fin del día), tampoco.
+**Why:** el brief pide «hoy con hora ya pasada = error (mismo mensaje que una fecha pasada, adaptado)». Error propio (`hora-pasada`) para que el mensaje diga qué corregir.
+**Discarded alternative:** reutilizar `fecha-pasada` (el mensaje «La fecha de entrega ya pasó» confunde cuando la fecha es hoy).

@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Tareas" };
 // sección y sus entregas (W5).
 export default async function TareasPage() {
   const datos = await datosAlumno();
-  const d = tareasVista(datos);
+  const d = tareasVista(datos, Date.now());
   return (
     <>
       <PageHeader

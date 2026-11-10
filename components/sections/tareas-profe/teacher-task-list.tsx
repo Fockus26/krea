@@ -60,13 +60,14 @@ import { TeacherTaskTable } from "./teacher-task-table";
  */
 export function TeacherTaskList({
   tareas,
-  hoy,
+  ahora,
   filtroInicial = "todas",
   eliminar,
   eliminarVarias,
 }: {
   tareas: readonly TareaProfe[];
-  hoy: string;
+  /** Instante (ms) para "vence" / "venció" por fecha y hora (D357). */
+  ahora: number;
   filtroInicial?: FiltroEstado;
   /** Server Action de la página real; sin ella (galería) no hay «Eliminar». */
   eliminar?: (id: string) => Promise<ResultadoTarea>;
@@ -201,7 +202,7 @@ export function TeacherTaskList({
           ) : null}
           <TeacherTaskTable
             tareas={visibles}
-            hoy={hoy}
+            ahora={ahora}
             seleccion={
               conLote
                 ? {
@@ -221,7 +222,7 @@ export function TeacherTaskList({
               key={t.id}
               ref={refDe(t.id)}
               tarea={t}
-              hoy={hoy}
+              ahora={ahora}
               saliendo={quitando?.hecha === true && quitando.tarea.id === t.id}
               onEliminar={
                 eliminar ? (boton) => abrirEliminar(t, boton) : undefined

@@ -42,14 +42,14 @@ export const tituloTareaId = (id: string) => `tarea-${id}-titulo`;
  */
 export function TeacherTaskCard({
   tarea,
-  hoy,
+  ahora,
   ref,
   saliendo = false,
   onEliminar,
 }: {
   tarea: TareaProfe;
-  /** Día civil ISO para "vence" / "venció". */
-  hoy: string;
+  /** Instante (ms) para "vence" / "venció" por fecha y hora (D357). */
+  ahora: number;
   /** El `<li>`: la lista lo mide (FLIP) y anima su salida. */
   ref?: React.Ref<HTMLLIElement>;
   /** Ya eliminada y animando su salida: fuera del árbol de accesibilidad y del teclado. */
@@ -107,7 +107,7 @@ export function TeacherTaskCard({
         >
           {tarea.titulo}
         </h2>
-        <p className="text-small nums text-text-2">{metaTarea(tarea, hoy)}</p>
+        <p className="text-small nums text-text-2">{metaTarea(tarea, ahora)}</p>
         {barra !== null ? (
           <MeterBar pct={barra} tone="accent" className="h-2 max-w-80" />
         ) : null}

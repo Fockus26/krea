@@ -45,7 +45,7 @@ export default async function TareaPage({ params }: Props) {
   const id = (await params).tarea;
   const datos = await datosAlumno();
   const companeros = datos.equipo ? await integrantesDe(datos.equipo.id) : [];
-  const d = entregaVista(datos, id, companeros);
+  const d = entregaVista(datos, id, companeros, Date.now());
   if (d.estado === "no-existe") notFound();
 
   // Respuestas en imagen (ya enviada) y la foto del premio (D265), en una sola pasada

@@ -41,13 +41,14 @@ import { tituloTareaId } from "./teacher-task-card";
  */
 export function TeacherTaskTable({
   tareas,
-  hoy,
+  ahora,
   seleccion,
   onEliminar,
 }: {
   /** Las visibles (ya filtradas), en el orden de la lista. */
   tareas: readonly TareaProfe[];
-  hoy: string;
+  /** Instante (ms) para "vence" / "venció" por fecha y hora (D357). */
+  ahora: number;
   seleccion?: {
     marcadas: ReadonlySet<string>;
     casilla: ReturnType<typeof useSeleccionLote>["casilla"];
@@ -122,7 +123,7 @@ export function TeacherTaskTable({
               <StatusBadge status={t.estado} />
             </TableCell>
             <TableCell className="nums whitespace-nowrap text-body text-text-2">
-              {fechaTareaTexto(t, hoy)}
+              {fechaTareaTexto(t, ahora)}
             </TableCell>
             <TableCell className="nums text-body text-text-2">
               {t.avance && t.estado !== "borrador" ? (

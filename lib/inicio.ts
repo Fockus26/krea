@@ -1,20 +1,35 @@
 // Textos dinámicos de Inicio del estudiante (HANDOFF §3 Inicio; lienzo design/canvas/Inicio.dc.html).
 // Lógica pura, sin React.
-import { formatFecha } from "@/lib/fecha";
+import { claveVencimiento, formatFechaHora, verboVence } from "@/lib/fecha";
 import { formatNota, puntosRanking } from "@/lib/grades";
+
+/** Día ISO de entrega y su hora "HH:MM" (`null` = al final del día, D352). */
+export type VencimientoTarea = { fecha: string; hora?: string | null };
 
 /**
  * Línea bajo el saludo: "Tienes 2 tareas por entregar. La más cercana vence el 30/10/2026." o
- * "Estás al día." `fechas`: días ISO de entrega de las tareas abiertas, en cualquier orden.
+ * "Estás al día." `vencimientos`: los de las tareas abiertas, en cualquier orden; la más cercana
+ * se elige por fecha y hora y lleva su hora (D355). Si en `ahora` ya pasó, "venció" (D357).
  */
-export function lineaPendientes(fechas: readonly string[]): string {
-  if (fechas.length === 0) return "Estás al día.";
-  const cercana = formatFecha([...fechas].sort()[0]);
-  if (fechas.length === 1) {
+export function lineaPendientes(
+  vencimientos: readonly VencimientoTarea[],
+  ahora?: number,
+): string {
+  const [cercana] = [...vencimientos].sort((a, b) => {
+    const x = claveVencimiento(a.fecha, a.hora) ?? "";
+    const y = claveVencimiento(b.fecha, b.hora) ?? "";
+    return x < y ? -1 : x > y ? 1 : 0;
+  });
+  if (!cercana) return "Estás al día.";
+  const cuando = formatFechaHora(cercana.fecha, cercana.hora);
+  const verbo = verboVence(cercana.fecha, cercana.hora, ahora);
+  // «… 3:30 p. m.» ya cierra con punto: no se duplica
+  const fin = cuando.endsWith(".") ? "" : ".";
+  if (vencimientos.length === 1) {
     // PLACEHOLDER de copy en singular (CONTENT_CHECKLIST fila 59)
-    return `Tienes 1 tarea por entregar. Vence el ${cercana}.`;
+    return `Tienes 1 tarea por entregar. ${verbo === "vence" ? "Vence" : "Venció"} el ${cuando}${fin}`;
   }
-  return `Tienes ${fechas.length} tareas por entregar. La más cercana vence el ${cercana}.`;
+  return `Tienes ${vencimientos.length} tareas por entregar. La más cercana ${verbo} el ${cuando}${fin}`;
 }
 
 /**

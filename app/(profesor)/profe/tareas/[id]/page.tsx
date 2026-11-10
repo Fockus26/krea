@@ -99,6 +99,9 @@ export default async function TareaProfePage({ params }: Props) {
           tareaId={id}
           modo={modo}
           fechaGuardada={t.estado === "borrador" ? null : t.fechaEntrega}
+          horaGuardada={
+            t.estado === "borrador" ? null : (t.horaEntrega ?? null)
+          }
           acciones={ACCIONES}
           perdida={perdidaAlEliminar(entregas)}
         />

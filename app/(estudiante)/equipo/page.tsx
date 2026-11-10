@@ -30,7 +30,7 @@ export default async function EquipoPage() {
       entregasGrupales(seccion),
       logoDeEquipo(datos.equipo),
     ]);
-    d = equipoVista(datos, companeros, grupales);
+    d = equipoVista(datos, companeros, grupales, Date.now());
     logo = firmado;
   }
   return d ? (

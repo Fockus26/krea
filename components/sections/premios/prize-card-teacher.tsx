@@ -221,6 +221,7 @@ export function PrizeCardTeacher({
                 estado.total,
                 estado.vence,
                 tarjeta.tipoTarea,
+                { hora: estado.venceHora, vencida: estado.vencida },
               )}
             </span>
           </div>

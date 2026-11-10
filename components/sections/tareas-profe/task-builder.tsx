@@ -9,6 +9,7 @@ import {
   Trash2,
   User,
   Users,
+  X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -33,6 +34,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/sonner";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { DESHACER_MS } from "@/lib/evaluar";
+import { hora24DeInstante } from "@/lib/fecha";
 import { METER_TEXT_CLASSES, SUM_STATE_TONE, sumMeterInfo } from "@/lib/meters";
 import type { SeccionId } from "@/lib/modelo";
 import {
@@ -59,9 +61,12 @@ import {
   crearBorrador,
   type DatosBorrador,
   ELIMINAR_TAREA_BOTON,
+  ERRORES,
   type ErroresTarea,
   eliminarTareaDescripcion,
   eliminarTareaTitulo,
+  FECHA_HORA_LEYENDA,
+  HORA_AYUDA,
   MAX_PREGUNTAS,
   MAX_PREGUNTAS_TEXTO,
   MIN_PREGUNTAS,
@@ -71,6 +76,7 @@ import {
   NOTA_PUBLICADA,
   type PerdidaEliminar,
   preguntasTitulo,
+  QUITAR_HORA,
   rutaTarea,
   sumaValores,
   TOAST_BORRADOR,
@@ -130,6 +136,7 @@ export function TaskBuilder({
   tareaId = null,
   modo = "borrador",
   fechaGuardada = null,
+  horaGuardada = null,
   acciones,
   perdida,
 }: {
@@ -150,6 +157,8 @@ export function TaskBuilder({
   modo?: ModoConstructor;
   /** Fecha ISO ya guardada de una publicada: se puede conservar aunque haya pasado (D200). */
   fechaGuardada?: string | null;
+  /** Hora "HH:MM" ya guardada con esa fecha: también se conserva aunque haya pasado (D354). */
+  horaGuardada?: string | null;
   acciones?: AccionesTarea;
   /** Lo que se pierde al eliminarla (el texto de la confirmación, D243). */
   perdida?: PerdidaEliminar;
@@ -167,6 +176,12 @@ export function TaskBuilder({
   const [pendiente, startTransition] = React.useTransition();
   const [confirmarCierre, setConfirmarCierre] = React.useState(false);
   const [confirmarEliminar, setConfirmarEliminar] = React.useState(false);
+  // Hora de Caracas del último «Publicar»: la de entrega de hoy no puede haber pasado (D354). Se
+  // toma al pulsar (no al pintar: el render queda puro y sin desfase con el servidor)
+  const [horaActual, setHoraActual] = React.useState<string | null>(null);
+  // Hora a medias (solo la hora o solo los minutos): el campo nativo da "" y `validity.badInput`
+  const [horaIncompleta, setHoraIncompleta] = React.useState(false);
+  const campoHora = React.useRef<HTMLInputElement>(null);
   const esBorrador = modo === "borrador";
   const estructuraFija = modo === "con-entregas" || modo === "cerrada";
   const cerrada = modo === "cerrada";
@@ -182,11 +197,15 @@ export function TaskBuilder({
   const suma = sumaValores(tarea.preguntas);
   const info = sumMeterInfo(suma);
   const motivo = motivoSuma(suma);
-  const errores = intentado
-    ? validarTarea(tarea, hoy, fechaGuardada)
+  const validadas = intentado
+    ? validarTarea(tarea, hoy, fechaGuardada, horaActual, horaGuardada)
     : intentoBorrador
       ? validarBorrador(tarea)
       : SIN_ERRORES;
+  const errores =
+    intentado && horaIncompleta
+      ? { ...validadas, hora: ERRORES.hora }
+      : validadas;
   const lleno = tarea.preguntas.length >= MAX_PREGUNTAS;
   const textoPublicar = esBorrador ? "Publicar tarea" : "Guardar cambios";
   const textoPublicando = esBorrador ? "Publicando…" : "Guardando…";
@@ -310,7 +329,14 @@ export function TaskBuilder({
       return;
     }
     setIntentado(true);
-    if (tieneErrores(validarTarea(tarea, hoy, fechaGuardada))) {
+    const ahora = hora24DeInstante(Date.now());
+    const incompleta = campoHora.current?.validity.badInput === true;
+    setHoraActual(ahora);
+    setHoraIncompleta(incompleta);
+    if (
+      incompleta ||
+      tieneErrores(validarTarea(tarea, hoy, fechaGuardada, ahora, horaGuardada))
+    ) {
       enfocarInvalido();
       return;
     }
@@ -619,34 +645,6 @@ export function TaskBuilder({
                     </ToggleGroupItem>
                   </ToggleGroup>
                 </div>
-                <Field
-                  label="Fecha de entrega"
-                  error={errores.fecha}
-                  announce={false}
-                >
-                  {/* Campo escribible + calendario propio (D283, reemplaza en parte D116) */}
-                  <DatePicker
-                    readOnly={cerrada}
-                    hoy={hoy}
-                    fechaGuardada={fechaGuardada}
-                    value={tarea.fecha}
-                    onValueChange={(valor) =>
-                      dispatch({ tipo: "fecha", valor })
-                    }
-                  />
-                </Field>
-              </div>
-              <div className="g2 gap-4">
-                {/* Casillas por sección del catálogo, agrupadas por año (D324) */}
-                <TaskSections
-                  secciones={secciones}
-                  elegidas={tarea.secciones}
-                  disabled={estructuraFija}
-                  error={errores.secciones}
-                  onCambio={(codigo, marcada) =>
-                    dispatch({ tipo: "seccion", codigo, marcada })
-                  }
-                />
                 {/* Grupal o individual (D263): lo gana la mejor nota de cada sección */}
                 <Field
                   label={
@@ -674,6 +672,86 @@ export function TaskBuilder({
                   />
                 </Field>
               </div>
+              {/* Fecha y hora juntas (D352): lado a lado ≥ 768, la hora debajo en móvil */}
+              <fieldset className="m-0 min-w-0 border-0 p-0">
+                <legend className="mb-1.5 text-label text-text">
+                  {FECHA_HORA_LEYENDA}
+                </legend>
+                <div className="g2 gap-4">
+                  <Field label="Fecha" error={errores.fecha} announce={false}>
+                    {/* Campo escribible + calendario propio (D283, reemplaza en parte D116) */}
+                    <DatePicker
+                      readOnly={cerrada}
+                      hoy={hoy}
+                      fechaGuardada={fechaGuardada}
+                      value={tarea.fecha}
+                      onValueChange={(valor) =>
+                        dispatch({ tipo: "fecha", valor })
+                      }
+                    />
+                  </Field>
+                  <Field
+                    label={
+                      <>
+                        Hora{" "}
+                        <span className="font-normal text-text-2">
+                          (opcional)
+                        </span>
+                      </>
+                    }
+                    help={HORA_AYUDA}
+                    error={errores.hora}
+                    announce={false}
+                  >
+                    {/* Hora nativa (D353): teclado por segmentos y rueda del sistema en móvil */}
+                    <Input
+                      ref={campoHora}
+                      type="time"
+                      step={60}
+                      readOnly={cerrada}
+                      inputClassName="nums"
+                      value={tarea.hora}
+                      onChange={(e) => {
+                        setHoraIncompleta(e.currentTarget.validity.badInput);
+                        dispatch({
+                          tipo: "hora",
+                          valor: e.currentTarget.value,
+                        });
+                      }}
+                      trailing={
+                        tarea.hora && !cerrada ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            icon
+                            aria-label={QUITAR_HORA}
+                            className="-mr-2"
+                            onClick={() => {
+                              setHoraIncompleta(false);
+                              dispatch({ tipo: "hora", valor: "" });
+                              // El botón desaparece: el foco vuelve al campo
+                              campoHora.current?.focus();
+                            }}
+                          >
+                            <X aria-hidden="true" />
+                          </Button>
+                        ) : null
+                      }
+                    />
+                  </Field>
+                </div>
+              </fieldset>
+              {/* Casillas por sección del catálogo, agrupadas por año (D324, D356): fila propia */}
+              <TaskSections
+                secciones={secciones}
+                elegidas={tarea.secciones}
+                disabled={estructuraFija}
+                error={errores.secciones}
+                onCambio={(codigo, marcada) =>
+                  dispatch({ tipo: "seccion", codigo, marcada })
+                }
+              />
             </Card>
           </section>
 

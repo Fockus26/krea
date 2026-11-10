@@ -81,6 +81,7 @@ export function filaDeTarea(id: string, t: TareaDoc): FilaTarea {
     secciones: [...t.secciones],
     estado: t.estado,
     fechaEntrega: t.fechaEntrega,
+    horaEntrega: t.horaEntrega ?? null,
     premio: t.premio,
     premioFoto: t.premioFoto ?? null,
     preguntas: [...t.preguntas],

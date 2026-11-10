@@ -97,7 +97,7 @@ export function inicioDe(alumno: DemoAlumno = alumnoPorCedula(CEDULA_DEMO)) {
     saludo: {
       eyebrow: `Sección ${alumno.seccion} · Escuela Creativa`,
       titulo: `¡Hola, ${primerNombre(alumno)}!`,
-      linea: lineaPendientes(abiertas.map((t) => t.fecha)),
+      linea: lineaPendientes(abiertas.map((t) => ({ fecha: t.fecha }))),
     },
     puntos: {
       puntos: fila.puntos,

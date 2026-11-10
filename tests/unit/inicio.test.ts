@@ -13,12 +13,12 @@ import {
 describe("lineaPendientes", () => {
   test("al día, una y varias (la más cercana, sin importar el orden)", () => {
     expect(lineaPendientes([])).toBe("Estás al día.");
-    expect(lineaPendientes(["2026-11-03"])).toBe(
+    expect(lineaPendientes([{ fecha: "2026-11-03" }])).toBe(
       "Tienes 1 tarea por entregar. Vence el 03/11/2026.",
     );
-    expect(lineaPendientes(["2026-11-07", "2026-10-30"])).toBe(
-      "Tienes 2 tareas por entregar. La más cercana vence el 30/10/2026.",
-    );
+    expect(
+      lineaPendientes([{ fecha: "2026-11-07" }, { fecha: "2026-10-30" }]),
+    ).toBe("Tienes 2 tareas por entregar. La más cercana vence el 30/10/2026.");
   });
 });
 

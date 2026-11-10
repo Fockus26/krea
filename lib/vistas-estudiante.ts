@@ -14,10 +14,13 @@ import type { PreguntaEntrega } from "@/components/sections/tareas/task-answer-f
 import { type DicebearEstilo, esEstiloDicebear } from "@/lib/dicebear";
 import { enJuegoTexto, ganadoresPremio, premioGanadoTexto } from "@/lib/equipo";
 import {
+  claveVencimiento,
   comparaFecha,
   diaDeInstante,
   formatFecha,
+  formatFechaHora,
   horaDeInstante,
+  vencida,
 } from "@/lib/fecha";
 import { formatNota, puntosRanking } from "@/lib/grades";
 import {
@@ -174,9 +177,12 @@ export function notasDelAlumno(
   const evaluadas = notas
     .filter((n) => n.nota !== null)
     .sort((a, b) => orden(b.fecha, a.fecha));
+  // Pendientes: la que vence antes primero, el mismo día por hora (D352)
+  const vence = (n: NotaAlumno) =>
+    claveVencimiento(n.fecha, n.tarea.horaEntrega) ?? "9999";
   const pendientes = notas
     .filter((n) => n.nota === null)
-    .sort((a, b) => orden(a.fecha, b.fecha));
+    .sort((a, b) => (vence(a) < vence(b) ? -1 : vence(a) > vence(b) ? 1 : 0));
   return [...evaluadas, ...pendientes];
 }
 
@@ -198,6 +204,7 @@ function filaNota(
   n: NotaAlumno,
   base: number,
   equipo: Pick<ConId<Equipo>, "id" | "nombre"> | null,
+  ahora?: number,
 ): FilaNota {
   return {
     id: n.tarea.id,
@@ -205,18 +212,23 @@ function filaNota(
     titulo: n.tarea.titulo,
     tipo: n.tarea.tipo,
     detalle: equipoDeFila(n, equipo),
-    fecha: n.fecha ? fechaNotaTexto(n.nota !== null, n.fecha) : "sin fecha",
+    fecha: n.fecha
+      ? fechaNotaTexto(n.nota !== null, n.fecha, n.tarea.horaEntrega, ahora)
+      : "sin fecha",
     nota: n.nota,
     // La base escala también las grupales, por integrante (D177)
     base,
   };
 }
 
-/** Filas de Mis notas. */
+/** Filas de Mis notas. `ahora`: para «vence» / «venció» de las pendientes (D357). */
 export function filasMisNotas(
   d: Pick<DatosAlumno, "usuario" | "equipo" | "tareas" | "entregas">,
+  ahora?: number,
 ): FilaNota[] {
-  return notasDelAlumno(d).map((n) => filaNota(n, d.usuario.base, d.equipo));
+  return notasDelAlumno(d).map((n) =>
+    filaNota(n, d.usuario.base, d.equipo, ahora),
+  );
 }
 
 /* ---------- Detalle de nota ---------- */
@@ -400,17 +412,18 @@ export function tareasAbiertas(
       const e = entregaDe(t.id, d.entregas);
       return !e || e.estado === "borrador";
     })
-    .sort((a, b) =>
-      comparaFecha(
-        a.fechaEntrega ?? "9999-12-31",
-        b.fechaEntrega ?? "9999-12-31",
-      ),
-    );
+    .sort((a, b) => {
+      // La que vence antes primero; el mismo día, por hora (sin hora = al final del día, D352)
+      const va = claveVencimiento(a.fechaEntrega, a.horaEntrega) ?? "9999";
+      const vb = claveVencimiento(b.fechaEntrega, b.horaEntrega) ?? "9999";
+      return va < vb ? -1 : va > vb ? 1 : 0;
+    });
 }
 
-/** Filas «Por entregar» de Inicio y de /tareas. */
+/** Filas «Por entregar» de Inicio y de /tareas. `ahora`: para «venció» por fecha y hora (D357). */
 export function filasPorEntregar(
   d: Pick<DatosAlumno, "usuario" | "equipo" | "tareas" | "entregas">,
+  ahora?: number,
 ): FilaPendiente[] {
   const capitan = d.equipo?.capitanId === d.usuario.cedula;
   return tareasAbiertas(d).map((t) => ({
@@ -418,7 +431,13 @@ export function filasPorEntregar(
     href: `/tareas/${t.id}`,
     titulo: t.titulo,
     tipo: t.tipo,
-    vence: t.fechaEntrega ? formatFecha(t.fechaEntrega) : "sin fecha",
+    vence: t.fechaEntrega
+      ? formatFechaHora(t.fechaEntrega, t.horaEntrega)
+      : "sin fecha",
+    vencida:
+      ahora !== undefined &&
+      t.fechaEntrega !== null &&
+      vencida(t.fechaEntrega, t.horaEntrega, ahora),
     premio: t.premio ?? undefined,
     entregasTu: t.tipo === "grupal" && capitan,
     avance:
@@ -455,6 +474,8 @@ const puntosEnRanking = (ranking: RankingSeccion | null) => (c: string) =>
 export function inicioVista(
   d: DatosAlumno,
   companeros: readonly Companero[],
+  /** Instante de la petición: «vence» / «venció» por fecha y hora (D357). */
+  ahora?: number,
 ): InicioVista {
   const u = d.usuario;
   const notas = notasDelAlumno(d);
@@ -494,7 +515,12 @@ export function inicioVista(
       eyebrow: `Sección ${u.seccion ?? ""} · Escuela Creativa`,
       titulo: `¡Hola, ${primerNombre(u.nombres)}!`,
       linea: lineaPendientes(
-        abiertas.flatMap((t) => (t.fechaEntrega ? [t.fechaEntrega] : [])),
+        abiertas.flatMap((t) =>
+          t.fechaEntrega
+            ? [{ fecha: t.fechaEntrega, hora: t.horaEntrega ?? null }]
+            : [],
+        ),
+        ahora,
       ),
     },
     puntos: fila
@@ -515,8 +541,8 @@ export function inicioVista(
     notas: notas
       .filter((n) => n.nota !== null)
       .slice(0, NOTAS_EN_INICIO)
-      .map((n) => filaNota(n, u.base, d.equipo)),
-    pendientes: filasPorEntregar(d),
+      .map((n) => filaNota(n, u.base, d.equipo, ahora)),
+    pendientes: filasPorEntregar(d, ahora),
     equipo,
   };
 }
@@ -538,6 +564,8 @@ export function equipoVista(
   d: Pick<DatosAlumno, "usuario" | "equipo" | "tareas" | "ranking">,
   companeros: readonly Companero[],
   entregasGrupales: ReadonlyArray<Entrega>,
+  /** Para «vence» / «venció» de las notas pendientes (D357). */
+  ahora?: number,
 ): EquipoVista | null {
   const eq = d.equipo;
   if (!eq) return null;
@@ -597,7 +625,14 @@ export function equipoVista(
       href: `/notas/${t.id}`,
       titulo: t.titulo,
       tipo: "grupal" as const,
-      fecha: fecha ? fechaNotaTexto(nota !== null, fecha) : "sin fecha",
+      fecha: fecha
+        ? fechaNotaTexto(
+            nota !== null,
+            fecha,
+            nota !== null ? null : t.horaEntrega,
+            ahora,
+          )
+        : "sin fecha",
       nota,
       enJuego: nota === null && t.premio ? enJuegoTexto(t.premio) : undefined,
     })),
@@ -664,6 +699,8 @@ const enviada = (e: Pick<Entrega, "estado"> | null) =>
  */
 export function tareasVista(
   d: Pick<DatosAlumno, "usuario" | "equipo" | "tareas" | "entregas">,
+  /** Para «venció» por fecha y hora en «Por entregar» (D357). */
+  ahora?: number,
 ): { pendientes: FilaPendiente[]; entregadas: FilaEntregada[] } {
   const filas = d.tareas.flatMap((t) => {
     const e = entregaDe(t.id, d.entregas);
@@ -689,7 +726,7 @@ export function tareasVista(
     ];
   });
   return {
-    pendientes: filasPorEntregar(d),
+    pendientes: filasPorEntregar(d, ahora),
     entregadas: filas.sort((a, b) => b.orden - a.orden).map((f) => f.fila),
   };
 }
@@ -759,6 +796,8 @@ export function entregaVista(
   d: Pick<DatosAlumno, "usuario" | "equipo" | "tareas" | "entregas">,
   tareaId: string,
   companeros: readonly Companero[],
+  /** Para «Vence» / «Venció» por fecha y hora en el encabezado (D357). */
+  ahora?: number,
 ): EntregaVista {
   const t = d.tareas.find((x) => x.id === tareaId);
   if (!t) return { estado: "no-existe" };
@@ -767,7 +806,9 @@ export function entregaVista(
     tipo: t.tipo,
     eyebrow: eyebrowTarea(t.tipo, d.equipo?.nombre),
     titulo: t.titulo,
-    vence: t.fechaEntrega ? venceTexto(t.fechaEntrega) : SIN_FECHA_ENTREGA,
+    vence: t.fechaEntrega
+      ? venceTexto(t.fechaEntrega, t.horaEntrega, ahora)
+      : SIN_FECHA_ENTREGA,
     puntos: puntosPreguntasTexto(t.preguntas.map((p) => p.valor)),
     premio: t.premio,
     premioFoto: t.premio ? (t.premioFoto ?? null) : null,

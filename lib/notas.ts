@@ -1,6 +1,6 @@
 // Textos y lógica de Mis notas y Detalle de nota (HANDOFF §3; lienzos design/canvas/Notas.dc.html
 // y DetalleNota.dc.html). Lógica pura, sin React.
-import { formatFecha } from "@/lib/fecha";
+import { formatFecha, formatFechaHora, verboVence } from "@/lib/fecha";
 import {
   formatNota,
   gradeColor,
@@ -46,11 +46,18 @@ export function vacioFiltroTexto(filtro: FiltroNotas): string {
 }
 
 /**
- * Meta de la fila: "evaluada el 21/10/2026" o, si está pendiente, "vence el 06/11/2026"
- * (lienzo Notas). `fecha`: día ISO de evaluación o de entrega.
+ * Meta de la fila: "evaluada el 21/10/2026" o, si está pendiente, "vence el 06/11/2026" (lienzo
+ * Notas), con la hora de entrega si la tiene (D355) y "venció el …" si en `ahora` ya pasó (D357).
+ * `fecha`: día ISO de evaluación o de entrega.
  */
-export function fechaNotaTexto(evaluada: boolean, fecha: string): string {
-  return `${evaluada ? "evaluada el" : "vence el"} ${formatFecha(fecha)}`;
+export function fechaNotaTexto(
+  evaluada: boolean,
+  fecha: string,
+  hora?: string | null,
+  ahora?: number,
+): string {
+  if (evaluada) return `evaluada el ${formatFecha(fecha)}`;
+  return `${verboVence(fecha, hora, ahora)} el ${formatFechaHora(fecha, hora)}`;
 }
 
 /**
