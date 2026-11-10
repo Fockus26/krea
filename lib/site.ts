@@ -23,8 +23,9 @@ export const TWITTER_BASE = { card: "summary_large_image" } as const;
 export const BRAND_BLUE = "#295AC3";
 export const BRAND_BG = "#F6F4FA";
 
-// Fondo oscuro para themeColor: mismo valor que --bg oscuro de globals.css (D024).
-export const BRAND_BG_DARK = "#14121a";
+// Azul de marca del tema oscuro: mismo valor que --accent oscuro de globals.css. Primer color de la
+// barra en oscuro; `BarraTema` lo cambia luego por el acento elegido (D358).
+export const BRAND_BLUE_DARK = "#5773af";
 
 // Colores fijos de la plantilla OG (HANDOFF §5); la imagen no conoce el acento ni el tema.
 export const OG_COLORS = {

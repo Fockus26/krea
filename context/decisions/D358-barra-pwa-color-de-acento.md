@@ -1,0 +1,6 @@
+# D358 · Colors · La barra del sistema (PWA) toma el color de acento en claro y oscuro · Implemented
+
+**Decision:** `meta[name="theme-color"]` sigue el `--accent` vigente: lo lee del token ya resuelto en `<html>` (`components/layout/barra-tema.tsx`, montado en el layout raíz) y lo vuelve a leer al cambiar `data-theme` / `data-accent` o el tema del sistema. El primer color (antes de hidratar) es el azul de marca de cada tema (`BRAND_BLUE`, `BRAND_BLUE_DARK` = `--accent` oscuro). El manifest (`theme_color`, pantalla de inicio) sigue fijo en el azul de marca: es uno para todos.
+**Why:** pedido de César (2026-11-10): que la barra de la app instalada cambie según el acento elegido. De tres opciones (acento solo en claro, acento en ambos, fondo de la app), eligió **acento en ambos**.
+**Alcance:** Android/Chrome y PWA de escritorio respetan `theme-color` dinámico. En iOS la app instalada no pinta la barra con `theme-color` (usa `apple-mobile-web-app-status-bar-style`); no cambia. Antes, en oscuro la barra era `--bg` oscuro (`#14121a`, D024).
+**Discarded alternative:** acento solo en claro (oscuro con el fondo); barra con el fondo de la app; tabla de hex por acento (se desincroniza de `globals.css`).
