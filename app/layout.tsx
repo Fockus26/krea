@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Nunito_Sans, Poppins } from "next/font/google";
+import { BarraTema } from "@/components/layout/barra-tema";
 import { RegistroServiceWorker } from "@/components/offline/registro-sw";
 import {
-  BRAND_BG_DARK,
   BRAND_BLUE,
+  BRAND_BLUE_DARK,
   OPEN_GRAPH_BASE,
   SITE_DESCRIPTION,
   SITE_NAME,
@@ -45,11 +46,12 @@ export const metadata: Metadata = {
   },
 };
 
-// themeColor: azul de marca en claro (HANDOFF §5); en oscuro, el --bg oscuro de globals.css.
+// themeColor: primer color de la barra (azul de marca en claro y en oscuro); `BarraTema` lo cambia
+// por el --accent elegido en los dos temas (D358).
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: BRAND_BLUE },
-    { media: "(prefers-color-scheme: dark)", color: BRAND_BG_DARK },
+    { media: "(prefers-color-scheme: dark)", color: BRAND_BLUE_DARK },
   ],
   colorScheme: "light dark",
   viewportFit: "cover", // la barra inferior usa safe-area-inset-bottom
@@ -74,6 +76,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </a>
         {children}
         <RegistroServiceWorker />
+        <BarraTema />
       </body>
     </html>
   );
