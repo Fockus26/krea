@@ -17,6 +17,16 @@ export type EntregaDeAlumno = {
   nota: number | null;
 };
 
+/**
+ * La tarea 1 en la ficha (`lib/puntaje-final`): el profe pone su puntaje final, haya entregado o
+ * no. Solo si la tarea es de la sección del alumno.
+ */
+export type PuntajeFinalAlumno = {
+  titulo: string;
+  /** Sobre 20; `null` = todavía sin nota. */
+  puntaje: number | null;
+};
+
 export type FilaAlumno = {
   cedula: string;
   seccion: SeccionId;
@@ -37,6 +47,8 @@ export type FilaAlumno = {
    * cada una abre su entrega en Evaluar. Ausente en la vista previa.
    */
   entregas?: readonly EntregaDeAlumno[];
+  /** Puntaje final de la tarea 1 (única que se edita desde la ficha); ausente si no aplica. */
+  puntajeFinal?: PuntajeFinalAlumno;
   estilo: DicebearEstilo;
   /** Semilla del avatar elegida en Perfil (D191); sin ella, la cédula (vista previa). */
   semilla?: string;

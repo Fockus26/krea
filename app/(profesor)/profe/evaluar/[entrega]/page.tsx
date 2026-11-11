@@ -2,17 +2,15 @@ import { ClipboardList } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { EmptyState } from "@/components/krea/empty-state";
-import type { QuestionAnswer } from "@/components/krea/question-card-detail";
 import {
-  AnswersEditor,
-  type RespuestaEditable,
-} from "@/components/sections/evaluar/answers-editor";
+  type QuestionAnswer,
+  QuestionCardDetail,
+} from "@/components/krea/question-card-detail";
 import { ReviewForm } from "@/components/sections/evaluar/review-form";
 import { ReviewHeader } from "@/components/sections/evaluar/review-header";
 import { Card } from "@/components/ui/card";
 import tareaSeed from "@/data/seed/tarea-identidad-marca.json";
 import { deshacerEvaluacion, guardarEvaluacion } from "@/lib/acciones/evaluar";
-import { editarRespuestas } from "@/lib/acciones/respuestas-profe";
 import { verificarSesion } from "@/lib/dal";
 import { urlsFirmadas } from "@/lib/datos/imagenes";
 import { colaEvaluar, entregaProfe, mapasProfe } from "@/lib/datos/profesor";
@@ -22,8 +20,8 @@ import {
   rutaEntrega,
   vistaEvaluar,
 } from "@/lib/evaluar-datos";
+import { formatNota } from "@/lib/grades";
 import { idEntrega } from "@/lib/modelo";
-import { PROFE_EDITA_RESPUESTAS } from "@/lib/respuestas-profe";
 
 type Props = PageProps<"/profe/evaluar/[entrega]">;
 
@@ -54,8 +52,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 // corrige, D204). Guardar escribe la evaluación y el ranking en una transacción (D175); la nota
 // la calcula `lib/` (D013). Solo se firman las imágenes de esta entrega (D195). La topbar móvil
 // sale de lib/topbar.ts; el Toaster es el global (D131).
-export default async function EvaluarEntregaPage({ params }: Props) {
+export default async function EvaluarEntregaPage({
+  params,
+  searchParams,
+}: Props) {
   const { entrega: id } = await params;
+  // `?ver`: desde la ficha del alumno (Editar alumno) se abre solo para ver, sin corregir
+  const soloVer = (await searchParams).ver !== undefined;
   const [entrega, cola, mapas] = await Promise.all([
     entregaProfe(id),
     colaEvaluar(),
@@ -82,21 +85,6 @@ export default async function EvaluarEntregaPage({ params }: Props) {
     }
     return { ...p, respuesta: r };
   });
-  // Permiso temporal (lib/respuestas-profe): el profe pasa las respuestas de texto a la web
-  const editables: RespuestaEditable[] = PROFE_EDITA_RESPUESTAS
-    ? tarea.preguntas.flatMap((p, i) => {
-        if (p.formato !== "texto") return [];
-        const r = entrega.respuestas[p.id];
-        return [
-          {
-            id: p.id,
-            numero: i + 1,
-            enunciado: p.enunciado,
-            texto: r && "texto" in r ? r.texto : "",
-          },
-        ];
-      })
-    : [];
 
   return (
     <>
@@ -107,17 +95,9 @@ export default async function EvaluarEntregaPage({ params }: Props) {
         identidad={v.identidad}
         linea={v.linea}
         chips={v.chips}
-        anteriorHref={v.anteriorHref}
-        saltarHref={v.saltarHref}
+        anteriorHref={soloVer ? null : v.anteriorHref}
+        saltarHref={soloVer ? null : v.saltarHref}
       />
-      {editables.length > 0 ? (
-        <AnswersEditor
-          entregaId={v.entregaId}
-          titular={v.titulo}
-          preguntas={editables}
-          guardar={editarRespuestas}
-        />
-      ) : null}
       {preguntas.length === 0 ? (
         // Nota importada del Excel sin preguntas (D136): no hay nada que puntuar aquí
         <Card>
@@ -129,6 +109,31 @@ export default async function EvaluarEntregaPage({ params }: Props) {
             description="Vino del registro de notas sin el puntaje de cada pregunta, así que no se puede corregir desde aquí."
           />
         </Card>
+      ) : soloVer ? (
+        <section aria-labelledby={TITULO_ID} className="flex flex-col gap-4">
+          <p className="text-body text-text">
+            Puntaje:{" "}
+            <span className="text-body-strong">
+              {entrega.evaluacion
+                ? `${formatNota(entrega.evaluacion.puntaje)} / 20`
+                : "Pendiente"}
+            </span>
+          </p>
+          <ol className="m-0 flex list-none flex-col gap-4 p-0">
+            {preguntas.map((p, i) => (
+              <QuestionCardDetail
+                key={p.id}
+                numero={i + 1}
+                enunciado={p.enunciado}
+                valor={p.valor}
+                obtenido={entrega.evaluacion?.puntos?.[p.id] ?? null}
+                respuesta={p.respuesta}
+                comentario={entrega.evaluacion?.comentarios[p.id]}
+                level={3}
+              />
+            ))}
+          </ol>
+        </section>
       ) : (
         <ReviewForm
           key={v.entregaId}

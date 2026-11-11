@@ -23,6 +23,7 @@ import {
 } from "@/lib/datos/profesor";
 import { catalogoSecciones } from "@/lib/datos/secciones";
 import { nombrePresencia } from "@/lib/presencia";
+import { TAREA_PUNTAJE_FINAL } from "@/lib/puntaje-final";
 import { seccionesDe } from "@/lib/secciones";
 
 export const metadata: Metadata = {
@@ -70,6 +71,9 @@ export default async function AlumnosPage({
     rankings,
     emails,
     tareas: new Map(tareas.map((t) => [t.id, t.titulo])),
+    puntajeFinal: tareas.find(
+      (t) => t.id === TAREA_PUNTAJE_FINAL && t.estado !== "borrador",
+    ),
   });
   if (secciones.length === 0) {
     return (

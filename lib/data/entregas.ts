@@ -27,6 +27,7 @@ import {
   type ErrorEntrega,
   type ErrorEnvio,
   enOtraEntrega,
+  faltanRespuestas,
   type PermisoEntrega,
   permisoEntrega,
   yaEnviada,
@@ -98,10 +99,14 @@ export async function permisoSubida(
   const pregunta = c.tarea?.preguntas.find((x) => x.id === preguntaId);
   if (pregunta?.formato !== "imagen") return { ok: false, error: "incompleta" };
   const [existente] = await db
-    .select({ estado: entregas.estado })
+    .select({ estado: entregas.estado, respuestas: entregas.respuestas })
     .from(entregas)
     .where(eq(entregas.id, p.permiso.entregaId));
-  if (existente && existente.estado !== "borrador") {
+  if (
+    existente &&
+    yaEnviada(existente) &&
+    !faltanRespuestas(existente, c.tarea?.preguntas ?? [])
+  ) {
     return { ok: false, error: "ya-entregada" };
   }
   return p;
@@ -135,8 +140,11 @@ export async function enviarEnTransaccion(
       .from(entregas)
       .where(eq(entregas.id, entregaId));
     const existente = previa ? entregaDeFila(previa) : null;
-    // Una fila que existe pero no valida tampoco se pisa
-    if (previa && (!existente || yaEnviada(existente))) {
+    // Una fila que existe pero no valida tampoco se pisa. Sí se completa una con nota y sin
+    // respuestas (el profe la evaluó antes, `faltanRespuestas`): la evaluación se queda.
+    const completar =
+      existente !== null && faltanRespuestas(existente, c.tarea.preguntas);
+    if (previa && (!existente || (yaEnviada(existente) && !completar))) {
       return { ok: false, error: "ya-entregada" };
     }
     let integrantes: string[] = [];
@@ -176,7 +184,20 @@ export async function enviarEnTransaccion(
       ahora,
     });
     if (!armada.ok) return armada;
-    const doc: Entrega = zEntrega.parse(armada.entrega);
+    // Completar: mismas personas y misma nota (el ranking no cambia), solo las respuestas y el envío
+    const doc: Entrega = zEntrega.parse(
+      completar && existente
+        ? {
+            ...armada.entrega,
+            integrantes: existente.integrantes,
+            estado: existente.estado,
+            evaluacion: existente.evaluacion,
+            ...(existente.evaluacionAnterior !== undefined
+              ? { evaluacionAnterior: existente.evaluacionAnterior }
+              : {}),
+          }
+        : armada.entrega,
+    );
     const fila = filaDeEntrega(entregaId, doc);
     await tx
       .insert(entregas)

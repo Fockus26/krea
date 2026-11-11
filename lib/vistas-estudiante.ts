@@ -12,6 +12,7 @@ import type { PreguntaDetalle } from "@/components/sections/notas/question-list"
 import type { FilaEntregada } from "@/components/sections/tareas/delivered-tasks";
 import type { PreguntaEntrega } from "@/components/sections/tareas/task-answer-form";
 import { type DicebearEstilo, esEstiloDicebear } from "@/lib/dicebear";
+import { faltanRespuestas, yaEnviada } from "@/lib/entregas";
 import { enJuegoTexto, ganadoresPremio, premioGanadoTexto } from "@/lib/equipo";
 import {
   claveVencimiento,
@@ -409,8 +410,7 @@ export function tareasAbiertas(
   return d.tareas
     .filter((t) => t.estado === "abierta")
     .filter((t) => {
-      const e = entregaDe(t.id, d.entregas);
-      return !e || e.estado === "borrador";
+      return !enviada(entregaDe(t.id, d.entregas), t);
     })
     .sort((a, b) => {
       // La que vence antes primero; el mismo día, por hora (sin hora = al final del día, D352)
@@ -689,9 +689,15 @@ export function perfilVista(u: Usuario, equipo: ConId<Equipo> | null) {
 
 /* ---------- Tareas y entrega (W5) ---------- */
 
-/** Entregada o evaluada: ya no se puede cambiar. */
-const enviada = (e: Pick<Entrega, "estado"> | null) =>
-  e !== null && e.estado !== "borrador";
+/**
+ * Entregada o evaluada: ya no se puede cambiar. Salvo la que tiene nota y le faltan las respuestas
+ * (tarea 1, `faltanRespuestas`): mientras la tarea siga abierta, cuenta como «por entregar».
+ */
+const enviada = (
+  e: Pick<Entrega, "estado" | "respuestas"> | null,
+  t: Pick<Tarea, "estado" | "preguntas">,
+) =>
+  yaEnviada(e) && !(t.estado === "abierta" && faltanRespuestas(e, t.preguntas));
 
 /**
  * /tareas: «Por entregar» (las filas de Inicio) y «Entregadas» (sus entregas enviadas, la más
@@ -704,7 +710,7 @@ export function tareasVista(
 ): { pendientes: FilaPendiente[]; entregadas: FilaEntregada[] } {
   const filas = d.tareas.flatMap((t) => {
     const e = entregaDe(t.id, d.entregas);
-    if (!e || !enviada(e)) return [];
+    if (!e || !enviada(e, t)) return [];
     const evaluada = e.evaluacion?.evaluadaEn ?? null;
     const instante = e.enviadaEn ?? evaluada;
     return [
@@ -821,7 +827,7 @@ export function entregaVista(
   };
 
   const e = entregaDe(t.id, d.entregas);
-  if (e && enviada(e)) {
+  if (e && enviada(e, t)) {
     const envio =
       e.enviadaPor === u.cedula
         ? u
