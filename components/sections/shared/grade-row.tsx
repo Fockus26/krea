@@ -19,6 +19,7 @@ export function GradeRow({
   detalle,
   nota,
   base,
+  aviso,
   chips,
   headingLevel = 3,
 }: {
@@ -32,6 +33,8 @@ export function GradeRow({
   /** Nota final (con base aplicada); `null` = Pendiente. */
   nota: number | null;
   base?: number;
+  /** Línea de texto bajo la meta (p. ej. «No participaste en esta entrega del equipo», D367). */
+  aviso?: string;
   chips?: ReactNode;
   /** Nivel semántico (el tamaño siempre es h4): 3 bajo una tarjeta con h2; 4 bajo un h3. */
   headingLevel?: 3 | 4;
@@ -51,6 +54,7 @@ export function GradeRow({
                 .join(" · ")}
             </span>
           </span>
+          {aviso ? <span className="text-small text-text">{aviso}</span> : null}
           {chips ? (
             <span className="mt-1 flex flex-wrap gap-1.5">{chips}</span>
           ) : null}

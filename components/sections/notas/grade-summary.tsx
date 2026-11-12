@@ -8,6 +8,8 @@ import {
   alertaBaseTexto,
   aporteTexto,
   formulaBaseTexto,
+  NO_PARTICIPASTE,
+  PUNTAJE_EQUIPO,
   puntajeTexto,
 } from "@/lib/notas";
 
@@ -17,6 +19,8 @@ import {
  * Puntaje, Base + fórmula si la base no es 20, y lo que aporta al ranking (`--success` + ChevronUp;
  * si es menor de 10, "0 pts" en `--text-2`: el chip Raspado ya lo pinta la píldora). Con base,
  * alerta info. La píldora no repite el chip Base: va en el `<dl>` junto a su fórmula.
+ * `noParticipo` (D367): el profe lo marcó «No participó» en la grupal; la nota es 1 fija, sin
+ * base (sin fórmula ni alerta de base), el puntaje se rotula «del equipo» y una alerta lo explica.
  */
 export function GradeSummary({
   tipo,
@@ -25,6 +29,7 @@ export function GradeSummary({
   puntaje,
   base,
   final,
+  noParticipo = false,
 }: {
   tipo: "individual" | "grupal";
   eyebrow: string;
@@ -34,9 +39,10 @@ export function GradeSummary({
   base: number;
   /** Con la base aplicada (D013). */
   final: number;
+  noParticipo?: boolean;
 }) {
   const Icon = tipo === "grupal" ? Users : User;
-  const conBase = base !== 20;
+  const conBase = base !== 20 && !noParticipo;
   const suma = puntosRanking(final) > 0;
   return (
     <Card variant="hero" className="flex flex-col gap-4 p-6 md:p-6">
@@ -51,7 +57,9 @@ export function GradeSummary({
         <GradePill nota={final} size="xl" />
         <dl className="m-0 flex min-w-[min(--spacing(55),100%)] flex-1 flex-col gap-2">
           <div className="flex flex-wrap items-center justify-between gap-x-3">
-            <dt className="text-body text-text-2">Puntaje</dt>
+            <dt className="text-body text-text-2">
+              {noParticipo ? PUNTAJE_EQUIPO : "Puntaje"}
+            </dt>
             <dd className="text-h3 nums m-0 text-text">
               {puntajeTexto(puntaje)}
             </dd>
@@ -81,7 +89,11 @@ export function GradeSummary({
           </div>
         </dl>
       </div>
-      {conBase ? (
+      {noParticipo ? (
+        <Alert variant="info">
+          <AlertDescription>{NO_PARTICIPASTE}</AlertDescription>
+        </Alert>
+      ) : conBase ? (
         <Alert variant="info">
           <AlertDescription>{alertaBaseTexto(base)}</AlertDescription>
         </Alert>

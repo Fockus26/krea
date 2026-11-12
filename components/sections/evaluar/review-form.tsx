@@ -32,6 +32,7 @@ import {
   type ResultadoEvaluar,
 } from "@/lib/evaluar-datos";
 import { ReviewIndex } from "./review-index";
+import { ReviewMembers } from "./review-members";
 
 export type ReviewQuestion = {
   id: string;
@@ -43,6 +44,8 @@ export type ReviewQuestion = {
 type Estado = {
   puntajes: (number | null)[];
   comentarios: string[];
+  /** Grupal: cédulas marcadas «No participó» (D364). */
+  noParticiparon: string[];
 };
 
 /** Server Actions de Evaluar (W7); sin ellas (vista previa de /secciones) nada se guarda. */
@@ -84,6 +87,7 @@ export function ReviewForm({
   actualHref,
   acciones,
   titular,
+  integrantes = [],
 }: {
   /** Clave de la entrega (para deshacer). */
   entregaId: string;
@@ -94,6 +98,8 @@ export function ReviewForm({
   inicial: {
     puntajes: readonly (number | null)[];
     comentarios: readonly string[];
+    /** Grupal: marcados «No participó» en la evaluación vigente (D364). */
+    noParticiparon?: readonly string[];
   };
   /**
    * `evaluadaEn` de la evaluación vigente al abrir (`null` = Pendiente). Va con Guardar: si otro
@@ -111,6 +117,8 @@ export function ReviewForm({
   acciones?: AccionesEvaluar;
   /** Alumno o equipo de la entrega (título del error al guardar, D171). */
   titular?: string;
+  /** Grupal: integrantes de la entrega para marcar «No participó» (D366); vacío = sin bloque. */
+  integrantes?: ReadonlyArray<{ cedula: string; nombre: string }>;
 }) {
   const router = useRouter();
   const [falloRed, setFalloRed] = React.useState(false);
@@ -121,6 +129,7 @@ export function ReviewForm({
       previo ?? {
         puntajes: [...inicial.puntajes],
         comentarios: [...inicial.comentarios],
+        noParticiparon: [...(inicial.noParticiparon ?? [])],
       }
     );
   });
@@ -131,7 +140,8 @@ export function ReviewForm({
   const motivoId = React.useId();
   const motivoMovilId = React.useId();
 
-  const { puntajes, comentarios } = estado;
+  const { puntajes, comentarios, noParticiparon } = estado;
+  const conIntegrantes = tipo === "grupal" && integrantes.length > 0;
   const completo = estaCompleta(puntajes);
   const faltan = puntajes.filter((p) => p === null).length;
   const indice = conIndice(preguntas.length);
@@ -151,7 +161,11 @@ export function ReviewForm({
     if (!completo || guardando.current) return;
     const valores = preguntas.map((p) => p.valor);
     const finales = normalizarPuntajes(puntajes, valores);
-    const guardado: Estado = { puntajes: finales, comentarios };
+    const guardado: Estado = {
+      puntajes: finales,
+      comentarios,
+      noParticiparon,
+    };
     let evaluadaEn: number | null = null;
     if (acciones) {
       guardando.current = true;
@@ -165,6 +179,7 @@ export function ReviewForm({
             preguntas.map((p, i) => [p.id, comentarios[i] ?? ""]),
           ),
           version,
+          ...(conIntegrantes ? { noParticiparon } : {}),
         })
         .catch((): ResultadoEvaluar => ({ ok: false, error: "red" }));
       guardando.current = false;
@@ -227,6 +242,13 @@ export function ReviewForm({
       ...s,
       comentarios: s.comentarios.map((c, j) => (j === i ? v : c)),
     }));
+  const setNoParticipo = (cedula: string, marcado: boolean) =>
+    setEstado((s) => ({
+      ...s,
+      noParticiparon: marcado
+        ? [...s.noParticiparon.filter((c) => c !== cedula), cedula]
+        : s.noParticiparon.filter((c) => c !== cedula),
+    }));
 
   return (
     <div data-slot="review-form" className="page-stack">
@@ -242,56 +264,65 @@ export function ReviewForm({
       ) : null}
 
       <div className="g-side">
-        <ol
-          className="flex flex-col gap-6"
-          onFocus={(e) => {
-            const li = (e.target as HTMLElement).closest("li");
-            const i = li
-              ? Array.prototype.indexOf.call(e.currentTarget.children, li)
-              : -1;
-            if (i >= 0) setActual(i);
-          }}
-        >
-          {preguntas.map((p, i) => {
-            const numero = i + 1;
-            const titleId = preguntaAncla(numero);
-            const puntaje = puntajes[i] ?? null;
-            return (
-              <QuestionCardReview
-                key={p.id}
-                numero={numero}
-                enunciado={p.enunciado}
-                valor={p.valor}
-                respuesta={p.respuesta}
-                titleId={titleId}
-                level={2}
-                comentario={comentarios[i] ?? ""}
-                onComentarioChange={(v) => setComentario(i, v)}
-                comentarioAyuda={ayuda}
-                score={
-                  <div className="flex flex-col gap-2">
-                    {/* Copy del lienzo: "Puntaje · sin puntuar" (el estado también en texto) */}
-                    <p className="text-small-b text-text">
-                      Puntaje
-                      {puntaje === null ? (
-                        <span className="font-normal text-text-2">
-                          {" "}
-                          · sin puntuar
-                        </span>
-                      ) : null}
-                    </p>
-                    <ScorePicker
-                      value={puntaje}
-                      onChange={(v) => setPuntaje(i, v)}
-                      max={p.valor}
-                      labelledBy={titleId}
-                    />
-                  </div>
-                }
-              />
-            );
-          })}
-        </ol>
+        <div className="flex min-w-0 flex-col gap-6">
+          <ol
+            className="flex flex-col gap-6"
+            onFocus={(e) => {
+              const li = (e.target as HTMLElement).closest("li");
+              const i = li
+                ? Array.prototype.indexOf.call(e.currentTarget.children, li)
+                : -1;
+              if (i >= 0) setActual(i);
+            }}
+          >
+            {preguntas.map((p, i) => {
+              const numero = i + 1;
+              const titleId = preguntaAncla(numero);
+              const puntaje = puntajes[i] ?? null;
+              return (
+                <QuestionCardReview
+                  key={p.id}
+                  numero={numero}
+                  enunciado={p.enunciado}
+                  valor={p.valor}
+                  respuesta={p.respuesta}
+                  titleId={titleId}
+                  level={2}
+                  comentario={comentarios[i] ?? ""}
+                  onComentarioChange={(v) => setComentario(i, v)}
+                  comentarioAyuda={ayuda}
+                  score={
+                    <div className="flex flex-col gap-2">
+                      {/* Copy del lienzo: "Puntaje · sin puntuar" (el estado también en texto) */}
+                      <p className="text-small-b text-text">
+                        Puntaje
+                        {puntaje === null ? (
+                          <span className="font-normal text-text-2">
+                            {" "}
+                            · sin puntuar
+                          </span>
+                        ) : null}
+                      </p>
+                      <ScorePicker
+                        value={puntaje}
+                        onChange={(v) => setPuntaje(i, v)}
+                        max={p.valor}
+                        labelledBy={titleId}
+                      />
+                    </div>
+                  }
+                />
+              );
+            })}
+          </ol>
+          {conIntegrantes ? (
+            <ReviewMembers
+              integrantes={integrantes}
+              marcados={noParticiparon}
+              onCambio={setNoParticipo}
+            />
+          ) : null}
+        </div>
 
         {/* ≥ 1024: columna de 360 sticky a 24 (en móvil, la barra y la ActionBar) */}
         <div className="sticky top-6 flex flex-col gap-6 max-lg:hidden">
