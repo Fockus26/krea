@@ -1,0 +1,5 @@
+# D372 · Data · La subida a B2 manda el cuerpo en bytes con Content-Length, y los rechazos registran el código S3 · Implemented
+
+**Decision:** `subir` (`lib/almacen/s3.ts`) firma con `aws4fetch` como antes, pero no envía el `Request` firmado: llama a `fetch(url, { method, headers, body: Uint8Array })` con las cabeceras firmadas y `Content-Length` explícito, que no se firma. Cada rechazo registra `[almacen] respuesta <estado> <Code>` (`codigoS3`: el `<Code>` del XML de S3/B2, nunca secretos).
+**Why:** 2026-11-12. Producción daba 403 en toda subida (`InvalidAccessKeyId`: el `B2_KEY_ID` de Vercel tenía 24 caracteres; César lo cambió). Con la clave buena pasó a 411 «Length Required»: el `Request` firmado llegaba a B2 sin largo. En local (Node 26 sin Next) no se reproduce, así que la pérdida ocurre en el `fetch` de Next o en el runtime Node 24 de Vercel. Enviar bytes evita ese camino. El código S3 en el log habría dado la causa del 403 sin tener que sondear.
+**Discarded alternative:** `UNSIGNED-PAYLOAD` o subir en streaming — B2 igual exige Content-Length en PUT, y el hash real del cuerpo se conserva (D195).

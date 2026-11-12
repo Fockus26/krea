@@ -58,6 +58,16 @@ async function sha256Hex(bytes: Uint8Array): Promise<string> {
   ).join("");
 }
 
+/** `<Code>` del XML de error de S3/B2, o «-» si no viene (p. ej. HEAD, que no tiene cuerpo). */
+export async function codigoS3(res: Response): Promise<string> {
+  try {
+    const texto = await res.text();
+    return /<Code>([A-Za-z]+)<\/Code>/.exec(texto)?.[1] ?? "-";
+  } catch {
+    return "-";
+  }
+}
+
 export type Almacen = {
   /** Sube (o reemplaza) un objeto privado. */
   subir: (
@@ -81,11 +91,15 @@ export function crearAlmacen(config: ConfigS3, deps: DepsS3): Almacen {
     retries: 0,
   });
 
-  async function enviar(req: Request): Promise<ResultadoAlmacen> {
+  async function enviar(
+    req: Request | string,
+    init?: RequestInit,
+  ): Promise<ResultadoAlmacen> {
     try {
-      const res = await deps.fetch(req);
+      const res = await deps.fetch(req, init);
       if (res.ok) return { ok: true };
-      console.error("[almacen] respuesta", res.status);
+      // El código S3 (InvalidAccessKeyId, AccessDenied…) dice qué arreglar; nunca trae secretos
+      console.error("[almacen] respuesta", res.status, await codigoS3(res));
       return { ok: false, error: "rechazado" };
     } catch {
       console.error("[almacen] sin conexión");
@@ -104,7 +118,16 @@ export function crearAlmacen(config: ConfigS3, deps: DepsS3): Almacen {
           "X-Amz-Content-Sha256": await sha256Hex(cuerpo),
         },
       });
-      return enviar(req);
+      // Se reenvía con el cuerpo en bytes, no con el `Request` firmado: Node manda el cuerpo de un
+      // `Request` en bloques (sin Content-Length) y B2 responde 411 (D372). La firma va en las
+      // cabeceras, que se conservan; Content-Length no está firmado.
+      const headers = new Headers(req.headers);
+      headers.set("Content-Length", String(cuerpo.byteLength));
+      return enviar(req.url, {
+        method: "PUT",
+        headers,
+        body: new Uint8Array(cuerpo),
+      });
     },
     async urlFirmada(clave, segundos = URL_FIRMADA_SEGUNDOS) {
       const url = new URL(urlObjeto(config, clave));
