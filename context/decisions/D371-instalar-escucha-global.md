@@ -1,0 +1,5 @@
+# D371 · Data · El aviso de instalación se escucha desde que carga cualquier página, y no depende de VAPID · Implemented
+
+**Decision:** `beforeinstallprompt` llega una sola vez por carga y en la primera página abierta (casi siempre Inicio). Un script en línea del `<head>` (`INSTALAR_SCRIPT`, `lib/instalar-pwa.ts`) lo guarda aunque llegue antes de hidratar. `escucharInstalacion` (`lib/use-instalar-pwa.ts`), que arranca `RegistroServiceWorker` en todas las páginas, lo recoge en un almacén del módulo. Perfil solo lo lee con `useSyncExternalStore`. Si faltan las variables VAPID (D337), la tarjeta «Avisos» no se pinta, pero `InstalarKrea` sí, con el título «KREA en tu pantalla de inicio» y solo cuando hay botón o pasos que ofrecer.
+**Why:** César no veía el botón (2026-11-12). El listener vivía solo en Perfil: al llegar navegando, Chrome ya había disparado el evento y nadie lo guardó. Además, el botón estaba dentro de una tarjeta que se oculta sin VAPID.
+**Discarded alternative:** escuchar solo en Perfil y pedir recargar la página — el alumno no sabría que tiene que hacerlo.

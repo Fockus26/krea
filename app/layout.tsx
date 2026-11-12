@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Nunito_Sans, Poppins } from "next/font/google";
 import { BarraTema } from "@/components/layout/barra-tema";
 import { RegistroServiceWorker } from "@/components/offline/registro-sw";
+import { INSTALAR_SCRIPT } from "@/lib/instalar-pwa";
 import {
   BRAND_BLUE,
   BRAND_BLUE_DARK,
@@ -68,6 +69,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: constante estática, sin datos del usuario */}
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: constante estática, sin datos del usuario (D371) */}
+        <script dangerouslySetInnerHTML={{ __html: INSTALAR_SCRIPT }} />
       </head>
       <body className="min-h-full flex flex-col">
         {/* Primer foco del documento (provisional, fila 19 del checklist) */}

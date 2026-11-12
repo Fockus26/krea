@@ -16,7 +16,7 @@ import { ERROR_CAMBIO_PASSWORD } from "@/lib/perfil";
 import { RUTA_INGRESAR } from "@/lib/sesion";
 import { AppearanceSettings } from "./appearance-settings";
 import { AvatarPicker } from "./avatar-picker";
-import { AvisoTareas } from "./aviso-tareas";
+import { AvisoTareas, InstalarKrea } from "./aviso-tareas";
 import { SecuritySettings } from "./security-settings";
 
 // PLACEHOLDER de copy (CONTENT_CHECKLIST fila 127): no están en el lienzo
@@ -73,13 +73,16 @@ export function AparienciaConectada({
   );
 }
 
-/** El aviso de tarea nueva llevado a las Server Actions (D335). Sin VAPID no se pinta. */
+/**
+ * El aviso de tarea nueva llevado a las Server Actions (D335). Sin VAPID no hay interruptor, pero
+ * sí la tarjeta para instalar la app (D371).
+ */
 export function AvisoTareasConectado({
   clavePublica,
 }: {
   clavePublica: string | null;
 }) {
-  if (!clavePublica) return null;
+  if (!clavePublica) return <InstalarKrea />;
   return (
     <AvisoTareas
       clavePublica={clavePublica}

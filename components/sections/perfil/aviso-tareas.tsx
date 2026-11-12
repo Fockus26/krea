@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import type { EstadoInstalacion } from "@/lib/instalar-pwa";
 import {
   activarAviso,
   desactivarAviso,
@@ -39,6 +40,48 @@ const TOAST_CANCELADO =
   "Para recibir avisos, acepta el permiso de notificaciones.";
 const TOAST_ERROR =
   "No se pudo cambiar el aviso. Revisa tu internet y vuelve a intentar.";
+
+// PROVISIONAL (CONTENT_CHECKLIST fila 189): título de la tarjeta cuando no hay avisos (sin VAPID)
+const TITULO_SOLO_INSTALAR = "KREA en tu pantalla de inicio";
+
+/** Botón (Chrome/Edge) o pasos (iPhone/iPad) para instalar; nada en otro caso (D368–D370). */
+function BloqueInstalar({
+  estado,
+  instalar,
+}: {
+  estado: EstadoInstalacion | null;
+  instalar: () => Promise<void>;
+}) {
+  if (estado === "disponible") {
+    return (
+      <div className="flex flex-col items-start gap-2">
+        <p className="text-small text-text-2">{INSTALAR_DESC}</p>
+        <Button variant="secondary" onClick={() => void instalar()}>
+          {INSTALAR_BOTON}
+        </Button>
+      </div>
+    );
+  }
+  if (estado === "ios") {
+    return <p className="text-small text-text-2">{INSTALAR_IOS}</p>;
+  }
+  return null;
+}
+
+/**
+ * Sin avisos configurados (faltan las variables VAPID, D337) la tarjeta «Avisos» no se pinta, pero
+ * instalar no depende de eso (D371): esta tarjeta solo aparece si hay algo que ofrecer.
+ */
+export function InstalarKrea() {
+  const { estado, instalar } = useInstalarPwa();
+  if (estado !== "disponible" && estado !== "ios") return null;
+  return (
+    <Card className="flex flex-col gap-4">
+      <h2 className="text-h3 text-text">{TITULO_SOLO_INSTALAR}</h2>
+      <BloqueInstalar estado={estado} instalar={instalar} />
+    </Card>
+  );
+}
 
 /**
  * "Avisos" de Perfil (D335, D339, D340) — no está en el lienzo: un interruptor para recibir en ESTE
@@ -99,17 +142,7 @@ export function AvisoTareas({
   return (
     <Card className="flex flex-col gap-4">
       <h2 className="text-h3 text-text">{TITULO}</h2>
-      {instalacion === "disponible" ? (
-        <div className="flex flex-col items-start gap-2">
-          <p className="text-small text-text-2">{INSTALAR_DESC}</p>
-          <Button variant="secondary" onClick={() => void instalar()}>
-            {INSTALAR_BOTON}
-          </Button>
-        </div>
-      ) : null}
-      {instalacion === "ios" ? (
-        <p className="text-small text-text-2">{INSTALAR_IOS}</p>
-      ) : null}
+      <BloqueInstalar estado={instalacion} instalar={instalar} />
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 flex-col gap-1">
           <label htmlFor={id} className="text-label text-text">

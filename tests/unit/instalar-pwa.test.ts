@@ -1,5 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import { esDispositivoIOS, estadoInstalacion } from "@/lib/instalar-pwa";
+import {
+  CLAVE_EVENTO_INSTALAR,
+  esDispositivoIOS,
+  estadoInstalacion,
+  INSTALAR_SCRIPT,
+} from "@/lib/instalar-pwa";
 
 const base = {
   standalone: false,
@@ -46,5 +51,13 @@ describe("esDispositivoIOS", () => {
     expect(esDispositivoIOS("Linux armv8l", "Mozilla/5.0 (Android)", 5)).toBe(
       false,
     );
+  });
+});
+
+describe("INSTALAR_SCRIPT (D371)", () => {
+  test("guarda el evento en la clave que lee escucharInstalacion", () => {
+    expect(INSTALAR_SCRIPT).toContain("beforeinstallprompt");
+    expect(INSTALAR_SCRIPT).toContain("preventDefault()");
+    expect(INSTALAR_SCRIPT).toContain(`window.${CLAVE_EVENTO_INSTALAR}=e`);
   });
 });
