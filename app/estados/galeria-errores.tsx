@@ -19,7 +19,7 @@ export function GaleriaErrores() {
           <h2 className="text-eyebrow text-text-2">Entrega rechazada</h2>
           <ErrorEntregaRechazada
             pregunta={3}
-            motivo="La imagen de la pregunta 3 pesa 9 MB y el máximo es 5 MB."
+            motivo="La imagen de la pregunta 3 pesa 30 MB y el máximo es 25 MB."
             href="#pregunta-3"
           />
         </Card>

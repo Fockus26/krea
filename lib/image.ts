@@ -5,12 +5,35 @@
 export const IMAGE_TYPES = ["image/jpeg", "image/png"] as const;
 /** Valor del atributo `accept` del `<input type="file">`. */
 export const IMAGE_ACCEPT = IMAGE_TYPES.join(",");
-/** Peso máximo del archivo original: 5 MB. */
-export const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+/** Peso máximo del archivo original: 25 MB (fotos de celular; se comprimen antes de subir). */
+export const IMAGE_MAX_BYTES = 25 * 1024 * 1024;
+/** Peso objetivo de lo que se guarda tras comprimir: 1,5 MB (el servidor acepta hasta 2,5 MB). */
+export const IMAGE_TARGET_BYTES = 1.5 * 1024 * 1024;
 /** Lado mayor tras comprimir, en píxeles. */
 export const IMAGE_MAX_SIDE = 1600;
-/** Calidad JPEG de la compresión. */
+/** Calidad JPEG del primer intento de compresión. */
 export const IMAGE_QUALITY = 0.8;
+
+export type CompressionStep = { side: number; quality: number };
+
+/**
+ * Escalera de intentos: primero baja la calidad con el lado completo; si aún no cabe,
+ * baja también el lado. El primer paso es el de siempre (1600 px, 0,8).
+ */
+export const COMPRESSION_STEPS: readonly CompressionStep[] = [
+  { side: IMAGE_MAX_SIDE, quality: IMAGE_QUALITY },
+  { side: IMAGE_MAX_SIDE, quality: 0.7 },
+  { side: IMAGE_MAX_SIDE, quality: 0.6 },
+  { side: IMAGE_MAX_SIDE, quality: 0.5 },
+  { side: 1400, quality: 0.7 },
+  { side: 1200, quality: 0.6 },
+  { side: 1000, quality: 0.5 },
+];
+
+/** Paso `attempt` (desde 0) de la escalera, o `null` cuando ya no quedan intentos. */
+export function nextCompressionStep(attempt: number): CompressionStep | null {
+  return COMPRESSION_STEPS[attempt] ?? null;
+}
 
 export type ImageValidation =
   | { ok: true }
@@ -83,33 +106,48 @@ export function progressPercent(progress: number): number {
 }
 
 /**
- * Comprime en el cliente: redimensiona a `IMAGE_MAX_SIDE` por el lado mayor y exporta JPEG 0,8.
+ * Comprime en el cliente: redimensiona por el lado mayor y exporta JPEG, recorriendo
+ * `COMPRESSION_STEPS` hasta que el resultado pese ≤ `IMAGE_TARGET_BYTES`. Si ningún paso
+ * alcanza, devuelve el último (el servidor aún acepta hasta 2,5 MB).
  * Necesita DOM (`createImageBitmap` y `<canvas>`), así que no se prueba en `bun test`: la lógica
- * que decide el tamaño es `targetSize`, que sí está probada. Respeta la orientación EXIF.
+ * que decide tamaño y escalera es pura y sí está probada. Respeta la orientación EXIF.
  * Un PNG con transparencia queda sobre fondo blanco (JPEG no tiene alfa).
+ * Se decodifica una sola vez y se reescala en canvas por intento (no se re-decodifica).
  */
 export async function compressImage(file: Blob): Promise<Blob> {
   const bitmap = await createImageBitmap(file, {
     imageOrientation: "from-image",
   });
   try {
-    const { width, height } = targetSize(bitmap.width, bitmap.height);
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
-    const context = canvas.getContext("2d");
-    if (!context) throw new Error("No se pudo preparar la imagen.");
-    context.fillStyle = "white";
-    context.fillRect(0, 0, width, height);
-    context.drawImage(bitmap, 0, 0, width, height);
-    return await new Promise<Blob>((resolve, reject) => {
-      canvas.toBlob(
-        (blob) =>
-          blob ? resolve(blob) : reject(new Error("No se pudo comprimir.")),
-        "image/jpeg",
-        IMAGE_QUALITY,
+    let result: Blob | null = null;
+    for (let attempt = 0; ; attempt++) {
+      const step = nextCompressionStep(attempt);
+      if (!step) break;
+      const { width, height } = targetSize(
+        bitmap.width,
+        bitmap.height,
+        step.side,
       );
-    });
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("No se pudo preparar la imagen.");
+      context.fillStyle = "white";
+      context.fillRect(0, 0, width, height);
+      context.drawImage(bitmap, 0, 0, width, height);
+      result = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(
+          (blob) =>
+            blob ? resolve(blob) : reject(new Error("No se pudo comprimir.")),
+          "image/jpeg",
+          step.quality,
+        );
+      });
+      if (result.size <= IMAGE_TARGET_BYTES) break;
+    }
+    if (!result) throw new Error("No se pudo comprimir.");
+    return result;
   } finally {
     bitmap.close();
   }

@@ -349,7 +349,7 @@ export function ImageUpload({
                   <span className="text-small-b text-text">
                     {IMAGE_HELP_TEXT}
                   </span>{" "}
-                  · JPG o PNG, hasta 5 MB
+                  · JPG o PNG, hasta 25 MB
                 </>
               )}
             </span>
