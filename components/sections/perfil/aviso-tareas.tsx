@@ -3,6 +3,7 @@
 import { useEffect, useId, useState } from "react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -11,6 +12,7 @@ import {
   type EstadoAviso,
   estadoAviso,
 } from "@/lib/push-cliente";
+import { useInstalarPwa } from "@/lib/use-instalar-pwa";
 
 // PROVISIONAL (CONTENT_CHECKLIST fila 171): rótulo y descripciones del interruptor
 const TITULO = "Avisos";
@@ -22,6 +24,12 @@ const DESC_DESACTIVADO =
 // PROVISIONAL (CONTENT_CHECKLIST fila 172): por qué no se puede activar
 const NO_SOPORTADO =
   "Este navegador no puede recibir avisos. En iPhone (iOS 16.4 o más), agrega KREA a tu pantalla de inicio (Compartir › Agregar a inicio) y ábrela desde ahí.";
+// PROVISIONAL (CONTENT_CHECKLIST filas 186–188): instalar KREA como app
+const INSTALAR_DESC =
+  "Ábrela desde tu pantalla de inicio, como cualquier app, y recibe los avisos más fácil.";
+const INSTALAR_BOTON = "Instalar KREA";
+const INSTALAR_IOS =
+  "Para instalar KREA en tu iPhone o iPad: toca Compartir y luego Agregar a inicio. Ábrela desde ahí.";
 const DENEGADO =
   "Bloqueaste los avisos de KREA en este navegador. Para activarlos, permite las notificaciones en la configuración del sitio (el ícono junto a la dirección) y vuelve a esta página.";
 // PROVISIONAL (CONTENT_CHECKLIST fila 173): toasts
@@ -52,6 +60,7 @@ export function AvisoTareas({
   const [ocupado, setOcupado] = useState(false);
   const id = useId();
   const descId = useId();
+  const { estado: instalacion, instalar } = useInstalarPwa();
 
   useEffect(() => {
     let vivo = true;
@@ -90,6 +99,17 @@ export function AvisoTareas({
   return (
     <Card className="flex flex-col gap-4">
       <h2 className="text-h3 text-text">{TITULO}</h2>
+      {instalacion === "disponible" ? (
+        <div className="flex flex-col items-start gap-2">
+          <p className="text-small text-text-2">{INSTALAR_DESC}</p>
+          <Button variant="secondary" onClick={() => void instalar()}>
+            {INSTALAR_BOTON}
+          </Button>
+        </div>
+      ) : null}
+      {instalacion === "ios" ? (
+        <p className="text-small text-text-2">{INSTALAR_IOS}</p>
+      ) : null}
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 flex-col gap-1">
           <label htmlFor={id} className="text-label text-text">
