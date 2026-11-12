@@ -349,6 +349,8 @@ export type EvaluarVista = {
   };
   /** Base con la que se calcula la nota (grupal: 20, D014). */
   base: number;
+  /** Grupal: integrantes para «No participó» (D364); vacío en individuales. */
+  integrantes: Array<{ cedula: string; nombre: string }>;
   siguiente: SiguienteEntrega;
 };
 
@@ -368,11 +370,16 @@ export function evaluarVista(indice: number): EvaluarVista {
   let seccion: Seccion;
   let baseAlumno = 20;
   let integrantesN: number | undefined;
+  let miembros: EvaluarVista["integrantes"] = [];
   if (entrega.destino.tipo === "equipo") {
     const eq = equipoPorId(entrega.destino.id);
     identidadE = { tipo: "equipo", teamId: eq.id, tema: eq.tema ?? eq.nombre };
     seccion = eq.seccion;
-    integrantesN = integrantes(eq).length;
+    miembros = integrantes(eq).map((a) => ({
+      cedula: a.cedula,
+      nombre: nombreCorto(a),
+    }));
+    integrantesN = miembros.length;
   } else {
     const al: DemoAlumno = alumnoPorCedula(entrega.destino.cedula);
     // PLACEHOLDER: el estilo de avatar lo elige cada alumno en Perfil
@@ -412,6 +419,7 @@ export function evaluarVista(indice: number): EvaluarVista {
       premio: entrega.tipo === "grupal" ? entrega.tarea.premio : undefined,
     },
     base: baseEfectiva(entrega.tipo, baseAlumno),
+    integrantes: miembros,
     siguiente: siguiente
       ? { nombre: nombreDestino(siguiente), tarea: siguiente.tarea.titulo }
       : null,

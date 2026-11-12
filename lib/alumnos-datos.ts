@@ -240,7 +240,7 @@ export function notaIndividualVigente(
     )
       ultima = e;
   }
-  return ultima ? notaDeIntegrante(ultima, alumno.base) : null;
+  return ultima ? notaDeIntegrante(ultima, alumno.base, alumno.cedula) : null;
 }
 
 /**
@@ -255,7 +255,7 @@ export function notasPorTarea(
   const en: Record<string, number> = {};
   for (const e of entregas) {
     if (!e.integrantes.includes(alumno.cedula) || !e.evaluacion) continue;
-    const nota = notaDeIntegrante(e, alumno.base);
+    const nota = notaDeIntegrante(e, alumno.base, alumno.cedula);
     if (nota === null) continue;
     if (e.evaluacion.evaluadaEn >= (en[e.tareaId] ?? -1)) {
       en[e.tareaId] = e.evaluacion.evaluadaEn;
@@ -287,7 +287,9 @@ export function entregasDeAlumno(
       id: e.id,
       titulo: titulos.get(e.tareaId) ?? "",
       tipo: e.tipo,
-      nota: e.evaluacion ? notaDeIntegrante(e, alumno.base) : null,
+      nota: e.evaluacion
+        ? notaDeIntegrante(e, alumno.base, alumno.cedula)
+        : null,
     }));
 }
 

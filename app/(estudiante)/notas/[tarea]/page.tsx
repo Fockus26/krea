@@ -79,6 +79,7 @@ export default async function DetalleNotaPage({ params }: Props) {
         puntaje={d.puntaje}
         base={d.base}
         final={d.final}
+        noParticipo={d.noParticipo}
       />
       {preguntas.length > 0 ? (
         <QuestionList preguntas={preguntas} />

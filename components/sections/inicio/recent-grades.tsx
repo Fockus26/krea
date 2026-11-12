@@ -15,6 +15,8 @@ export type FilaNota = {
   fecha: string;
   nota: number | null;
   base?: number;
+  /** Línea bajo la meta: «No participaste en esta entrega del equipo» (D367). */
+  aviso?: string;
 };
 
 /** "Mis notas" de Inicio (HANDOFF §3 Inicio §3): h2 + "Ver todas" y filas `GradeRow`. */

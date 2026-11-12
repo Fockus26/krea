@@ -120,6 +120,11 @@ export function aporteTexto(final: number): string {
   return p > 0 ? `+${formatNota(p)} pts` : "0 pts";
 }
 
+/** Línea del alumno marcado «No participó» en una grupal (D367). PROVISIONAL (CONTENT_CHECKLIST fila 185). */
+export const NO_PARTICIPASTE = "No participaste en esta entrega del equipo";
+/** Rótulo del puntaje en su Detalle cuando no participó: el 20 es del equipo, no suyo (D367). */
+export const PUNTAJE_EQUIPO = "Puntaje del equipo";
+
 /** Alerta de base (§3 Detalle). */
 export function alertaBaseTexto(base: number): string {
   return `Por acuerdo de conducta tu nota se calcula sobre ${formatNota(base)}. Lo que lograste en cada pregunta no cambia.`;

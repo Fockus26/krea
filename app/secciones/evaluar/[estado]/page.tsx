@@ -81,6 +81,7 @@ export default async function EvaluarVista({
           siguiente={v.siguiente}
           guardarHref={siguiente === null ? FIN_HREF : hrefDe(siguiente)}
           actualHref={hrefDe(indice)}
+          integrantes={v.integrantes}
         />
       </Vista>
     </>

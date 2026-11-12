@@ -17,7 +17,13 @@ import {
   zGuardarEvaluacion,
 } from "@/lib/evaluar-datos";
 import { hora24DeInstante, isoLocalDeInstante } from "@/lib/fecha";
-import type { Entrega, Equipo, Tarea, Usuario } from "@/lib/modelo";
+import {
+  type Entrega,
+  type Equipo,
+  type Tarea,
+  type Usuario,
+  zEvaluacion,
+} from "@/lib/modelo";
 
 const tarea: { id: string } & Tarea = {
   id: "t1",
@@ -246,7 +252,9 @@ describe("cola y vista", () => {
     expect(v.inicial).toEqual({
       puntajes: [null, null],
       comentarios: ["", ""],
+      noParticiparon: [],
     });
+    expect(v.integrantes).toEqual([]);
     expect(IMAGEN_NO_DISPONIBLE).toContain("imagen");
   });
 
@@ -275,6 +283,7 @@ describe("cola y vista", () => {
     expect(v.inicial).toEqual({
       puntajes: [10, 8],
       comentarios: ["", "Buen color"],
+      noParticiparon: [],
     });
     expect(v.preguntas[0]?.respuesta).toEqual({
       tipo: "texto",
@@ -314,6 +323,141 @@ describe("cola y vista", () => {
     });
     expect(v.linea).toContain("entregó Yeilin Duarte (capitán)");
     expect(v.guardarHref).toBe(RUTA_EVALUAR);
+    // Bloque «No participó» (D366): los de la entrega; sin documento, «Sin nombre»
+    expect(v.integrantes).toEqual([
+      { cedula: "30000001", nombre: "Yeilin Duarte" },
+      { cedula: "30000002", nombre: TITULAR_DESCONOCIDO },
+    ]);
+    expect(v.inicial.noParticiparon).toEqual([]);
+  });
+
+  test("grupal ya evaluada: los marcados «No participó» vienen marcados al reevaluar", () => {
+    const v = vistaEvaluar({
+      entrega: ent({
+        id: "g",
+        tipo: "grupal",
+        titularId: "eq",
+        integrantes: ["30000001", "30000002"],
+        estado: "evaluada",
+        evaluacion: {
+          puntos: { p1: 10, p2: 8 },
+          comentarios: {},
+          puntaje: 18,
+          evaluadaPor: null,
+          evaluadaEn: 1,
+          noParticiparon: ["30000002"],
+        },
+      }),
+      tarea: { ...tarea, tipo: "grupal" },
+      cola: [],
+      mapas,
+    });
+    expect(v.inicial.noParticiparon).toEqual(["30000002"]);
+  });
+});
+
+describe("«No participó» al guardar (D364)", () => {
+  const grupal = ent({
+    id: "e1",
+    tipo: "grupal",
+    titularId: "eq",
+    integrantes: ["30000001", "30000002", "30000003"],
+  });
+  const armarCon = (e: Entrega, noParticiparon?: string[]) =>
+    armarEvaluacion({
+      entrega: e,
+      tarea: { ...tarea, tipo: e.tipo },
+      envio: zGuardarEvaluacion.parse({
+        entregaId: "e1",
+        puntos: { p1: 10, p2: 8 },
+        comentarios: {},
+        version: null,
+        noParticiparon,
+      }),
+      autorId: "30262232",
+      ahora: 5,
+    });
+
+  test("se guarda en el orden de los integrantes, sin repetir; el puntaje del equipo no cambia", () => {
+    const r = armarCon(grupal, ["30000003", "30000001", "30000003"]);
+    expect(r.ok && r.evaluacion.noParticiparon).toEqual([
+      "30000001",
+      "30000003",
+    ]);
+    expect(r.ok && r.evaluacion.puntaje).toBe(18);
+  });
+
+  test("sin marcas (o sin el campo) no se escribe: igual que una evaluación de antes", () => {
+    for (const marcas of [undefined, []]) {
+      const r = armarCon(grupal, marcas);
+      expect(r.ok).toBe(true);
+      expect(r.ok && "noParticiparon" in r.evaluacion).toBe(false);
+    }
+  });
+
+  test("una cédula que no es de la entrega, o una marca en una individual, se rechaza", () => {
+    expect(armarCon(grupal, ["30000009"])).toEqual({
+      ok: false,
+      error: "invalida",
+    });
+    expect(armarCon(ent({ id: "e1" }), ["30000001"])).toEqual({
+      ok: false,
+      error: "invalida",
+    });
+  });
+
+  test("zod: cédulas válidas; la evaluación vieja sin el campo se lee", () => {
+    expect(
+      zGuardarEvaluacion.safeParse({
+        entregaId: "e1",
+        puntos: {},
+        comentarios: {},
+        version: null,
+        noParticiparon: ["abc"],
+      }).success,
+    ).toBe(false);
+    expect(
+      zEvaluacion.safeParse({
+        puntos: null,
+        comentarios: {},
+        puntaje: 18,
+        evaluadaPor: null,
+        evaluadaEn: 1,
+      }).success,
+    ).toBe(true);
+    expect(
+      zEvaluacion.safeParse({
+        puntos: null,
+        comentarios: {},
+        puntaje: 18,
+        evaluadaPor: null,
+        evaluadaEn: 1,
+        noParticiparon: ["30000001"],
+      }).data?.noParticiparon,
+    ).toEqual(["30000001"]);
+  });
+
+  test("«Deshacer» devuelve también las marcas de la evaluación anterior", () => {
+    const r1 = armarCon(grupal, ["30000002"]);
+    if (!r1.ok) throw new Error("no armó");
+    const primera = entregaEvaluada(grupal, r1.evaluacion);
+    const r2 = armarEvaluacion({
+      entrega: primera,
+      tarea: { ...tarea, tipo: "grupal" },
+      envio: zGuardarEvaluacion.parse({
+        entregaId: "e1",
+        puntos: { p1: 10, p2: 8 },
+        comentarios: {},
+        version: 5,
+      }),
+      autorId: "30262232",
+      ahora: 9,
+    });
+    if (!r2.ok) throw new Error("no armó");
+    const segunda = entregaEvaluada(primera, r2.evaluacion);
+    expect(segunda.evaluacion?.noParticiparon).toBeUndefined();
+    const d = deshacerEvaluacion(segunda, 9, "30262232");
+    expect(d.ok && d.entrega.evaluacion?.noParticiparon).toEqual(["30000002"]);
   });
 });
 

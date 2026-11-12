@@ -149,6 +149,7 @@ export default async function EvaluarEntregaPage({
           actualHref={rutaEntrega(v.entregaId)}
           acciones={ACCIONES}
           titular={v.titulo}
+          integrantes={v.integrantes}
         />
       )}
     </>

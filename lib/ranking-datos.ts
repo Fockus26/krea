@@ -1,7 +1,7 @@
 // Cálculo puro de los puntos del ranking a partir de los documentos de Firestore (D007, D174,
 // D176, D177). El servidor lo corre en la misma transacción que evalúa o ajusta, y escribe el
 // resultado en `ranking/{seccion}`; el cliente solo lo lee con onSnapshot.
-import { notaFinal, puntosRanking } from "@/lib/grades";
+import { NOTA_MIN, notaFinal, puntosRanking } from "@/lib/grades";
 import type {
   Ajuste,
   Entrega,
@@ -15,14 +15,29 @@ import type {
 const decimas = (n: number) => Math.round(n * 10);
 
 /**
+ * ¿El profe marcó a este integrante «No participó» en la grupal evaluada? (D364). En una
+ * individual nunca: la marca solo existe para las grupales.
+ */
+export function noParticipo(
+  entrega: Pick<Entrega, "tipo" | "estado" | "evaluacion">,
+  cedula: string,
+): boolean {
+  if (entrega.tipo !== "grupal" || entrega.estado !== "evaluada") return false;
+  return entrega.evaluacion?.noParticiparon?.includes(cedula) ?? false;
+}
+
+/**
  * Nota final de un integrante en una entrega evaluada: puntaje × su base / 20 (D006, D013).
- * También en las grupales: la base se aplica por integrante (D177). `null` si no está evaluada.
+ * También en las grupales: la base se aplica por integrante (D177); si el profe lo marcó «No
+ * participó», `NOTA_MIN` fija, sin base (D365). `null` si no está evaluada.
  */
 export function notaDeIntegrante(
   entrega: Entrega,
   base: number,
+  cedula: string,
 ): number | null {
   if (entrega.estado !== "evaluada" || entrega.evaluacion === null) return null;
+  if (noParticipo(entrega, cedula)) return NOTA_MIN;
   return notaFinal(entrega.evaluacion.puntaje, base);
 }
 
@@ -35,7 +50,9 @@ export function puntosDeAlumno(
   let total = 0;
   for (const e of entregas) {
     if (!e.integrantes.includes(alumno.cedula)) continue;
-    total += decimas(puntosRanking(notaDeIntegrante(e, alumno.base)));
+    total += decimas(
+      puntosRanking(notaDeIntegrante(e, alumno.base, alumno.cedula)),
+    );
   }
   for (const a of ajustes) {
     if (a.destino === "alumno" && a.destinoId === alumno.cedula)

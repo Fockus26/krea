@@ -39,7 +39,7 @@ import type {
   Tarea,
   Usuario,
 } from "@/lib/modelo";
-import { fechaNotaTexto, promedioNotas } from "@/lib/notas";
+import { fechaNotaTexto, NO_PARTICIPASTE, promedioNotas } from "@/lib/notas";
 import {
   baseChipTexto,
   capitanChipTexto,
@@ -47,7 +47,7 @@ import {
   partirNombre,
 } from "@/lib/perfil";
 import { primerApellido, rankCompetition } from "@/lib/ranking";
-import { notaDeIntegrante } from "@/lib/ranking-datos";
+import { noParticipo, notaDeIntegrante } from "@/lib/ranking-datos";
 import {
   entregadaTexto,
   eyebrowTarea,
@@ -128,6 +128,8 @@ export type NotaAlumno = {
   puntaje: number | null;
   /** Nota final con su base (D013, D177); `null` = Pendiente. */
   nota: number | null;
+  /** Grupal evaluada en la que el profe lo marcó «No participó»: su nota es 1 fija (D365). */
+  noParticipo: boolean;
   /** Día ISO: de evaluación si está evaluada, si no de entrega (o `null` sin fecha). */
   fecha: string | null;
 };
@@ -161,7 +163,8 @@ export function notasDelAlumno(
         tarea,
         entrega,
         puntaje: ev.puntaje,
-        nota: notaDeIntegrante(entrega, d.usuario.base),
+        nota: notaDeIntegrante(entrega, d.usuario.base, d.usuario.cedula),
+        noParticipo: noParticipo(entrega, d.usuario.cedula),
         fecha: diaDeInstante(ev.evaluadaEn),
       };
     }
@@ -170,6 +173,7 @@ export function notasDelAlumno(
       entrega,
       puntaje: null,
       nota: null,
+      noParticipo: false,
       fecha: tarea.fechaEntrega,
     };
   });
@@ -217,8 +221,10 @@ function filaNota(
       ? fechaNotaTexto(n.nota !== null, n.fecha, n.tarea.horaEntrega, ahora)
       : "sin fecha",
     nota: n.nota,
-    // La base escala también las grupales, por integrante (D177)
-    base,
+    // La base escala también las grupales, por integrante (D177); el 1 de «No participó» no
+    // lleva base (D365): sin chip
+    base: n.noParticipo ? undefined : base,
+    aviso: n.noParticipo ? NO_PARTICIPASTE : undefined,
   };
 }
 
@@ -250,6 +256,8 @@ export type DetalleVista =
       puntaje: number;
       base: number;
       final: number;
+      /** El profe lo marcó «No participó» en esta grupal: `final` es 1 fija, sin base (D365). */
+      noParticipo: boolean;
       /** Quién respondió, para el `alt` de las imágenes: su primer nombre o «tu equipo». */
       autor: string;
       /** Vacío si la nota vino del Excel sin desglose. */
@@ -268,7 +276,9 @@ export function detalleNota(
   if (!tarea) return { estado: "no-existe" };
   const entrega = entregaDe(tarea.id, d.entregas);
   const ev = entrega?.estado === "evaluada" ? entrega.evaluacion : null;
-  const final = entrega ? notaDeIntegrante(entrega, d.usuario.base) : null;
+  const final = entrega
+    ? notaDeIntegrante(entrega, d.usuario.base, d.usuario.cedula)
+    : null;
   if (!entrega || !ev || final === null) {
     return { estado: "sin-detalle", tipo: tarea.tipo, titulo: tarea.titulo };
   }
@@ -282,6 +292,7 @@ export function detalleNota(
     puntaje: ev.puntaje,
     base: d.usuario.base,
     final,
+    noParticipo: noParticipo(entrega, d.usuario.cedula),
     autor:
       tarea.tipo === "individual" || entrega.enviadaPor === d.usuario.cedula
         ? primerNombre(d.usuario.nombres)

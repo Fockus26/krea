@@ -3,9 +3,11 @@ import alumnosJson from "@/data/seed/alumnos.json";
 import gruposJson from "@/data/seed/grupos.json";
 import tareaJson from "@/data/seed/tarea-identidad-marca.json";
 import { rankingAlumnos, rankingEquipos } from "@/lib/demo/seed";
+import { NOTA_MIN } from "@/lib/grades";
 import type { Ajuste, Entrega } from "@/lib/modelo";
 import {
   calcularRanking,
+  noParticipo,
   notaDeIntegrante,
   puntosDeAlumno,
   puntosDeEquipoDatos,
@@ -32,6 +34,20 @@ const evaluada = (over: Partial<Entrega> & { puntaje: number }): Entrega => ({
   ...over,
 });
 
+/** Grupal de eq1 (18/20) con `marcados` «No participó» (D364). */
+const grupalSin = (marcados: string[]): Entrega => {
+  const g = evaluada({
+    puntaje: 18,
+    tipo: "grupal",
+    titularId: "eq1",
+    integrantes: ["11111111", "22222222"],
+  });
+  return {
+    ...g,
+    evaluacion: g.evaluacion && { ...g.evaluacion, noParticiparon: marcados },
+  };
+};
+
 const ajuste = (over: Partial<Ajuste>): Ajuste => ({
   destino: "alumno",
   destinoId: "11111111",
@@ -48,15 +64,48 @@ const ajuste = (over: Partial<Ajuste>): Ajuste => ({
 
 describe("notaDeIntegrante", () => {
   test("aplica la base del integrante (D006, D013)", () => {
-    expect(notaDeIntegrante(evaluada({ puntaje: 18.5 }), 15)).toBe(13.9);
+    expect(notaDeIntegrante(evaluada({ puntaje: 18.5 }), 15, "11111111")).toBe(
+      13.9,
+    );
   });
   test("sin evaluar → null", () => {
     expect(
       notaDeIntegrante(
         { ...evaluada({ puntaje: 10 }), estado: "entregada", evaluacion: null },
         20,
+        "11111111",
       ),
     ).toBeNull();
+  });
+  test("grupal: el marcado «No participó» queda con NOTA_MIN, sin base; los demás no cambian (D365)", () => {
+    const g = grupalSin(["22222222"]);
+    expect(notaDeIntegrante(g, 15, "22222222")).toBe(NOTA_MIN);
+    expect(notaDeIntegrante(g, 20, "22222222")).toBe(NOTA_MIN);
+    // 18 × 15/20 = 13,5
+    expect(notaDeIntegrante(g, 15, "11111111")).toBe(13.5);
+    expect(noParticipo(g, "22222222")).toBe(true);
+    expect(noParticipo(g, "11111111")).toBe(false);
+  });
+  test("una individual ignora la marca (solo existe en grupales)", () => {
+    const base = evaluada({ puntaje: 18 });
+    const ind: Entrega = {
+      ...base,
+      evaluacion: base.evaluacion && {
+        ...base.evaluacion,
+        noParticiparon: ["11111111"],
+      },
+    };
+    expect(noParticipo(ind, "11111111")).toBe(false);
+    expect(notaDeIntegrante(ind, 20, "11111111")).toBe(18);
+  });
+  test("evaluación vieja sin el campo: nadie marcado", () => {
+    const g = evaluada({
+      puntaje: 18,
+      tipo: "grupal",
+      titularId: "eq1",
+      integrantes: ["11111111", "22222222"],
+    });
+    expect(notaDeIntegrante(g, 20, "22222222")).toBe(18);
   });
 });
 
@@ -107,6 +156,20 @@ describe("puntosDeAlumno", () => {
     expect(puntosDeAlumno({ cedula: "11111111", base: 17 }, entregas, [])).toBe(
       23,
     );
+  });
+});
+
+describe("«No participó» en el ranking (D365)", () => {
+  test("el marcado aporta 0 por esa grupal; el otro integrante, su nota", () => {
+    const g = grupalSin(["22222222"]);
+    expect(puntosDeAlumno({ cedula: "22222222", base: 20 }, [g], [])).toBe(0);
+    expect(puntosDeAlumno({ cedula: "11111111", base: 20 }, [g], [])).toBe(18);
+  });
+  test("los puntos del equipo no cambian", () => {
+    expect(puntosDeEquipoDatos("eq1", [grupalSin(["22222222"])], [])).toBe(
+      puntosDeEquipoDatos("eq1", [grupalSin([])], []),
+    );
+    expect(puntosDeEquipoDatos("eq1", [grupalSin(["22222222"])], [])).toBe(18);
   });
 });
 
