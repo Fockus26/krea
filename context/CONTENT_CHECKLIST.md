@@ -170,3 +170,4 @@
 | 183 | Evaluar entrega (grupal), bloque Integrantes: «Integrantes» · «Quien no participó queda con 1 en esta tarea; el equipo conserva su nota.» · casilla «No participó» | `lib/evaluar-datos.ts` | 11-12 X2 no participó (#132) | — | Provisional |
 | 184 | Evaluar entrega, junto al nombre marcado: «Queda con 1» | `lib/evaluar-datos.ts` (`NO_PARTICIPO_ESTADO`) | 11-12 X2 no participó (#132) | — | Provisional |
 | 185 | Mis notas / Inicio / Detalle: «No participaste en esta entrega del equipo» · «Puntaje del equipo» | `lib/notas.ts` | 11-12 X2 no participó (#132) | — | Provisional |
+| 189 | Perfil (sin avisos configurados): título «KREA en tu pantalla de inicio» | `aviso-tareas.tsx` (TITULO_SOLO_INSTALAR) | 11-12 fix instalar (D371) | — | Provisional |
