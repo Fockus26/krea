@@ -231,7 +231,7 @@ export function Preguntas() {
               formato="imagen"
               upload={{
                 status: "error",
-                error: "La imagen pesa 7,3 MB. El máximo es 5 MB.",
+                error: "La imagen pesa 31 MB. El máximo es 25 MB.",
                 ...SIN_ACCIONES,
               }}
             />
@@ -277,9 +277,10 @@ export function Preguntas() {
         <Muestra title="Subida de imagen con archivos reales (ImageUpload)">
           <Card className="flex flex-col gap-3">
             <p className="text-small text-text-2">
-              Elige un JPG o PNG: se valida, se comprime a 1600 px (JPEG 0,8) y
-              queda la vista previa. Prueba también con un archivo de otro tipo
-              o de más de 5 MB para ver el error. No se sube nada.
+              Elige un JPG o PNG: se valida, se comprime a 1,5 MB o menos (hasta
+              1600 px, JPEG) y queda la vista previa. Prueba también con un
+              archivo de otro tipo o de más de 25 MB para ver el error. No se
+              sube nada.
             </p>
             <SubidaInteractiva />
           </Card>

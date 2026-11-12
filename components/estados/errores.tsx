@@ -47,7 +47,7 @@ export function ErrorEntregaRechazada({
   href,
 }: {
   pregunta: number;
-  /** «La imagen de la pregunta 3 pesa 9 MB y el máximo es 5 MB.» */
+  /** «La imagen de la pregunta 3 pesa 30 MB y el máximo es 25 MB.» */
   motivo: string;
   href: string;
 }) {
