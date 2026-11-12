@@ -1,0 +1,1 @@
+2026-11-12 · X2 · PR #132 · «No participó» por integrante en grupales: evaluacion.noParticiparon (jsonb opcional, sin migración), nota 1 fija sin base, equipo y demás sin cambio, aporta 0 al ranking (D364–D367). Sin QA en navegador.
