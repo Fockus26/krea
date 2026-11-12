@@ -3,6 +3,15 @@
  * del navegador y el evento `beforeinstallprompt` viven en `useInstalarPwa`.
  */
 
+/** Donde el script del `<head>` deja el evento si llega antes de hidratar (D371). */
+export const CLAVE_EVENTO_INSTALAR = "__kreaInstalar";
+
+/**
+ * Script en línea del `<head>` (D371): guarda `beforeinstallprompt` aunque llegue antes de que
+ * React monte; `escucharInstalacion` lo recoge después. Constante estática, sin datos del usuario.
+ */
+export const INSTALAR_SCRIPT = `window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();window.${CLAVE_EVENTO_INSTALAR}=e;});`;
+
 export type EstadoInstalacion =
   | "instalada" // ya corre como app: no se muestra nada
   | "disponible" // Chrome/Edge: botón que lanza el diálogo del navegador

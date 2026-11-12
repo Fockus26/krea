@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 import {
+  CLAVE_EVENTO_INSTALAR,
   type EstadoInstalacion,
   esDispositivoIOS,
   estadoInstalacion,
@@ -12,21 +13,23 @@ type EventoInstalacion = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 };
 
-/**
- * Estado de instalación solo en el cliente: el primer render (y el del servidor) es `null`, así no
- * hay desajuste de hidratación; tras montar pasa al estado real.
+/*
+ * Almacén de la página (D371): Chrome dispara `beforeinstallprompt` UNA vez por carga, en la
+ * primera página que se abre (casi siempre Inicio). Si solo Perfil lo escuchara, al llegar a Perfil
+ * navegando ya se habría perdido y el botón no saldría nunca. Por eso se escucha desde que arranca
+ * cualquier página (`escucharInstalacion`, llamado por `RegistroServiceWorker`) y Perfil solo lee.
  */
-export function useInstalarPwa(): {
-  estado: EstadoInstalacion | null;
-  instalar: () => Promise<void>;
-} {
-  const [estado, setEstado] = useState<EstadoInstalacion | null>(null);
-  const evento = useRef<EventoInstalacion | null>(null);
+let evento: EventoInstalacion | null = null;
+let instalada = false;
+let escuchando = false;
+let estado: EstadoInstalacion | null = null;
+const oyentes = new Set<() => void>();
 
-  const calcular = useCallback(() => {
-    const nav = navigator as Navigator & { standalone?: boolean };
-    setEstado(
-      estadoInstalacion({
+function recalcular() {
+  const nav = navigator as Navigator & { standalone?: boolean };
+  estado = instalada
+    ? "instalada"
+    : estadoInstalacion({
         standalone: window.matchMedia("(display-mode: standalone)").matches,
         iosStandalone: nav.standalone === true,
         esIOS: esDispositivoIOS(
@@ -34,39 +37,64 @@ export function useInstalarPwa(): {
           nav.userAgent,
           nav.maxTouchPoints,
         ),
-        hayEvento: evento.current !== null,
-      }),
-    );
-  }, []);
+        hayEvento: evento !== null,
+      });
+  for (const o of oyentes) o();
+}
 
-  useEffect(() => {
-    const alLlegar = (e: Event) => {
-      e.preventDefault();
-      evento.current = e as EventoInstalacion;
-      calcular();
-    };
-    const alInstalar = () => {
-      evento.current = null;
-      setEstado("instalada");
-    };
-    window.addEventListener("beforeinstallprompt", alLlegar);
-    window.addEventListener("appinstalled", alInstalar);
-    calcular();
-    return () => {
-      window.removeEventListener("beforeinstallprompt", alLlegar);
-      window.removeEventListener("appinstalled", alInstalar);
-    };
-  }, [calcular]);
+/** Empieza a escuchar el aviso de instalación; idempotente. Llamarlo al cargar cualquier página. */
+export function escucharInstalacion() {
+  if (escuchando || typeof window === "undefined") return;
+  escuchando = true;
+  // Lo que el script del <head> guardó antes de hidratar
+  const temprano = (window as unknown as Record<string, unknown>)[
+    CLAVE_EVENTO_INSTALAR
+  ];
+  if (temprano) evento = temprano as EventoInstalacion;
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    evento = e as EventoInstalacion;
+    recalcular();
+  });
+  window.addEventListener("appinstalled", () => {
+    evento = null;
+    instalada = true;
+    recalcular();
+  });
+  recalcular();
+}
+
+function suscribir(oyente: () => void) {
+  escucharInstalacion();
+  oyentes.add(oyente);
+  return () => {
+    oyentes.delete(oyente);
+  };
+}
+
+/**
+ * Estado de instalación solo en el cliente: en el servidor (y al hidratar) es `null`, así no hay
+ * desajuste de hidratación; tras montar pasa al estado real.
+ */
+export function useInstalarPwa(): {
+  estado: EstadoInstalacion | null;
+  instalar: () => Promise<void>;
+} {
+  const actual = useSyncExternalStore(
+    suscribir,
+    () => estado,
+    () => null,
+  );
 
   const instalar = useCallback(async () => {
-    const ev = evento.current;
+    const ev = evento;
     if (!ev) return;
     await ev.prompt();
     await ev.userChoice;
     // El evento solo sirve una vez; si aceptó, `appinstalled` oculta el botón
-    evento.current = null;
-    calcular();
-  }, [calcular]);
+    evento = null;
+    recalcular();
+  }, []);
 
-  return { estado, instalar };
+  return { estado: actual, instalar };
 }
