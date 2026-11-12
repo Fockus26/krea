@@ -11,6 +11,7 @@ import {
 } from "@/lib/almacen/imagen";
 import {
   type ConfigS3,
+  codigoS3,
   configB2,
   crearAlmacen,
   esClaveValida,
@@ -27,14 +28,16 @@ const CONFIG: ConfigS3 = {
   region: "us-east-005",
 };
 
-/** Doble de `fetch`: guarda la petición y responde con `status`. */
-function fetchDoble(status = 200) {
+/** Doble de `fetch`: guarda la petición (y el `init` tal cual) y responde con `status`. */
+function fetchDoble(status = 200, cuerpo: string | null = null) {
   const llamadas: Request[] = [];
-  const f = (async (req: Request) => {
-    llamadas.push(req);
-    return new Response(null, { status });
+  const inits: Array<RequestInit | undefined> = [];
+  const f = (async (entrada: Request | string, init?: RequestInit) => {
+    llamadas.push(new Request(entrada, init));
+    inits.push(init);
+    return new Response(cuerpo, { status });
   }) as unknown as typeof fetch;
-  return { f, llamadas };
+  return { f, llamadas, inits };
 }
 
 const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]);
@@ -99,6 +102,30 @@ describe("crearAlmacen (dobles, sin red)", () => {
     expect(new Uint8Array(await req.arrayBuffer())).toEqual(JPEG);
     // La clave secreta nunca viaja
     expect(auth).not.toContain(CONFIG.appKey);
+  });
+
+  test("subir: cuerpo en bytes con Content-Length, no un Request en bloques (B2 da 411, D372)", async () => {
+    const { f, inits } = fetchDoble();
+    await crearAlmacen(CONFIG, { fetch: f }).subir(
+      "entregas/t1/abc/x.jpg",
+      JPEG,
+      "image/jpeg",
+    );
+    const init = inits[0];
+    if (!init) throw new Error("sin init: se pasó un Request");
+    expect(init.body).toBeInstanceOf(Uint8Array);
+    expect(new Headers(init.headers).get("content-length")).toBe(
+      String(JPEG.byteLength),
+    );
+  });
+
+  test("codigoS3: lee el <Code> del error, o «-»", async () => {
+    const xml =
+      "<?xml version='1.0'?><Error><Code>InvalidAccessKeyId</Code><Message>Malformed</Message></Error>";
+    expect(await codigoS3(new Response(xml, { status: 403 }))).toBe(
+      "InvalidAccessKeyId",
+    );
+    expect(await codigoS3(new Response(null, { status: 403 }))).toBe("-");
   });
 
   test("subir: rechazo y fallo de red como códigos", async () => {
