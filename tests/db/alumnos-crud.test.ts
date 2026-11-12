@@ -463,7 +463,7 @@ describe("equipos (D270, D307–D309)", () => {
     // Su nota en la grupal sigue saliendo: la busca por `integrantes`, como el DAL
     const deD2 = await entregasDeIntegrante(db(), D2);
     const nota = deD2.find((e) => e.tareaId === "w12-g2");
-    expect(nota && notaDeIntegrante(nota, 20)).toBe(16);
+    expect(nota && notaDeIntegrante(nota, 20, D2)).toBe(16);
   });
 
   test("con solo entregas o solo ajustes, igual: la entrega se queda y el ajuste se va", async () => {

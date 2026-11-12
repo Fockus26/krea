@@ -15,7 +15,7 @@ import {
   tipoChipTexto,
 } from "@/lib/evaluar";
 import { diaDeInstante, hora24DeInstante } from "@/lib/fecha";
-import { formatNota, NOTA_MAX } from "@/lib/grades";
+import { formatNota, NOTA_MAX, NOTA_MIN } from "@/lib/grades";
 import {
   type Entrega,
   type Equipo,
@@ -25,6 +25,7 @@ import {
   sumaValores,
   type TareaDoc,
   type Usuario,
+  zCedula,
   zInstante,
   zPuntaje,
 } from "@/lib/modelo";
@@ -61,6 +62,12 @@ export const zGuardarEvaluacion = z.object({
    * F-M1; D224).
    */
   version: zInstante.nullable(),
+  /**
+   * Grupal: cédulas de los integrantes marcados «No participó» (D364). Opcional para que un
+   * formulario viejo siga guardando (sin el campo = nadie marcado). El servidor rechaza las que
+   * no son de la entrega y cualquiera en una individual.
+   */
+  noParticiparon: z.array(zCedula).max(50).optional(),
 });
 export type GuardarEvaluacion = z.infer<typeof zGuardarEvaluacion>;
 
@@ -155,6 +162,8 @@ export function armarEvaluacion({
   const puntaje = sumaValores(
     Object.values(puntos).map((valor) => ({ valor })),
   );
+  const marcados = noParticiparonDe(entrega, envio.noParticiparon ?? []);
+  if (!marcados) return { ok: false, error: "invalida" };
   return {
     ok: true,
     evaluacion: {
@@ -163,8 +172,26 @@ export function armarEvaluacion({
       puntaje,
       evaluadaPor: autorId,
       evaluadaEn: ahora,
+      // Solo si hay alguno: así una evaluación sin marcas queda igual que las de antes (D364)
+      ...(marcados.length > 0 ? { noParticiparon: marcados } : {}),
     },
   };
+}
+
+/**
+ * «No participó» que se guarda (D364): solo en grupales y solo integrantes de la entrega (la
+ * foto de quién entregó, D221), sin repetir y en el orden de `integrantes`. `null` si llega una
+ * cédula ajena o alguna marca en una individual: no se adivina, se rechaza.
+ */
+export function noParticiparonDe(
+  entrega: Pick<Entrega, "tipo" | "integrantes">,
+  cedulas: readonly string[],
+): string[] | null {
+  if (cedulas.length === 0) return [];
+  if (entrega.tipo !== "grupal") return null;
+  const pedidas = new Set(cedulas);
+  if ([...pedidas].some((c) => !entrega.integrantes.includes(c))) return null;
+  return entrega.integrantes.filter((c) => pedidas.has(c));
 }
 
 /** Lo que cambia en la entrega al guardar: evaluada, y la anterior para «Deshacer» (D205). */
@@ -295,6 +322,13 @@ export const IMAGEN_NO_DISPONIBLE =
 /** Chip de base de una grupal: la base se aplica por integrante (D177). PROVISIONAL (fila 133). */
 export const BASE_GRUPAL_CHIP = "Base de cada integrante";
 
+/** Bloque «No participó» de las grupales (D366). PROVISIONAL (CONTENT_CHECKLIST fila 183). */
+export const INTEGRANTES_TITULO = "Integrantes";
+export const NO_PARTICIPO_AYUDA = `Quien no participó queda con ${formatNota(NOTA_MIN)} en esta tarea; el equipo conserva su nota.`;
+export const NO_PARTICIPO_CASILLA = "No participó";
+/** Estado en texto junto al nombre marcado (no solo el ✓). PROVISIONAL (fila 184). */
+export const NO_PARTICIPO_ESTADO = `Queda con ${formatNota(NOTA_MIN)}`;
+
 export type RespuestaEvaluar =
   | { tipo: "texto"; texto: string }
   | { tipo: "imagen"; ruta: string; alt: string };
@@ -321,7 +355,16 @@ export type VistaEvaluar = {
     valor: number;
     respuesta: RespuestaEvaluar;
   }>;
-  inicial: { puntajes: (number | null)[]; comentarios: string[] };
+  /**
+   * Grupal: quiénes entregaron (D221), para marcar «No participó» (D364); vacío en individuales.
+   */
+  integrantes: Array<{ cedula: string; nombre: string }>;
+  inicial: {
+    puntajes: (number | null)[];
+    comentarios: string[];
+    /** Cédulas marcadas «No participó» en la evaluación vigente (al reevaluar vienen marcadas). */
+    noParticiparon: string[];
+  };
   /** Posición en la cola; `null` si ya está evaluada (se abre para corregir). */
   posicion: { indice: number; total: number } | null;
   siguiente: SiguienteEntrega;
@@ -441,9 +484,21 @@ export function vistaEvaluar({
     },
     base: baseEfectiva(entrega.tipo, baseAlumno),
     preguntas,
+    integrantes:
+      entrega.tipo === "grupal"
+        ? entrega.integrantes.map((cedula) => {
+            const u = mapas.usuarios.get(cedula);
+            return {
+              cedula,
+              nombre: u ? nombreCorto(u) : TITULAR_DESCONOCIDO,
+            };
+          })
+        : [],
     inicial: {
       puntajes: preguntas.map((p) => ev?.puntos?.[p.id] ?? null),
       comentarios: preguntas.map((p) => ev?.comentarios[p.id] ?? ""),
+      noParticiparon:
+        entrega.tipo === "grupal" ? [...(ev?.noParticiparon ?? [])] : [],
     },
     posicion: enCola ? { indice, total: cola.length } : null,
     siguiente: siguienteDe(sig, mapas),

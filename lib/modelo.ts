@@ -367,6 +367,12 @@ export const zEvaluacion = z.object({
   puntaje: zPuntaje,
   evaluadaPor: zCedula.nullable(),
   evaluadaEn: zInstante,
+  /**
+   * Solo en grupales: integrantes que el profe marcó «No participó» (D364). Cada uno queda con
+   * `NOTA_MIN` en esta tarea; el equipo y los demás conservan su nota. Opcional: las evaluaciones
+   * de antes no lo traen y se leen igual (sin migración); se escribe solo si hay alguno.
+   */
+  noParticiparon: z.array(zCedula).optional(),
 });
 export type Evaluacion = z.infer<typeof zEvaluacion>;
 

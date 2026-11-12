@@ -3,7 +3,9 @@ import alumnosJson from "@/data/seed/alumnos.json";
 import gruposJson from "@/data/seed/grupos.json";
 import tareaJson from "@/data/seed/tarea-identidad-marca.json";
 import { diaDeInstante } from "@/lib/fecha";
+import { NOTA_MIN } from "@/lib/grades";
 import type { Ajuste, Entrega, SeccionId, Tarea, Usuario } from "@/lib/modelo";
+import { NO_PARTICIPASTE } from "@/lib/notas";
 import { calcularRanking } from "@/lib/ranking-datos";
 import { docsDesdeSeed } from "@/lib/seed-firestore";
 import {
@@ -157,6 +159,44 @@ describe("notasDelAlumno / filasMisNotas", () => {
     const fila = filasMisNotas(otro).find((f) => f.id === "logo-y-paleta");
     expect(fila?.nota).toBe(19);
     expect(fila?.detalle).toBeUndefined();
+  });
+});
+
+describe("«No participó» en sus vistas (D365, D367)", () => {
+  // Yeilin marcada «No participó» en la grupal «logo-y-paleta» (19/20 del equipo), con base 15
+  const marcada = (): DatosAlumno => {
+    const d = datosDe(YEILIN, { usuario: { base: 15 } });
+    return {
+      ...d,
+      entregas: d.entregas.map((e) =>
+        e.tipo === "grupal" && e.evaluacion
+          ? { ...e, evaluacion: { ...e.evaluacion, noParticiparon: [YEILIN] } }
+          : e,
+      ),
+    };
+  };
+
+  test("Mis notas: 1 fija, sin chip de base, con la línea que lo explica", () => {
+    const fila = filasMisNotas(marcada()).find((f) => f.id === "logo-y-paleta");
+    expect(fila?.nota).toBe(NOTA_MIN);
+    expect(fila?.base).toBeUndefined();
+    expect(fila?.aviso).toBe(NO_PARTICIPASTE);
+    // La individual no cambia
+    const ind = filasMisNotas(marcada()).find(
+      (f) => f.id === "identidad-de-marca",
+    );
+    expect(ind?.aviso).toBeUndefined();
+    expect(ind?.base).toBe(15);
+  });
+
+  test("Detalle: final 1 y `noParticipo`; el puntaje sigue siendo el del equipo", () => {
+    const d = detalleNota(marcada(), "logo-y-paleta");
+    if (d.estado !== "ok") throw new Error(d.estado);
+    expect(d.final).toBe(NOTA_MIN);
+    expect(d.noParticipo).toBe(true);
+    expect(d.puntaje).toBe(19);
+    const sin = detalleNota(datosDe(YEILIN), "logo-y-paleta");
+    expect(sin.estado === "ok" && sin.noParticipo).toBe(false);
   });
 });
 

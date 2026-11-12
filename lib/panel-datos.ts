@@ -155,7 +155,7 @@ export function panelDatosDe({
           x.estado === "evaluada" &&
           x.integrantes.includes(u.cedula),
       );
-      const nota = e ? notaDeIntegrante(e, u.base) : null;
+      const nota = e ? notaDeIntegrante(e, u.base, u.cedula) : null;
       if (nota === null) continue;
       evaluados++;
       if (nota < NOTA_APROBATORIA) {

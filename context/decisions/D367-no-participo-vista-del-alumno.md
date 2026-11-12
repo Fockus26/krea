@@ -1,0 +1,5 @@
+# D367 · Copy · El alumno marcado ve 1 y «No participaste en esta entrega del equipo» · Implemented
+
+**Decision:** en Mis notas e Inicio, la fila de esa grupal muestra la píldora 1 (`gradeColor`, D004) **sin chip de base** (el 1 no lleva base) y, bajo la meta, la línea «No participaste en esta entrega del equipo» (`FilaNota.aviso`, `GradeRow`). En su Detalle: píldora 1, el puntaje se rotula «Puntaje del equipo» (el 19/20 es del equipo, no suyo), sin fórmula ni alerta de base, «Aporta al ranking» 0 pts, y una alerta info con la misma línea. Las preguntas siguen mostrando lo que entregó el equipo. Mi equipo (nota del equipo) no cambia. Copy provisional: CONTENT_CHECKLIST filas 183–185.
+**Why:** que el 1 no parezca un error de cálculo frente a la nota del equipo.
+**Discarded alternative:** ocultar el puntaje del equipo en su Detalle (pierde el contexto de por qué el equipo tiene otra nota); un chip «No participó» junto a la píldora (otro color de estado que revisar en 4 acentos × 2 temas).
