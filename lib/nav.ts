@@ -69,7 +69,7 @@ const ESTUDIANTE: readonly NavItem[] = [
     href: "/tareas",
     icon: "tareas",
     match: "prefix",
-    on: ["lateral"],
+    on: ["lateral", "inferior"],
   },
   {
     id: "ranking",
@@ -88,12 +88,14 @@ const ESTUDIANTE: readonly NavItem[] = [
     on: ["lateral", "inferior"],
   },
   {
+    // < lg, Perfil es el avatar de la topbar: su pestaña cedió el lugar a Tareas en la barra
+    // inferior de 5 columnas (decisión de César, 2026-11-12)
     id: "perfil",
     label: "Perfil",
     href: "/perfil",
     icon: "perfil",
     match: "prefix",
-    on: ["lateral", "inferior"],
+    on: ["lateral"],
   },
 ];
 
