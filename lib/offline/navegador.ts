@@ -12,6 +12,7 @@ import {
   guardarTareaPendiente,
   type ResultadoTareaCola,
 } from "@/lib/acciones/tareas";
+import { rutasImagen } from "@/lib/modelo";
 import {
   type Candado,
   candadoEnMemoria,
@@ -214,11 +215,16 @@ async function ejecutar(
       s = { ok: false, error: "red" };
     }
     if (!s.ok) return clasificar("entrega", s, mensajeRechazoEntrega);
+    // Varias imágenes en la misma pregunta (D373): se suman a las ya subidas
+    const previas = rutasImagen(actual.respuestas[img.preguntaId]);
     actual = {
       ...actual,
       respuestas: {
         ...actual.respuestas,
-        [img.preguntaId]: { imagenPath: s.imagenPath },
+        [img.preguntaId]:
+          previas.length > 0
+            ? { imagenPaths: [...previas, s.imagenPath] }
+            : { imagenPath: s.imagenPath },
       },
       imagenes: actual.imagenes.filter((i) => i.imagenId !== img.imagenId),
     };

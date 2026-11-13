@@ -130,7 +130,11 @@ export type ImagenBorrador = {
   nombre: string;
   peso: number;
 };
-export type Borrador = Record<string, string | ImagenBorrador>;
+/** Por pregunta: texto, una imagen o varias (pregunta «Varias imágenes», D373). */
+export type Borrador = Record<
+  string,
+  string | ImagenBorrador | ImagenBorrador[]
+>;
 
 function esImagenBorrador(v: unknown): v is ImagenBorrador {
   if (!v || typeof v !== "object") return false;
@@ -155,6 +159,13 @@ export function leerBorrador(raw: string | null): Borrador {
       if (typeof v === "string") out[k] = v;
       else if (esImagenBorrador(v)) {
         out[k] = { imagenPath: v.imagenPath, nombre: v.nombre, peso: v.peso };
+      } else if (Array.isArray(v)) {
+        const imgs = v.filter(esImagenBorrador).map((i) => ({
+          imagenPath: i.imagenPath,
+          nombre: i.nombre,
+          peso: i.peso,
+        }));
+        if (imgs.length > 0) out[k] = imgs;
       }
     }
     return out;

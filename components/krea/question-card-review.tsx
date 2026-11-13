@@ -1,6 +1,9 @@
 import { useId } from "react";
 import { ImageViewer } from "@/components/krea/image-viewer";
-import type { QuestionAnswer } from "@/components/krea/question-card-detail";
+import type {
+  AnswerImage,
+  QuestionAnswer,
+} from "@/components/krea/question-card-detail";
 import { QuestionHeader } from "@/components/krea/question-header";
 import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
@@ -27,6 +30,32 @@ type QuestionCardReviewProps = {
   comentarioAyuda?: string;
   level?: 2 | 3 | 4;
 };
+
+/** Imagen de 280 con «Ampliar» abajo a la derecha (visor a pantalla completa). */
+function ImagenRevision({
+  imagen,
+  enunciado,
+}: {
+  imagen: AnswerImage;
+  enunciado: string;
+}) {
+  return (
+    <div className="relative aspect-4/3 w-70 max-w-full overflow-hidden rounded-nav bg-surface-2">
+      {/* biome-ignore lint/performance/noImgElement: blobs locales y remotos (D046) */}
+      <img
+        src={imagen.src}
+        alt={imagen.alt}
+        className="size-full object-cover"
+      />
+      <ImageViewer
+        src={imagen.src}
+        alt={imagen.alt}
+        enunciado={enunciado}
+        className="absolute right-2 bottom-2"
+      />
+    </div>
+  );
+}
 
 /*
  * Tarjeta de pregunta, variante evaluar (profesor) — HANDOFF §2.16, §3 "Evaluar entrega".
@@ -63,21 +92,17 @@ export function QuestionCardReview({
           <p className="rounded-nav bg-surface-2 px-3.5 py-3 text-callout text-text">
             {respuesta.texto}
           </p>
+        ) : respuesta.tipo === "imagen" ? (
+          <ImagenRevision imagen={respuesta} enunciado={enunciado} />
         ) : (
-          <div className="relative aspect-4/3 w-70 max-w-full overflow-hidden rounded-nav bg-surface-2">
-            {/* biome-ignore lint/performance/noImgElement: blobs locales y remotos (D046) */}
-            <img
-              src={respuesta.src}
-              alt={respuesta.alt}
-              className="size-full object-cover"
-            />
-            <ImageViewer
-              src={respuesta.src}
-              alt={respuesta.alt}
-              enunciado={enunciado}
-              className="absolute right-2 bottom-2"
-            />
-          </div>
+          // Varias imágenes (D373): cada una con su «Ampliar»
+          <ul className="m-0 flex list-none flex-wrap gap-3 p-0">
+            {respuesta.imagenes.map((img) => (
+              <li key={img.src} className="max-w-full">
+                <ImagenRevision imagen={img} enunciado={enunciado} />
+              </li>
+            ))}
+          </ul>
         )}
         {score}
         <Field

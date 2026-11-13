@@ -1,4 +1,8 @@
 // Lógica pura de la tarjeta de pregunta (HANDOFF §2.11 barra, §2.16, D003). Sin React.
+import type {
+  AnswerImage,
+  QuestionAnswer,
+} from "@/components/krea/question-card-detail";
 import { formatNota, gradeColor, NOTA_MAX } from "@/lib/grades";
 
 /** Variante de la tarjeta: define el texto del valor de la cabecera (§2.16). */
@@ -60,12 +64,65 @@ export function barWidth(fraction: number): string {
   return `${Math.round(fraction * 1000) / 10}%`;
 }
 
-/** Texto alternativo de una respuesta en imagen: "Respuesta de María a la pregunta 3". */
-export function answerImageAlt(nombre: string, numero: number): string {
-  return `Respuesta de ${nombre} a la pregunta ${numero}`;
+/**
+ * Texto alternativo de una respuesta en imagen: "Respuesta de María a la pregunta 3". Con varias
+ * (D373): "Respuesta de María a la pregunta 3, imagen 1 de 2".
+ */
+export function answerImageAlt(
+  nombre: string,
+  numero: number,
+  imagen?: { n: number; de: number },
+): string {
+  const base = `Respuesta de ${nombre} a la pregunta ${numero}`;
+  return imagen && imagen.de > 1
+    ? `${base}, imagen ${imagen.n} de ${imagen.de}`
+    : base;
+}
+
+/**
+ * Ayuda de una pregunta «Varias imágenes» (D373): "Hasta 2 imágenes · llevas 1.". PROVISIONAL
+ * (CONTENT_CHECKLIST fila 190).
+ */
+export function imagenesAyuda(llevas: number, limite: number): string {
+  const tope = `Hasta ${limite} imágenes`;
+  if (llevas === 0) return `${tope}. Sube al menos una.`;
+  if (llevas >= limite) return `${tope}: ya subiste ${llevas}.`;
+  return `${tope} · llevas ${llevas}.`;
 }
 
 /** Aviso de la pregunta bloqueada para quien no es capitán (D012). */
 export function lockedMessage(capitan: string): string {
   return `Solo ${capitan} puede responder.`;
+}
+
+/**
+ * Imágenes de una respuesta ya firmadas (D195) → lo que pinta la tarjeta: una imagen, varias
+ * (D373) o `null` si no se pudo firmar ninguna (la página pone su texto de respaldo). Las que no
+ * se firmaron se saltan.
+ */
+export function respuestaFirmada(
+  imagenes: ReadonlyArray<{ ruta: string; alt: string }>,
+  urls: ReadonlyMap<string, string>,
+): Exclude<QuestionAnswer, { tipo: "texto" }> | null {
+  const firmadas: AnswerImage[] = imagenes.flatMap(({ ruta, alt }) => {
+    const src = urls.get(ruta);
+    return src ? [{ src, alt }] : [];
+  });
+  const [unica] = firmadas;
+  if (!unica) return null;
+  return imagenes.length === 1
+    ? { tipo: "imagen", ...unica }
+    : { tipo: "imagenes", imagenes: firmadas };
+}
+
+/** Rutas con su `alt` («…, imagen 1 de 2» si son varias, D373). */
+export function imagenesConAlt(
+  rutas: readonly string[],
+  nombre: string,
+  numero: number,
+): Array<{ ruta: string; alt: string }> {
+  return rutas.map((ruta, i) => ({
+    ruta,
+    alt: answerImageAlt(nombre, numero, { n: i + 1, de: rutas.length }),
+  }));
 }

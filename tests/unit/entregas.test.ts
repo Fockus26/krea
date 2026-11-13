@@ -207,6 +207,47 @@ describe("respuestas y entrega armada", () => {
     expect(mal({ p1: { imagenPath: ajena }, p2: { texto: "a" } })).toBeNull();
   });
 
+  test("varias imágenes (D373): de 1 al límite, sin repetir, se guarda `imagenPaths`", async () => {
+    const c = await carpetaEntrega(idEntrega(GRUPAL.id, "5a-g2"));
+    const img = (n: number) =>
+      claveImagen(GRUPAL.id, c, `${UUID.slice(0, -1)}${n}`);
+    const preguntas = [
+      { id: "p1", formato: "imagen" as const, maxImagenes: 2 },
+    ];
+    const validar = (r: Parameters<typeof respuestasValidas>[1]) =>
+      respuestasValidas(preguntas, r, GRUPAL.id, c);
+    expect(validar({ p1: { imagenPaths: [img(1), img(2)] } })).toEqual({
+      p1: { imagenPaths: [img(1), img(2)] },
+    });
+    // Una sola en una de varias: también vale, con la misma forma
+    expect(validar({ p1: { imagenPath: img(1) } })).toEqual({
+      p1: { imagenPaths: [img(1)] },
+    });
+    expect(validar({ p1: { imagenPaths: [img(1), img(2), img(3)] } })).toBe(
+      null,
+    );
+    expect(validar({ p1: { imagenPaths: [img(1), img(1)] } })).toBeNull();
+    expect(validar({ p1: { imagenPaths: [] } })).toBeNull();
+    const ajena = claveImagen(GRUPAL.id, "a".repeat(32), UUID);
+    expect(validar({ p1: { imagenPaths: [img(1), ajena] } })).toBeNull();
+    // Una de una imagen sigue guardando `imagenPath`; dos no caben
+    const una = [{ id: "p1", formato: "imagen" as const }];
+    expect(
+      respuestasValidas(una, { p1: { imagenPaths: [img(1)] } }, GRUPAL.id, c),
+    ).toEqual({ p1: { imagenPath: img(1) } });
+    expect(
+      respuestasValidas(
+        una,
+        { p1: { imagenPaths: [img(1), img(2)] } },
+        GRUPAL.id,
+        c,
+      ),
+    ).toBeNull();
+    expect(
+      imagenesDe({ p1: { imagenPaths: [img(1), img(2)] }, p2: { texto: "a" } }),
+    ).toEqual([img(1), img(2)]);
+  });
+
   test("grupal: integrantes del equipo (con el capitán), valida con zEntrega", async () => {
     const p = permisoEntrega(CAPITAN, GRUPAL, GRUPAL.id, EQUIPO);
     if (!p.ok) throw new Error(p.error);
@@ -404,6 +445,18 @@ describe("borrador del dispositivo (D196)", () => {
     });
   });
 
+  test("varias imágenes (D373): la lista de las subidas, sin las incompletas", () => {
+    const img = { imagenPath: "entregas/a/b/c.jpg", nombre: "a.jpg", peso: 9 };
+    expect(
+      leerBorrador(
+        JSON.stringify({
+          p1: [img, { nombre: "x" }],
+          p2: [{ nombre: "x" }],
+        }),
+      ),
+    ).toEqual({ p1: [img] });
+  });
+
   test("clave por alumno", () => {
     expect(claveBorrador("competencia", "33272397")).toBe(
       "krea-borrador-competencia-33272397",
@@ -507,7 +560,7 @@ describe("entregaVista", () => {
       hora: "4:12 p. m.",
       evaluada: false,
       respuestas: [
-        { tipo: "imagen", imagenPath: "entregas/presentacion/abc/x.jpg" },
+        { tipo: "imagen", imagenPaths: ["entregas/presentacion/abc/x.jpg"] },
         { tipo: "texto", texto: "A 2 dólares" },
       ],
     });
@@ -592,7 +645,7 @@ describe("entregaVista grupal por persona (D248)", () => {
       notaHref: null,
     });
     expect(v.respuestas).toEqual([
-      { tipo: "imagen", imagenPath: "entregas/presentacion/abc/x.jpg" },
+      { tipo: "imagen", imagenPaths: ["entregas/presentacion/abc/x.jpg"] },
       { tipo: "texto", texto: "A 2 dólares" },
     ]);
   });

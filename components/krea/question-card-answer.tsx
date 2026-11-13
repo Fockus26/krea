@@ -8,7 +8,11 @@ import { QuestionHeader } from "@/components/krea/question-header";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { ANSWER_MAX_LENGTH, lockedMessage } from "@/lib/question";
+import {
+  ANSWER_MAX_LENGTH,
+  imagenesAyuda,
+  lockedMessage,
+} from "@/lib/question";
 
 type QuestionCardAnswerBase = {
   numero: number;
@@ -31,6 +35,15 @@ type QuestionCardAnswerProps = QuestionCardAnswerBase &
         onValueChange: (value: string) => void;
       }
     | { formato: "imagen"; upload: ImageUploadProps }
+    | {
+        /** Pregunta «Varias imágenes» (D373): una zona por imagen y otra para añadir. */
+        formato: "imagenes";
+        /** Las ya elegidas (subiendo o listas), cada una con su `key` estable. */
+        uploads: ReadonlyArray<ImageUploadProps & { key: string }>;
+        /** Zona vacía para añadir otra; `null` al llegar al límite. */
+        agregar: ImageUploadProps | null;
+        limite: number;
+      }
   );
 
 /*
@@ -41,6 +54,7 @@ type QuestionCardAnswerProps = QuestionCardAnswerBase &
 export function QuestionCardAnswer(props: QuestionCardAnswerProps) {
   const { numero, enunciado, valor, bloqueadaPor, level, formato } = props;
   const titleId = useId();
+  const helpId = useId();
   const FormatIcon = formato === "texto" ? Type : ImageIcon;
   return (
     <li className="list-none">
@@ -55,7 +69,11 @@ export function QuestionCardAnswer(props: QuestionCardAnswerProps) {
         />
         <Badge variant="acc" className="self-start">
           <FormatIcon aria-hidden="true" />
-          {formato === "texto" ? "Texto" : "Imagen"}
+          {formato === "texto"
+            ? "Texto"
+            : formato === "imagen"
+              ? "Imagen"
+              : "Imágenes"}
         </Badge>
         {bloqueadaPor ? (
           <p className="text-small-b flex icono-linea gap-2 rounded-nav bg-surface-2 px-3.5 py-3 text-text-2">
@@ -71,8 +89,23 @@ export function QuestionCardAnswer(props: QuestionCardAnswerProps) {
             value={props.value}
             onChange={(event) => props.onValueChange(event.currentTarget.value)}
           />
-        ) : (
+        ) : props.formato === "imagen" ? (
           <ImageUpload {...props.upload} />
+        ) : (
+          // Nombrado por el enunciado; la ayuda dice cuántas lleva y el tope (D373)
+          <fieldset
+            aria-labelledby={titleId}
+            aria-describedby={helpId}
+            className="m-0 flex min-w-0 flex-col gap-3 border-0 p-0"
+          >
+            <p id={helpId} className="text-small text-text-2">
+              {imagenesAyuda(props.uploads.length, props.limite)}
+            </p>
+            {props.uploads.map(({ key, ...u }) => (
+              <ImageUpload key={key} {...u} />
+            ))}
+            {props.agregar ? <ImageUpload {...props.agregar} /> : null}
+          </fieldset>
         )}
       </Card>
     </li>

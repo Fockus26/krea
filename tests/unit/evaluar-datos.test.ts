@@ -245,8 +245,12 @@ describe("cola y vista", () => {
       { tipo: "texto", texto: "Hola" },
       {
         tipo: "imagen",
-        ruta: "entregas/x.jpg",
-        alt: "Respuesta de Yeilin Duarte a la pregunta 2",
+        imagenes: [
+          {
+            ruta: "entregas/x.jpg",
+            alt: "Respuesta de Yeilin Duarte a la pregunta 2",
+          },
+        ],
       },
     ]);
     expect(v.inicial).toEqual({

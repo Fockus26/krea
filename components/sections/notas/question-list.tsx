@@ -1,5 +1,8 @@
 import { useId } from "react";
-import { QuestionCardDetail } from "@/components/krea/question-card-detail";
+import {
+  type QuestionAnswer,
+  QuestionCardDetail,
+} from "@/components/krea/question-card-detail";
 import { preguntasResumenTexto } from "@/lib/notas";
 
 export type PreguntaDetalle = {
@@ -8,8 +11,11 @@ export type PreguntaDetalle = {
   valor: number;
   obtenido: number;
   respuesta: string;
-  /** Respuesta en imagen ya firmada (D195); sin ella se muestra `respuesta` en texto. */
-  imagen?: { src: string; alt: string };
+  /**
+   * Respuesta en imagen ya firmada (D195): una o varias (D373). Sin ella se muestra `respuesta`
+   * en texto.
+   */
+  imagen?: Exclude<QuestionAnswer, { tipo: "texto" }>;
   comentario?: string;
 };
 
@@ -43,11 +49,7 @@ export function QuestionList({
             enunciado={p.enunciado}
             valor={p.valor}
             obtenido={p.obtenido}
-            respuesta={
-              p.imagen
-                ? { tipo: "imagen", ...p.imagen }
-                : { tipo: "texto", texto: p.respuesta }
-            }
+            respuesta={p.imagen ?? { tipo: "texto", texto: p.respuesta }}
             comentario={p.comentario}
             level={3}
           />

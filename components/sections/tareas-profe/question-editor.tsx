@@ -6,13 +6,19 @@ import { Button } from "@/components/ui/button";
 import { cardVariants } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { MAX_IMAGENES_TOPE } from "@/lib/modelo";
 import {
+  CANTIDAD_IMAGENES,
   type ErroresPregunta,
   type FormatoPregunta,
+  LIMITE_IMAGENES,
+  MAX_IMAGENES_INICIAL,
   type PreguntaBorrador,
+  UNA_IMAGEN,
   VALOR_MAX,
   VALOR_MIN,
   VALOR_PASO,
+  VARIAS_IMAGENES,
 } from "@/lib/tareas-profe";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +45,8 @@ function MensajeError({ id, children }: { id: string; children: string }) {
  * Los errores salen tras intentar publicar y no se anuncian en cada tecla (D071): se leen por
  * `aria-describedby` al enfocar el campo. `bloqueada` (tarea con entregas o cerrada, D200): se lee
  * pero no se cambia (campos de solo lectura, formato deshabilitado, sin eliminar).
+ * Imagen (D373): «Imágenes» Una/Varias y, con Varias, el «Máximo» (2–10). Con `ampliarDesde`
+ * (tarea con entregas) solo se puede subir el límite desde ese número: lo enviado sigue valiendo.
  */
 export function QuestionEditor({
   pregunta,
@@ -48,6 +56,7 @@ export function QuestionEditor({
   onCambio,
   onEliminar,
   bloqueada = false,
+  ampliarDesde,
 }: {
   pregunta: PreguntaBorrador;
   numero: number;
@@ -57,8 +66,14 @@ export function QuestionEditor({
   onCambio: (cambios: Partial<Omit<PreguntaBorrador, "id">>) => void;
   onEliminar: () => void;
   bloqueada?: boolean;
+  /** Bloqueada pero con entregas en curso: el límite de imágenes guardado, que solo sube. */
+  ampliarDesde?: number;
 }) {
   const ids = preguntaDomId(pregunta.id);
+  const labelLimite = `pregunta-${pregunta.id}-limite`;
+  const varias = pregunta.maxImagenes != null;
+  const limiteFijo = bloqueada && ampliarDesde === undefined;
+  const minimoLimite = Math.max(MAX_IMAGENES_INICIAL, ampliarDesde ?? 0);
   const errEnunciado = `${ids.error}-enunciado`;
   const errValor = `${ids.error}-valor`;
   const labelValor = `pregunta-${pregunta.id}-valor`;
@@ -134,6 +149,56 @@ export function QuestionEditor({
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
+        {pregunta.formato === "imagen" ? (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-label text-text" aria-hidden="true">
+              {CANTIDAD_IMAGENES}
+            </span>
+            <ToggleGroup
+              aria-label={`Cantidad de imágenes de la pregunta ${numero}`}
+              disabled={limiteFijo}
+              value={varias ? "varias" : "una"}
+              onValueChange={(v) => {
+                if (!v) return;
+                onCambio({
+                  maxImagenes: v === "varias" ? minimoLimite : null,
+                });
+              }}
+            >
+              <ToggleGroupItem
+                value="una"
+                // Ya guardada con varias y con entregas: no se vuelve a una (D373)
+                disabled={(ampliarDesde ?? 1) > 1}
+              >
+                {UNA_IMAGEN}
+              </ToggleGroupItem>
+              <ToggleGroupItem value="varias">
+                {VARIAS_IMAGENES}
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </div>
+        ) : null}
+        {pregunta.formato === "imagen" && varias ? (
+          <div className="flex min-w-0 max-w-full flex-col gap-1.5">
+            <span id={labelLimite} className="text-label text-text">
+              {LIMITE_IMAGENES}
+              <span className="sr-only">
+                {" "}
+                de imágenes de la pregunta {numero}
+              </span>
+            </span>
+            <NumberStepper
+              aria-labelledby={labelLimite}
+              value={pregunta.maxImagenes ?? minimoLimite}
+              onChange={(v) => onCambio({ maxImagenes: v })}
+              min={minimoLimite}
+              max={MAX_IMAGENES_TOPE}
+              step={1}
+              unit="imágenes"
+              readOnly={limiteFijo}
+            />
+          </div>
+        ) : null}
         <div className="flex min-w-0 max-w-full flex-col gap-1.5">
           <span id={labelValor} className="text-label text-text">
             Valor

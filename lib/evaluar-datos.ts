@@ -22,6 +22,7 @@ import {
   type Evaluacion,
   type Pregunta,
   type PreguntaBorrador,
+  rutasImagen,
   sumaValores,
   type TareaDoc,
   type Usuario,
@@ -29,7 +30,7 @@ import {
   zInstante,
   zPuntaje,
 } from "@/lib/modelo";
-import { answerImageAlt } from "@/lib/question";
+import { imagenesConAlt } from "@/lib/question";
 import { estiloDe, nombreCorto } from "@/lib/vistas-estudiante";
 
 type ConId<T> = { id: string } & T;
@@ -331,7 +332,8 @@ export const NO_PARTICIPO_ESTADO = `Queda con ${formatNota(NOTA_MIN)}`;
 
 export type RespuestaEvaluar =
   | { tipo: "texto"; texto: string }
-  | { tipo: "imagen"; ruta: string; alt: string };
+  /** Una o varias (D373), en orden; cada una con su `alt`. */
+  | { tipo: "imagen"; imagenes: ReadonlyArray<{ ruta: string; alt: string }> };
 
 export type VistaEvaluar = {
   entregaId: string;
@@ -382,14 +384,12 @@ function respuestaDe(
 ): RespuestaEvaluar {
   const r = e.respuestas[p.id];
   if (!r) return { tipo: "texto", texto: SIN_RESPUESTA };
-  if ("imagenPath" in r) {
-    return {
-      tipo: "imagen",
-      ruta: r.imagenPath,
-      alt: answerImageAlt(autor, numero),
-    };
-  }
-  return { tipo: "texto", texto: r.texto.trim() || SIN_RESPUESTA };
+  if ("texto" in r)
+    return { tipo: "texto", texto: r.texto.trim() || SIN_RESPUESTA };
+  return {
+    tipo: "imagen",
+    imagenes: imagenesConAlt(rutasImagen(r), autor, numero),
+  };
 }
 
 /**
