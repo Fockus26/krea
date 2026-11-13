@@ -171,3 +171,4 @@
 | 184 | Evaluar entrega, junto al nombre marcado: «Queda con 1» | `lib/evaluar-datos.ts` (`NO_PARTICIPO_ESTADO`) | 11-12 X2 no participó (#132) | — | Provisional |
 | 185 | Mis notas / Inicio / Detalle: «No participaste en esta entrega del equipo» · «Puntaje del equipo» | `lib/notas.ts` | 11-12 X2 no participó (#132) | — | Provisional |
 | 189 | Perfil (sin avisos configurados): título «KREA en tu pantalla de inicio» | `aviso-tareas.tsx` (TITULO_SOLO_INSTALAR) | 11-12 fix instalar (D371) | — | Provisional |
+| 190 | Constructor (pregunta de imagen): «Imágenes» · «Una» / «Varias» · «Máximo … imágenes» · Tarea (alumno): «Imágenes» · «Hasta 2 imágenes. Sube al menos una.» / «Hasta 2 imágenes · llevas 1.» / «Hasta 2 imágenes: ya subiste 2.» | `lib/tareas-profe.ts`, `lib/question.ts` (`imagenesAyuda`) | 11-12 varias imágenes (D373) | — | Provisional |
