@@ -5,7 +5,9 @@ import "server-only";
 // con zod: se omite y se registra.
 import { and, arrayContains, eq } from "drizzle-orm";
 import { cache } from "react";
+import { type TarjetaProfe, tarjetasProfes } from "@/lib/contacto";
 import { exigirSesion } from "@/lib/dal";
+import { contactosDeProfes } from "@/lib/data/contacto";
 import { entregasDeIntegrante } from "@/lib/data/entregas";
 import {
   ajusteDeFila,
@@ -46,6 +48,12 @@ export const alumnoActual = cache(
     return { sesion, usuario, seccion: usuario.seccion };
   },
 );
+
+/** «Tus profesores» (D380): los de su sección o de todas que cargaron algún contacto. */
+export const profesDelAlumno = cache(async (): Promise<TarjetaProfe[]> => {
+  const { seccion } = await alumnoActual();
+  return tarjetasProfes(await contactosDeProfes(db(), seccion));
+});
 
 export const equipoPorId = cache(
   async (id: string): Promise<ConId<Equipo> | null> => {

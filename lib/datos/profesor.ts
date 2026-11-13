@@ -4,7 +4,9 @@ import "server-only";
 // catálogo (`seccion: null`, D323); el mapeo a las pantallas es puro (`lib/tareas-profe-datos.ts`).
 import { and, eq, isNotNull } from "drizzle-orm";
 import { cache } from "react";
+import type { Contacto } from "@/lib/contacto";
 import { exigirSesion } from "@/lib/dal";
+import { leerContacto } from "@/lib/data/contacto";
 import {
   ajusteDeFila,
   entregaDeFila,
@@ -45,6 +47,17 @@ export const profesorActual = cache(
     return { sesion, usuario };
   },
 );
+
+/** Su contacto para los alumnos (D378): vacío si no lo cargó. */
+export const miContacto = cache(async (): Promise<Contacto> => {
+  const sesion = await exigirSesion("profesor");
+  return (
+    (await leerContacto(db(), sesion.uid)) ?? {
+      telefono: null,
+      emailContacto: null,
+    }
+  );
+});
 
 /** Todas las tareas, borradores incluidos. */
 export const tareasProfe = cache(async (): Promise<Array<ConId<TareaDoc>>> => {

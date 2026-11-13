@@ -27,10 +27,13 @@ export function usuarioDeFila(f: FilaUsuario): Usuario | null {
   return u.success ? u.data : null;
 }
 
-/** `Usuario` → columnas (sin el email de recuperación, que va aparte). */
+/**
+ * `Usuario` → columnas, sin el email de recuperación ni el contacto del profe (D378): van aparte,
+ * así que reescribir un perfil con esta fila nunca los borra.
+ */
 export function filaDeUsuario(
   u: Usuario,
-): Omit<FilaUsuario, "emailRecuperacion"> {
+): Omit<FilaUsuario, "emailRecuperacion" | "telefono" | "emailContacto"> {
   return {
     cedula: u.cedula,
     rol: u.rol,

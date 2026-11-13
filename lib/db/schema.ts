@@ -131,6 +131,12 @@ export const usuarios = pgTable(
       .notNull(),
     /** Email real para recuperar la contraseña (antes `privados/{cedula}`). */
     emailRecuperacion: text("email_recuperacion"),
+    /**
+     * Contacto opcional del profesor que ven sus alumnos (D378): teléfono móvil venezolano en
+     * E.164 sin `+` (`58412…`, abre WhatsApp) y correo. `null` = no lo cargó.
+     */
+    telefono: text("telefono"),
+    emailContacto: text("email_contacto"),
     actualizadoEn: ms("actualizado_en").notNull(),
   },
   (t) => [

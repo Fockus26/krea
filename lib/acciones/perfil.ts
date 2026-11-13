@@ -7,8 +7,10 @@ import { eq, sql } from "drizzle-orm";
 import { refresh } from "next/cache";
 import { headers } from "next/headers";
 import { authKrea } from "@/lib/better-auth";
+import { zContacto } from "@/lib/contacto";
 import { zMisDatos } from "@/lib/cuentas-datos";
 import { verificarSesion } from "@/lib/dal";
+import { guardarContactoCon } from "@/lib/data/contacto";
 import { crearPasswordPropia, guardarMisDatosCon } from "@/lib/data/cuentas";
 import { baseDeDatos } from "@/lib/db";
 import { ranking, usuarios } from "@/lib/db/schema";
@@ -208,6 +210,32 @@ export async function guardarMisDatos(
     return { ok: true };
   } catch (e) {
     console.error("[guardarMisDatos]", (e as Error).message);
+    return { ok: false };
+  }
+}
+
+/**
+ * El profesor guarda SU contacto para los alumnos (D378): teléfono móvil venezolano (WhatsApp) y
+ * correo, ambos opcionales; vacío = borrar. La cédula sale de la sesión; el teléfono se guarda
+ * normalizado con la misma función pura que valida el formulario.
+ */
+export async function guardarContacto(
+  entrada: unknown,
+): Promise<ResultadoPerfil> {
+  const sesion = await verificarSesion();
+  const db = baseDeDatos();
+  if (!sesion || sesion.debeCambiarPassword || !db) return { ok: false };
+  if (sesion.rol !== "profesor") return { ok: false };
+  const datos = zContacto.safeParse(entrada);
+  if (!datos.success) return { ok: false };
+  try {
+    const r = await guardarContactoCon(db, sesion.uid, datos.data, Date.now());
+    if (!r.ok) return { ok: false };
+    // El Perfil de sus alumnos vuelve a leer «Tus profesores»
+    refresh();
+    return { ok: true };
+  } catch (e) {
+    console.error("[guardarContacto]", (e as Error).message);
     return { ok: false };
   }
 }
