@@ -7,6 +7,8 @@ import {
   type Entrega,
   type Equipo,
   idEntrega,
+  limiteImagenes,
+  rutasImagen,
   type Tarea,
   type Usuario,
   zRespuesta,
@@ -185,10 +187,14 @@ export function esImagenDe(
 
 /**
  * Respuestas normalizadas: una por pregunta, del formato de la pregunta. Textos sin espacios
- * en los extremos, no vacíos y de hasta `ANSWER_MAX_LENGTH`; imágenes de esta entrega.
+ * en los extremos, no vacíos y de hasta `ANSWER_MAX_LENGTH`; imágenes de esta entrega, de 1 al
+ * límite de la pregunta y sin repetir (D373). Una pregunta de una imagen se guarda `imagenPath`;
+ * la de varias, `imagenPaths` (aunque el alumno haya subido una sola).
  */
 export function respuestasValidas(
-  preguntas: ReadonlyArray<Pick<Tarea["preguntas"][number], "id" | "formato">>,
+  preguntas: ReadonlyArray<
+    Pick<Tarea["preguntas"][number], "id" | "formato" | "maxImagenes">
+  >,
   respuestas: EnvioEntrega["respuestas"],
   tareaId: string,
   carpeta: string,
@@ -205,9 +211,18 @@ export function respuestasValidas(
       if (texto === "" || texto.length > ANSWER_MAX_LENGTH) return null;
       out[p.id] = { texto };
     } else {
-      if (!("imagenPath" in r)) return null;
-      if (!esImagenDe(r.imagenPath, tareaId, carpeta)) return null;
-      out[p.id] = { imagenPath: r.imagenPath };
+      if ("texto" in r) return null;
+      const rutas = rutasImagen(r);
+      const limite = limiteImagenes(p);
+      if (rutas.length === 0 || rutas.length > limite) return null;
+      if (new Set(rutas).size !== rutas.length) return null;
+      if (rutas.some((ruta) => !esImagenDe(ruta, tareaId, carpeta)))
+        return null;
+      const [primera] = rutas;
+      out[p.id] =
+        limite === 1 && primera !== undefined
+          ? { imagenPath: primera }
+          : { imagenPaths: rutas };
     }
   }
   return out;
@@ -317,9 +332,7 @@ export async function comprobarImagenes(
 
 /** Rutas de las respuestas de imagen de un envío (para comprobar que existen en B2). */
 export function imagenesDe(respuestas: EnvioEntrega["respuestas"]): string[] {
-  return Object.values(respuestas).flatMap((r) =>
-    r && "imagenPath" in r ? [r.imagenPath] : [],
-  );
+  return Object.values(respuestas).flatMap((r) => rutasImagen(r));
 }
 
 /** Copy de los errores (PLACEHOLDER de copy, CONTENT_CHECKLIST fila 129). */

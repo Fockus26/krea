@@ -180,6 +180,12 @@ export function TaskBuilder({
   const esBorrador = modo === "borrador";
   const estructuraFija = modo === "con-entregas" || modo === "cerrada";
   const cerrada = modo === "cerrada";
+  // Con entregas, el límite de imágenes guardado solo puede subir (D373)
+  const limiteGuardado = React.useMemo(
+    () =>
+      new Map((inicial.preguntas ?? []).map((p) => [p.id, p.maxImagenes ?? 1])),
+    [inicial.preguntas],
+  );
   // Id del elemento que recibe el foco tras el próximo render (añadir, eliminar, deshacer)
   const foco = React.useRef<string | null>(null);
 
@@ -732,6 +738,11 @@ export function TaskBuilder({
                   errores={errores.preguntas[p.id]}
                   puedeEliminar={tarea.preguntas.length > MIN_PREGUNTAS}
                   bloqueada={estructuraFija}
+                  ampliarDesde={
+                    modo === "con-entregas"
+                      ? (limiteGuardado.get(p.id) ?? 1)
+                      : undefined
+                  }
                   onCambio={(cambios) =>
                     dispatch({ tipo: "editar", id: p.id, cambios })
                   }

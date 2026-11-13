@@ -50,6 +50,7 @@ import {
   claveBorrador,
   type EstadoRespuesta,
   faltaTexto,
+  type ImagenBorrador,
   leerBorrador,
   puedeEntregar,
 } from "@/lib/tareas";
@@ -58,8 +59,14 @@ export type PreguntaEntrega = {
   id: string;
   enunciado: string;
   formato: "texto" | "imagen";
+  /** «Varias imágenes» (D373): de 2 a 10. Ausente = una sola. */
+  maxImagenes?: number;
   valor: number;
 };
+
+/** ¿La pregunta admite varias imágenes? (D373) */
+const esVarias = (p: PreguntaEntrega) =>
+  p.formato === "imagen" && (p.maxImagenes ?? 1) > 1;
 
 export type ImagenRespuesta = {
   status: ImageUploadStatus;
@@ -80,27 +87,61 @@ export type AccionesEntrega = {
 
 /** Respuestas iniciales por id de pregunta (lo que ya estaba en el dispositivo). */
 export type RespuestasIniciales = Readonly<
-  Record<string, string | ImagenRespuesta>
+  Record<string, string | ImagenRespuesta | readonly ImagenRespuesta[]>
 >;
 
+/** Una de las imágenes de una pregunta «Varias» (D373), con su id para la `key` de React. */
+export type ImagenItem = ImagenRespuesta & { id: string };
+
 const IMAGEN_VACIA: ImagenRespuesta = { status: "vacia" };
+
+const nuevoId = () => crypto.randomUUID();
+
+const imagenDeBorrador = (v: ImagenBorrador): ImagenRespuesta => ({
+  status: "lista",
+  file: { name: v.nombre, size: v.peso, src: "" },
+  path: v.imagenPath,
+});
 
 /** Borrador del dispositivo → textos e imágenes ya subidas (sin vista previa: no se descargan). */
 function desdeBorrador(
   b: Borrador,
-): [Record<string, string>, Record<string, ImagenRespuesta>] {
+): [
+  Record<string, string>,
+  Record<string, ImagenRespuesta>,
+  Record<string, ImagenItem[]>,
+] {
   const textos: Record<string, string> = {};
   const imagenes: Record<string, ImagenRespuesta> = {};
+  const varias: Record<string, ImagenItem[]> = {};
   for (const [id, v] of Object.entries(b)) {
     if (typeof v === "string") textos[id] = v;
-    else
-      imagenes[id] = {
-        status: "lista",
-        file: { name: v.nombre, size: v.peso, src: "" },
-        path: v.imagenPath,
-      };
+    else if (Array.isArray(v))
+      varias[id] = v.map((i) => ({ ...imagenDeBorrador(i), id: nuevoId() }));
+    else imagenes[id] = imagenDeBorrador(v);
   }
-  return [textos, imagenes];
+  return [textos, imagenes, varias];
+}
+
+/** Lo que guarda el borrador de una imagen ya subida; `null` si todavía no tiene ruta. */
+function aBorrador(img: ImagenRespuesta): ImagenBorrador | null {
+  return img.status === "lista" && img.path && img.file
+    ? { imagenPath: img.path, nombre: img.file.name, peso: img.file.size }
+    : null;
+}
+
+/** Imágenes iniciales de una pregunta de varias: solo las elegidas (subiendo o listas). */
+function variasIniciales(
+  v: RespuestasIniciales[string] | undefined,
+): ImagenItem[] {
+  const lista: readonly ImagenRespuesta[] = Array.isArray(v)
+    ? v
+    : v && typeof v !== "string"
+      ? [v as ImagenRespuesta]
+      : [];
+  return lista
+    .filter((x) => x.status === "lista" || x.status === "subiendo")
+    .map((x) => ({ ...x, id: nuevoId() }));
 }
 
 /**
@@ -114,7 +155,8 @@ function desdeBorrador(
  * Sin conexión (D292, D295): una imagen elegida queda lista en el teléfono y «Entregar» deja la
  * entrega en la cola (IndexedDB) con el mismo `opId`; se envía sola al volver la red. Mientras
  * espera, «Pendiente de enviar»; si el servidor la rechaza (tarea cerrada o evaluada), el aviso
- * y las respuestas siguen aquí.
+ * y las respuestas siguen aquí. «Varias imágenes» (D373): cada imagen se sube sola al elegirla,
+ * hasta el límite; la pregunta cuenta como respondida con al menos una y ninguna subiendo.
  */
 export function TaskAnswerForm({
   tareaId,
@@ -159,12 +201,27 @@ export function TaskAnswerForm({
       const i: Record<string, ImagenRespuesta> = {};
       for (const p of preguntas) {
         const v = inicial[p.id];
-        if (p.formato === "imagen")
-          i[p.id] = v && typeof v !== "string" ? v : IMAGEN_VACIA;
+        if (p.formato === "imagen" && !esVarias(p))
+          i[p.id] =
+            v && typeof v !== "string" && !Array.isArray(v)
+              ? (v as ImagenRespuesta)
+              : IMAGEN_VACIA;
       }
       return i;
     },
   );
+  // Preguntas de varias imágenes (D373): solo las elegidas; la zona para añadir va aparte
+  const [varias, setVarias] = useState<Record<string, ImagenItem[]>>(() =>
+    Object.fromEntries(
+      preguntas
+        .filter(esVarias)
+        .map((p) => [p.id, variasIniciales(inicial[p.id])]),
+    ),
+  );
+  // Error de la zona «añadir» de cada pregunta de varias (tipo, peso o la subida falló)
+  const [errorAgregar, setErrorAgregar] = useState<Record<string, string>>({});
+  const quitarError = (id: string) =>
+    setErrorAgregar(({ [id]: _quitado, ...resto }) => resto);
   const [guardado, setGuardado] = useState<Date | null>(null);
   // Cuenta las ediciones del alumno: el borrador solo se guarda si cambió algo
   const [ediciones, setEdiciones] = useState(0);
@@ -198,18 +255,32 @@ export function TaskAnswerForm({
     if (bloqueadaPor || restaurado.current) return;
     restaurado.current = true;
     try {
-      const [t, i] = desdeBorrador(
+      const [t, i, v] = desdeBorrador(
         leerBorrador(window.localStorage.getItem(clave)),
       );
-      const formato = new Map(preguntas.map((p) => [p.id, p.formato]));
-      const soloDe = <T,>(m: Record<string, T>, f: "texto" | "imagen") =>
+      const formato = new Map(
+        preguntas.map((p) => [
+          p.id,
+          esVarias(p) ? ("varias" as const) : p.formato,
+        ]),
+      );
+      const soloDe = <T,>(
+        m: Record<string, T>,
+        f: "texto" | "imagen" | "varias",
+      ) =>
         Object.fromEntries(
           Object.entries(m).filter(([id]) => formato.get(id) === f),
         );
       setTextos((prev) => ({ ...prev, ...soloDe(t, "texto") }));
       // Una imagen sin ruta no se subió: el borrador de las galerías no la restaura
-      if (acciones)
+      if (acciones) {
         setImagenes((prev) => ({ ...prev, ...soloDe(i, "imagen") }));
+        const limite = new Map(preguntas.map((p) => [p.id, p.maxImagenes]));
+        const restauradas = Object.entries(soloDe(v, "varias")).map(
+          ([id, lista]) => [id, lista.slice(0, limite.get(id) ?? 1)] as const,
+        );
+        setVarias((prev) => ({ ...prev, ...Object.fromEntries(restauradas) }));
+      }
     } catch {
       // Sin almacenamiento (modo privado): se trabaja sin borrador
     }
@@ -221,13 +292,12 @@ export function TaskAnswerForm({
     const t = setTimeout(() => {
       const borrador: Borrador = { ...textos };
       for (const [id, img] of Object.entries(imagenes)) {
-        if (img.status === "lista" && img.path && img.file) {
-          borrador[id] = {
-            imagenPath: img.path,
-            nombre: img.file.name,
-            peso: img.file.size,
-          };
-        }
+        const b = aBorrador(img);
+        if (b) borrador[id] = b;
+      }
+      for (const [id, lista] of Object.entries(varias)) {
+        const bs = lista.flatMap((img) => aBorrador(img) ?? []);
+        if (bs.length > 0) borrador[id] = bs;
       }
       try {
         window.localStorage.setItem(clave, JSON.stringify(borrador));
@@ -237,23 +307,32 @@ export function TaskAnswerForm({
       }
     }, BORRADOR_MS);
     return () => clearTimeout(t);
-  }, [ediciones, textos, imagenes, clave, bloqueadaPor]);
+  }, [ediciones, textos, imagenes, varias, clave, bloqueadaPor]);
 
   const imagenLista = (img: ImagenRespuesta | undefined) =>
     img?.status === "lista" &&
     (!acciones || Boolean(img.path) || Boolean(img.pendiente));
-  const imagenesSinSubir = Object.values(imagenes).some(
-    (i) => i.status === "lista" && i.pendiente,
-  );
-  const estados: EstadoRespuesta[] = preguntas.map((p) =>
-    p.formato === "texto"
-      ? { formato: "texto", completa: (textos[p.id] ?? "").trim() !== "" }
-      : {
-          formato: "imagen",
-          completa: imagenLista(imagenes[p.id]),
-          subiendo: imagenes[p.id]?.status === "subiendo",
-        },
-  );
+  const imagenesSinSubir = [
+    ...Object.values(imagenes),
+    ...Object.values(varias).flat(),
+  ].some((i) => i.status === "lista" && i.pendiente);
+  const estados: EstadoRespuesta[] = preguntas.map((p) => {
+    if (p.formato === "texto")
+      return { formato: "texto", completa: (textos[p.id] ?? "").trim() !== "" };
+    if (esVarias(p)) {
+      const lista = varias[p.id] ?? [];
+      return {
+        formato: "imagen",
+        completa: lista.length > 0 && lista.every((i) => imagenLista(i)),
+        subiendo: lista.some((i) => i.status === "subiendo"),
+      };
+    }
+    return {
+      formato: "imagen",
+      completa: imagenLista(imagenes[p.id]),
+      subiendo: imagenes[p.id]?.status === "subiendo",
+    };
+  });
   const { faltan, subiendo } = avanceEntrega(estados);
   // Ya en la cola: no se entrega otra vez (la primera puede estar entrando ahora mismo)
   const listo = puedeEntregar(estados) && !enviando && !enEspera;
@@ -308,6 +387,82 @@ export function TaskAnswerForm({
     if (r.ok || r.error === "red") setEdiciones((n) => n + 1);
   }
 
+  /** Cambia (o quita, con `null`) una imagen de una pregunta de varias, si sigue ahí. */
+  const setItem = (
+    preguntaId: string,
+    itemId: string,
+    v: ImagenRespuesta | null,
+  ) =>
+    setVarias((prev) => {
+      const lista = prev[preguntaId] ?? [];
+      if (!lista.some((i) => i.id === itemId)) return prev;
+      return {
+        ...prev,
+        [preguntaId]:
+          v === null
+            ? lista.filter((i) => i.id !== itemId)
+            : lista.map((i) => (i.id === itemId ? { ...v, id: itemId } : i)),
+      };
+    });
+
+  /** Añade una imagen a una pregunta de varias (D373) y la sube como las de una sola. */
+  async function agregarImagen(
+    p: PreguntaEntrega,
+    blob: Blob,
+    meta: { name: string },
+  ) {
+    const file = { name: meta.name, size: blob.size, src: blob };
+    const limite = p.maxImagenes ?? 1;
+    if ((varias[p.id]?.length ?? 0) >= limite) return;
+    quitarError(p.id);
+    if (acciones && blob.size > IMAGEN_SUBIDA_MAX_BYTES) {
+      setErrorAgregar((prev) => ({
+        ...prev,
+        [p.id]: mensajeErrorEntrega("imagen-peso"),
+      }));
+      return;
+    }
+    const itemId = nuevoId();
+    // Galerías: lista sin subir. Sin red: lista en el teléfono, se sube al entregar (D295)
+    const sinSubir = !acciones || !navigator.onLine;
+    const item: ImagenItem = sinSubir
+      ? { id: itemId, status: "lista", file, pendiente: Boolean(acciones) }
+      : { id: itemId, status: "subiendo", file };
+    setVarias((prev) => ({
+      ...prev,
+      [p.id]: [...(prev[p.id] ?? []), item].slice(0, limite),
+    }));
+    if (!acciones) return;
+    if (sinSubir) {
+      setEdiciones((n) => n + 1);
+      return;
+    }
+    const form = new FormData();
+    form.set("tareaId", tareaId);
+    form.set("preguntaId", p.id);
+    form.set("imagen", blob, "respuesta.jpg");
+    let r: ResultadoSubida;
+    try {
+      r = await acciones.subir(form);
+    } catch {
+      r = { ok: false, error: "red" };
+    }
+    if (r.ok)
+      setItem(p.id, itemId, { status: "lista", file, path: r.imagenPath });
+    else if (r.error === "red")
+      // Se cayó la red al subir: igual que sin conexión
+      setItem(p.id, itemId, { status: "lista", file, pendiente: true });
+    else {
+      const error = r.error;
+      setItem(p.id, itemId, null);
+      setErrorAgregar((prev) => ({
+        ...prev,
+        [p.id]: mensajeErrorEntrega(error),
+      }));
+    }
+    if (r.ok || r.error === "red") setEdiciones((n) => n + 1);
+  }
+
   function limpiarBorrador() {
     try {
       window.localStorage.removeItem(clave);
@@ -327,7 +482,19 @@ export function TaskAnswerForm({
     for (const p of preguntas) {
       if (p.formato === "texto")
         respuestas[p.id] = { texto: textos[p.id] ?? "" };
-      else {
+      else if (esVarias(p)) {
+        // Las ya subidas van en la respuesta; las del teléfono, a la cola (se suman al subir)
+        const lista = varias[p.id] ?? [];
+        const rutas = lista.flatMap((i) => (i.path ? [i.path] : []));
+        if (rutas.length > 0) respuestas[p.id] = { imagenPaths: rutas };
+        for (const img of lista)
+          if (!img.path && img.pendiente && img.file?.src instanceof Blob)
+            locales.push({
+              preguntaId: p.id,
+              imagenId: crypto.randomUUID(),
+              blob: img.file.src,
+            });
+      } else {
         const img = imagenes[p.id];
         if (img?.path) respuestas[p.id] = { imagenPath: img.path };
         else if (img?.pendiente && img.file?.src instanceof Blob)
@@ -391,7 +558,49 @@ export function TaskAnswerForm({
         </h2>
         <ol className="m-0 flex list-none flex-col gap-4 p-0">
           {preguntas.map((p, i) =>
-            p.formato === "texto" ? (
+            esVarias(p) ? (
+              <QuestionCardAnswer
+                key={p.id}
+                numero={i + 1}
+                enunciado={p.enunciado}
+                valor={p.valor}
+                bloqueadaPor={bloqueadaPor}
+                level={3}
+                formato="imagenes"
+                limite={p.maxImagenes ?? 1}
+                uploads={(varias[p.id] ?? []).map((img, j) => ({
+                  key: img.id,
+                  status: img.status,
+                  file: img.file,
+                  progress: img.progress,
+                  alt: `Vista previa de la imagen ${j + 1} de la respuesta de ${autor} a la pregunta ${i + 1}`,
+                  // Una zona llena no ofrece elegir otra: solo quitarla
+                  onSelect: () => {},
+                  onReject: () => {},
+                  onRemove: () => {
+                    setItem(p.id, img.id, null);
+                    setEdiciones((n) => n + 1);
+                  },
+                }))}
+                agregar={
+                  (varias[p.id]?.length ?? 0) < (p.maxImagenes ?? 1)
+                    ? {
+                        status: errorAgregar[p.id] ? "error" : "vacia",
+                        error: errorAgregar[p.id],
+                        onSelect: (blob, meta) => {
+                          void agregarImagen(p, blob, meta);
+                        },
+                        onReject: (message) =>
+                          setErrorAgregar((prev) => ({
+                            ...prev,
+                            [p.id]: message,
+                          })),
+                        onRemove: () => quitarError(p.id),
+                      }
+                    : null
+                }
+              />
+            ) : p.formato === "texto" ? (
               <QuestionCardAnswer
                 key={p.id}
                 numero={i + 1}

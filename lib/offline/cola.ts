@@ -6,10 +6,16 @@
 // Solo se encolan dos cosas (decisión de César, 2026-11-07): la entrega del alumno y crear o
 // editar una tarea del profe. Lo demás que escribe no pasa por aquí.
 
-/** Respuesta ya lista: texto, o imagen ya subida (ruta en B2). */
-export type RespuestaCola = { texto: string } | { imagenPath: string };
+/** Respuesta ya lista: texto, o imagen(es) ya subida(s) (rutas en B2; varias, D373). */
+export type RespuestaCola =
+  | { texto: string }
+  | { imagenPath: string }
+  | { imagenPaths: string[] };
 
-/** Imagen elegida sin conexión: el Blob ya comprimido (`lib/image-entrada.ts`) hasta subirla. */
+/**
+ * Imagen elegida sin conexión: el Blob ya comprimido (`lib/image-entrada.ts`) hasta subirla. En
+ * una pregunta de varias (D373) va una por imagen, con el mismo `preguntaId`.
+ */
 export type ImagenCola = {
   preguntaId: string;
   /** uuid del teléfono: la clave en B2 sale de él, así reintentar pisa el mismo objeto. */

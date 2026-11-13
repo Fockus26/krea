@@ -15,7 +15,7 @@ import { enviarEntrega, subirImagenRespuesta } from "@/lib/acciones/entregas";
 import { verificarSesion } from "@/lib/dal";
 import { datosAlumno, integrantesDe } from "@/lib/datos/estudiante";
 import { urlsFirmadas } from "@/lib/datos/imagenes";
-import { answerImageAlt } from "@/lib/question";
+import { imagenesConAlt, respuestaFirmada } from "@/lib/question";
 import { TAREA_GRUPAL_SEED } from "@/lib/seed-firestore";
 import { entregaVista, RESPUESTA_IMAGEN } from "@/lib/vistas-estudiante";
 
@@ -51,9 +51,7 @@ export default async function TareaPage({ params }: Props) {
   // Respuestas en imagen (ya enviada) y la foto del premio (D265), en una sola pasada
   const urls = await urlsFirmadas([
     ...(d.estado === "entregada"
-      ? d.respuestas.flatMap((r) =>
-          r?.tipo === "imagen" ? [r.imagenPath] : [],
-        )
+      ? d.respuestas.flatMap((r) => (r?.tipo === "imagen" ? r.imagenPaths : []))
       : []),
     ...(d.premioFoto ? [d.premioFoto] : []),
   ]);
@@ -102,8 +100,13 @@ export default async function TareaPage({ params }: Props) {
                 {d.preguntas.map((p, i) => {
                   const r = d.respuestas[i];
                   if (!r) return null;
-                  const src =
-                    r.tipo === "imagen" ? urls.get(r.imagenPath) : null;
+                  const imagen =
+                    r.tipo === "imagen"
+                      ? respuestaFirmada(
+                          imagenesConAlt(r.imagenPaths, d.autor, i + 1),
+                          urls,
+                        )
+                      : null;
                   return (
                     <QuestionCardDetail
                       key={p.id}
@@ -114,13 +117,10 @@ export default async function TareaPage({ params }: Props) {
                       respuesta={
                         r.tipo === "texto"
                           ? r
-                          : src
-                            ? {
-                                tipo: "imagen",
-                                src,
-                                alt: answerImageAlt(d.autor, i + 1),
-                              }
-                            : { tipo: "texto", texto: RESPUESTA_IMAGEN }
+                          : (imagen ?? {
+                              tipo: "texto",
+                              texto: RESPUESTA_IMAGEN,
+                            })
                       }
                       level={3}
                     />

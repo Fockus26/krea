@@ -22,6 +22,7 @@ import {
 } from "@/lib/evaluar-datos";
 import { formatNota } from "@/lib/grades";
 import { idEntrega } from "@/lib/modelo";
+import { respuestaFirmada } from "@/lib/question";
 
 type Props = PageProps<"/profe/evaluar/[entrega]">;
 
@@ -71,17 +72,17 @@ export default async function EvaluarEntregaPage({
 
   const urls = await urlsFirmadas(
     v.preguntas.flatMap((p) =>
-      p.respuesta.tipo === "imagen" ? [p.respuesta.ruta] : [],
+      p.respuesta.tipo === "imagen"
+        ? p.respuesta.imagenes.map((i) => i.ruta)
+        : [],
     ),
   );
   const preguntas = v.preguntas.map(({ respuesta, ...p }) => {
     let r: QuestionAnswer;
     if (respuesta.tipo === "texto") r = respuesta;
     else {
-      const src = urls.get(respuesta.ruta);
-      r = src
-        ? { tipo: "imagen", src, alt: respuesta.alt }
-        : { tipo: "texto", texto: IMAGEN_NO_DISPONIBLE };
+      const imagenes = respuestaFirmada(respuesta.imagenes, urls);
+      r = imagenes ?? { tipo: "texto", texto: IMAGEN_NO_DISPONIBLE };
     }
     return { ...p, respuesta: r };
   });

@@ -203,14 +203,36 @@ export type TipoTareaId = (typeof TIPOS_TAREA)[number];
 export const ESTADOS_TAREA = ["borrador", "abierta", "evaluada"] as const;
 export type EstadoTareaId = (typeof ESTADOS_TAREA)[number];
 
+/** Límite de imágenes de una pregunta «Varias imágenes» (D373): de 2 a 10. */
+export const MAX_IMAGENES_MIN = 2;
+export const MAX_IMAGENES_TOPE = 10;
+export const zMaxImagenes = z
+  .number()
+  .int()
+  .min(MAX_IMAGENES_MIN)
+  .max(MAX_IMAGENES_TOPE);
+
 export const zPregunta = z.object({
   id: z.string().min(1).max(40),
   enunciado: texto(500),
   formato: z.enum(["texto", "imagen"]),
+  /**
+   * Solo en imagen (D373): cuántas imágenes puede subir el alumno, de 2 a 10. Ausente = una sola
+   * (las preguntas de antes siguen igual, sin migración).
+   */
+  maxImagenes: zMaxImagenes.optional(),
   /** Valor sobre 20 en pasos de 0,5; mayor que 0. */
   valor: zPuntaje.refine((n) => n > 0, "El valor debe ser mayor que 0"),
 });
 export type Pregunta = z.infer<typeof zPregunta>;
+
+/** Imágenes que admite la pregunta: 1 salvo «Varias imágenes» (D373). */
+export function limiteImagenes(p: {
+  formato: "texto" | "imagen";
+  maxImagenes?: number | null | undefined;
+}): number {
+  return p.formato === "imagen" ? (p.maxImagenes ?? 1) : 0;
+}
 
 /**
  * Decisión del profe ante un empate en la mejor nota de una sección (D123, D124, D201): «dar» a
@@ -312,6 +334,7 @@ export const zPreguntaBorrador = z.object({
   id: zPregunta.shape.id,
   enunciado: z.string().trim().max(500),
   formato: zPregunta.shape.formato,
+  maxImagenes: zPregunta.shape.maxImagenes,
   valor: zPregunta.shape.valor.nullable(),
 });
 export type PreguntaBorrador = z.infer<typeof zPreguntaBorrador>;
@@ -354,10 +377,26 @@ export function sumaValores(
 export const ESTADOS_ENTREGA = ["borrador", "entregada", "evaluada"] as const;
 export type EstadoEntregaId = (typeof ESTADOS_ENTREGA)[number];
 
+/**
+ * Respuesta: texto, una imagen (`imagenPath`) o varias (`imagenPaths`, D373). Una pregunta de una
+ * imagen sigue guardando `imagenPath`; quien lee las rutas usa `rutasImagen`.
+ */
 export const zRespuesta = z.union([
   z.object({ texto: z.string().max(5000) }),
   z.object({ imagenPath: z.string().min(1) }),
+  z.object({
+    imagenPaths: z.array(z.string().min(1)).min(1).max(MAX_IMAGENES_TOPE),
+  }),
 ]);
+export type Respuesta = z.infer<typeof zRespuesta>;
+
+/** Rutas de imagen de una respuesta, en orden (ninguna si es de texto). */
+export function rutasImagen(r: Respuesta | null | undefined): string[] {
+  if (!r) return [];
+  if ("imagenPaths" in r) return [...r.imagenPaths];
+  if ("imagenPath" in r) return [r.imagenPath];
+  return [];
+}
 
 export const zEvaluacion = z.object({
   /** Puntos por pregunta (id → puntos); `null` si la nota vino del Excel sin desglose. */

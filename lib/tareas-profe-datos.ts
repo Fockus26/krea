@@ -18,6 +18,7 @@ import {
   type DecisionPremio,
   type Entrega,
   type Equipo,
+  rutasImagen,
   type SeccionId,
   sumaValores as sumaModelo,
   type TareaDoc,
@@ -26,6 +27,7 @@ import {
   zDecisionPremio,
   zDia,
   zHora,
+  zMaxImagenes,
   zPuntaje,
   zSeccion,
   zTarea,
@@ -83,6 +85,8 @@ export const zEntradaTarea = z.object({
         id: z.string().regex(/^[A-Za-z0-9_-]{1,40}$/, "Id inválido"),
         enunciado: z.string().trim().max(500),
         formato: z.enum(["texto", "imagen"]),
+        // Varias imágenes (D373); ausente o `null` = una sola. En texto se ignora al guardar
+        maxImagenes: zMaxImagenes.nullable().optional(),
         valor: zPuntaje.refine((n) => n > 0).nullable(),
       }),
     )
@@ -173,6 +177,31 @@ function fechaOk(
 
 const horaDe = (e: Pick<EntradaTarea, "hora">) => e.hora ?? null;
 
+/**
+ * Preguntas como se guardan: `maxImagenes` solo en las de imagen con «Varias» (D373); en texto, o
+ * `null` (una imagen), no se escribe.
+ */
+function preguntasDe(entrada: Pick<EntradaTarea, "preguntas">) {
+  return entrada.preguntas.map(({ maxImagenes, ...p }) =>
+    p.formato === "imagen" && maxImagenes != null ? { ...p, maxImagenes } : p,
+  );
+}
+
+/**
+ * Con entregas las preguntas no cambian (D200), salvo subir el límite de imágenes (D373): una
+ * respuesta ya enviada sigue cabiendo. Bajarlo, o cualquier otro cambio, no se aplica.
+ */
+function conLimitesAmpliados<
+  P extends { id: string; formato: string; maxImagenes?: number | undefined },
+>(guardadas: readonly P[], entrada: Pick<EntradaTarea, "preguntas">): P[] {
+  const pedidas = new Map(entrada.preguntas.map((p) => [p.id, p]));
+  return guardadas.map((p) => {
+    const nueva = pedidas.get(p.id)?.maxImagenes;
+    if (p.formato !== "imagen" || nueva == null) return p;
+    return nueva > (p.maxImagenes ?? 1) ? { ...p, maxImagenes: nueva } : p;
+  });
+}
+
 /** Tarea publicada completa (D004): todo escrito y la suma en 20 exactos. */
 function publicada(
   a: Armar,
@@ -202,7 +231,7 @@ function publicada(
     horaEntrega: horaDe(entrada),
     premio: premioDe(entrada),
     ...fotoDe(premioDe(entrada), a.previa),
-    preguntas: entrada.preguntas,
+    preguntas: preguntasDe(entrada),
     importada: false,
     autorId: base.autorId,
     actualizadoEn: a.ahora,
@@ -238,7 +267,8 @@ function conFotoSuelta(r: Armada, previa: TareaDoc | null): Armada {
 /**
  * Documento que se escribe (D199, D200). Borrador o nueva: «borrador» guarda lo que haya (con
  * título) y «publicar» exige la tarea completa. Abierta: solo «guardar»; con entregas, solo
- * título, fecha y premio (las preguntas, el tipo y las secciones quedan como estaban). Cerrada
+ * título, fecha, premio y subir el límite de imágenes (D373; lo demás de las preguntas, el tipo y
+ * las secciones quedan como estaban). Cerrada
  * (`evaluada`) o importada del Excel: no se cambia.
  */
 export function armarTarea(a: Armar): Armada {
@@ -271,6 +301,10 @@ function armarSinFoto(a: Armar): Armada {
       horaEntrega: horaDe(entrada),
       premio,
       ...fotoDe(premio, previa),
+      preguntas: conLimitesAmpliados<TareaDoc["preguntas"][number]>(
+        previa.preguntas,
+        entrada,
+      ),
       actualizadoEn: a.ahora,
     });
     return r.success
@@ -291,7 +325,7 @@ function armarSinFoto(a: Armar): Armada {
     horaEntrega: horaDe(entrada),
     premio: premioDe(entrada),
     ...fotoDe(premioDe(entrada), previa),
-    preguntas: entrada.preguntas,
+    preguntas: preguntasDe(entrada),
     importada: false,
     autorId,
     actualizadoEn: a.ahora,
@@ -499,7 +533,7 @@ export function planEliminar(
   for (const e of entregas) {
     secciones.add(e.seccion);
     for (const r of Object.values(e.respuestas)) {
-      if ("imagenPath" in r) imagenes.push(r.imagenPath);
+      imagenes.push(...rutasImagen(r));
     }
   }
   const s = ordenarSecciones(secciones);
@@ -519,10 +553,13 @@ export function datosBorradorDe(t: TareaDoc): DatosBorrador {
     hora: horaCampo(t.horaEntrega ?? null),
     secciones: [...t.secciones],
     premio: t.premio ?? "",
-    preguntas: t.preguntas.map(({ id, enunciado, formato, valor }) => ({
+    preguntas: t.preguntas.map(({ id, enunciado, formato, valor, ...p }) => ({
       id,
       enunciado,
       formato,
+      ...(formato === "imagen" && p.maxImagenes
+        ? { maxImagenes: p.maxImagenes }
+        : {}),
       valor,
     })),
   };

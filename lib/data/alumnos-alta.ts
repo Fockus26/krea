@@ -36,7 +36,12 @@ import {
 } from "@/lib/db/schema";
 import { cambiosEntre, conCambios, estadoDeDatos } from "@/lib/equipos-datos";
 import { equipoDeCedula, moverAlumno } from "@/lib/equipos-profe";
-import { type SeccionId, type Usuario, zAjuste } from "@/lib/modelo";
+import {
+  rutasImagen,
+  type SeccionId,
+  type Usuario,
+  zAjuste,
+} from "@/lib/modelo";
 
 /**
  * ¿Puede un alumno nuevo de `seccion` entrar en `equipoId`? Se mira ANTES de crear la cuenta para
@@ -188,7 +193,7 @@ function planear(l: Lecturas) {
     if (!borradas.has(d.id)) continue;
     const e = entregaDeFila(d);
     for (const r of Object.values(e?.respuestas ?? {}))
-      if ("imagenPath" in r) imagenes.add(r.imagenPath);
+      for (const ruta of rutasImagen(r)) imagenes.add(ruta);
   }
 
   // Sacarlo del equipo con la regla del tablero: si era capitán, el cargo pasa al siguiente

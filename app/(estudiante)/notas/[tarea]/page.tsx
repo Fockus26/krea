@@ -11,7 +11,7 @@ import tareaSeed from "@/data/seed/tarea-identidad-marca.json";
 import { verificarSesion } from "@/lib/dal";
 import { datosAlumno } from "@/lib/datos/estudiante";
 import { urlsFirmadas } from "@/lib/datos/imagenes";
-import { answerImageAlt } from "@/lib/question";
+import { imagenesConAlt, respuestaFirmada } from "@/lib/question";
 import { TAREA_GRUPAL_SEED } from "@/lib/seed-firestore";
 import { detalleNota } from "@/lib/vistas-estudiante";
 
@@ -60,13 +60,14 @@ export default async function DetalleNotaPage({ params }: Props) {
 
   // Solo se firman las imágenes de esta entrega, que es suya (D195)
   const urls = await urlsFirmadas(
-    d.preguntas.flatMap((p) => (p.imagenPath ? [p.imagenPath] : [])),
+    d.preguntas.flatMap((p) => p.imagenPaths ?? []),
   );
-  const preguntas = d.preguntas.map(({ imagenPath, ...p }, i) => {
-    const src = imagenPath ? urls.get(imagenPath) : undefined;
-    return src
-      ? { ...p, imagen: { src, alt: answerImageAlt(d.autor, i + 1) } }
-      : p;
+  const preguntas = d.preguntas.map(({ imagenPaths, ...p }, i) => {
+    const imagen = respuestaFirmada(
+      imagenesConAlt(imagenPaths ?? [], d.autor, i + 1),
+      urls,
+    );
+    return imagen ? { ...p, imagen } : p;
   });
 
   return (

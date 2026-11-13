@@ -16,7 +16,7 @@ import {
 } from "@/lib/fecha";
 import { NOTA_MAX } from "@/lib/grades";
 import { percent, sumMeterInfo } from "@/lib/meters";
-import type { SeccionId } from "@/lib/modelo";
+import { MAX_IMAGENES_MIN, type SeccionId } from "@/lib/modelo";
 import {
   listaSecciones,
   ordenarSecciones,
@@ -267,10 +267,24 @@ export const VALOR_MIN = 0.5;
 export const VALOR_MAX = NOTA_MAX;
 export const VALOR_PASO = 0.5;
 
+/** Límite al elegir «Varias imágenes» (D373): el mínimo de la regla. */
+export const MAX_IMAGENES_INICIAL = MAX_IMAGENES_MIN;
+
+/* Cantidad de imágenes (D373). PROVISIONAL (CONTENT_CHECKLIST fila 190) */
+export const CANTIDAD_IMAGENES = "Imágenes";
+export const UNA_IMAGEN = "Una";
+export const VARIAS_IMAGENES = "Varias";
+export const LIMITE_IMAGENES = "Máximo";
+
 export type PreguntaBorrador = {
   id: string;
   enunciado: string;
   formato: FormatoPregunta;
+  /**
+   * Solo en imagen: `null` o ausente = una imagen; un número = «Varias», hasta ese límite (D373).
+   * Se conserva al pasar a Texto (como el premio, D116) pero no se guarda.
+   */
+  maxImagenes?: number | null;
   /** `null` = sin valor todavía (D103): cuenta 0 en la suma. */
   valor: number | null;
 };
@@ -584,12 +598,15 @@ export function tareaAGuardar(t: TareaBorrador) {
     hora: horaValor(t.hora),
     secciones: [...t.secciones],
     premio: premio || null,
-    preguntas: t.preguntas.map(({ id, enunciado, formato, valor }) => ({
-      id,
-      enunciado: enunciado.trim(),
-      formato,
-      valor,
-    })),
+    preguntas: t.preguntas.map(
+      ({ id, enunciado, formato, valor, maxImagenes }) => ({
+        id,
+        enunciado: enunciado.trim(),
+        formato,
+        ...(formato === "imagen" && maxImagenes != null ? { maxImagenes } : {}),
+        valor,
+      }),
+    ),
   };
 }
 

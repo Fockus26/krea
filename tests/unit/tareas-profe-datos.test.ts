@@ -37,6 +37,7 @@ import {
   tareaProfeDe,
   tarjetasPremios,
   totalTitulares,
+  zEntradaTarea,
   zGuardarTarea,
 } from "@/lib/tareas-profe-datos";
 
@@ -232,6 +233,129 @@ describe("armarTarea: publicada (D200)", () => {
       secciones: ["5A"],
       preguntas: previa.preguntas,
     });
+  });
+
+  test("varias imágenes (D373): se guarda el límite solo en las de imagen", () => {
+    const r = armar({
+      entrada: entrada({
+        preguntas: [
+          {
+            id: "q1",
+            enunciado: "Uno",
+            formato: "texto",
+            valor: 11.5,
+            maxImagenes: 3,
+          },
+          {
+            id: "q2",
+            enunciado: "Logo",
+            formato: "imagen",
+            valor: 8,
+            maxImagenes: 2,
+          },
+          {
+            id: "q3",
+            enunciado: "Foto",
+            formato: "imagen",
+            valor: 0.5,
+            maxImagenes: null,
+          },
+        ],
+      }),
+    });
+    if (!r.ok) throw new Error(r.error);
+    expect(r.tarea.preguntas).toEqual([
+      { id: "q1", enunciado: "Uno", formato: "texto", valor: 11.5 },
+      {
+        id: "q2",
+        enunciado: "Logo",
+        formato: "imagen",
+        valor: 8,
+        maxImagenes: 2,
+      },
+      { id: "q3", enunciado: "Foto", formato: "imagen", valor: 0.5 },
+    ]);
+    expect(
+      zEntradaTarea.safeParse(
+        entrada({
+          preguntas: [
+            {
+              id: "q1",
+              enunciado: "a",
+              formato: "imagen",
+              valor: 20,
+              maxImagenes: 11,
+            },
+          ],
+        }),
+      ).success,
+    ).toBe(false);
+  });
+
+  test("con entregas: el límite de imágenes solo sube (D373)", () => {
+    const previa = publicada({
+      preguntas: [
+        { id: "p1", enunciado: "Uno", formato: "texto", valor: 10 },
+        { id: "p2", enunciado: "Logo", formato: "imagen", valor: 10 },
+      ],
+    });
+    const guardar = (maxImagenes: number | null, texto?: number) =>
+      armar({
+        accion: "guardar",
+        previa,
+        conEntregas: true,
+        entrada: entrada({
+          preguntas: [
+            {
+              id: "p1",
+              enunciado: "Otro",
+              formato: "texto",
+              valor: 10,
+              maxImagenes: texto,
+            },
+            {
+              id: "p2",
+              enunciado: "Cambiado",
+              formato: "imagen",
+              valor: 5,
+              maxImagenes,
+            },
+          ],
+        }),
+      });
+    const r = guardar(2, 4);
+    if (!r.ok) throw new Error(r.error);
+    expect(r.tarea.preguntas).toEqual([
+      { id: "p1", enunciado: "Uno", formato: "texto", valor: 10 },
+      {
+        id: "p2",
+        enunciado: "Logo",
+        formato: "imagen",
+        valor: 10,
+        maxImagenes: 2,
+      },
+    ]);
+    const conDos = publicada({
+      preguntas: r.tarea.preguntas as Tarea["preguntas"],
+    });
+    const bajar = armar({
+      accion: "guardar",
+      previa: conDos,
+      conEntregas: true,
+      entrada: entrada({
+        preguntas: [
+          {
+            id: "p2",
+            enunciado: "Logo",
+            formato: "imagen",
+            valor: 10,
+            maxImagenes: null,
+          },
+        ],
+      }),
+    });
+    if (!bajar.ok) throw new Error(bajar.error);
+    expect(bajar.tarea.preguntas).toEqual(conDos.preguntas);
   });
 
   test("con entregas: la fecha vencida se puede conservar, no poner otra pasada", () => {

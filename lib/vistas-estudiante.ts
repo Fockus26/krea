@@ -31,13 +31,14 @@ import {
   lineaPendientes,
   puestoTexto,
 } from "@/lib/inicio";
-import type {
-  Ajuste,
-  Entrega,
-  Equipo,
-  RankingSeccion,
-  Tarea,
-  Usuario,
+import {
+  type Ajuste,
+  type Entrega,
+  type Equipo,
+  type RankingSeccion,
+  rutasImagen,
+  type Tarea,
+  type Usuario,
 } from "@/lib/modelo";
 import { fechaNotaTexto, NO_PARTICIPASTE, promedioNotas } from "@/lib/notas";
 import {
@@ -261,7 +262,8 @@ export type DetalleVista =
       /** Quién respondió, para el `alt` de las imágenes: su primer nombre o «tu equipo». */
       autor: string;
       /** Vacío si la nota vino del Excel sin desglose. */
-      preguntas: Array<PreguntaDetalle & { imagenPath?: string }>;
+      /** `imagenPaths`: rutas de la respuesta en imagen (una o varias, D373), sin firmar. */
+      preguntas: Array<PreguntaDetalle & { imagenPaths?: string[] }>;
     };
 
 /**
@@ -312,7 +314,9 @@ export function detalleNota(
                 ? r.texto.trim() || RESPUESTA_SIN_REGISTRO
                 : RESPUESTA_IMAGEN,
             // La página la cambia por la imagen con una URL firmada (D195); si no, queda el texto
-            imagenPath: r && "imagenPath" in r ? r.imagenPath : undefined,
+            ...(rutasImagen(r).length > 0
+              ? { imagenPaths: rutasImagen(r) }
+              : {}),
             comentario: comentario || undefined,
           };
         })
@@ -751,7 +755,7 @@ export function tareasVista(
 /** Respuesta ya enviada por pregunta (la imagen se firma en la página, solo si se muestra). */
 export type RespuestaEnviada =
   | { tipo: "texto"; texto: string }
-  | { tipo: "imagen"; imagenPath: string };
+  | { tipo: "imagen"; imagenPaths: string[] };
 
 export type CabeceraEntrega = {
   tipo: Tarea["tipo"];
@@ -833,6 +837,9 @@ export function entregaVista(
       id: p.id,
       enunciado: p.enunciado,
       formato: p.formato,
+      ...(p.formato === "imagen" && p.maxImagenes
+        ? { maxImagenes: p.maxImagenes }
+        : {}),
       valor: p.valor,
     })),
   };
@@ -859,7 +866,7 @@ export function entregaVista(
         if ("texto" in r) {
           return r.texto.trim() ? { tipo: "texto", texto: r.texto } : null;
         }
-        return { tipo: "imagen", imagenPath: r.imagenPath };
+        return { tipo: "imagen", imagenPaths: rutasImagen(r) };
       }),
     };
   }
