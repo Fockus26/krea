@@ -82,7 +82,7 @@ export function RankRow({
   // Chip de empate o delta: a la derecha, o bajo el nombre si la fila es estrecha (D226). El
   // contenido visual va `aria-hidden`: pintarlo en dos sitios no lo repite al lector.
   const marca = chipEmpate ? (
-    <Badge variant="neutral" className="h-5.5 px-2 text-xs!">
+    <Badge variant="neutral" size="sm" className="px-2 text-xs!">
       Empate
     </Badge>
   ) : delta !== undefined ? (

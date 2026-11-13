@@ -44,7 +44,7 @@ export function RankingRules({ className }: { className?: string }) {
               {r.ejemplo.tipo === "nota" ? (
                 <EjemploNota valor={r.ejemplo.valor} />
               ) : (
-                <Badge variant="ok" className="h-6.5">
+                <Badge variant="ok" size="md">
                   {puntosConSigno(r.ejemplo.valor)}
                 </Badge>
               )}

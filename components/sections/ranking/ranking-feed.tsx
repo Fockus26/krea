@@ -52,7 +52,8 @@ export function RankingFeed({
                   <Badge
                     aria-hidden="true"
                     variant={m.valor < 0 ? "err" : "ok"}
-                    className="h-5.5 shrink-0"
+                    size="sm"
+                    className="shrink-0"
                   >
                     {puntosConSigno(m.valor)}
                   </Badge>

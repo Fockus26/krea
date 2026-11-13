@@ -42,11 +42,17 @@ const HREF_COLA = "/profe/evaluar";
  * avatar/TeamLogo 40, nombre (`h3` con aspecto h4: cuelga del `h2` de la tarjeta), meta y "Evaluar" secondary sm,
  * y el pie "Ver las N". Muestra las primeras ENTREGAS_VISIBLES; la cola completa es de Evaluar.
  */
-export function PendingReviews({ filas }: { filas: readonly FilaEvaluar[] }) {
+export function PendingReviews({
+  filas,
+  className,
+}: {
+  filas: readonly FilaEvaluar[];
+  className?: string;
+}) {
   const visibles = filas.slice(0, ENTREGAS_VISIBLES);
   const primera = filas[0];
   return (
-    <Card className="h-full">
+    <Card className={className}>
       <CardHeader>
         <CardTitle level={2}>Por evaluar</CardTitle>
         {primera ? (

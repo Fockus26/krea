@@ -1,0 +1,5 @@
+# D383 · UI · Tarjeta de premio por definir: botón abajo y alto de la fila de estado reservado · Implemented
+
+**Decisión:** en `prize-card-teacher` la `Card` ocupa toda la celda (`h-full`) y el botón («Agregar premio» / «Editar premio») va con `mt-auto` en todos los estados. La tarjeta por definir añade un bloque `aria-hidden` con `min-h = chip (spacing 7 = 28) + gap (spacing 2 = 8) + 2lh` de `text-small` (2 × 18 = 36) = 72 px, que ocupa el lugar de la fila de estado (chip + meta de 2 líneas) para que, sola en su fila, mida lo mismo que una definida sin foto. La tarjeta del alumno (`tareas/prize-card`) no comparte grilla y no se toca.
+**Why:** César: el botón subía pegado al título; debía quedar abajo como en la tarjeta definida y que todas midan igual con una descripción de 2 líneas.
+**Cuentas (sin foto, gap 16):** cabecera ícono 48 (o título + subtítulo) + 16 + estado 72 + 16 + botón sm 36 ⇒ definida y por definir coinciden; con foto la definida es más alta y el botón de la por definir baja con `mt-auto` por el estiramiento de la fila.
