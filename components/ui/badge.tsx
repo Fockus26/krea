@@ -8,11 +8,12 @@ import { cn } from "@/lib/utils";
  * 28 de alto, padding 0 10, radio 10, 13/18 700, gap 6, ícono 16. Los tintes de ok/warn/prize
  * cambian con el tema (14 % en oscuro) porque salen de los tokens `--chip-*-bg` (D016).
  * El significado nunca va solo en el color: el llamador pone ícono + palabra.
- * El alto sale de `--chip-h` y el padding vertical lo sigue ((alto − 1lh) / 2): para otro alto se usa
- * `size`, nunca `h-*` suelto (con 22 px el padding de 28 dejaba el número bajo, D381).
+ * Otro alto = `size`, nunca `h-*` suelto: `size` cambia el alto y el padding vertical a la vez
+ * ((alto − 1lh) / 2). Con 22 px y el padding de 28 el número quedaba bajo (D381). `Badge` pasa por `cn`
+ * (tailwind-merge), así `sm`/`md` ganan a los `h-7`/`py` de la base.
  */
 const chip =
-  "icono-linea inline-flex h-[var(--chip-h,calc(var(--spacing)*7))] w-fit shrink-0 gap-1.5 rounded-sm px-2.5 py-[calc((var(--chip-h,calc(var(--spacing)*7))-1lh)/2)] text-small-b whitespace-nowrap";
+  "icono-linea inline-flex h-7 w-fit shrink-0 gap-1.5 rounded-sm px-2.5 py-[calc((--spacing(7)-1lh)/2)] text-small-b whitespace-nowrap";
 
 const badgeVariants = cva(
   [
@@ -38,8 +39,8 @@ const badgeVariants = cva(
       size: {
         default: "",
         // 22 de alto (contadores y chips de lista) y 26 (ejemplos de reglas)
-        sm: "[--chip-h:calc(var(--spacing)*5.5)]",
-        md: "[--chip-h:calc(var(--spacing)*6.5)]",
+        sm: "h-5.5 py-[calc((--spacing(5.5)-1lh)/2)]",
+        md: "h-6.5 py-[calc((--spacing(6.5)-1lh)/2)]",
       },
     },
     defaultVariants: {
