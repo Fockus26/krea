@@ -1,0 +1,5 @@
+# D374 · Navigation · Estudiante < lg: Tareas ocupa la pestaña de Perfil en la barra inferior; Perfil queda en el avatar de la topbar · Implemented
+
+**Decisión:** la barra inferior del estudiante es Inicio · Notas · Tareas · Ranking · Equipo (5 columnas, como el handoff §2.7). Perfil sale de la superficie `inferior` en `lib/nav.ts` y se sigue alcanzando desde el avatar de la topbar («Tu perfil»), que ahora lleva `aria-current="page"` y el fondo `--accent-soft-2` con anillo `--accent-ink` en `/perfil` y sus subrutas. Escritorio sin cambios (la lateral conserva los 6 ítems). Decisión de César, 2026-11-12.
+**Why:** a las tareas solo se llegaba desde Inicio; César las quiere a un toque. Quitar Perfil mantiene las 5 columnas y la píldora de 56 px sin apretar a 320 px, y Perfil ya tenía otra entrada visible.
+**Alternativas descartadas:** 6 columnas (≈52 px por pestaña a 320 px, bajo la píldora de 56; rompe el handoff) · Tareas en lugar de Equipo (Equipo se usa a diario: el capitán envía la tarea grupal, D012).

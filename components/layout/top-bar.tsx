@@ -8,7 +8,7 @@ import type { NavRoute, NavUsuario } from "@/components/layout/nav-types";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Rol } from "@/lib/layout";
-import { PERFIL_HREF } from "@/lib/nav";
+import { isActive, PERFIL_HREF } from "@/lib/nav";
 import { tiposTransicion } from "@/lib/transicion";
 
 /**
@@ -97,7 +97,13 @@ export function TopBar({
           href={PERFIL_HREF}
           transitionTypes={tiposTransicion(rol, pathname, PERFIL_HREF)}
           aria-label="Tu perfil"
-          className="grid size-11 shrink-0 place-items-center rounded-pill transition-colors duration-fast ease-krea hover:bg-accent-soft hover:ring-1 hover:ring-accent-ink active:bg-accent-soft-2 active:ring-1 active:ring-accent-ink motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          // < lg Perfil no tiene pestaña (cedió el lugar a Tareas): el avatar anuncia y marca la página actual
+          aria-current={
+            isActive({ href: PERFIL_HREF, match: "prefix" }, pathname)
+              ? "page"
+              : undefined
+          }
+          className="grid size-11 shrink-0 place-items-center rounded-pill transition-colors duration-fast ease-krea hover:bg-accent-soft hover:ring-1 hover:ring-accent-ink active:bg-accent-soft-2 active:ring-1 active:ring-accent-ink aria-[current=page]:bg-accent-soft-2 aria-[current=page]:ring-1 aria-[current=page]:ring-accent-ink motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
         >
           {usuario ? (
             <UserAvatar

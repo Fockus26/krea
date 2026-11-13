@@ -39,13 +39,13 @@ describe("navItems (HANDOFF §2.7)", () => {
     ]);
   });
 
-  test("inferior: 5 columnas por rol; Tareas del estudiante no está", () => {
+  test("inferior: 5 columnas por rol; el estudiante tiene Tareas y Perfil queda en el avatar", () => {
     expect(labels("estudiante", "inferior")).toEqual([
       "Inicio",
       "Notas",
+      "Tareas",
       "Ranking",
       "Equipo",
-      "Perfil",
     ]);
     expect(labels("profesor", "inferior")).toEqual([
       "Panel",
@@ -54,6 +54,18 @@ describe("navItems (HANDOFF §2.7)", () => {
       "Puntos",
       "Ranking",
     ]);
+  });
+
+  test("la pestaña Tareas del estudiante queda activa en /tareas y en el detalle de una tarea", () => {
+    const tareas = navItems("estudiante", "inferior").find(
+      (i) => i.id === "tareas",
+    );
+    expect(tareas).toBeDefined();
+    if (!tareas) return;
+    expect(tareas.icon).toBe("tareas");
+    expect(isActive(tareas, "/tareas")).toBe(true);
+    expect(isActive(tareas, "/tareas/abc123")).toBe(true);
+    expect(isActive(tareas, "/notas")).toBe(false);
   });
 
   test("Menú del profesor: Tareas, Equipos, Premios y Perfil; el estudiante no tiene Menú", () => {
