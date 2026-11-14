@@ -3,6 +3,7 @@
 // La escribe el navegador del profe (única excepción a D175, D275); un latido cada LATIDO_MS y,
 // si el último tiene más de VIGENCIA_MS, la pestaña se da por muerta y la entrada se ignora.
 import { z } from "zod";
+import { zCedula } from "@/lib/modelo";
 
 /** Cada cuánto el diálogo abierto renueva su entrada. */
 export const LATIDO_MS = 20_000;
@@ -49,12 +50,20 @@ export function editoresVigentes(
 export function presenciaTexto(
   editores: ReadonlyArray<Pick<EntradaPresencia, "nombre">>,
 ): string {
+  return quienes(editores, "editando");
+}
+
+/** «Ana Pérez está <verbo>» · «Ana Pérez y Luis Díaz están <verbo>» · «… y 2 más están <verbo>». */
+function quienes(
+  editores: ReadonlyArray<Pick<EntradaPresencia, "nombre">>,
+  verbo: string,
+): string {
   const [primero, segundo, ...resto] = editores;
   if (!primero) return "";
-  if (!segundo) return `${primero.nombre} está editando`;
+  if (!segundo) return `${primero.nombre} está ${verbo}`;
   if (resto.length === 0)
-    return `${primero.nombre} y ${segundo.nombre} están editando`;
-  return `${primero.nombre} y ${resto.length + 1} más están editando`;
+    return `${primero.nombre} y ${segundo.nombre} están ${verbo}`;
+  return `${primero.nombre} y ${resto.length + 1} más están ${verbo}`;
 }
 
 /**
@@ -64,6 +73,69 @@ export function presenciaTexto(
 export function avisoPresencia(texto: string): string {
   return texto
     ? `${texto} a este alumno. Si guarda antes que tú, te avisaremos.`
+    : "";
+}
+
+/* ---------- Presencia en «Evaluar entrega» (pedido 8, D408–D410) ---------- */
+
+// Misma tabla que la de alumnos: la entrega va en `alumno_id` con el prefijo «entrega:» (D408).
+// Una cédula es `^\d{7,9}$`, así que nunca empieza así: las dos presencias no se mezclan.
+const PREFIJO_ENTREGA = "entrega:";
+
+/** Id de entrega (`tarea__titular`, ids automáticos): el patrón de `zIdDocumento` (lib/evaluar-datos). */
+export const zIdEntrega = z
+  .string()
+  .regex(/^[A-Za-z0-9_-]{1,200}$/, "Id inválido");
+
+/** La clave de presencia de una entrega: `entrega:<id>`. */
+export function claveEntrega(id: string): string {
+  return PREFIJO_ENTREGA + id;
+}
+
+export function esClaveEntrega(clave: string): boolean {
+  return clave.startsWith(PREFIJO_ENTREGA);
+}
+
+/** El id de la entrega de una clave `entrega:<id>`; `null` si es la de un alumno. */
+export function entregaDeClave(clave: string): string | null {
+  return esClaveEntrega(clave) ? clave.slice(PREFIJO_ENTREGA.length) : null;
+}
+
+const zAccion = z.enum(["marcar", "quitar"]);
+
+/**
+ * Lo que manda el navegador a /api/presencia: o un alumno (`cedula`, «Editar alumno») o una
+ * entrega (`entrega`, «Evaluar»). Nunca los dos: `strict` rechaza el pedido ambiguo.
+ */
+export const zPedidoPresencia = z.union([
+  z.object({ accion: zAccion, cedula: zCedula }).strict(),
+  z.object({ accion: zAccion, entrega: zIdEntrega }).strict(),
+]);
+export type PedidoPresencia = z.infer<typeof zPedidoPresencia>;
+
+/** La fila de `presencia` que toca un pedido: la cédula del alumno o `entrega:<id>`. */
+export function claveDePedido(p: PedidoPresencia): string {
+  return "cedula" in p ? p.cedula : claveEntrega(p.entrega);
+}
+
+/**
+ * «Ana Pérez está evaluando» · «Ana Pérez y Luis Díaz están evaluando» · «Ana Pérez y 2 más están
+ * evaluando». Vacío si no hay nadie. PROVISIONAL (fila 217).
+ */
+export function presenciaEvaluarTexto(
+  evaluadores: ReadonlyArray<Pick<EntradaPresencia, "nombre">>,
+): string {
+  return quienes(evaluadores, "evaluando");
+}
+
+/**
+ * El aviso de Evaluar: no bloquea, avisa (D410). «Ana Pérez está evaluando esta entrega. Si guarda
+ * antes que tú, te avisaremos.» El «te avisaremos» es el error `cambio` de Guardar (D224).
+ * PROVISIONAL (fila 217).
+ */
+export function avisoPresenciaEntrega(texto: string): string {
+  return texto
+    ? `${texto} esta entrega. Si guarda antes que tú, te avisaremos.`
     : "";
 }
 

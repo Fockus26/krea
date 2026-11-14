@@ -6,6 +6,7 @@ import {
   type QuestionAnswer,
   QuestionCardDetail,
 } from "@/components/krea/question-card-detail";
+import { PresenciaEvaluar } from "@/components/sections/evaluar/presencia-evaluar";
 import { ReviewForm } from "@/components/sections/evaluar/review-form";
 import { ReviewHeader } from "@/components/sections/evaluar/review-header";
 import { Card } from "@/components/ui/card";
@@ -13,7 +14,12 @@ import tareaSeed from "@/data/seed/tarea-identidad-marca.json";
 import { deshacerEvaluacion, guardarEvaluacion } from "@/lib/acciones/evaluar";
 import { verificarSesion } from "@/lib/dal";
 import { urlsFirmadas } from "@/lib/datos/imagenes";
-import { colaEvaluar, entregaProfe, mapasProfe } from "@/lib/datos/profesor";
+import {
+  colaEvaluar,
+  entregaProfe,
+  mapasProfe,
+  profesorActual,
+} from "@/lib/datos/profesor";
 import {
   colaFiltradaCon,
   filtrosDeParams,
@@ -24,6 +30,7 @@ import {
 } from "@/lib/evaluar-datos";
 import { formatNota } from "@/lib/grades";
 import { idEntrega } from "@/lib/modelo";
+import { nombrePresencia } from "@/lib/presencia";
 import { respuestaFirmada } from "@/lib/question";
 
 type Props = PageProps<"/profe/evaluar/[entrega]">;
@@ -65,10 +72,11 @@ export default async function EvaluarEntregaPage({
   const soloVer = query.ver !== undefined;
   // Filtros de la cola (D384): Anterior, Saltar y Guardar siguen la cola filtrada (D385)
   const filtros = filtrosDeParams(query);
-  const [entrega, cola, mapas] = await Promise.all([
+  const [entrega, cola, mapas, profe] = await Promise.all([
     entregaProfe(id),
     colaEvaluar(),
     mapasProfe(),
+    profesorActual(),
   ]);
   const tarea = entrega ? mapas.tareas.get(entrega.tareaId) : undefined;
   // Un borrador del alumno todavía no es una entrega (D196)
@@ -112,6 +120,13 @@ export default async function EvaluarEntregaPage({
         filtroTexto={soloVer ? null : v.filtroTexto}
         colaHref={v.colaHref}
       />
+      {soloVer || preguntas.length === 0 ? null : (
+        <PresenciaEvaluar
+          key={v.entregaId}
+          entregaId={v.entregaId}
+          yo={{ uid: profe.sesion.uid, nombre: nombrePresencia(profe.usuario) }}
+        />
+      )}
       {preguntas.length === 0 ? (
         // Nota importada del Excel sin preguntas (D136): no hay nada que puntuar aquí
         <Card>
