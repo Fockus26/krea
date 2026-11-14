@@ -59,7 +59,9 @@ const ev = (o: Partial<Evaluacion> = {}): Evaluacion => ({
   ...o,
 });
 
-const ent = (o: Partial<Entrega> = {}): { id: string } & Entrega => ({
+const ent = (
+  o: Partial<Entrega> & { id?: string } = {},
+): { id: string } & Entrega => ({
   id: "e1",
   tareaId: "t1",
   tipo: "individual",
