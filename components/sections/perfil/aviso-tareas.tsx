@@ -13,8 +13,8 @@ import {
   type EstadoAviso,
   estadoAviso,
 } from "@/lib/push-cliente";
-import { InstalarIOS } from "./instalar-ios";
 import { useInstalarPwa } from "@/lib/use-instalar-pwa";
+import { InstalarIOS } from "./instalar-ios";
 
 // PROVISIONAL (CONTENT_CHECKLIST fila 171): rótulo y descripciones del interruptor
 const TITULO = "Avisos";
