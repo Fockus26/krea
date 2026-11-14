@@ -254,6 +254,7 @@ describe("cola y vista", () => {
       },
     ]);
     expect(v.inicial).toEqual({
+      enviadaEn: expect.any(Number),
       puntajes: [null, null],
       comentarios: ["", ""],
       noParticiparon: [],
@@ -285,6 +286,7 @@ describe("cola y vista", () => {
     expect(v.anteriorHref).toBeNull();
     expect(v.saltarHref).toBe(`${RUTA_EVALUAR}/c`);
     expect(v.inicial).toEqual({
+      enviadaEn: expect.any(Number),
       puntajes: [10, 8],
       comentarios: ["", "Buen color"],
       noParticiparon: [],

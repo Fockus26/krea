@@ -27,10 +27,10 @@ import {
   type ErrorEntrega,
   type ErrorEnvio,
   enOtraEntrega,
-  faltanRespuestas,
+  imagenesSinUso,
+  modoEnvio,
   type PermisoEntrega,
   permisoEntrega,
-  yaEnviada,
 } from "@/lib/entregas";
 import {
   type Entrega,
@@ -42,6 +42,14 @@ import {
 } from "@/lib/modelo";
 
 export type ResultadoEnvio = { ok: true } | { ok: false; error: ErrorEnvio };
+
+/**
+ * Lo que devuelve la transacción: además, las imágenes que un reenvío dejó sin usar (D396), que la
+ * Server Action borra de B2 después del commit. Ausente si no hay ninguna.
+ */
+export type ResultadoEnvioTx =
+  | { ok: true; sinUso?: string[] }
+  | { ok: false; error: ErrorEnvio };
 
 type Contexto = {
   usuario: Usuario;
@@ -102,29 +110,27 @@ export async function permisoSubida(
     .select({ estado: entregas.estado, respuestas: entregas.respuestas })
     .from(entregas)
     .where(eq(entregas.id, p.permiso.entregaId));
-  if (
-    existente &&
-    yaEnviada(existente) &&
-    !faltanRespuestas(existente, c.tarea?.preguntas ?? [])
-  ) {
-    return { ok: false, error: "ya-entregada" };
-  }
-  return p;
+  // También para editar una entregada sin evaluar (D395); evaluada, no (salvo completar)
+  const m = modoEnvio(existente ?? null, c.tarea?.preguntas ?? []);
+  return m.ok ? p : m;
 }
 
 /**
  * Envía la entrega en UNA transacción: bloquea la tarea, lee perfil, equipo, la entrega existente y
  * (grupal) los integrantes actuales y las demás entregas de la tarea (D221); comprueba permiso
- * (D012) y respuestas; guarda la entrega `entregada`.
+ * (D012) y respuestas; guarda la entrega `entregada`. Sobre una `entregada` sin evaluar es una
+ * edición (D395): respuestas, `enviadaEn` y `enviadaPor` nuevos, los mismos integrantes. La fila
+ * de la entrega se bloquea (`FOR UPDATE`, como la relee Evaluar): si el profe la está evaluando,
+ * uno espera al otro y el segundo ve la versión nueva (`ya-evaluada` o, en Evaluar, `editada`).
  */
 export async function enviarEnTransaccion(
   db: Db,
   uid: string,
   envio: EnvioEntrega,
   ahora: number,
-): Promise<ResultadoEnvio> {
+): Promise<ResultadoEnvioTx> {
   const { tareaId, respuestas } = envio;
-  return db.transaction(async (tx): Promise<ResultadoEnvio> => {
+  return db.transaction(async (tx): Promise<ResultadoEnvioTx> => {
     const c = await contexto(tx, uid, tareaId, true);
     // Reintento de un envío que ya entró (D293): el mismo resultado, sin volver a escribir
     const op = await leerOperacionEnTx(tx, envio.opId, uid, "entrega");
@@ -138,18 +144,19 @@ export async function enviarEnTransaccion(
     const [previa] = await tx
       .select()
       .from(entregas)
-      .where(eq(entregas.id, entregaId));
+      .where(eq(entregas.id, entregaId))
+      .for("update");
     const existente = previa ? entregaDeFila(previa) : null;
-    // Una fila que existe pero no valida tampoco se pisa. Sí se completa una con nota y sin
-    // respuestas (el profe la evaluó antes, `faltanRespuestas`): la evaluación se queda.
-    const completar =
-      existente !== null && faltanRespuestas(existente, c.tarea.preguntas);
-    if (previa && (!existente || (yaEnviada(existente) && !completar))) {
-      return { ok: false, error: "ya-entregada" };
-    }
+    // Una fila que existe pero no valida no se pisa
+    if (previa && !existente) return { ok: false, error: "ya-entregada" };
+    // Evaluada: no se edita. Sí se completa una con nota y sin respuestas (el profe la evaluó
+    // antes, `faltanRespuestas`): la evaluación se queda.
+    const m = modoEnvio(existente, c.tarea.preguntas);
+    if (!m.ok) return m;
     let integrantes: string[] = [];
     let excluidos = new Set<string>();
-    if (p.permiso.tipo === "grupal") {
+    // Al editar, los integrantes no se recalculan (D396): no hace falta leer el equipo
+    if (p.permiso.tipo === "grupal" && m.modo === "nueva") {
       const [miembros, otras] = await enSerie([
         tx
           .select({ cedula: usuarios.cedula })
@@ -184,9 +191,10 @@ export async function enviarEnTransaccion(
       ahora,
     });
     if (!armada.ok) return armada;
-    // Completar: mismas personas y misma nota (el ranking no cambia), solo las respuestas y el envío
+    // Completar: mismas personas y misma nota (el ranking no cambia), solo las respuestas y el
+    // envío. Reenviar: mismas personas (la foto del primer envío, D396), respuestas y envío nuevos.
     const doc: Entrega = zEntrega.parse(
-      completar && existente
+      m.modo === "completar" && existente
         ? {
             ...armada.entrega,
             integrantes: existente.integrantes,
@@ -196,7 +204,15 @@ export async function enviarEnTransaccion(
               ? { evaluacionAnterior: existente.evaluacionAnterior }
               : {}),
           }
-        : armada.entrega,
+        : m.modo === "reenvio" && existente
+          ? {
+              ...armada.entrega,
+              integrantes: existente.integrantes,
+              ...(existente.titularNombre
+                ? { titularNombre: existente.titularNombre }
+                : {}),
+            }
+          : armada.entrega,
     );
     const fila = filaDeEntrega(entregaId, doc);
     await tx
@@ -204,7 +220,10 @@ export async function enviarEnTransaccion(
       .values(fila)
       .onConflictDoUpdate({ target: entregas.id, set: fila });
     await registrarOperacionEnTx(tx, op, uid, "entrega", null, ahora);
-    return { ok: true };
+    const sinUso = existente
+      ? imagenesSinUso(existente.respuestas, doc.respuestas)
+      : [];
+    return sinUso.length > 0 ? { ok: true, sinUso } : { ok: true };
   });
 }
 

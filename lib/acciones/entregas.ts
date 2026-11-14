@@ -7,6 +7,7 @@
 import { refresh } from "next/cache";
 import { almacenB2 } from "@/lib/almacen/b2";
 import { validarImagenSubida } from "@/lib/almacen/imagen";
+import type { Almacen } from "@/lib/almacen/s3";
 import { exigirSesion, sesionDeCola } from "@/lib/dal";
 import {
   enviarEnTransaccion,
@@ -121,7 +122,10 @@ async function subir(
   }
 }
 
-/** Envía la entrega (D012: en grupal solo el capitán). Después no se puede cambiar. */
+/**
+ * Envía la entrega (D012: en grupal solo el capitán). Mientras no esté evaluada y la tarea siga
+ * abierta, volver a enviarla la edita (D395).
+ */
 export async function enviarEntrega(entrada: unknown): Promise<ResultadoEnvio> {
   const sesion = await exigirSesion("estudiante");
   const r = await enviar(sesion.uid, entrada);
@@ -157,9 +161,25 @@ async function enviar(uid: string, entrada: unknown): Promise<ResultadoEnvio> {
       return sinAlmacen("enviarEntrega");
     const faltan = await comprobarImagenes(almacen, envio.data.respuestas);
     if (faltan) return { ok: false, error: faltan };
-    return await enviarEnTransaccion(db, uid, envio.data, Date.now());
+    const r = await enviarEnTransaccion(db, uid, envio.data, Date.now());
+    if (!r.ok) return r;
+    // Después del commit (D396, como el logo de equipo, D212): si B2 falla, el envío ya entró
+    if (r.sinUso && almacen) await borrarSinUso(almacen, r.sinUso);
+    return { ok: true };
   } catch (e) {
     console.error("[enviarEntrega]", (e as { code?: string }).code ?? "error");
     return { ok: false, error: "red" };
   }
+}
+
+/** Borra las imágenes que una edición dejó sin usar; un fallo solo se registra. */
+async function borrarSinUso(
+  almacen: Pick<Almacen, "borrar">,
+  claves: readonly string[],
+): Promise<void> {
+  const hechos = await Promise.all(
+    claves.map((c) => almacen.borrar(c).catch(() => null)),
+  );
+  if (hechos.some((h) => !h?.ok))
+    console.error("[enviarEntrega] no se borró alguna imagen sin uso");
 }

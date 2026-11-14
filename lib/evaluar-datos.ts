@@ -69,6 +69,11 @@ export const zGuardarEvaluacion = z.object({
    * no son de la entrega y cualquiera en una individual.
    */
   noParticiparon: z.array(zCedula).max(50).optional(),
+  /**
+   * `enviadaEn` de la entrega que el profe tenía en pantalla (D397): si el alumno la editó mientras
+   * tanto, no se guarda (`editada`). Opcional para que un formulario viejo siga guardando.
+   */
+  enviadaEn: zInstante.nullable().optional(),
 });
 export type GuardarEvaluacion = z.infer<typeof zGuardarEvaluacion>;
 
@@ -86,6 +91,8 @@ export type ErrorEvaluar =
   | "sin-preguntas"
   | "incompleta"
   | "cambio"
+  /** El alumno editó la entrega mientras el profe la puntuaba (D397). */
+  | "editada"
   | "red";
 
 export type ResultadoEvaluar =
@@ -99,6 +106,8 @@ export function errorEvaluarTexto(e: ErrorEvaluar): string {
       return "No se pudo guardar. Revisa tu conexión e inténtalo de nuevo.";
     case "cambio":
       return "Otra persona cambió esta nota. Recarga para ver la última.";
+    case "editada":
+      return "El alumno editó la entrega. Recarga para ver la versión nueva.";
     case "incompleta":
       return "Falta puntuar alguna pregunta o un puntaje pasa del máximo.";
     case "no-existe":
@@ -362,6 +371,8 @@ export type VistaEvaluar = {
    */
   integrantes: Array<{ cedula: string; nombre: string }>;
   inicial: {
+    /** `enviadaEn` de la entrega que se ve: va con Guardar (D397). */
+    enviadaEn: number | null;
     puntajes: (number | null)[];
     comentarios: string[];
     /** Cédulas marcadas «No participó» en la evaluación vigente (al reevaluar vienen marcadas). */
@@ -495,6 +506,7 @@ export function vistaEvaluar({
           })
         : [],
     inicial: {
+      enviadaEn: entrega.enviadaEn,
       puntajes: preguntas.map((p) => ev?.puntos?.[p.id] ?? null),
       comentarios: preguntas.map((p) => ev?.comentarios[p.id] ?? ""),
       noParticiparon:

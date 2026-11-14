@@ -46,8 +46,10 @@ export type ErrorEntrega =
   | "sin-equipo"
   /** Grupal y no es el capitán (D012). */
   | "no-capitan"
-  /** Ya hay una entrega enviada para este titular. */
+  /** La entrega guardada no se puede pisar (la fila no valida). */
   | "ya-entregada"
+  /** El profe ya la evaluó: no se edita (D395). */
+  | "ya-evaluada"
   /** Falta una respuesta, sobra una o no es del formato de la pregunta. */
   | "incompleta";
 
@@ -130,6 +132,115 @@ export function faltanRespuestas(
     preguntas.length > 0 &&
     preguntas.some((p) => !e?.respuestas[p.id])
   );
+}
+
+/**
+ * Qué hace un envío con la entrega que ya existe para el titular (D395): `nueva` (no hay, o es un
+ * borrador), `reenvio` (está `entregada` y sin evaluar: el alumno la edita), `completar` (evaluada
+ * sin respuestas, `faltanRespuestas`: la nota se queda) o el error. Una evaluada con respuestas ya
+ * no se edita (`ya-evaluada`); el permiso (tarea abierta, capitán, D012) se mira aparte.
+ */
+export function modoEnvio(
+  existente: {
+    estado: Entrega["estado"];
+    respuestas: Readonly<Record<string, unknown>>;
+  } | null,
+  preguntas: ReadonlyArray<Pick<Tarea["preguntas"][number], "id">>,
+):
+  | { ok: true; modo: "nueva" | "reenvio" | "completar" }
+  | { ok: false; error: "ya-evaluada" } {
+  if (!yaEnviada(existente)) return { ok: true, modo: "nueva" };
+  if (existente?.estado === "entregada") return { ok: true, modo: "reenvio" };
+  if (faltanRespuestas(existente, preguntas))
+    return { ok: true, modo: "completar" };
+  return { ok: false, error: "ya-evaluada" };
+}
+
+/**
+ * ¿Ve «Editar entrega» en /tareas/[tarea]? (D395) Solo quien puede enviar (individual: el alumno;
+ * grupal: el capitán del equipo actual, D012), con la tarea abierta (D196) y su propia entrega
+ * `entregada` sin evaluar. Un integrante que cambió de equipo ve la del equipo viejo: no es la
+ * suya (otro `entregaId`), no la edita.
+ */
+export function puedeEditar(
+  usuario: Pick<Usuario, "cedula" | "rol" | "seccion" | "equipoId">,
+  tarea: Pick<Tarea, "tipo" | "estado" | "secciones"> | null,
+  tareaId: string,
+  equipo: ConId<Pick<Equipo, "seccion" | "capitanId">> | null,
+  entrega: { id: string; estado: Entrega["estado"] } | null,
+): boolean {
+  if (!entrega || entrega.estado !== "entregada") return false;
+  const p = permisoEntrega(usuario, tarea, tareaId, equipo);
+  return p.ok && p.permiso.entregaId === entrega.id;
+}
+
+/** Una imagen ya enviada, como la espera el formulario (`ImagenRespuesta` de `TaskAnswerForm`). */
+export type ImagenEnviada = {
+  status: "lista";
+  /** `size` 0: el peso no se conoce (el chip muestra solo el nombre). `src`: URL firmada o "". */
+  file: { name: string; size: number; src: string };
+  path: string;
+};
+
+/**
+ * Lo enviado → respuestas iniciales del formulario al editar (D395): el texto tal cual; cada
+ * imagen ya subida con su ruta (se puede quitar o reemplazar) y, si se firmó, su vista previa.
+ * Una pregunta sin respuesta guardada queda vacía.
+ */
+export function inicialEdicion(
+  preguntas: ReadonlyArray<{
+    id: string;
+    formato: "texto" | "imagen";
+    maxImagenes?: number;
+  }>,
+  respuestas: ReadonlyArray<
+    | { tipo: "texto"; texto: string }
+    | { tipo: "imagen"; imagenPaths: readonly string[] }
+    | null
+  >,
+  urls: ReadonlyMap<string, string>,
+): Record<string, string | ImagenEnviada | ImagenEnviada[]> {
+  const out: Record<string, string | ImagenEnviada | ImagenEnviada[]> = {};
+  preguntas.forEach((p, i) => {
+    const r = respuestas[i];
+    if (!r) return;
+    if (r.tipo === "texto") {
+      if (p.formato === "texto") out[p.id] = r.texto;
+      return;
+    }
+    if (p.formato !== "imagen") return;
+    const varias = (p.maxImagenes ?? 1) > 1;
+    const imagenes = r.imagenPaths.map(
+      (path, j): ImagenEnviada => ({
+        status: "lista",
+        // PROVISIONAL (CONTENT_CHECKLIST fila 205)
+        file: {
+          name: varias ? `Imagen ${j + 1} enviada` : "Imagen enviada",
+          size: 0,
+          src: urls.get(path) ?? "",
+        },
+        path,
+      }),
+    );
+    const [primera] = imagenes;
+    if (varias) out[p.id] = imagenes;
+    else if (primera) out[p.id] = primera;
+  });
+  return out;
+}
+
+/**
+ * Imágenes que la entrega deja de usar al reenviarla (D396): las que tenía y ya no están en las
+ * respuestas nuevas. Se borran de B2 después del commit.
+ */
+export function imagenesSinUso(
+  antes: Readonly<Record<string, Parameters<typeof rutasImagen>[0]>>,
+  despues: Readonly<Record<string, Parameters<typeof rutasImagen>[0]>>,
+): string[] {
+  const nuevas = new Set(Object.values(despues).flatMap((r) => rutasImagen(r)));
+  return [
+    ...new Set(Object.values(antes).flatMap((r) => rutasImagen(r))),
+  ].filter((ruta) => !nuevas.has(ruta));
 }
 
 /* ---------- Claves de imagen (D195) ---------- */
@@ -348,6 +459,8 @@ export function mensajeErrorEntrega(error: ErrorSubida | ErrorEnvio): string {
       return "Solo el capitán de tu equipo puede entregar esta tarea.";
     case "ya-entregada":
       return "Esta tarea ya se entregó.";
+    case "ya-evaluada":
+      return "Ya fue evaluada: tu profe ya le puso nota y no se puede cambiar.";
     case "incompleta":
       return "Revisa tus respuestas: falta alguna o hay una imagen que no se subió.";
     case "imagen-tipo":

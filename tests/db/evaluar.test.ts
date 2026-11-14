@@ -8,6 +8,7 @@ import {
   anularAjusteEnTransaccion,
   aplicarAjusteEnTransaccion,
 } from "@/lib/data/ajustes";
+import { enviarEnTransaccion } from "@/lib/data/entregas";
 import {
   deshacerEvaluacionEnTransaccion,
   evaluarEnTransaccion,
@@ -502,6 +503,87 @@ describe("concurrencia: dos profes a la vez (Postgres)", () => {
         version: vigente,
       },
       AHORA + 81,
+    );
+    expect(r.ok).toBe(true);
+  });
+});
+
+describe("el alumno edita mientras el profe evalúa (D397)", () => {
+  const A4 = "39700004";
+  const E4 = idEntrega(T_IND, A4);
+  const respuestas = (texto: string) => ({
+    p1: { texto },
+    p2: { texto: "Dos" },
+  });
+  const evaluar = (enviadaEn: number | null | undefined, ahora: number) =>
+    evaluarEnTransaccion(
+      db(),
+      PROFE,
+      {
+        entregaId: E4,
+        puntos: { p1: 12, p2: 8 },
+        comentarios: {},
+        version: null,
+        ...(enviadaEn !== undefined ? { enviadaEn } : {}),
+      },
+      ahora,
+    );
+
+  beforeAll(async () => {
+    await ponerUsuario(db(), { ...alumno(A4, 20), equipoId: null });
+  });
+
+  test("con el `enviadaEn` viejo: `editada` y no guarda; con el nuevo, sí", async () => {
+    expect(
+      await enviarEnTransaccion(
+        db(),
+        A4,
+        { tareaId: T_IND, respuestas: respuestas("Primera") },
+        AHORA,
+      ),
+    ).toEqual({ ok: true });
+    // El profe abre el formulario (ve `enviadaEn` = AHORA); el alumno edita antes de que guarde
+    expect(
+      await enviarEnTransaccion(
+        db(),
+        A4,
+        { tareaId: T_IND, respuestas: respuestas("Editada") },
+        AHORA + 10,
+      ),
+    ).toEqual({ ok: true });
+    expect(await evaluar(AHORA, AHORA + 20)).toEqual({
+      ok: false,
+      error: "editada",
+    });
+    const e = await entrega(E4);
+    expect(e.estado).toBe("entregada");
+    expect(e.respuestas.p1).toEqual({ texto: "Editada" });
+    // Recarga: ve la versión nueva y guarda
+    expect((await evaluar(AHORA + 10, AHORA + 30)).ok).toBe(true);
+    // Ya evaluada: el alumno no la puede editar
+    expect(
+      await enviarEnTransaccion(
+        db(),
+        A4,
+        { tareaId: T_IND, respuestas: respuestas("Tarde") },
+        AHORA + 40,
+      ),
+    ).toEqual({ ok: false, error: "ya-evaluada" });
+  });
+
+  test("sin `enviadaEn` (formulario viejo) no se mira", async () => {
+    // Corregir la evaluada sin el campo: pasa el control de versión normal (D224)
+    const vigente = (await entrega(E4)).evaluacion?.evaluadaEn ?? null;
+    const r = await evaluarEnTransaccion(
+      db(),
+      PROFE,
+      {
+        entregaId: E4,
+        puntos: { p1: 10, p2: 8 },
+        comentarios: {},
+        version: vigente,
+      },
+      AHORA + 50,
     );
     expect(r.ok).toBe(true);
   });

@@ -116,7 +116,7 @@ beforeAll(async () => {
 });
 
 describe("enviarEnTransaccion (Postgres)", () => {
-  test("individual: crea la entrega `entregada` y no se puede enviar dos veces", async () => {
+  test("individual: crea la entrega `entregada`; reenviarla la edita (D395)", async () => {
     const envio = {
       tareaId: "w5-ind",
       respuestas: await respuestas("w5-ind", SOLO),
@@ -135,14 +135,12 @@ describe("enviarEnTransaccion (Postgres)", () => {
       enviadaEn: AHORA,
       respuestas: { p2: { texto: "Respuesta" } },
     });
+    // Sin evaluar y con la tarea abierta: el mismo envío otra vez es una edición
     expect(await enviarEnTransaccion(db(), SOLO, envio, AHORA + 1)).toEqual({
-      ok: false,
-      error: "ya-entregada",
+      ok: true,
     });
-    expect(await permisoSubida(db(), SOLO, "w5-ind", "p1")).toEqual({
-      ok: false,
-      error: "ya-entregada",
-    });
+    const p = await permisoSubida(db(), SOLO, "w5-ind", "p1");
+    expect(p.ok).toBe(true);
   });
 
   test("grupal: el integrante no puede; el capitán sí, con todo el equipo", async () => {
@@ -235,5 +233,130 @@ describe("enviarEnTransaccion (Postgres)", () => {
       const s = await docs.snap(db(), "entregas", idEntrega(t, tit));
       expect(s.exists).toBe(false);
     }
+  });
+});
+
+describe("editar la entrega (D395–D397)", () => {
+  const T = "w5-edit";
+  const T_GRU = "w5-edit-gru";
+  const UUID_2 = "1c6d4b63-8e1f-4a64-8e1c-1f2e3d4c5b6a";
+
+  beforeAll(async () => {
+    await docs.ponerDoc(db(), "tareas", T, tarea("individual", "abierta"));
+    await docs.ponerDoc(db(), "tareas", T_GRU, tarea("grupal", "abierta"));
+  });
+
+  async function con(
+    tareaId: string,
+    titular: string,
+    uuid: string,
+    texto: string,
+  ) {
+    const c = await carpetaEntrega(idEntrega(tareaId, titular));
+    return {
+      tareaId,
+      respuestas: {
+        p1: { imagenPath: claveImagen(tareaId, c, uuid) },
+        p2: { texto },
+      },
+    };
+  }
+
+  test("reenviar una entregada: respuestas y envío nuevos; la imagen vieja sale en `sinUso`", async () => {
+    const primero = await con(T, SOLO, UUID, "Primera");
+    expect(await enviarEnTransaccion(db(), SOLO, primero, AHORA)).toEqual({
+      ok: true,
+    });
+    const segundo = await con(T, SOLO, UUID_2, "Segunda");
+    expect(
+      await enviarEnTransaccion(db(), SOLO, segundo, AHORA + 60_000),
+    ).toEqual({
+      ok: true,
+      sinUso: [primero.respuestas.p1.imagenPath],
+    });
+    const e = zEntrega.parse(
+      (await docs.snap(db(), "entregas", idEntrega(T, SOLO))).data(),
+    );
+    expect(e).toMatchObject({
+      estado: "entregada",
+      evaluacion: null,
+      enviadaEn: AHORA + 60_000,
+      enviadaPor: SOLO,
+      respuestas: {
+        p1: { imagenPath: segundo.respuestas.p1.imagenPath },
+        p2: { texto: "Segunda" },
+      },
+    });
+  });
+
+  test("evaluada: `ya-evaluada` al enviar y al subir; no cambia nada", async () => {
+    const id = idEntrega(T, SOLO);
+    await docs.actualizarDoc(db(), "entregas", id, {
+      estado: "evaluada",
+      evaluacion: {
+        puntos: { p1: 10, p2: 10 },
+        comentarios: {},
+        puntaje: 20,
+        evaluadaPor: null,
+        evaluadaEn: AHORA + 120_000,
+      },
+    });
+    const otro = await con(T, SOLO, UUID, "Tercera");
+    expect(
+      await enviarEnTransaccion(db(), SOLO, otro, AHORA + 180_000),
+    ).toEqual({
+      ok: false,
+      error: "ya-evaluada",
+    });
+    expect(await permisoSubida(db(), SOLO, T, "p1")).toEqual({
+      ok: false,
+      error: "ya-evaluada",
+    });
+    const e = zEntrega.parse((await docs.snap(db(), "entregas", id)).data());
+    expect(e.estado).toBe("evaluada");
+    expect(e.respuestas.p2).toEqual({ texto: "Segunda" });
+  });
+
+  test("grupal: el capitán edita con los mismos integrantes; el integrante no", async () => {
+    const primero = await con(T_GRU, EQUIPO, UUID, "Del equipo");
+    expect(await enviarEnTransaccion(db(), CAPITAN, primero, AHORA)).toEqual({
+      ok: true,
+    });
+    const id = idEntrega(T_GRU, EQUIPO);
+    const antes = (await docs.snap(db(), "entregas", id)).get("integrantes");
+    // Alguien entra al equipo después del primer envío: la foto no cambia al editar (D396)
+    await docs.ponerDoc(
+      db(),
+      "usuarios",
+      "39000009",
+      usuario("39000009", EQUIPO),
+    );
+    const editado = await con(T_GRU, EQUIPO, UUID, "Editada");
+    expect(
+      await enviarEnTransaccion(db(), INTEGRANTE, editado, AHORA + 1),
+    ).toEqual({
+      ok: false,
+      error: "no-capitan",
+    });
+    expect(
+      await enviarEnTransaccion(db(), CAPITAN, editado, AHORA + 2),
+    ).toEqual({
+      ok: true,
+    });
+    const s = await docs.snap(db(), "entregas", id);
+    expect(s.get("integrantes")).toEqual(antes);
+    expect(s.get("respuestas")).toMatchObject({ p2: { texto: "Editada" } });
+    await docs.actualizarDoc(db(), "usuarios", "39000009", { equipoId: null });
+  });
+
+  test("tarea cerrada: no se edita", async () => {
+    await docs.actualizarDoc(db(), "tareas", T_GRU, { estado: "evaluada" });
+    const editado = await con(T_GRU, EQUIPO, UUID, "Tarde");
+    expect(
+      await enviarEnTransaccion(db(), CAPITAN, editado, AHORA + 3),
+    ).toEqual({
+      ok: false,
+      error: "cerrada",
+    });
   });
 });
