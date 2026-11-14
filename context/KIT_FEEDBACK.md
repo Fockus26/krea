@@ -143,4 +143,7 @@ rows get marked with `→ PR <owner/repo#N>` in "Proposal" (they are not deleted
 "` |
 | 93 | 2026-11-14 | Gap | 1 | orchestrate · brief | El prompt pidió toasts dentro de un diálogo modal; el modal oculta el Toaster a los lectores de pantalla | El brief dice: región viva dentro del diálogo mientras está abierto; toast solo al cerrar |
 | 94 | 2026-11-14 | Gap | 1 | orchestrate · brief | `tests/unit/cache-rutas.test.ts` exige `refresh()` literal en cada Server Action; un helper falló en CI | Las trampas del brief nombran los tests que vigilan las acciones |
-| 95 | 2026-11-14 | Cost | 3 | orchestrate · pool Windows | Con varios workers, typecheck y suite completa locales tardan >10 min o se cuelgan (U1, U2, U3) | El brief permite dar por buena la suite de CI cuando el typecheck local pasó |
+| 95 | 2026-11-14 | Cost | 9 | orchestrate · pool Windows | Con varios workers, typecheck y suite completa locales tardan >10 min o se cuelgan (U1, U2, U3) | El brief permite dar por buena la suite de CI cuando el typecheck local pasó |
+| 96 | 2026-11-14 | Gap | 5 | orchestrate · brief | «Dueños de archivos» lista solo archivos existentes; V4 necesitó uno nuevo (`instalar-ios.tsx`) y dudó si podía | El brief dice: archivos nuevos junto a los del dueño están permitidos |
+| 97 | 2026-11-14 | Gap | 1 | orchestrate · brief Windows | Un worker editó con Python y dejó CRLF; biome lo marca como error de formato | El brief dice: edita con Edit/Write o normaliza con `biome check --write` antes del commit |
+| 98 | 2026-11-14 | Cost | 2 | orchestrate · brief Windows | Grep/`grep -rn` sin ruta acotada en un slot recorre `node_modules` y pasa de 20–120 s | El brief dice: busca con ruta acotada o `git grep` |

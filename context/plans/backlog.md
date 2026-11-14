@@ -42,3 +42,4 @@
 - **`image-upload.tsx` zona de arrastre** (`ZONE`, ~líneas 112 y 243): ícono + texto de dos líneas con `items-center`; debería usar `icono-linea` (D304). Visto de paso por W23 (#100). Baja.
 - (tanda 11-07 X5b, visto de paso, Low) `decidirPremio`: `zDecidirPremio.seccion` no comprueba que la sección esté entre las de la tarea.
 - tests/unit/formularios-post.test.ts recorre app/ y components/ síncrono con timeout de 5 s: frágil con carga (visto en X2, 2026-11-12).
+- (2026-11-14, V2) Cédulas ajenas que aún ve un alumno: `/api/ranking/[seccion]` indexa `alumnos` por cédula (`lib/modelo.ts:511`, `lib/ranking-en-vivo.ts:92,103`), `lib/vistas-estudiante.ts:518,630` (`id: m.cedula`), `capitanId` en equipos del ranking en vivo. Media: decidir con César si se oculta.
