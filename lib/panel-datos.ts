@@ -30,7 +30,7 @@ export const SIN_TAREA_EVALUADA = "Ninguna tarea todavía";
 
 const primerNombre = (nombres: string) => nombres.trim().split(/\s+/)[0] ?? "";
 
-function filaEvaluar(e: ConId<Entrega>, m: MapasEvaluar): FilaEvaluar {
+export function filaEvaluar(e: ConId<Entrega>, m: MapasEvaluar): FilaEvaluar {
   const tarea = tituloTarea(e, m);
   const fecha =
     e.enviadaEn === null ? "" : formatFecha(diaDeInstante(e.enviadaEn));

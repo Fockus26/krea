@@ -2,14 +2,12 @@ import { cache } from "react";
 import { RouteSideNav, RouteTopBar } from "@/components/layout/route-nav";
 import { SincronizarApariencia } from "@/components/layout/sincronizar-apariencia";
 import { colaEvaluar, profesorActual, tareasProfe } from "@/lib/datos/profesor";
-import { tituloEntrega } from "@/lib/evaluar";
-import { rutaEntrega } from "@/lib/evaluar-datos";
 import { rutaTarea } from "@/lib/tareas-profe";
 import { navUsuarioDe } from "@/lib/vistas-estudiante";
 
 // Partes del shell del profesor que dependen de la sesión (D189, W6): cada una va en su
 // `<Suspense>` del layout (`cacheComponents`), con el mismo componente sin usuario como reserva.
-// El contador y los títulos de Evaluar salen de la cola real (W7, D204).
+// El contador de Evaluar sale de la cola real (W7, D204).
 
 const shell = cache(async () => {
   const [{ sesion, usuario }, tareas, cola] = await Promise.all([
@@ -25,10 +23,8 @@ const shell = cache(async () => {
     apariencia: usuario?.apariencia ?? null,
     porEvaluar: cola.length,
     titulos: {
-      // «Entrega n de m» en la topbar móvil; una ya evaluada queda con «Evaluar entrega»
-      ...Object.fromEntries(
-        cola.map((e, i) => [rutaEntrega(e.id), tituloEntrega(i, cola.length)]),
-      ),
+      // La topbar móvil de una entrega queda en «Evaluar entrega»: la posición («entrega i de n»)
+      // depende de los filtros de la URL (D384) y la dice el eyebrow de la pantalla
       // Constructor de una tarea publicada: su título; el borrador queda con «Nueva tarea» (D152)
       ...Object.fromEntries(
         tareas

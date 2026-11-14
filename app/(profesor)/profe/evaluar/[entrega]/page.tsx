@@ -15,6 +15,8 @@ import { verificarSesion } from "@/lib/dal";
 import { urlsFirmadas } from "@/lib/datos/imagenes";
 import { colaEvaluar, entregaProfe, mapasProfe } from "@/lib/datos/profesor";
 import {
+  colaFiltradaCon,
+  filtrosDeParams,
   IMAGEN_NO_DISPONIBLE,
   nombreTitular,
   rutaEntrega,
@@ -59,7 +61,10 @@ export default async function EvaluarEntregaPage({
 }: Props) {
   const { entrega: id } = await params;
   // `?ver`: desde la ficha del alumno (Editar alumno) se abre solo para ver, sin corregir
-  const soloVer = (await searchParams).ver !== undefined;
+  const query = await searchParams;
+  const soloVer = query.ver !== undefined;
+  // Filtros de la cola (D384): Anterior, Saltar y Guardar siguen la cola filtrada (D385)
+  const filtros = filtrosDeParams(query);
   const [entrega, cola, mapas] = await Promise.all([
     entregaProfe(id),
     colaEvaluar(),
@@ -68,7 +73,13 @@ export default async function EvaluarEntregaPage({
   const tarea = entrega ? mapas.tareas.get(entrega.tareaId) : undefined;
   // Un borrador del alumno todavía no es una entrega (D196)
   if (!entrega || !tarea || entrega.estado === "borrador") notFound();
-  const v = vistaEvaluar({ entrega, tarea, cola, mapas });
+  const v = vistaEvaluar({
+    entrega,
+    tarea,
+    cola: colaFiltradaCon(cola, filtros, entrega.id),
+    mapas,
+    filtros,
+  });
 
   const urls = await urlsFirmadas(
     v.preguntas.flatMap((p) =>
@@ -98,6 +109,8 @@ export default async function EvaluarEntregaPage({
         chips={v.chips}
         anteriorHref={soloVer ? null : v.anteriorHref}
         saltarHref={soloVer ? null : v.saltarHref}
+        filtroTexto={soloVer ? null : v.filtroTexto}
+        colaHref={v.colaHref}
       />
       {preguntas.length === 0 ? (
         // Nota importada del Excel sin preguntas (D136): no hay nada que puntuar aquí
@@ -147,7 +160,7 @@ export default async function EvaluarEntregaPage({
           base={v.base}
           siguiente={v.siguiente}
           guardarHref={v.guardarHref}
-          actualHref={rutaEntrega(v.entregaId)}
+          actualHref={rutaEntrega(v.entregaId, filtros)}
           acciones={ACCIONES}
           titular={v.titulo}
           integrantes={v.integrantes}
