@@ -12,6 +12,11 @@ import {
   repartoCapitan,
   sinParteDe,
 } from "@/lib/partes";
+import {
+  type EntregaVista,
+  repartoVista,
+  rutasReparto,
+} from "@/lib/vistas-estudiante";
 
 const CAP = "30000001";
 const ANA = "30000002";
@@ -50,11 +55,11 @@ const aplicar = (
   });
 
 describe("permisoParte", () => {
-  const tarea = {
+  const tarea: Pick<Tarea, "tipo" | "estado" | "secciones"> = {
     tipo: "grupal",
     estado: "abierta",
     secciones: ["5A"],
-  } as const;
+  };
   const equipo = { id: "eq", seccion: "5A", capitanId: CAP } as const;
   const u = (cedula: string) => ({
     cedula,
@@ -376,5 +381,111 @@ describe("vistaEvaluar con reparto (D420)", () => {
     });
     expect(v.inicial.noParticiparon).toEqual([]);
     expect(v.integrantes.every((m) => !("sinParte" in m))).toBe(true);
+  });
+});
+
+describe("repartoVista (D422)", () => {
+  const cabecera = {
+    tipo: "grupal" as const,
+    eyebrow: "Grupal · Equipo",
+    titulo: "Prueba",
+    vence: "Vence 20/11/2026",
+    puntos: "20 pts · 2 preguntas",
+    premio: null,
+    premioFoto: null,
+    preguntas: [
+      { id: "p1", enunciado: "Uno", formato: "texto" as const, valor: 10 },
+      { id: "p2", enunciado: "Dos", formato: "imagen" as const, valor: 10 },
+    ],
+  };
+  const persona = (cedula: string, nombres: string) => ({
+    cedula,
+    nombres,
+    apellidos: "Pérez",
+    avatar: { estilo: "fun-emoji", semilla: cedula },
+  });
+  const companeros = [
+    persona(CAP, "Carla"),
+    persona(ANA, "Ana"),
+    persona(LUIS, "Luis"),
+  ];
+  const partes = [
+    parte({
+      estado: "aceptada",
+      respuesta: { texto: "Hecha" },
+      actualizadoEn: 7,
+    }),
+    parte({
+      preguntaId: "p2",
+      asignado: LUIS,
+      estado: "entregada",
+      respuesta: { imagenPath: "entregas/t1/c/l.jpg" },
+    }),
+  ];
+  const entrada = (vista: EntregaVista, cedula: string) => ({
+    vista,
+    usuario: {
+      cedula,
+      nombres: companeros.find((c) => c.cedula === cedula)?.nombres ?? "",
+    },
+    equipo: { capitanId: CAP },
+    companeros,
+    partes,
+  });
+  const urls = new Map([["entregas/t1/c/l.jpg", "https://firmada/l"]]);
+
+  test("capitán: panel, lo aceptado precargado y la versión", () => {
+    const e = entrada(
+      { ...cabecera, estado: "responder", autor: "Carla" },
+      CAP,
+    );
+    expect(rutasReparto(e)).toEqual(["entregas/t1/c/l.jpg"]);
+    const r = repartoVista({ ...e, urls });
+    expect(r?.modo).toBe("capitan");
+    if (r?.modo !== "capitan") return;
+    expect(r.integrantes.map((m) => m.cedula)).toEqual([ANA, LUIS]);
+    expect(r.filas.map((f) => [f.asignado, f.estado])).toEqual([
+      [ANA, "aceptada"],
+      [LUIS, "entregada"],
+    ]);
+    expect(r.filas[1]?.respuesta).toMatchObject({
+      tipo: "imagen",
+      src: "https://firmada/l",
+    });
+    expect(r.inicial).toEqual({ p1: "Hecha" });
+    expect(r.prioridad).toEqual(["p1"]);
+    expect(r.version).toBe(7);
+    // Los dos entregaron algo: nadie queda marcado
+    expect(r.aviso).toBeNull();
+  });
+
+  test("integrante: solo su parte y su imagen; la otra, bloqueada con el nombre de quien la tiene", () => {
+    const e = entrada({ ...cabecera, estado: "lector", capitan: null }, ANA);
+    expect(rutasReparto(e)).toEqual([]);
+    const r = repartoVista({ ...e, urls });
+    expect(r).toEqual({
+      modo: "integrante",
+      capitan: "Carla",
+      partes: [
+        {
+          mia: true,
+          estado: "aceptada",
+          inicial: "Hecha",
+          respuesta: { tipo: "texto", texto: "Hecha" },
+        },
+        { mia: false, bloqueadaPor: "Luis" },
+      ],
+    });
+  });
+
+  test("sin preguntas asignadas o con la tarea entregada: nada", () => {
+    const e = entrada({ ...cabecera, estado: "lector", capitan: null }, ANA);
+    expect(repartoVista({ ...e, partes: [], urls })).toBeNull();
+    expect(
+      repartoVista({
+        ...entrada({ ...cabecera, estado: "cerrada" }, CAP),
+        urls,
+      }),
+    ).toBeNull();
   });
 });

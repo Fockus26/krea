@@ -1,6 +1,8 @@
 // De los documentos de Firestore a las props de las pantallas del estudiante (fase 07, D189).
 // Puro: sin Firebase ni reloj. Lo lee el DAL (`lib/datos/estudiante.ts`) en el servidor y lo
 // prueban los tests. Los datos demo (`lib/demo/*`) quedan solo para las galerías.
+
+import type { QuestionAnswer } from "@/components/krea/question-card-detail";
 import type { NavUsuario } from "@/components/layout/nav-types";
 import type { DatosEquipo } from "@/components/sections/equipo/team-hero";
 import type { Integrante } from "@/components/sections/equipo/team-members";
@@ -10,9 +12,11 @@ import type { FilaNota } from "@/components/sections/inicio/recent-grades";
 import type { ResumenEquipo } from "@/components/sections/inicio/team-summary";
 import type { PreguntaDetalle } from "@/components/sections/notas/question-list";
 import type { FilaEntregada } from "@/components/sections/tareas/delivered-tasks";
+import type { ParteDeIntegrante } from "@/components/sections/tareas/partes-integrante";
+import type { FilaRepartoPanel } from "@/components/sections/tareas/reparto-panel";
 import type { PreguntaEntrega } from "@/components/sections/tareas/task-answer-form";
 import { type DicebearEstilo, esEstiloDicebear } from "@/lib/dicebear";
-import { faltanRespuestas, yaEnviada } from "@/lib/entregas";
+import { faltanRespuestas, inicialEdicion, yaEnviada } from "@/lib/entregas";
 import { enJuegoTexto, ganadoresPremio, premioGanadoTexto } from "@/lib/equipo";
 import {
   claveVencimiento,
@@ -35,6 +39,7 @@ import {
   type Ajuste,
   type Entrega,
   type Equipo,
+  type Parte,
   type RankingSeccion,
   rutasImagen,
   type Tarea,
@@ -42,11 +47,23 @@ import {
 } from "@/lib/modelo";
 import { fechaNotaTexto, NO_PARTICIPASTE, promedioNotas } from "@/lib/notas";
 import {
+  aceptadas,
+  avisoSinParteTexto,
+  PARTE_IMAGEN_SIN_VISTA,
+  PARTE_SIN_NOMBRE,
+  partesDeIntegrante,
+  partesVigentes,
+  type RespuestaParte,
+  repartoCapitan,
+  sinParteDe,
+} from "@/lib/partes";
+import {
   baseChipTexto,
   capitanChipTexto,
   cedulaTexto,
   partirNombre,
 } from "@/lib/perfil";
+import { imagenesConAlt, respuestaFirmada } from "@/lib/question";
 import { primerApellido, rankCompetition } from "@/lib/ranking";
 import {
   baseDeIntegrante,
@@ -62,6 +79,171 @@ import {
 import type { TitulosTopbar } from "@/lib/topbar";
 
 export type ConId<T> = { id: string } & T;
+
+/* ---------- Grupal por partes (D422) ---------- */
+
+/** Lo que pinta /tareas/[tarea] del reparto: el panel del capitán o las partes del integrante. */
+export type RepartoVista =
+  | {
+      modo: "capitan";
+      filas: FilaRepartoPanel[];
+      /** A quién se puede asignar: el equipo sin el capitán. */
+      integrantes: Array<{ cedula: string; nombre: string }>;
+      /** Lo aceptado, para precargar su formulario (D418). */
+      inicial: ReturnType<typeof inicialEdicion>;
+      prioridad: string[];
+      /** Mayor `actualizadoEn` de lo aceptado: la `key` que remonta el formulario. */
+      version: number;
+      /** Confirmación de «Entregar»: quién quedará «No participó» (D420). */
+      aviso: string | null;
+    }
+  | { modo: "integrante"; partes: ParteDeIntegrante[]; capitan: string }
+  | null;
+
+type EntradaReparto = {
+  vista: EntregaVista;
+  usuario: Pick<Usuario, "cedula" | "nombres">;
+  equipo: Pick<Equipo, "capitanId"> | null;
+  companeros: readonly Companero[];
+  partes: readonly Parte[];
+};
+
+/** Solo hay reparto en una grupal abierta y sin enviar: responder (capitán) o lector. */
+function conReparto(
+  v: EntregaVista,
+): v is Extract<EntregaVista, { estado: "responder" | "lector" }> {
+  return (
+    (v.estado === "responder" || v.estado === "lector") && v.tipo === "grupal"
+  );
+}
+
+/**
+ * Las imágenes del reparto que la página firma: todas las entregadas para el capitán, solo las
+ * suyas para el integrante (D423).
+ */
+export function rutasReparto(e: EntradaReparto): string[] {
+  if (!conReparto(e.vista) || !e.equipo) return [];
+  const miembros = e.companeros.map((c) => c.cedula);
+  const capitanId = e.equipo.capitanId;
+  const esCapitan = e.vista.estado === "responder";
+  return partesVigentes(e.partes, miembros, capitanId).flatMap((p) =>
+    esCapitan || p.asignado === e.usuario.cedula
+      ? rutasImagen(p.respuesta)
+      : [],
+  );
+}
+
+/** Respuesta de una parte, firmada para mostrarla. */
+function parteFirmada(
+  r: RespuestaParte,
+  autor: string,
+  numero: number,
+  urls: ReadonlyMap<string, string>,
+): QuestionAnswer {
+  if (r.tipo === "texto") return r;
+  return (
+    respuestaFirmada(imagenesConAlt(r.imagenPaths, autor, numero), urls) ?? {
+      tipo: "texto",
+      texto: PARTE_IMAGEN_SIN_VISTA,
+    }
+  );
+}
+
+/**
+ * /tareas/[tarea] con reparto (D422): `capitan` ve el panel y su formulario precargado con lo
+ * aceptado; `integrante` (con al menos una pregunta suya) ve sus partes; si no, `null` (como hoy).
+ */
+export function repartoVista(
+  e: EntradaReparto & { urls: ReadonlyMap<string, string> },
+): RepartoVista {
+  const v = e.vista;
+  if (!conReparto(v) || !e.equipo) return null;
+  const capitanId = e.equipo.capitanId;
+  const miembros = e.companeros.map((c) => c.cedula);
+  const persona = new Map(e.companeros.map((c) => [c.cedula, c]));
+  const corto = (cedula: string | null) => {
+    const c = cedula ? persona.get(cedula) : undefined;
+    return c ? nombreCorto(c) : PARTE_SIN_NOMBRE;
+  };
+
+  if (v.estado === "responder") {
+    const acept = aceptadas(e.partes, miembros, capitanId);
+    const vigentes = partesVigentes(e.partes, miembros, capitanId);
+    return {
+      modo: "capitan",
+      filas: repartoCapitan(v.preguntas, e.partes, miembros, capitanId).map(
+        (f, i) => ({
+          preguntaId: f.preguntaId,
+          numero: i + 1,
+          enunciado: v.preguntas[i]?.enunciado ?? "",
+          asignado: f.asignado,
+          estado: f.estado,
+          respuesta: f.respuesta
+            ? parteFirmada(f.respuesta, corto(f.asignado), i + 1, e.urls)
+            : null,
+        }),
+      ),
+      integrantes: e.companeros
+        .filter((c) => c.cedula !== capitanId)
+        .map((c) => ({ cedula: c.cedula, nombre: nombreCorto(c) })),
+      inicial: inicialEdicion(
+        v.preguntas,
+        v.preguntas.map((p) => acept.respuestas[p.id] ?? null),
+        e.urls,
+      ),
+      prioridad: Object.keys(acept.respuestas),
+      version: acept.version,
+      aviso: avisoSinParteTexto(
+        sinParteDe(vigentes, miembros, e.usuario.cedula).map(corto),
+      ),
+    };
+  }
+
+  const mias = partesDeIntegrante(
+    v.preguntas,
+    e.partes,
+    miembros,
+    capitanId,
+    e.usuario.cedula,
+  );
+  if (!mias) return null;
+  const capitan = primerNombre(persona.get(capitanId ?? "")?.nombres ?? "");
+  const yo = primerNombre(e.usuario.nombres);
+  return {
+    modo: "integrante",
+    capitan: capitan || "el capitán",
+    partes: mias.map((m, i): ParteDeIntegrante => {
+      if (!m.mia) {
+        const quien = m.asignado ? persona.get(m.asignado) : undefined;
+        return {
+          mia: false,
+          bloqueadaPor:
+            primerNombre(quien?.nombres ?? "") || capitan || "el capitán",
+        };
+      }
+      const p = v.preguntas[i];
+      const inicial =
+        p && m.respuesta
+          ? inicialEdicion([p], [m.respuesta], e.urls)[p.id]
+          : undefined;
+      return {
+        mia: true,
+        estado: m.estado,
+        inicial:
+          inicial === undefined
+            ? null
+            : typeof inicial === "string"
+              ? inicial
+              : Array.isArray(inicial)
+                ? inicial
+                : [inicial],
+        respuesta: m.respuesta
+          ? parteFirmada(m.respuesta, yo, i + 1, e.urls)
+          : null,
+      };
+    }),
+  };
+}
 
 /** Lo que el servidor lee para un estudiante (todo de su sección y lo suyo). */
 export type DatosAlumno = {

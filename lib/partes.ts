@@ -364,6 +364,12 @@ export const ESTADO_PARTE_TEXTO: Record<EstadoParteId, string> = {
 /** Pregunta sin asignar en el panel del capitán. Fila 223. */
 export const SIN_ASIGNAR_TEXTO = "La respondes tú";
 
+/** Imagen entregada que no se pudo firmar. Fila 223. */
+export const PARTE_IMAGEN_SIN_VISTA =
+  "Entregó una imagen, pero no se pudo cargar. Recarga la página para verla.";
+/** Quien ya no tiene perfil (no debería pasar: la parte vigente es de alguien del equipo). */
+export const PARTE_SIN_NOMBRE = "Alguien del equipo";
+
 /** Panel «Reparto» del capitán. Fila 224. */
 export const REPARTO_TITULO = "Reparto";
 export const REPARTO_AYUDA =
