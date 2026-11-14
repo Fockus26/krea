@@ -76,6 +76,11 @@ export function conEntrega(
   return { ...datos, entregas: [...otras, entrega] };
 }
 
+/** Quita la entrega `id` de los datos leídos (al eliminarla, D413). */
+export function sinEntrega(datos: DatosSeccion, id: string): DatosSeccion {
+  return { ...datos, entregas: datos.entregas.filter((e) => e.id !== id) };
+}
+
 /** Añade un ajuste a los datos leídos. */
 export function conAjuste(
   datos: DatosSeccion,
