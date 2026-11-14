@@ -25,6 +25,7 @@ const UUID = "6f1c2d3e-4b5a-4c6d-8e7f-9a0b1c2d3e4f";
 const OP_ENTREGA = "0d9a2c1e-5b4f-4a3e-9c2d-1e0f9a8b7c6d";
 const OP_AJENA = "1e0f9a8b-7c6d-4a3e-9c2d-0d9a2c1e5b4f";
 const OP_TAREA = "2a3b4c5d-6e7f-4a1b-8c2d-3e4f5a6b7c8d";
+const OP_EVALUADA = "3b4c5d6e-7f8a-4b2c-9d3e-4f5a6b7c8d9e";
 
 const usuario = (cedula: string): Usuario => ({
   cedula,
@@ -82,7 +83,7 @@ beforeAll(async () => {
   await docs.ponerDoc(db(), "tareas", TAREA, tarea);
   for (const t of [ALUMNO, OTRO])
     await docs.borrarDoc(db(), "entregas", idEntrega(TAREA, t));
-  for (const op of [OP_ENTREGA, OP_AJENA, OP_TAREA])
+  for (const op of [OP_ENTREGA, OP_AJENA, OP_TAREA, OP_EVALUADA])
     await docs.borrarDoc(db(), "operaciones", op);
 });
 
@@ -108,13 +109,29 @@ describe("operaciones/{opId} (emulador, D293)", () => {
     expect(op.get("expiraEn") as number).toBeGreaterThan(AHORA);
   });
 
-  test("entrega: un opId nuevo sobre una entrega ya enviada sigue siendo «ya entregada»", async () => {
+  test("entrega: un opId nuevo sobre una entregada la edita (D395); sobre una evaluada, «ya evaluada»", async () => {
     const e = await envio(ALUMNO, OP_AJENA);
     expect(await enviarEnTransaccion(db(), ALUMNO, e, AHORA + 9)).toEqual({
-      ok: false,
-      error: "ya-entregada",
+      ok: true,
     });
-    const op = await docs.snap(db(), "operaciones", OP_AJENA);
+    const doc = await docs.snap(db(), "entregas", idEntrega(TAREA, ALUMNO));
+    expect(doc.get("enviadaEn")).toBe(AHORA + 9);
+    await docs.actualizarDoc(db(), "entregas", idEntrega(TAREA, ALUMNO), {
+      estado: "evaluada",
+      evaluacion: {
+        puntos: { p1: 10, p2: 10 },
+        comentarios: {},
+        puntaje: 20,
+        evaluadaPor: null,
+        evaluadaEn: AHORA + 10,
+      },
+    });
+    const tarde = await envio(ALUMNO, OP_EVALUADA);
+    expect(await enviarEnTransaccion(db(), ALUMNO, tarde, AHORA + 11)).toEqual({
+      ok: false,
+      error: "ya-evaluada",
+    });
+    const op = await docs.snap(db(), "operaciones", OP_EVALUADA);
     expect(op.exists).toBe(false);
   });
 
