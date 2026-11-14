@@ -13,6 +13,7 @@ import {
   equipoPorId,
   profesDelAlumno,
 } from "@/lib/datos/estudiante";
+import { baseSelectorAvatar } from "@/lib/perfil";
 import { clavePublicaPush } from "@/lib/push";
 import { perfilVista } from "@/lib/vistas-estudiante";
 
@@ -46,7 +47,7 @@ export default async function PerfilPage() {
         nombre={p.nombre}
         estilo={p.estilo}
         seed={p.seed}
-        base={usuario.cedula}
+        base={baseSelectorAvatar(usuario.avatar.semilla, usuario.cedula)}
       />
       <AparienciaConectada inicial={usuario.apariencia ?? null} />
       {/* Aviso de tarea nueva (D335): solo con las tres variables de VAPID */}

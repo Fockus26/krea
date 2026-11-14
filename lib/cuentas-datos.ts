@@ -6,7 +6,7 @@ import { APELLIDOS_VACIO, EMAIL_INVALIDO, NOMBRES_VACIO } from "@/lib/alumnos";
 import { zEmailEntrada } from "@/lib/alumnos-datos";
 import { validateCedula } from "@/lib/cedula";
 import { type Usuario, zBase, zCedula, zSeccion, zUsuario } from "@/lib/modelo";
-import { cedulaTexto } from "@/lib/perfil";
+import { cedulaTexto, semillaConCedula } from "@/lib/perfil";
 import { ESTILO_AVATAR_DEFECTO } from "@/lib/seed-firestore";
 
 /* ---------- Contraseña temporal (D232) ---------- */
@@ -80,11 +80,18 @@ export type EntradaCuenta = z.input<typeof zEntradaCuenta>;
 export type CuentaNueva = z.output<typeof zEntradaCuenta>;
 
 /**
- * Perfil `usuarios/{cedula}` de una cuenta nueva: avatar por defecto con su cédula de semilla,
- * sin equipo, base 20 si no se dice otra, y `debeCambiarPassword` (D232). Nunca admin: eso solo
- * lo pone el script (`scripts/admin-profesor.ts`).
+ * Perfil `usuarios/{cedula}` de una cuenta nueva: avatar por defecto con una semilla opaca que
+ * genera quien llama (`semillaAvatarNueva`, D388: nunca la cédula, que la URL de DiceBear
+ * mostraría), sin equipo, base 20 si no se dice otra, y `debeCambiarPassword` (D232). Nunca
+ * admin: eso solo lo pone el script (`scripts/admin-profesor.ts`).
  */
-export function usuarioNuevo(c: CuentaNueva, ahora: number): Usuario {
+export function usuarioNuevo(
+  c: CuentaNueva,
+  ahora: number,
+  semilla: string,
+): Usuario {
+  if (semillaConCedula(semilla, c.cedula))
+    throw new Error("usuarioNuevo: la semilla del avatar contiene la cédula");
   return {
     cedula: c.cedula,
     rol: c.rol,
@@ -93,7 +100,7 @@ export function usuarioNuevo(c: CuentaNueva, ahora: number): Usuario {
     seccion: c.rol === "estudiante" ? c.seccion : null,
     equipoId: null,
     base: c.rol === "estudiante" ? (c.base ?? 20) : 20,
-    avatar: { estilo: ESTILO_AVATAR_DEFECTO, semilla: c.cedula },
+    avatar: { estilo: ESTILO_AVATAR_DEFECTO, semilla },
     debeCambiarPassword: true,
     actualizadoEn: ahora,
   };

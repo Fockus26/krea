@@ -20,6 +20,7 @@ import { filaDeUsuario, leerUsuarioParaActualizar } from "@/lib/data/usuarios";
 import type { Db, Tx } from "@/lib/db";
 import { account, session, user, usuarios } from "@/lib/db/schema";
 import { emailInterno } from "@/lib/modelo";
+import { semillaAvatarNueva } from "@/lib/perfil";
 
 /** Proveedor de Better Auth para email + contraseña. */
 export const PROVEEDOR_CREDENCIAL = "credential";
@@ -82,7 +83,12 @@ export async function crearCuentaCon(
   ahora: number,
   generar: () => string = generarPasswordTemporal,
 ): Promise<{ passwordTemporal: string }> {
-  const usuario = usuarioNuevo(cuenta, ahora);
+  // Semilla opaca del avatar (D388): la URL de DiceBear la expone
+  const usuario = usuarioNuevo(
+    cuenta,
+    ahora,
+    semillaAvatarNueva(cuenta.cedula),
+  );
   const passwordTemporal = generar();
   const hash = await hashPassword(passwordTemporal);
   try {

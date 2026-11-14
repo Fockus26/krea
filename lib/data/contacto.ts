@@ -1,8 +1,12 @@
-// Contacto opcional del profesor en Postgres (D378, D380): lo guarda el propio profe y lo leen sus
-// alumnos. La lectura del alumno trae solo nombres, apellidos, teléfono y correo de contacto: nunca
-// la cédula, el email de recuperación ni el avatar (su semilla lleva la cédula).
+// Contacto opcional del profesor en Postgres (D378, D380, D389): lo guarda el propio profe y lo
+// leen sus alumnos. La lectura del alumno trae solo nombres, apellidos, teléfono, correo de contacto
+// y el avatar si su semilla ya no lleva la cédula: nunca la cédula ni el email de recuperación.
 import { and, eq, isNotNull, isNull, or } from "drizzle-orm";
-import type { Contacto, FilaContactoProfe } from "@/lib/contacto";
+import {
+  avatarVisibleProfe,
+  type Contacto,
+  type FilaContactoProfe,
+} from "@/lib/contacto";
 import type { Tx } from "@/lib/db";
 import { usuarios } from "@/lib/db/schema";
 import type { SeccionId } from "@/lib/modelo";
@@ -50,18 +54,21 @@ export async function guardarContactoCon(
 
 /**
  * Los profes de un alumno con algún dato de contacto: los que ven todas las secciones
- * (`seccion: null`, D323) y los de la suya (D380).
+ * (`seccion: null`, D323) y los de la suya (D380). La cédula se lee solo para decidir si el avatar
+ * se puede mostrar (D388) y no sale de aquí.
  */
 export async function contactosDeProfes(
   db: Tx,
   seccion: SeccionId,
 ): Promise<FilaContactoProfe[]> {
-  return db
+  const filas = await db
     .select({
+      cedula: usuarios.cedula,
       nombres: usuarios.nombres,
       apellidos: usuarios.apellidos,
       telefono: usuarios.telefono,
       emailContacto: usuarios.emailContacto,
+      avatar: usuarios.avatar,
     })
     .from(usuarios)
     .where(
@@ -71,4 +78,8 @@ export async function contactosDeProfes(
         or(isNotNull(usuarios.telefono), isNotNull(usuarios.emailContacto)),
       ),
     );
+  return filas.map(({ cedula, avatar, ...f }) => ({
+    ...f,
+    avatar: avatarVisibleProfe(avatar, cedula),
+  }));
 }

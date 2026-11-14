@@ -31,7 +31,7 @@ export function AvatarPicker({
   nombre: string;
   estilo: DicebearEstilo;
   seed: string;
-  /** Semilla de la que salen las opciones (la cédula del alumno). */
+  /** Semilla de la que salen las opciones: la raíz opaca de la actual (`baseSelectorAvatar`, D388). */
   base: string;
   onChange?: (avatar: { estilo: DicebearEstilo; seed: string }) => void;
 }) {

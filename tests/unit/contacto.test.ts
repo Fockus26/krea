@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { EMAIL_INVALIDO } from "@/lib/alumnos";
 import {
+  avatarVisibleProfe,
   contactoAFormulario,
   enlaceCorreo,
   enlaceWhatsApp,
@@ -13,6 +14,27 @@ import {
   telefonoTexto,
   zContacto,
 } from "@/lib/contacto";
+import { estiloDe } from "@/lib/vistas-estudiante";
+
+describe("avatarVisibleProfe (D389)", () => {
+  const CI = "30262232";
+  test("semilla con la cédula (sola o con sufijo de tanda) → null: iniciales", () => {
+    expect(
+      avatarVisibleProfe({ estilo: "fun-emoji", semilla: CI }, CI),
+    ).toBeNull();
+    expect(
+      avatarVisibleProfe({ estilo: "fun-emoji", semilla: `${CI}-3-5` }, CI),
+    ).toBeNull();
+  });
+  test("semilla opaca → el avatar tal cual, sin la cédula", () => {
+    const a = {
+      estilo: "fun-emoji",
+      semilla: "0a1b2c3d4e5f60718293a4b5c6d7e8f9",
+    };
+    expect(avatarVisibleProfe(a, CI)).toEqual(a);
+    expect(JSON.stringify(avatarVisibleProfe(a, CI))).not.toContain(CI);
+  });
+});
 
 describe("normalizarTelefono", () => {
   test("las formas habituales de escribirlo dan el mismo E.164 sin +", () => {
@@ -130,11 +152,33 @@ describe("tarjetasProfes", () => {
     apellidos: string,
     telefono: string | null,
     emailContacto: string | null,
+    avatar: FilaContactoProfe["avatar"] = null,
   ): FilaContactoProfe => ({
     nombres,
     apellidos,
     telefono,
     emailContacto,
+    avatar,
+  });
+
+  test("avatar del profe (D389): estilo válido y su semilla, o null → iniciales", () => {
+    const [con, sin, raro] = tarjetasProfes([
+      fila("Ana", "Díaz", "584241112233", null, {
+        estilo: "bottts-neutral",
+        semilla: "9f2c4e7a1b3d5f6081a2b3c4d5e6f708",
+      }),
+      fila("Beto", "Luna", "584241112233", null),
+      fila("Carla", "Mora", "584241112233", null, {
+        estilo: "estilo-que-ya-no-existe",
+        semilla: "abc",
+      }),
+    ]);
+    expect(con?.avatar).toEqual({
+      estilo: "bottts-neutral",
+      seed: "9f2c4e7a1b3d5f6081a2b3c4d5e6f708",
+    });
+    expect(sin?.avatar).toBeNull();
+    expect(raro?.avatar?.estilo).toBe(estiloDe("estilo-que-ya-no-existe"));
   });
 
   test("solo los profes con algún dato válido, por nombre corto", () => {

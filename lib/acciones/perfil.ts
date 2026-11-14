@@ -36,13 +36,23 @@ export async function guardarAvatar(
   const db = baseDeDatos();
   // Con contraseña temporal solo puede crear la suya (D232)
   if (!sesion || sesion.debeCambiarPassword || !db) return { ok: false };
-  const avatar = zAvatarElegido(sesion.uid).safeParse(entrada);
-  if (!avatar.success) return { ok: false };
-  const { estilo, semilla } = avatar.data;
   const uid = sesion.uid;
   const seccion = sesion.seccion;
   try {
-    await db.transaction(async (tx) => {
+    const ok = await db.transaction(async (tx) => {
+      // Las opciones válidas salen de la semilla guardada (D388): se lee antes de validar
+      const [actual] = await tx
+        .select({ avatar: usuarios.avatar })
+        .from(usuarios)
+        .where(eq(usuarios.cedula, uid))
+        .limit(1)
+        .for("update");
+      if (!actual) throw new Error("sin perfil");
+      const avatar = zAvatarElegido(actual.avatar.semilla, uid).safeParse(
+        entrada,
+      );
+      if (!avatar.success) return false;
+      const { estilo, semilla } = avatar.data;
       const r = await tx
         .update(usuarios)
         .set({ avatar: { estilo, semilla }, actualizadoEn: Date.now() })
@@ -59,7 +69,9 @@ export async function guardarAvatar(
           .where(
             sql`${ranking.seccion} = ${seccion} AND ${ranking.alumnos} ? ${uid}`,
           );
+      return true;
     });
+    if (!ok) return { ok: false };
     // La topbar, la barra lateral y el ranking vuelven a leer el perfil (D250)
     refresh();
     return { ok: true };
