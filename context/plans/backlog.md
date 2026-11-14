@@ -45,3 +45,9 @@
 - (2026-11-14, V2) Cédulas ajenas que aún ve un alumno: `/api/ranking/[seccion]` indexa `alumnos` por cédula (`lib/modelo.ts:511`, `lib/ranking-en-vivo.ts:92,103`), `lib/vistas-estudiante.ts:518,630` (`id: m.cedula`), `capitanId` en equipos del ranking en vivo. Media: decidir con César si se oculta.
 - (2026-11-14, W2, visto de paso, Low) `POST /api/presencia` guarda `nombres + apellidos` completos (`app/api/presencia/route.ts:51`); D277 pide primer nombre + primer apellido (`nombrePresencia`). Los otros profes ven el nombre completo en Alumnos y en Evaluar. Arreglo de una línea.
 - (2026-11-14, W1, visto de paso, Low) `NumberStepper` llama a `onChange` con valores fuera de paso mientras se escribe («17,3») y `notaFinal` lanza `RangeError` con una base así. Evaluar lo cubre con `normalizarBase`; «Editar alumno» depende de su validación (sin revisar a fondo).
+
+## Tras la ola 3 de la tanda 2026-11-14 (#148 + #149)
+- **Costura X1×X2:** «Eliminar entrega» (#148) de una grupal no borra sus `partes` ni sabe de ellas; borra de B2 las imágenes de la entrega, que las partes aceptadas pueden seguir citando. Fix chico con las dos en main: en `eliminarEntregaEnTransaccion`, borrar las partes de esa entrega (`borrarPartesDeEntrega`) y sumar sus imágenes al borrado.
+- Avisos push al capitán cuando un integrante entrega su parte (D424).
+- Eliminar equipo deja en B2 las imágenes de sus partes (D421).
+- Galería `app/secciones/tareas`: faltan los estados del reparto.
