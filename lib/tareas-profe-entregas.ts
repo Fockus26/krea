@@ -2,7 +2,8 @@
 // (sin Postgres ni React): una fila por titular — el alumno en una individual, el equipo en una
 // grupal con sus integrantes y la nota propia de cada uno —, con estado, puntaje sobre 20, base,
 // nota y a dónde lleva «Ver» y «Evaluar»/«Corregir». La nota no se guarda: sale de
-// `puntaje × base / 20` con la base vigente (D013); «No participó» queda en NOTA_MIN (D365).
+// `puntaje × base / 20` con la base de esa entrega (D013, D403; si no la guardó, la vigente);
+// «No participó» queda en NOTA_MIN (D365).
 import {
   nombreGrupal,
   rutaEntrega,
@@ -10,7 +11,11 @@ import {
 } from "@/lib/evaluar-datos";
 import { formatNota, NOTA_MIN } from "@/lib/grades";
 import type { Entrega, Equipo, SeccionId, Usuario } from "@/lib/modelo";
-import { noParticipo, notaDeIntegrante } from "@/lib/ranking-datos";
+import {
+  baseDeIntegrante,
+  noParticipo,
+  notaDeIntegrante,
+} from "@/lib/ranking-datos";
 import { ordenarSecciones } from "@/lib/secciones";
 
 type ConId<T> = { id: string } & T;
@@ -21,7 +26,7 @@ export type EstadoFilaEntrega = "sin-entregar" | "por-evaluar" | "evaluada";
 export type FilaIntegrante = {
   cedula: string;
   nombre: string;
-  /** Base vigente; `null` si el alumno ya no existe. */
+  /** Base de esta entrega (D403; si no la guardó, la vigente); `null` si no hay ninguna. */
   base: number | null;
   /** Nota con su base; `null` = Pendiente (D003). «No participó» = NOTA_MIN (D365). */
   nota: number | null;
@@ -39,7 +44,10 @@ export type FilaEntregaTarea = {
   entregaId: string | null;
   /** Sobre 20; `null` mientras no esté evaluada. */
   puntaje: number | null;
-  /** Individual: la base vigente del alumno. Grupal: `null` (cada integrante tiene la suya). */
+  /**
+   * Individual: la base de esta entrega si se evaluó con una (D403); si no, la vigente del
+   * alumno. Grupal: `null` (cada integrante tiene la suya).
+   */
   base: number | null;
   /** Individual evaluada: su nota. Grupal: `null` (la nota es de cada integrante). */
   nota: number | null;
@@ -63,11 +71,20 @@ function integranteDe(
 ): FilaIntegrante {
   const u = usuarios.get(cedula);
   const noPart = noParticipo(e, cedula);
+  // La de la entrega; si no la guardó, la vigente (un alumno que ya no existe no tiene)
+  const base = u
+    ? baseDeIntegrante(e, cedula, u.base)
+    : (e.evaluacion?.bases?.[cedula] ?? null);
   return {
     cedula,
     nombre: u ? nombreCompleto(u) : TITULAR_DESCONOCIDO,
-    base: u?.base ?? null,
-    nota: u ? notaDeIntegrante(e, u.base, cedula) : noPart ? NOTA_MIN : null,
+    base,
+    nota:
+      base !== null
+        ? notaDeIntegrante(e, base, cedula)
+        : noPart
+          ? NOTA_MIN
+          : null,
     noParticipo: noPart,
   };
 }
@@ -95,7 +112,11 @@ function filaDeEntrega(
     estado: evaluada ? "evaluada" : "por-evaluar",
     entregaId: e.id,
     puntaje: evaluada ? (e.evaluacion?.puntaje ?? null) : null,
-    base: grupal ? null : (titular?.base ?? null),
+    base: grupal
+      ? null
+      : titular
+        ? baseDeIntegrante(e, titular.cedula, titular.base)
+        : (e.evaluacion?.bases?.[e.titularId] ?? null),
     nota:
       grupal || !titular
         ? null

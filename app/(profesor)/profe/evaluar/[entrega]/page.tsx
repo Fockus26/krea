@@ -21,6 +21,7 @@ import {
   profesorActual,
 } from "@/lib/datos/profesor";
 import {
+  basesIntegrantesTexto,
   colaFiltradaCon,
   filtrosDeParams,
   IMAGEN_NO_DISPONIBLE,
@@ -148,6 +149,16 @@ export default async function EvaluarEntregaPage({
                 : "Pendiente"}
             </span>
           </p>
+          {v.tipo === "grupal" && entrega.evaluacion ? (
+            // La base de cada integrante en esta tarea (D403); en individual, el chip
+            <p className="text-body text-text">
+              {basesIntegrantesTexto(
+                v.integrantes,
+                v.inicial.bases,
+                v.inicial.noParticiparon,
+              )}
+            </p>
+          ) : null}
           <ol className="m-0 flex list-none flex-col gap-4 p-0">
             {preguntas.map((p, i) => (
               <QuestionCardDetail

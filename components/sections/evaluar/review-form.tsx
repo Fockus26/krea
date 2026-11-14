@@ -13,11 +13,14 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/sonner";
 import {
   activaTexto,
+  baseChipTexto,
   conIndice,
   DESHACER_MS,
   esAtajoGuardar,
   estaCompleta,
   faltanCortoTexto,
+  normalizarBase,
+  normalizarBases,
   normalizarPuntajes,
   notaGuardada,
   notaGuardadaTexto,
@@ -31,6 +34,7 @@ import {
   type GuardarEvaluacion,
   type ResultadoEvaluar,
 } from "@/lib/evaluar-datos";
+import { ReviewBase, usePublicarBaseChip } from "./review-base";
 import { ReviewIndex } from "./review-index";
 import { ReviewMembers } from "./review-members";
 
@@ -46,6 +50,8 @@ type Estado = {
   comentarios: string[];
   /** Grupal: cédulas marcadas «No participó» (D364). */
   noParticiparon: string[];
+  /** Base de cada integrante en esta tarea (cédula → base, D403). */
+  bases: Record<string, number>;
 };
 
 /** Server Actions de Evaluar (W7); sin ellas (vista previa de /secciones) nada se guarda. */
@@ -73,6 +79,9 @@ let enfocarAlMontar = false;
  * deshabilitado con su motivo en `aria-describedby`); Ctrl/Cmd + Enter guarda desde cualquier
  * parte de la página (no dentro de un diálogo; Enter solo, nunca). Al guardar: toast
  * "Nota guardada · 18,5" con "Deshacer" (5 s) y la siguiente entrega, con el scroll arriba.
+ * Base de esta tarea (D403, D405): individual, la tarjeta «Base de esta tarea» tras las
+ * preguntas (la nota en vivo, el chip de la cabecera y el toast usan la elegida); grupal, una
+ * por integrante en «Integrantes» (la nota en vivo sigue siendo la del equipo, sobre 20).
  */
 export function ReviewForm({
   entregaId,
@@ -105,13 +114,18 @@ export function ReviewForm({
     comentarios: readonly string[];
     /** Grupal: marcados «No participó» en la evaluación vigente (D364). */
     noParticiparon?: readonly string[];
+    /**
+     * Base de cada integrante en esta tarea (D403; en individual, solo el titular). Sin ella
+     * (galería vieja) no hay control de base y Guardar no manda bases.
+     */
+    bases?: Readonly<Record<string, number>>;
   };
   /**
    * `evaluadaEn` de la evaluación vigente al abrir (`null` = Pendiente). Va con Guardar: si otro
    * la cambió mientras tanto, el servidor responde `cambio` y no se pisa (D224).
    */
   version?: number | null;
-  /** Base con la que sale la nota (grupal: 20, D014). */
+  /** Base con la que sale la nota al abrir (grupal: 20, la del equipo). */
   base: number;
   siguiente: SiguienteEntrega;
   /** A dónde va "Guardar" (la siguiente entrega, o la lista al acabar la cola). */
@@ -135,6 +149,7 @@ export function ReviewForm({
         puntajes: [...inicial.puntajes],
         comentarios: [...inicial.comentarios],
         noParticiparon: [...(inicial.noParticiparon ?? [])],
+        bases: { ...inicial.bases },
       }
     );
   });
@@ -145,8 +160,21 @@ export function ReviewForm({
   const motivoId = React.useId();
   const motivoMovilId = React.useId();
 
-  const { puntajes, comentarios, noParticiparon } = estado;
+  const { puntajes, comentarios, noParticiparon, bases } = estado;
   const conIntegrantes = tipo === "grupal" && integrantes.length > 0;
+  // Individual: la cédula del titular es la única clave de `inicial.bases`
+  const cedulaIndividual =
+    tipo === "individual" && inicial.bases
+      ? Object.keys(inicial.bases)[0]
+      : undefined;
+  const baseIndividual =
+    cedulaIndividual === undefined ? undefined : bases[cedulaIndividual];
+  // La nota en vivo y el toast: la base elegida (individual) o la del equipo (grupal)
+  const baseNota =
+    baseIndividual === undefined ? base : normalizarBase(baseIndividual);
+  usePublicarBaseChip(
+    baseIndividual === undefined ? null : baseChipTexto("individual", baseNota),
+  );
   const completo = estaCompleta(puntajes);
   const faltan = puntajes.filter((p) => p === null).length;
   const indice = conIndice(preguntas.length);
@@ -166,10 +194,12 @@ export function ReviewForm({
     if (!completo || guardando.current) return;
     const valores = preguntas.map((p) => p.valor);
     const finales = normalizarPuntajes(puntajes, valores);
+    const basesFinales = normalizarBases(bases);
     const guardado: Estado = {
       puntajes: finales,
       comentarios,
       noParticiparon,
+      bases: basesFinales,
     };
     let evaluadaEn: number | null = null;
     if (acciones) {
@@ -185,6 +215,7 @@ export function ReviewForm({
           ),
           version,
           ...(conIntegrantes ? { noParticiparon } : {}),
+          ...(inicial.bases ? { bases: basesFinales } : {}),
           ...(inicial.enviadaEn !== undefined
             ? { enviadaEn: inicial.enviadaEn }
             : {}),
@@ -200,7 +231,7 @@ export function ReviewForm({
       setFalloRed(false);
       evaluadaEn = r.evaluadaEn;
     }
-    toast.success(notaGuardadaTexto(notaGuardada(finales, base)), {
+    toast.success(notaGuardadaTexto(notaGuardada(finales, baseNota)), {
       duration: DESHACER_MS,
       action: {
         // Copy del handoff (§3)
@@ -257,13 +288,15 @@ export function ReviewForm({
         ? [...s.noParticiparon.filter((c) => c !== cedula), cedula]
         : s.noParticiparon.filter((c) => c !== cedula),
     }));
+  const setBase = (cedula: string, v: number) =>
+    setEstado((s) => ({ ...s, bases: { ...s.bases, [cedula]: v } }));
 
   return (
     <div data-slot="review-form" className="page-stack">
       {/* < 1024: medidor sticky a 64 bajo la topbar (`.sticky-top` del lienzo) */}
       <LiveTotal
         scores={puntajes}
-        base={base}
+        base={baseNota}
         variant="bar"
         className="sticky top-16 z-sticky bajo:static lg:hidden"
       />
@@ -323,11 +356,19 @@ export function ReviewForm({
               );
             })}
           </ol>
+          {cedulaIndividual !== undefined && baseIndividual !== undefined ? (
+            <ReviewBase
+              value={baseIndividual}
+              onChange={(v) => setBase(cedulaIndividual, v)}
+            />
+          ) : null}
           {conIntegrantes ? (
             <ReviewMembers
               integrantes={integrantes}
               marcados={noParticiparon}
               onCambio={setNoParticipo}
+              bases={inicial.bases ? bases : undefined}
+              onBase={setBase}
             />
           ) : null}
         </div>
@@ -336,7 +377,7 @@ export function ReviewForm({
         <div className="sticky top-6 flex flex-col gap-6 max-lg:hidden">
           <LiveTotal
             scores={puntajes}
-            base={base}
+            base={baseNota}
             variant="card"
             headingLevel={2}
           />

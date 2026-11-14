@@ -347,7 +347,8 @@ function EditForm({
       <Field
         label="Base de evaluación"
         controlId={ids.base}
-        help="Entre 10 y 20. Nota final = puntaje × base / 20. Cambia todas sus notas; los puntos de sus notas se recalculan."
+        // PROVISIONAL (CONTENT_CHECKLIST fila 214): la base es la de las próximas evaluaciones (D403)
+        help="Entre 10 y 20. Nota final = puntaje × base / 20. Es la base con la que empiezan sus próximas evaluaciones; las tareas ya evaluadas conservan la suya."
         error={ver.base}
         announce={false}
       >

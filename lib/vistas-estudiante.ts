@@ -48,7 +48,11 @@ import {
   partirNombre,
 } from "@/lib/perfil";
 import { primerApellido, rankCompetition } from "@/lib/ranking";
-import { noParticipo, notaDeIntegrante } from "@/lib/ranking-datos";
+import {
+  baseDeIntegrante,
+  noParticipo,
+  notaDeIntegrante,
+} from "@/lib/ranking-datos";
 import {
   entregadaTexto,
   eyebrowTarea,
@@ -129,6 +133,8 @@ export type NotaAlumno = {
   puntaje: number | null;
   /** Nota final con su base (D013, D177); `null` = Pendiente. */
   nota: number | null;
+  /** Base de esa nota: la que guardó la evaluación (D403); si no, o pendiente, su base vigente. */
+  base: number;
   /** Grupal evaluada en la que el profe lo marcó «No participó»: su nota es 1 fija (D365). */
   noParticipo: boolean;
   /** Día ISO: de evaluación si está evaluada, si no de entrega (o `null` sin fecha). */
@@ -165,6 +171,7 @@ export function notasDelAlumno(
         entrega,
         puntaje: ev.puntaje,
         nota: notaDeIntegrante(entrega, d.usuario.base, d.usuario.cedula),
+        base: baseDeIntegrante(entrega, d.usuario.cedula, d.usuario.base),
         noParticipo: noParticipo(entrega, d.usuario.cedula),
         fecha: diaDeInstante(ev.evaluadaEn),
       };
@@ -174,6 +181,7 @@ export function notasDelAlumno(
       entrega,
       puntaje: null,
       nota: null,
+      base: d.usuario.base,
       noParticipo: false,
       fecha: tarea.fechaEntrega,
     };
@@ -208,7 +216,6 @@ function equipoDeFila(
 
 function filaNota(
   n: NotaAlumno,
-  base: number,
   equipo: Pick<ConId<Equipo>, "id" | "nombre"> | null,
   ahora?: number,
 ): FilaNota {
@@ -222,9 +229,9 @@ function filaNota(
       ? fechaNotaTexto(n.nota !== null, n.fecha, n.tarea.horaEntrega, ahora)
       : "sin fecha",
     nota: n.nota,
-    // La base escala también las grupales, por integrante (D177); el 1 de «No participó» no
-    // lleva base (D365): sin chip
-    base: n.noParticipo ? undefined : base,
+    // La base de esa entrega (D403) escala también las grupales, por integrante (D177); el 1
+    // de «No participó» no lleva base (D365): sin chip
+    base: n.noParticipo ? undefined : n.base,
     aviso: n.noParticipo ? NO_PARTICIPASTE : undefined,
   };
 }
@@ -234,9 +241,7 @@ export function filasMisNotas(
   d: Pick<DatosAlumno, "usuario" | "equipo" | "tareas" | "entregas">,
   ahora?: number,
 ): FilaNota[] {
-  return notasDelAlumno(d).map((n) =>
-    filaNota(n, d.usuario.base, d.equipo, ahora),
-  );
+  return notasDelAlumno(d).map((n) => filaNota(n, d.equipo, ahora));
 }
 
 /* ---------- Detalle de nota ---------- */
@@ -292,7 +297,7 @@ export function detalleNota(
     eyebrow: `${tipo} · evaluada el ${formatFecha(diaDeInstante(ev.evaluadaEn))}`,
     titulo: tarea.titulo,
     puntaje: ev.puntaje,
-    base: d.usuario.base,
+    base: baseDeIntegrante(entrega, d.usuario.cedula, d.usuario.base),
     final,
     noParticipo: noParticipo(entrega, d.usuario.cedula),
     autor:
@@ -556,7 +561,7 @@ export function inicioVista(
     notas: notas
       .filter((n) => n.nota !== null)
       .slice(0, NOTAS_EN_INICIO)
-      .map((n) => filaNota(n, u.base, d.equipo, ahora)),
+      .map((n) => filaNota(n, d.equipo, ahora)),
     pendientes: filasPorEntregar(d, ahora),
     equipo,
   };

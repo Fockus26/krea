@@ -188,6 +188,8 @@ describe("evaluar (Postgres)", () => {
       puntaje: 18.5,
       evaluadaPor: PROFE,
       evaluadaEn: AHORA,
+      // Sin base en el envío: la vigente del alumno queda guardada en la entrega (D403)
+      bases: { [A1]: 15 },
     });
     expect(e.evaluacionAnterior).toBeNull();
     // Base 15 (D006): 18,5 × 15 / 20 = 13,9

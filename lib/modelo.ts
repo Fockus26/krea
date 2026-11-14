@@ -415,6 +415,12 @@ export const zEvaluacion = z.object({
    * de antes no lo traen y se leen igual (sin migración); se escribe solo si hay alguno.
    */
   noParticiparon: z.array(zCedula).optional(),
+  /**
+   * La base con la que se evaluó a cada integrante en ESTA entrega (cédula → base, D403). La app
+   * la escribe siempre (una clave por integrante); opcional porque las evaluaciones de antes no
+   * la traen: quien lee cae a la base vigente del alumno (`baseDeIntegrante`).
+   */
+  bases: z.record(zCedula, zBase).optional(),
 });
 export type Evaluacion = z.infer<typeof zEvaluacion>;
 

@@ -4,11 +4,11 @@
 //
 // Evaluar cambia puntos: la entrega y el ranking de su sección se escriben en la MISMA transacción
 // (D175), con la sección bloqueada y releída dentro (lib/data/ranking.ts).
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { entregaDeFila, filaDeEntrega, tareaDeFila } from "@/lib/data/filas";
 import { conEntrega, escribirRanking, leerSeccion } from "@/lib/data/ranking";
 import type { Db } from "@/lib/db";
-import { entregas, tareas } from "@/lib/db/schema";
+import { entregas, tareas, usuarios } from "@/lib/db/schema";
 import {
   armarEvaluacion,
   deshacerEvaluacion,
@@ -64,11 +64,19 @@ export async function evaluarEnTransaccion(
     const t = tareaDeFila(ft);
     if (!t) return { ok: false, error: "invalida" };
     const { id: __, ...tarea } = t;
+    // Bases vigentes de los integrantes (D403), aunque alguno ya esté en otra sección
+    const vigentes = await tx
+      .select({ cedula: usuarios.cedula, base: usuarios.base })
+      .from(usuarios)
+      .where(inArray(usuarios.cedula, entregaActual.integrantes));
 
     const r = armarEvaluacion({
       entrega: entregaActual,
       tarea,
       envio,
+      basesVigentes: Object.fromEntries(
+        vigentes.map((u) => [u.cedula, u.base]),
+      ),
       autorId,
       ahora,
     });

@@ -27,9 +27,22 @@ export function noParticipo(
 }
 
 /**
- * Nota final de un integrante en una entrega evaluada: puntaje × su base / 20 (D006, D013).
- * También en las grupales: la base se aplica por integrante (D177); si el profe lo marcó «No
- * participó», `NOTA_MIN` fija, sin base (D365). `null` si no está evaluada.
+ * Base con la que cuenta la nota de un integrante en esta entrega (D403): la que guardó la
+ * evaluación para él; si no la trae (evaluaciones de antes, o sin evaluar), su base vigente.
+ */
+export function baseDeIntegrante(
+  entrega: Pick<Entrega, "evaluacion">,
+  cedula: string,
+  baseVigente: number,
+): number {
+  return entrega.evaluacion?.bases?.[cedula] ?? baseVigente;
+}
+
+/**
+ * Nota final de un integrante en una entrega evaluada: puntaje × su base en esa entrega / 20
+ * (D006, D013, D403). `base` es la vigente del alumno, de respaldo si la evaluación no guardó la
+ * suya. También en las grupales: la base se aplica por integrante (D177); si el profe lo marcó
+ * «No participó», `NOTA_MIN` fija, sin base (D365). `null` si no está evaluada.
  */
 export function notaDeIntegrante(
   entrega: Entrega,
@@ -38,7 +51,10 @@ export function notaDeIntegrante(
 ): number | null {
   if (entrega.estado !== "evaluada" || entrega.evaluacion === null) return null;
   if (noParticipo(entrega, cedula)) return NOTA_MIN;
-  return notaFinal(entrega.evaluacion.puntaje, base);
+  return notaFinal(
+    entrega.evaluacion.puntaje,
+    baseDeIntegrante(entrega, cedula, base),
+  );
 }
 
 /** Puntos de un estudiante: sus notas (individuales y grupales) que aportan + sus ajustes. */
