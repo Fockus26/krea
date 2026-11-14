@@ -4,10 +4,12 @@ import { formatNota, notaFinal } from "@/lib/grades";
 import {
   type DecisionPremio,
   type Entrega,
+  type Evaluacion,
   idDeDecision,
   type SeccionId,
   type Usuario,
 } from "@/lib/modelo";
+import { baseDeIntegrante } from "@/lib/ranking-datos";
 
 /** "Mi equipo · 5A". */
 export function eyebrowEquipo(seccion: string): string {
@@ -78,7 +80,7 @@ export function notasPremioIndividual(
     Pick<Entrega, "tareaId" | "tipo" | "titularId" | "estado" | "evaluacion">
   >,
 ): Array<{ id: string; nota: number | null }> {
-  const evaluadas = new Map<string, number>();
+  const evaluadas = new Map<string, Evaluacion>();
   for (const e of entregas) {
     if (
       e.tareaId === tareaId &&
@@ -86,16 +88,23 @@ export function notasPremioIndividual(
       e.estado === "evaluada" &&
       e.evaluacion
     ) {
-      evaluadas.set(e.titularId, e.evaluacion.puntaje);
+      evaluadas.set(e.titularId, e.evaluacion);
     }
   }
   return alumnos
     .filter((a) => a.rol === "estudiante" && a.seccion === seccion)
     .map((a) => {
-      const puntaje = evaluadas.get(a.cedula);
+      const evaluacion = evaluadas.get(a.cedula);
       return {
         id: a.cedula,
-        nota: puntaje === undefined ? null : notaFinal(puntaje, a.base),
+        // La base de esa entrega; si no la guardó, la vigente (D403).
+        nota:
+          evaluacion === undefined
+            ? null
+            : notaFinal(
+                evaluacion.puntaje,
+                baseDeIntegrante({ evaluacion }, a.cedula, a.base),
+              ),
       };
     });
 }

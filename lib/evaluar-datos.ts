@@ -3,8 +3,9 @@
 // (`deshacerEvaluacion`), la cola «Por evaluar» y las props de la pantalla. Lo usan los
 // adaptadores de Postgres (`lib/data/evaluar.ts`), las páginas del profe y las pruebas.
 //
-// La nota NO se guarda: se deriva de `puntaje × base / 20` (D013, D176). Aquí solo se valida y se
-// suma el puntaje por pregunta en medios enteros (D004); la nota de la vista sale de `lib/grades`.
+// La nota NO se guarda: se deriva de `puntaje × base / 20` (D013), con la base que la evaluación
+// guardó para cada integrante (D403). Aquí solo se valida y se suma el puntaje por pregunta en
+// medios enteros (D004); la nota de la vista sale de `lib/grades`.
 import { z } from "zod";
 import type { ReviewIdentity } from "@/components/sections/evaluar/review-header";
 import {
@@ -15,7 +16,7 @@ import {
   tipoChipTexto,
 } from "@/lib/evaluar";
 import { diaDeInstante, hora24DeInstante } from "@/lib/fecha";
-import { formatNota, NOTA_MAX, NOTA_MIN } from "@/lib/grades";
+import { BASE_MAX, formatNota, NOTA_MAX, NOTA_MIN } from "@/lib/grades";
 import {
   type Entrega,
   type Equipo,
@@ -26,6 +27,7 @@ import {
   sumaValores,
   type TareaDoc,
   type Usuario,
+  zBase,
   zCedula,
   zInstante,
   zPuntaje,
@@ -128,6 +130,15 @@ export const zGuardarEvaluacion = z.object({
    */
   noParticiparon: z.array(zCedula).max(50).optional(),
   /**
+   * Base de cada integrante en esta tarea (cédula → base 10–20, pasos de 0,5; D403). Opcional
+   * para que un formulario viejo siga guardando: quien no viene conserva la que tenía la
+   * evaluación o, si no, su base vigente (`armarEvaluacion`). Una cédula ajena = `invalida`.
+   */
+  bases: z
+    .record(zCedula, zBase)
+    .refine((b) => Object.keys(b).length <= 50, "Demasiadas bases")
+    .optional(),
+  /**
    * `enviadaEn` de la entrega que el profe tenía en pantalla (D397): si el alumno la editó mientras
    * tanto, no se guarda (`editada`). Opcional para que un formulario viejo siga guardando.
    */
@@ -186,18 +197,22 @@ function preguntasDe(t: TareaDoc): readonly Pregunta[] {
 /**
  * Evaluación que se escribe: cada pregunta de la tarea con su puntaje (0 a su valor, pasos de
  * 0,5, D004), ni una de más ni una de menos; comentarios recortados y solo los que tienen texto.
- * El puntaje total es la suma en medios enteros (sin errores de coma flotante).
+ * El puntaje total es la suma en medios enteros (sin errores de coma flotante). Lleva la base de
+ * cada integrante (D403, `basesDeEvaluacion`); `basesVigentes`: cédula → base vigente de los
+ * integrantes que siguen existiendo.
  */
 export function armarEvaluacion({
   entrega,
   tarea,
   envio,
+  basesVigentes,
   autorId,
   ahora,
 }: {
   entrega: Entrega;
   tarea: TareaDoc;
   envio: GuardarEvaluacion;
+  basesVigentes: Readonly<Record<string, number>>;
   autorId: string;
   ahora: number;
 }): { ok: true; evaluacion: Evaluacion } | { ok: false; error: ErrorEvaluar } {
@@ -232,6 +247,8 @@ export function armarEvaluacion({
   );
   const marcados = noParticiparonDe(entrega, envio.noParticiparon ?? []);
   if (!marcados) return { ok: false, error: "invalida" };
+  const bases = basesDeEvaluacion(entrega, envio.bases ?? {}, basesVigentes);
+  if (!bases) return { ok: false, error: "invalida" };
   return {
     ok: true,
     evaluacion: {
@@ -242,8 +259,52 @@ export function armarEvaluacion({
       evaluadaEn: ahora,
       // Solo si hay alguno: así una evaluación sin marcas queda igual que las de antes (D364)
       ...(marcados.length > 0 ? { noParticiparon: marcados } : {}),
+      bases,
     },
   };
+}
+
+/** Cédula → base vigente de los integrantes de la entrega que siguen existiendo. */
+export function basesVigentesDe(
+  entrega: Pick<Entrega, "integrantes">,
+  usuarios: ReadonlyMap<string, Pick<Usuario, "base">>,
+): Record<string, number> {
+  const bases: Record<string, number> = {};
+  for (const c of entrega.integrantes) {
+    const u = usuarios.get(c);
+    if (u) bases[c] = u.base;
+  }
+  return bases;
+}
+
+/**
+ * Base de cada integrante que se guarda en la evaluación (D403), en el orden de `integrantes`:
+ * la que mandó el profe → si no, la que ya tenía la evaluación vigente de esta entrega → si no,
+ * la vigente del alumno → si el alumno ya no existe, `BASE_MAX`. `null` si llega una cédula que
+ * no es integrante o una base fuera de 10–20 / de los pasos de 0,5: no se adivina, se rechaza.
+ */
+export function basesDeEvaluacion(
+  entrega: Pick<Entrega, "integrantes" | "evaluacion">,
+  pedidas: Readonly<Record<string, number>>,
+  basesVigentes: Readonly<Record<string, number>>,
+): Record<string, number> | null {
+  for (const [cedula, base] of Object.entries(pedidas)) {
+    if (!entrega.integrantes.includes(cedula)) return null;
+    if (!zBase.safeParse(base).success) return null;
+  }
+  const bases: Record<string, number> = {};
+  for (const c of entrega.integrantes) {
+    const candidatas = [
+      pedidas[c],
+      entrega.evaluacion?.bases?.[c],
+      basesVigentes[c],
+    ];
+    bases[c] =
+      candidatas.find(
+        (b): b is number => b !== undefined && zBase.safeParse(b).success,
+      ) ?? BASE_MAX;
+  }
+  return bases;
 }
 
 /**
@@ -487,6 +548,24 @@ export const NO_PARTICIPO_CASILLA = "No participó";
 /** Estado en texto junto al nombre marcado (no solo el ✓). PROVISIONAL (fila 184). */
 export const NO_PARTICIPO_ESTADO = `Queda con ${formatNota(NOTA_MIN)}`;
 
+/**
+ * «Solo ver» de una grupal evaluada: la base de cada integrante en esta tarea (D403), en el orden
+ * de la entrega. «Bases en esta tarea: Ana Pérez 15 · Luis Díaz no participó». PROVISIONAL
+ * (CONTENT_CHECKLIST fila 215).
+ */
+export function basesIntegrantesTexto(
+  integrantes: ReadonlyArray<{ cedula: string; nombre: string }>,
+  bases: Readonly<Record<string, number>>,
+  noParticiparon: readonly string[],
+): string {
+  const partes = integrantes.map((m) => {
+    if (noParticiparon.includes(m.cedula)) return `${m.nombre} no participó`;
+    const b = bases[m.cedula];
+    return b === undefined ? m.nombre : `${m.nombre} ${formatNota(b)}`;
+  });
+  return `Bases en esta tarea: ${partes.join(" · ")}`;
+}
+
 export type RespuestaEvaluar =
   | { tipo: "texto"; texto: string }
   /** Una o varias (D373), en orden; cada una con su `alt`. */
@@ -506,7 +585,10 @@ export type VistaEvaluar = {
     base: string;
     premio?: string;
   };
-  /** Base de la nota que se ve al evaluar: la del alumno; en grupales, 20 (nota del equipo). */
+  /**
+   * Base de la nota que se ve al abrir: la del alumno en esta tarea (D403); en grupales, 20 (la
+   * nota del equipo). En individual, el formulario la cambia en vivo con la que se elija.
+   */
   base: number;
   preguntas: Array<{
     id: string;
@@ -525,6 +607,11 @@ export type VistaEvaluar = {
     comentarios: string[];
     /** Cédulas marcadas «No participó» en la evaluación vigente (al reevaluar vienen marcadas). */
     noParticiparon: string[];
+    /**
+     * Base de cada integrante en esta tarea (cédula → base, D403; en individual, solo el
+     * titular): la de la evaluación vigente o, si no la trae, la vigente del alumno.
+     */
+    bases: Record<string, number>;
   };
   /** Filtro activo en texto («Grupales · 5A») o `null`; el enlace «Cambiar» va a `colaHref`. */
   filtroTexto: string | null;
@@ -582,6 +669,10 @@ export function vistaEvaluar({
 
   const titulo = nombreTitular(entrega, mapas);
   let identidad: ReviewIdentity;
+  // Base de cada integrante en esta tarea (D403): la de la evaluación vigente o la vigente
+  const bases =
+    basesDeEvaluacion(entrega, {}, basesVigentesDe(entrega, mapas.usuarios)) ??
+    {};
   let baseAlumno: number = NOTA_MAX;
   if (entrega.tipo === "grupal") {
     const eq = mapas.equipos.get(entrega.titularId);
@@ -598,7 +689,7 @@ export function vistaEvaluar({
       seed: u?.avatar.semilla ?? entrega.titularId,
       nombre: titulo,
     };
-    baseAlumno = u?.base ?? NOTA_MAX;
+    baseAlumno = bases[entrega.titularId] ?? NOTA_MAX;
   }
 
   const autor = entrega.enviadaPor
@@ -666,6 +757,7 @@ export function vistaEvaluar({
       comentarios: preguntas.map((p) => ev?.comentarios[p.id] ?? ""),
       noParticiparon:
         entrega.tipo === "grupal" ? [...(ev?.noParticiparon ?? [])] : [],
+      bases,
     },
     posicion: enCola ? { indice, total: cola.length } : null,
     siguiente: siguienteDe(sig, mapas),

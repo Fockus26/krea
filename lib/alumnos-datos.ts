@@ -1,7 +1,8 @@
 // Alumnos del profesor con datos de Firestore (fase 07 W8, D209). Puro (sin Firebase ni reloj):
 // qué manda el diálogo Editar, qué documentos se escriben (perfil, historial de base D176,
-// email de recuperación) y las filas de la tabla. La base cambia las notas derivadas (nota =
-// puntaje × base / 20, D013) y por eso el ranking; nunca toca una entrega ni un ajuste (D007).
+// email de recuperación) y las filas de la tabla. La base es la de las próximas evaluaciones
+// (D403): solo cambia las notas de las entregas que no guardaron la suya (nota = puntaje × base /
+// 20, D013); nunca toca una entrega ni un ajuste (D007).
 import { z } from "zod";
 import type {
   EntregaDeAlumno,
@@ -223,8 +224,8 @@ export function armarEdicion({
 const comparaNombre = new Intl.Collator("es", { sensitivity: "base" });
 
 /**
- * Nota individual de la tabla: la de su tarea individual evaluada más reciente, con su base
- * vigente (D013, D209); sin ninguna, `null` = Pendiente (D003).
+ * Nota individual de la tabla: la de su tarea individual evaluada más reciente, con la base de
+ * esa entrega (D013, D209, D403); sin ninguna, `null` = Pendiente (D003).
  */
 export function notaIndividualVigente(
   alumno: Pick<Usuario, "cedula" | "base">,
@@ -244,7 +245,7 @@ export function notaIndividualVigente(
 }
 
 /**
- * Nota grupal de la tabla (D399): la de su grupal evaluada más reciente, con su base vigente. Entra
+ * Nota grupal de la tabla (D399): la de su grupal evaluada más reciente, con su base en ella. Entra
  * quien estaba en el equipo al entregar (`integrantes` es una foto, D221): si se mudó de equipo, la
  * nota se queda con el equipo con el que entregó. «No participó» = NOTA_MIN (D365). Sin ninguna,
  * `null` = Pendiente (D003).
@@ -268,7 +269,7 @@ export function notaGrupalVigente(
 
 /**
  * Nota del alumno en cada tarea evaluada (individual o grupal: entra si es integrante), con su
- * base vigente. Si hubiera dos entregas de una tarea para él, queda la evaluada más reciente.
+ * base en esa entrega (D403). Si hubiera dos entregas de una tarea para él, queda la evaluada más reciente.
  */
 export function notasPorTarea(
   alumno: Pick<Usuario, "cedula" | "base">,

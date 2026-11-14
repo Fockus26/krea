@@ -2,7 +2,7 @@
 // Textos, completitud, base efectiva, cola y atajo de guardar. Sin React; el total en vivo y la
 // nota los calcula `liveTotalInfo` (lib/meters.ts, D057) con `notaFinal` (D013): aquí no se repite.
 import { formatFecha } from "@/lib/fecha";
-import { formatNota, NOTA_MAX } from "@/lib/grades";
+import { BASE_MAX, BASE_MIN, formatNota, NOTA_MAX } from "@/lib/grades";
 import { liveTotalInfo } from "@/lib/meters";
 import { snapToStep } from "@/lib/stepper";
 
@@ -93,6 +93,39 @@ export function baseChipTexto(tipo: TipoEntrega, base: number): string {
   return tipo === "grupal"
     ? `Base ${NOTA_MAX} · todos`
     : `Base ${formatNota(base)}`;
+}
+
+/* ---------- Base de esta tarea (D403) ---------- */
+
+/** PROVISIONAL (CONTENT_CHECKLIST fila 212): título y nombre accesible del control individual. */
+export const BASE_TAREA_TITULO = "Base de esta tarea";
+/** PROVISIONAL (fila 212): ayuda del control individual. */
+export const BASE_TAREA_AYUDA = `Entre ${BASE_MIN} y ${BASE_MAX}. Nota = puntaje × base / 20. Cambiarla aquí solo cambia la nota de esta tarea.`;
+/** PROVISIONAL (fila 213): ayuda de las bases por integrante en una grupal. */
+export const BASES_INTEGRANTES_AYUDA = `Cada integrante tiene su base en esta tarea (entre ${BASE_MIN} y ${BASE_MAX}): su nota = nota del equipo × su base / 20.`;
+/** PROVISIONAL (fila 213): etiqueta visible junto al control de cada integrante. */
+export const BASE_INTEGRANTE_ETIQUETA = "Base";
+
+/** Nombre accesible del control de base de un integrante: «Base de Yeilin Duarte» (fila 213). */
+export function baseIntegranteLabel(nombre: string): string {
+  return `Base de ${nombre}`;
+}
+
+/**
+ * Base al paso de 0,5 dentro de 10–20: mientras se escribe, el stepper puede dejar «17,3» hasta
+ * salir del campo, y ni `notaFinal` ni el servidor la aceptan así (D004, D006).
+ */
+export function normalizarBase(base: number): number {
+  return snapToStep(base, { min: BASE_MIN, max: BASE_MAX });
+}
+
+/** Las bases que se mandan al guardar, cada una normalizada (`normalizarBase`). */
+export function normalizarBases(
+  bases: Readonly<Record<string, number>>,
+): Record<string, number> {
+  return Object.fromEntries(
+    Object.entries(bases).map(([c, b]) => [c, normalizarBase(b)]),
+  );
 }
 
 /* ---------- Estado de la evaluación ---------- */

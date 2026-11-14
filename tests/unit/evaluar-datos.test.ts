@@ -86,6 +86,7 @@ describe("armarEvaluacion", () => {
       entrega: e,
       tarea,
       envio: envio(puntos, { p1: "  Bien ", p2: " ", x: "fuera" }),
+      basesVigentes: { "30000001": 15 },
       autorId: "30262232",
       ahora: 5,
     });
@@ -99,6 +100,7 @@ describe("armarEvaluacion", () => {
         puntaje: 18.5,
         evaluadaPor: "30262232",
         evaluadaEn: 5,
+        bases: { "30000001": 15 },
       },
     });
   });
@@ -149,6 +151,7 @@ describe("armarEvaluacion", () => {
         entrega: e,
         tarea,
         envio: envio({ p1: 4, p2: 4 }, {}, version),
+        basesVigentes: {},
         autorId: "30262232",
         ahora: 200,
       });
@@ -258,6 +261,7 @@ describe("cola y vista", () => {
       puntajes: [null, null],
       comentarios: ["", ""],
       noParticiparon: [],
+      bases: { "30000001": 15 },
     });
     expect(v.integrantes).toEqual([]);
     expect(IMAGEN_NO_DISPONIBLE).toContain("imagen");
@@ -290,6 +294,7 @@ describe("cola y vista", () => {
       puntajes: [10, 8],
       comentarios: ["", "Buen color"],
       noParticiparon: [],
+      bases: { "30000001": 15 },
     });
     expect(v.preguntas[0]?.respuesta).toEqual({
       tipo: "texto",
@@ -335,6 +340,8 @@ describe("cola y vista", () => {
       { cedula: "30000002", nombre: TITULAR_DESCONOCIDO },
     ]);
     expect(v.inicial.noParticiparon).toEqual([]);
+    // Sin evaluar: la vigente de cada uno; quien ya no existe, 20 (D403)
+    expect(v.inicial.bases).toEqual({ "30000001": 15, "30000002": 20 });
   });
 
   test("grupal ya evaluada: los marcados «No participó» vienen marcados al reevaluar", () => {
@@ -380,6 +387,7 @@ describe("«No participó» al guardar (D364)", () => {
         version: null,
         noParticiparon,
       }),
+      basesVigentes: {},
       autorId: "30262232",
       ahora: 5,
     });
@@ -456,6 +464,7 @@ describe("«No participó» al guardar (D364)", () => {
         comentarios: {},
         version: 5,
       }),
+      basesVigentes: {},
       autorId: "30262232",
       ahora: 9,
     });

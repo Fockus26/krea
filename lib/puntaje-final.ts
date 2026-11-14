@@ -10,7 +10,10 @@ export const TAREA_PUNTAJE_FINAL = "identidad-de-marca";
 
 export const zPonerPuntajeFinal = z.object({
   cedula: zCedula,
-  /** Sobre 20, en pasos de 0,5 (D004); la nota sale con la base del alumno (D013). */
+  /**
+   * Sobre 20, en pasos de 0,5 (D004); la nota sale con la base que ya tenía esa entrega o, si
+   * no tenía, la vigente del alumno (D013, D403).
+   */
   puntaje: zPuntaje,
 });
 export type PonerPuntajeFinal = z.infer<typeof zPonerPuntajeFinal>;

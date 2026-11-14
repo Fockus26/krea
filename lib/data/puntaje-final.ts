@@ -62,6 +62,8 @@ export async function ponerPuntajeFinalEnTransaccion(
       puntaje,
       evaluadaPor: autorId,
       evaluadaEn: ahora,
+      // La base de esta tarea (D403): la que ya tenía la entrega; si no, la vigente del alumno
+      bases: { [cedula]: previa?.evaluacion?.bases?.[cedula] ?? u.base },
     };
     let nueva: Entrega;
     if (previa) {

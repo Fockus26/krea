@@ -351,6 +351,8 @@ export type EvaluarVista = {
   base: number;
   /** Grupal: integrantes para «No participó» (D364); vacío en individuales. */
   integrantes: Array<{ cedula: string; nombre: string }>;
+  /** Base de cada integrante en esta tarea (D403): la vigente de cada alumno del demo. */
+  bases: Record<string, number>;
   siguiente: SiguienteEntrega;
 };
 
@@ -371,6 +373,7 @@ export function evaluarVista(indice: number): EvaluarVista {
   let baseAlumno = 20;
   let integrantesN: number | undefined;
   let miembros: EvaluarVista["integrantes"] = [];
+  let bases: EvaluarVista["bases"] = {};
   if (entrega.destino.tipo === "equipo") {
     const eq = equipoPorId(entrega.destino.id);
     identidadE = { tipo: "equipo", teamId: eq.id, tema: eq.tema ?? eq.nombre };
@@ -379,6 +382,7 @@ export function evaluarVista(indice: number): EvaluarVista {
       cedula: a.cedula,
       nombre: nombreCorto(a),
     }));
+    bases = Object.fromEntries(integrantes(eq).map((a) => [a.cedula, a.base]));
     integrantesN = miembros.length;
   } else {
     const al: DemoAlumno = alumnoPorCedula(entrega.destino.cedula);
@@ -391,6 +395,7 @@ export function evaluarVista(indice: number): EvaluarVista {
     };
     seccion = al.seccion;
     baseAlumno = al.base;
+    bases = { [al.cedula]: al.base };
   }
 
   return {
@@ -420,6 +425,7 @@ export function evaluarVista(indice: number): EvaluarVista {
     },
     base: baseEfectiva(entrega.tipo, baseAlumno),
     integrantes: miembros,
+    bases,
     siguiente: siguiente
       ? { nombre: nombreDestino(siguiente), tarea: siguiente.tarea.titulo }
       : null,
