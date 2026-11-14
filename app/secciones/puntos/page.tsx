@@ -7,6 +7,7 @@ import {
   historialPuntos,
 } from "@/lib/demo/puntos";
 import { USUARIO_PROFESOR } from "@/lib/demo/usuarios";
+import { MOTIVOS_INICIALES } from "@/lib/motivos";
 import { Vista } from "../_vista/vista";
 
 export const metadata: Metadata = {
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 // Ruta final (fase 05): /profe/puntos. Datos: alumnos, equipos y puntos del seed (D069) y el historial
-// del lienzo; aplicar y anular solo cambian el estado local (D120, D121). Ejemplo inicial = el del lienzo.
+// del lienzo; aplicar y anular (y editar las opciones de Motivo, D375) solo cambian el estado local (D120, D121). Ejemplo inicial = el del lienzo.
 export default function PuntosVista() {
   return (
     <Vista rol="profesor" ruta="/profe/puntos">
@@ -26,6 +27,7 @@ export default function PuntosVista() {
       <PuntosView
         candidatos={candidatosPuntos()}
         secciones={["5A", "5C"]}
+        motivos={MOTIVOS_INICIALES}
         historial={historialPuntos()}
         inicial={AJUSTE_INICIAL}
         profe={USUARIO_PROFESOR.nombre}

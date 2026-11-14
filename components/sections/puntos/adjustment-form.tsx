@@ -10,7 +10,6 @@ import {
   Users,
 } from "lucide-react";
 import * as React from "react";
-import { NumberStepper } from "@/components/krea/number-stepper";
 import { focusPrimerInvalido } from "@/components/sections/auth/focus-invalid";
 import { SelectorSeccion } from "@/components/sections/shared/selector-seccion";
 import { alertVariants } from "@/components/ui/alert";
@@ -24,6 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { InicialAjuste } from "@/lib/demo/puntos";
 import type { SeccionId } from "@/lib/modelo";
+import { type CatalogoMotivos, type Motivo, motivoPorId } from "@/lib/motivos";
 import { chipAjuste } from "@/lib/panel";
 import {
   ajusteAplicadoTexto,
@@ -32,31 +32,29 @@ import {
   conDeltas,
   type FilaHistorial,
   isoLocal,
-  MOTIVOS,
-  type MotivoId,
   nuevoAjuste,
-  PUNTOS_MAX,
-  PUNTOS_MIN,
-  PUNTOS_PASO,
   sinErrores,
   type TipoDestino,
   validarAjuste,
-  valorPropuesto,
   vistaPrevia,
 } from "@/lib/puntos";
 import { cn } from "@/lib/utils";
+import { PuntosStepper } from "./puntos-stepper";
 import { RecipientCombobox } from "./recipient-combobox";
 
 /**
  * «Nuevo ajuste» (HANDOFF §3 Ajustes de puntos; D118–D120). Formulario cliente que valida al enviar
  * (D071: foco al primer inválido, `Field announce={false}`). Destino (Alumno/Equipo radiogroup + el
- * selector de sección del catálogo, D322; cambiarlos limpia «¿A quién?»), combobox, Motivo con 8 radios reales, Puntos con signo (texto + ícono,
- * el color solo refuerza), Detalle (obligatorio en «Otro») y la vista previa: una sola región `role="status"`.
- * Un ajuste mueve puntos del ranking, nunca la nota (D007).
+ * selector de sección del catálogo, D322; cambiarlos limpia «¿A quién?»), combobox, Motivo con un radio
+ * real por opción de `config/motivos` (D375; `editarOpciones` = el botón «Editar opciones», D377), Puntos
+ * con signo (texto + ícono, el color solo refuerza), Detalle (opcional, D376) y la vista previa: una sola
+ * región `role="status"`. Un ajuste mueve puntos del ranking, nunca la nota (D007).
  */
 export function AdjustmentForm({
   candidatos,
   secciones,
+  motivos,
+  editarOpciones,
   deltas,
   inicial,
   profe,
@@ -65,6 +63,10 @@ export function AdjustmentForm({
   candidatos: CandidatosPuntos;
   /** Secciones del catálogo, ordenadas (al menos una: sin ninguna, la página muestra el vacío). */
   secciones: readonly SeccionId[];
+  /** Opciones fijas vigentes, en su orden (al menos una). */
+  motivos: CatalogoMotivos;
+  /** El botón «Editar opciones» (abre su diálogo), debajo de las opciones de Motivo. */
+  editarOpciones?: React.ReactNode;
   /** Puntos movidos en esta sesión por destino (`deltasSesion`): la vista previa parte del estado local. */
   deltas: Readonly<Record<string, number>>;
   inicial?: InicialAjuste;
@@ -76,7 +78,7 @@ export function AdjustmentForm({
    */
   onAplicar: (
     fila: FilaHistorial,
-    motivo: MotivoId,
+    motivoId: string,
   ) => boolean | Promise<boolean>;
 }) {
   const ids = React.useId();
@@ -99,23 +101,29 @@ export function AdjustmentForm({
   const [destinoId, setDestinoId] = React.useState<string | null>(
     inicial?.destinoId ?? null,
   );
-  const [motivo, setMotivo] = React.useState<MotivoId | null>(
+  const [motivoId, setMotivoId] = React.useState<string | null>(
     inicial?.motivo ?? null,
   );
   const [valor, setValor] = React.useState<number | null>(
-    inicial ? valorPropuesto(inicial.motivo) : null,
+    inicial ? (motivoPorId(motivos, inicial.motivo)?.valor ?? null) : null,
   );
   const [detalle, setDetalle] = React.useState(inicial?.detalle ?? "");
   const [intentado, setIntentado] = React.useState(false);
-  // Dirección del último −/+ (o ↑/↓): desde «sin valor» el stepper parte de `min` en las dos
-  // direcciones (D103), que aquí sería −20; con la dirección se parte de ±0,5 (D119).
-  const direccion = React.useRef<1 | -1 | null>(null);
   // Un envío a la vez (doble clic mientras se guarda)
   const enviando = React.useRef(false);
 
   const opciones = conDeltas(candidatos[tipo][seccion] ?? [], deltas);
   const destino = opciones.find((o) => o.id === destinoId) ?? null;
-  const borrador = { tipo, destinoId, motivo, valor, detalle };
+  // Si otro profe (o el diálogo) borró la opción elegida, cuenta como sin elegir
+  const motivo: Motivo | null =
+    (motivoId === null ? undefined : motivoPorId(motivos, motivoId)) ?? null;
+  const borrador = {
+    tipo,
+    destinoId,
+    motivo: motivo?.id ?? null,
+    valor,
+    detalle,
+  };
   const errores = intentado ? validarAjuste(borrador) : {};
   const previa =
     destino && valor !== null && valor !== 0
@@ -148,12 +156,12 @@ export function AdjustmentForm({
       profe,
     });
     enviando.current = true;
-    const ok = await onAplicar(fila, motivo);
+    const ok = await onAplicar(fila, motivo.id);
     enviando.current = false;
     if (!ok) return;
     toast.success(ajusteAplicadoTexto(fila));
     // Se queda el destino (puede llevar otro ajuste); motivo, puntos y detalle vuelven a vacío
-    setMotivo(null);
+    setMotivoId(null);
     setValor(null);
     setDetalle("");
     setIntentado(false);
@@ -234,9 +242,9 @@ export function AdjustmentForm({
             <span className="sr-only">(obligatorio)</span>
           </legend>
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-            {MOTIVOS.map((m) => {
+            {motivos.map((m) => {
               const chip = chipMotivo(m.valor);
-              const elegido = motivo === m.id;
+              const elegido = motivo?.id === m.id;
               return (
                 <label
                   key={m.id}
@@ -258,9 +266,8 @@ export function AdjustmentForm({
                     aria-describedby={errores.motivo ? eMotivo : undefined}
                     className="sr-only"
                     onChange={() => {
-                      setMotivo(m.id);
-                      direccion.current = null;
-                      setValor(valorPropuesto(m.id));
+                      setMotivoId(m.id);
+                      setValor(m.valor);
                     }}
                   />
                   <span className="flex min-w-0 icono-linea gap-2">
@@ -288,6 +295,9 @@ export function AdjustmentForm({
               {errores.motivo}
             </p>
           ) : null}
+          {editarOpciones ? (
+            <div className="mt-1 flex">{editarOpciones}</div>
+          ) : null}
         </fieldset>
 
         {/* D262: una columna en todos los anchos: Motivo → Puntos → Detalle */}
@@ -296,31 +306,11 @@ export function AdjustmentForm({
             <Label id={lPuntos} htmlFor={idPuntos}>
               Puntos
             </Label>
-            {/* Solo lee qué botón del stepper se pulsó (los botones son del NumberStepper) */}
-            <div
-              className="flex flex-wrap items-center gap-2"
-              onClickCapture={(e) => {
-                const b = (e.target as Element).closest("button");
-                const nombre = b?.getAttribute("aria-label") ?? "";
-                direccion.current = nombre.startsWith("Sumar")
-                  ? 1
-                  : nombre.startsWith("Restar")
-                    ? -1
-                    : null;
-              }}
-              onKeyDownCapture={(e) => {
-                direccion.current =
-                  e.key === "ArrowUp" ? 1 : e.key === "ArrowDown" ? -1 : null;
-              }}
-            >
-              <NumberStepper
+            <div className="flex flex-wrap items-center gap-2">
+              <PuntosStepper
                 id={idPuntos}
                 aria-labelledby={lPuntos}
                 value={valor}
-                min={PUNTOS_MIN}
-                max={PUNTOS_MAX}
-                step={PUNTOS_PASO}
-                unit="pts"
                 emptyText="Sin valor"
                 aria-invalid={errValor ? true : undefined}
                 aria-describedby={[
@@ -334,15 +324,7 @@ export function AdjustmentForm({
                   valor !== null && valor > 0 && "[&_input]:text-success",
                   valor !== null && valor < 0 && "[&_input]:text-error",
                 )}
-                onChange={(n) => {
-                  const dir = direccion.current;
-                  direccion.current = null;
-                  setValor(
-                    valor === null && n === PUNTOS_MIN && dir !== null
-                      ? dir * PUNTOS_PASO
-                      : n,
-                  );
-                }}
+                onChange={setValor}
               />
               {chipValor ? (
                 <Badge
@@ -364,9 +346,7 @@ export function AdjustmentForm({
               ) : null}
             </div>
             <p id={hPuntos} className="text-small text-text-2">
-              {motivo === "otro"
-                ? "Escribe el valor: positivo suma, negativo resta. Pasos de 0,5."
-                : "Propuesto por el motivo. Pasos de 0,5."}
+              Propuesto por el motivo. Pasos de 0,5.
             </p>
             {errValor ? (
               <p
@@ -382,21 +362,16 @@ export function AdjustmentForm({
             className="w-full"
             label={
               <>
-                Detalle{" "}
-                <span className="font-normal text-text-2">
-                  (obligatorio en «Otro»)
-                </span>
+                Detalle {/* PROVISIONAL (CONTENT_CHECKLIST fila 193) */}
+                <span className="font-normal text-text-2">(opcional)</span>
               </>
             }
-            error={errores.detalle}
-            announce={false}
           >
             <Textarea
               rows={2}
               compact
               autoGrow
               value={detalle}
-              required={motivo === "otro"}
               onChange={(e) => setDetalle(e.currentTarget.value)}
             />
           </Field>

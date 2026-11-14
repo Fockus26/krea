@@ -3,7 +3,13 @@ import { PuntosView } from "@/components/sections/puntos/puntos-view";
 import { PageHeader } from "@/components/sections/shared/page-header";
 import { SinSecciones } from "@/components/sections/shared/sin-secciones";
 import { anularAjuste, aplicarAjuste } from "@/lib/acciones/ajustes";
+import {
+  borrarMotivo,
+  crearMotivo,
+  editarMotivo,
+} from "@/lib/acciones/motivos";
 import { candidatosDe, historialDe } from "@/lib/ajustes-datos";
+import { catalogoMotivos } from "@/lib/datos/motivos";
 import {
   ajustesTodos,
   equiposTodos,
@@ -20,7 +26,11 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-const ACCIONES = { aplicar: aplicarAjuste, anular: anularAjuste };
+const ACCIONES = {
+  aplicar: aplicarAjuste,
+  anular: anularAjuste,
+  motivos: { crear: crearMotivo, editar: editarMotivo, borrar: borrarMotivo },
+};
 
 const EYEBROW = "Puntos del ranking · no cambian la nota";
 
@@ -30,15 +40,23 @@ const EYEBROW = "Puntos del ranking · no cambian la nota";
 // Las secciones salen del catálogo (D323); sin ninguna, el vacío de D325. Los avisos usan el
 // Toaster global (D131).
 export default async function PuntosPage() {
-  const [{ usuario, sesion }, usuarios, equipos, ajustes, rankings, catalogo] =
-    await Promise.all([
-      profesorActual(),
-      usuariosTodos(),
-      equiposTodos(),
-      ajustesTodos(),
-      rankingsTodos(),
-      catalogoSecciones(),
-    ]);
+  const [
+    { usuario, sesion },
+    usuarios,
+    equipos,
+    ajustes,
+    rankings,
+    catalogo,
+    motivos,
+  ] = await Promise.all([
+    profesorActual(),
+    usuariosTodos(),
+    equiposTodos(),
+    ajustesTodos(),
+    rankingsTodos(),
+    catalogoSecciones(),
+    catalogoMotivos(),
+  ]);
   const secciones = seccionesDe(catalogo);
   if (secciones.length === 0) {
     return (
@@ -58,6 +76,7 @@ export default async function PuntosPage() {
       <PuntosView
         candidatos={candidatosDe({ usuarios, equipos, rankings, secciones })}
         secciones={secciones}
+        motivos={motivos}
         historial={historialDe(ajustes, nombres)}
         profe={usuario ? nombreCorto(usuario) : ""}
         acciones={ACCIONES}

@@ -26,6 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { SeccionId } from "@/lib/modelo";
+import type { CatalogoMotivos } from "@/lib/motivos";
 import { chipAjuste } from "@/lib/panel";
 import {
   FILTRO_VACIO,
@@ -37,8 +38,8 @@ import {
   filtrosActivos,
   historialMetaTexto,
   historialMostrable,
-  MOTIVOS_FILTRO,
   motivoNoAnulable,
+  motivosFiltro,
   motivoTexto,
   opcionesAjusteLabel,
   rutaDestinoHistorial,
@@ -78,6 +79,7 @@ const quedarseAbierto = (e: Event) => e.preventDefault();
 export function AdjustmentHistory({
   filas,
   secciones,
+  motivos,
   filtro,
   onFiltro,
   onAnular,
@@ -85,6 +87,8 @@ export function AdjustmentHistory({
   filas: readonly FilaHistorial[];
   /** Secciones del catálogo, ordenadas. */
   secciones: readonly SeccionId[];
+  /** Opciones vigentes (D375): el filtro suma las etiquetas viejas del historial (D376). */
+  motivos: CatalogoMotivos;
   filtro: FiltroHistorial;
   onFiltro: (f: FiltroHistorial) => void;
   onAnular: (id: string) => void;
@@ -171,7 +175,7 @@ export function AdjustmentHistory({
                 <DropdownMenuRadioItem value="todos" onSelect={quedarseAbierto}>
                   Todos los motivos
                 </DropdownMenuRadioItem>
-                {MOTIVOS_FILTRO.map((m) => (
+                {motivosFiltro(motivos, mostrables).map((m) => (
                   <DropdownMenuRadioItem
                     key={m}
                     value={m}
