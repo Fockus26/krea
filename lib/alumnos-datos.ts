@@ -23,7 +23,7 @@ import {
   zPrivado,
   zUsuario,
 } from "@/lib/modelo";
-import { notaDeIntegrante } from "@/lib/ranking-datos";
+import { noParticipo, notaDeIntegrante } from "@/lib/ranking-datos";
 import { estiloDe } from "@/lib/vistas-estudiante";
 
 type ConId<T> = { id: string } & T;
@@ -244,6 +244,29 @@ export function notaIndividualVigente(
 }
 
 /**
+ * Nota grupal de la tabla (D399): la de su grupal evaluada más reciente, con su base vigente. Entra
+ * quien estaba en el equipo al entregar (`integrantes` es una foto, D221): si se mudó de equipo, la
+ * nota se queda con el equipo con el que entregó. «No participó» = NOTA_MIN (D365). Sin ninguna,
+ * `null` = Pendiente (D003).
+ */
+export function notaGrupalVigente(
+  alumno: Pick<Usuario, "cedula" | "base">,
+  entregas: readonly Entrega[],
+): number | null {
+  let ultima: Entrega | null = null;
+  for (const e of entregas) {
+    if (e.tipo !== "grupal" || !e.integrantes.includes(alumno.cedula)) continue;
+    if (e.estado !== "evaluada" || !e.evaluacion) continue;
+    if (
+      !ultima?.evaluacion ||
+      e.evaluacion.evaluadaEn > ultima.evaluacion.evaluadaEn
+    )
+      ultima = e;
+  }
+  return ultima ? notaDeIntegrante(ultima, alumno.base, alumno.cedula) : null;
+}
+
+/**
  * Nota del alumno en cada tarea evaluada (individual o grupal: entra si es integrante), con su
  * base vigente. Si hubiera dos entregas de una tarea para él, queda la evaluada más reciente.
  */
@@ -290,6 +313,9 @@ export function entregasDeAlumno(
       nota: e.evaluacion
         ? notaDeIntegrante(e, alumno.base, alumno.cedula)
         : null,
+      puntaje: e.evaluacion?.puntaje ?? null,
+      estado: e.estado === "evaluada" ? "evaluada" : "entregada",
+      noParticipo: noParticipo(e, alumno.cedula),
     }));
 }
 
@@ -336,6 +362,7 @@ export function filasAlumnos(datos: {
         equipo: (u.equipoId && equipos.get(u.equipoId)) || null,
         base: u.base,
         nota: notaIndividualVigente(u, datos.entregas),
+        notaGrupal: notaGrupalVigente(u, datos.entregas),
         notas: notasPorTarea(u, datos.entregas),
         ...(datos.tareas
           ? { entregas: entregasDeAlumno(u, datos.entregas, datos.tareas) }

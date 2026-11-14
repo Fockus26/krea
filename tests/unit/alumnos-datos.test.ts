@@ -1,11 +1,18 @@
 import { describe, expect, test } from "bun:test";
-import { EMAIL_INVALIDO, validarEdicion } from "@/lib/alumnos";
+import {
+  accionDeEntrega,
+  EMAIL_INVALIDO,
+  entregaAccionLabel,
+  separarEntregas,
+  validarEdicion,
+} from "@/lib/alumnos";
 import {
   armarEdicion,
   type EditarAlumno,
   entregasDeAlumno,
   errorAlumnoTexto,
   filasAlumnos,
+  notaGrupalVigente,
   notaIndividualVigente,
   puntajeFinalDe,
   zEditarAlumno,
@@ -209,6 +216,84 @@ describe("notaIndividualVigente", () => {
   });
 });
 
+describe("notaGrupalVigente (D399)", () => {
+  const grupal = (
+    equipo: string,
+    integrantes: string[],
+    puntaje: number,
+    en: number,
+    noParticiparon?: string[],
+  ): Entrega => ({
+    ...evaluada(equipo, puntaje, en, "grupal"),
+    integrantes,
+    evaluacion: {
+      puntos: null,
+      comentarios: {},
+      puntaje,
+      evaluadaPor: PROFE,
+      evaluadaEn: en,
+      ...(noParticiparon ? { noParticiparon } : {}),
+    },
+  });
+  const yo = { cedula: "1111111", base: 15 };
+
+  test("la grupal evaluada más reciente, con su base; la individual no cuenta", () => {
+    expect(
+      notaGrupalVigente(yo, [
+        grupal("eq-1", ["1111111", "2222222"], 20, 1),
+        grupal("eq-1", ["1111111", "2222222"], 16, 5),
+        evaluada("1111111", 20, 9),
+      ]),
+    ).toBe(12); // 16 × 15 / 20
+  });
+
+  test("«No participó» queda con la nota mínima (D365)", () => {
+    expect(
+      notaGrupalVigente(yo, [
+        grupal("eq-1", ["1111111", "2222222"], 20, 1, ["1111111"]),
+      ]),
+    ).toBe(1);
+  });
+
+  test("movido de equipo: la nota se queda con el equipo con el que entregó (D221)", () => {
+    const vieja = grupal("eq-1", ["1111111", "2222222"], 18, 1);
+    expect(notaGrupalVigente({ cedula: "1111111", base: 20 }, [vieja])).toBe(
+      18,
+    );
+    // Quien entró después al equipo no recibe la nota de esa entrega
+    expect(
+      notaGrupalVigente({ cedula: "3333333", base: 20 }, [vieja]),
+    ).toBeNull();
+  });
+
+  test("sin grupal evaluada, o solo entregada: Pendiente (D003)", () => {
+    expect(notaGrupalVigente(yo, [])).toBeNull();
+    expect(
+      notaGrupalVigente(yo, [
+        {
+          ...grupal("eq-1", ["1111111"], 10, 1),
+          estado: "entregada",
+          evaluacion: null,
+        },
+      ]),
+    ).toBeNull();
+  });
+
+  test("filasAlumnos trae notaGrupal junto a la individual", () => {
+    const [f] = filasAlumnos({
+      usuarios: [usuario("1111111", { base: 15 })],
+      equipos: [],
+      entregas: [
+        grupal("eq-1", ["1111111"], 16, 5),
+        evaluada("1111111", 20, 9),
+      ],
+      rankings: { "5A": null },
+      emails: new Map(),
+    });
+    expect(f).toMatchObject({ nota: 15, notaGrupal: 12 });
+  });
+});
+
 describe("filasAlumnos", () => {
   const equipos: Array<{ id: string } & Equipo> = [
     {
@@ -327,12 +412,23 @@ describe("entregasDeAlumno", () => {
         titulos,
       ),
     ).toEqual([
-      { id: "t-7__1111111", titulo: "Afiche", tipo: "individual", nota: null },
+      {
+        id: "t-7__1111111",
+        titulo: "Afiche",
+        tipo: "individual",
+        nota: null,
+        puntaje: null,
+        estado: "entregada",
+        noParticipo: false,
+      },
       {
         id: "t-1__1111111",
         titulo: "Identidad de marca",
         tipo: "individual",
         nota: 15,
+        puntaje: 20,
+        estado: "evaluada",
+        noParticipo: false,
       },
     ]);
   });
@@ -364,5 +460,39 @@ describe("puntajeFinalDe", () => {
       puntaje: 17.5,
     });
     expect(puntajeFinalDe("2222222", t, [evaluada]).puntaje).toBeNull();
+  });
+});
+
+describe("ficha: individuales y grupales (D400, D401)", () => {
+  const e = (
+    id: string,
+    tipo: "individual" | "grupal",
+    estado: "entregada" | "evaluada",
+  ) => ({
+    id,
+    titulo: id,
+    tipo,
+    nota: estado === "evaluada" ? 15 : null,
+    puntaje: estado === "evaluada" ? 15 : null,
+    estado,
+    noParticipo: false,
+  });
+
+  test("separa por tipo y conserva el orden", () => {
+    const r = separarEntregas([
+      e("a", "grupal", "evaluada"),
+      e("b", "individual", "entregada"),
+      e("c", "grupal", "entregada"),
+    ]);
+    expect(r.individuales.map((x) => x.id)).toEqual(["b"]);
+    expect(r.grupales.map((x) => x.id)).toEqual(["a", "c"]);
+  });
+
+  test("Corregir si está evaluada, Evaluar si no", () => {
+    expect(accionDeEntrega({ estado: "evaluada" })).toBe("corregir");
+    expect(accionDeEntrega({ estado: "entregada" })).toBe("evaluar");
+    expect(entregaAccionLabel("corregir", "Logo")).toBe(
+      "Corregir la entrega de Logo",
+    );
   });
 });

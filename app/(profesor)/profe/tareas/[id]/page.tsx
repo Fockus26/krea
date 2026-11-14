@@ -1,10 +1,12 @@
 import { ClipboardList } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EmptyState } from "@/components/krea/empty-state";
 import { BackLink } from "@/components/sections/shared/back-link";
 import { PageHeader } from "@/components/sections/shared/page-header";
 import { TaskBuilder } from "@/components/sections/tareas-profe/task-builder";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import tareaSeed from "@/data/seed/tarea-identidad-marca.json";
 import {
@@ -22,7 +24,7 @@ import { catalogoSecciones } from "@/lib/datos/secciones";
 import { diaDeInstante } from "@/lib/fecha";
 import { seccionesDe } from "@/lib/secciones";
 import { TAREA_GRUPAL_SEED } from "@/lib/seed-firestore";
-import { RUTA_TAREAS } from "@/lib/tareas-profe";
+import { RUTA_TAREAS, rutaEntregasTarea } from "@/lib/tareas-profe";
 import {
   datosBorradorDe,
   modoConstructor,
@@ -77,6 +79,18 @@ export default async function TareaProfePage({ params }: Props) {
           title={t.estado === "borrador" ? "Nueva tarea" : t.titulo}
           description={
             sinPreguntas || modo === "cerrada" ? undefined : DESCRIPCION
+          }
+          actions={
+            t.estado === "borrador" ? undefined : (
+              <Button asChild variant="secondary" size="sm">
+                <Link
+                  href={rutaEntregasTarea(id)}
+                  aria-label={`Ver notas de ${t.titulo}`}
+                >
+                  Ver notas
+                </Link>
+              </Button>
+            )
           }
         />
       </div>

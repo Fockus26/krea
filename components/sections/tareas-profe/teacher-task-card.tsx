@@ -14,14 +14,14 @@ import { StatusBadge } from "@/components/krea/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cardVariants } from "@/components/ui/card";
-import { rutaAlumnos } from "@/lib/alumnos";
 import {
   barraEvaluadas,
   eliminarTareaLabel,
   evaluarLabel,
   evaluarTexto,
   metaTarea,
-  RUTA_EVALUAR,
+  rutaEntregasTarea,
+  rutaEvaluarTarea,
   rutaTarea,
   sumaChip,
   type TareaProfe,
@@ -117,7 +117,7 @@ export function TeacherTaskCard({
         {tarea.estado === "abierta" && tarea.porEvaluar > 0 ? (
           <Button asChild variant="secondary" size="sm">
             <Link
-              href={RUTA_EVALUAR}
+              href={rutaEvaluarTarea(tarea.id)}
               aria-label={evaluarLabel(tarea.porEvaluar, tarea.titulo)}
             >
               {evaluarTexto(tarea.porEvaluar)}
@@ -138,10 +138,10 @@ export function TeacherTaskCard({
             </Link>
           </Button>
         ) : null}
-        {tarea.estado === "evaluada" ? (
+        {tarea.estado !== "borrador" ? (
           <Button asChild variant="ghost" size="sm">
             <Link
-              href={rutaAlumnos({ tarea: tarea.id })}
+              href={rutaEntregasTarea(tarea.id)}
               aria-label={`Ver notas de ${tarea.titulo}`}
             >
               Ver notas

@@ -40,7 +40,7 @@ import {
 } from "./edit-student-dialog";
 import type { Presencia } from "./use-presencia";
 
-const COLUMNAS = 7;
+const COLUMNAS = 8;
 
 /** «Ana Pérez está editando» bajo el nombre (texto vacío: nada). */
 function EditandoChip({ texto }: { texto: string }) {
@@ -55,7 +55,7 @@ function EditandoChip({ texto }: { texto: string }) {
 
 /**
  * Tabla de alumnos (HANDOFF §2.15, §3 Alumnos): Alumno · Cédula · Equipo · Base · Nota
- * individual · Puntos · Editar (y Eliminar, D298). Con `seleccion`, una casilla al inicio de cada
+ * individual · Nota grupal (sin tarea elegida, D399) · Puntos · Editar (y Eliminar, D298). Con `seleccion`, una casilla al inicio de cada
  * fila y «todos los visibles» en la cabecera, para eliminar en lote. La región desplazable, el `position: relative` para el `sr-only` y
  * la pista bajo 1024 los pone `Table` (D044). Nota `null` = Pendiente (D003); Raspado = ícono
  * con nombre accesible (`GradePill table`). Base ≠ 20 con chip, no solo con un número distinto.
@@ -137,6 +137,11 @@ export function StudentsTable({
           <TableHead scope="col" className="text-center">
             {tarea ? "Nota en la tarea" : "Nota individual"}
           </TableHead>
+          {tarea ? null : (
+            <TableHead scope="col" className="text-center">
+              Nota grupal
+            </TableHead>
+          )}
           <TableHead scope="col" numeric>
             Puntos
           </TableHead>
@@ -149,7 +154,7 @@ export function StudentsTable({
         {filas.length === 0 ? (
           <TableRow className="hover:bg-transparent">
             <TableCell
-              colSpan={COLUMNAS + (seleccion ? 1 : 0)}
+              colSpan={COLUMNAS - (tarea ? 1 : 0) + (seleccion ? 1 : 0)}
               className="h-auto py-8 text-center"
             >
               <span className="animate-fade-in text-body text-text-2">
@@ -206,6 +211,11 @@ export function StudentsTable({
                   table
                 />
               </TableCell>
+              {tarea ? null : (
+                <TableCell className="text-center">
+                  <GradePill nota={a.notaGrupal ?? null} size="sm" table />
+                </TableCell>
+              )}
               <TableCell numeric className="text-small-b">
                 {formatDecimal(a.puntos)}
               </TableCell>

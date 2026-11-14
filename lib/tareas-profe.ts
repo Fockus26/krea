@@ -29,6 +29,12 @@ export const RUTA_TAREAS = "/profe/tareas";
 export const RUTA_NUEVA_TAREA = "/profe/tareas/nueva";
 export const RUTA_EVALUAR = "/profe/evaluar";
 export const rutaTarea = (id: string) => `${RUTA_TAREAS}/${id}`;
+/** Cola de Evaluar filtrada a una tarea (forma compartida con Evaluar: `?tarea=<id>`, D398). */
+export const rutaEvaluarTarea = (id: string) =>
+  `${RUTA_EVALUAR}?tarea=${encodeURIComponent(id)}`;
+/** Lista de entregas de una tarea (D398). */
+export const rutaEntregasTarea = (id: string) =>
+  `${RUTA_TAREAS}/${id}/entregas`;
 
 /* ---------- Lista ---------- */
 

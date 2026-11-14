@@ -1,0 +1,5 @@
+# D399 · Alumnos · Columna «Nota grupal» · Implemented
+
+**Decisión:** la tabla de Alumnos suma «Nota grupal» junto a «Nota individual»: la de su grupal evaluada más reciente con su base vigente (`notaGrupalVigente` en `lib/alumnos-datos.ts`, mismo criterio que la individual y `notaDeIntegrante`; «No participó» = NOTA_MIN, D365). Sin ninguna, Pendiente (D003). Entra quien figura en `integrantes` de la entrega (foto del equipo al entregar, D221): si el alumno se mudó de equipo, la nota se queda con el equipo con el que entregó. Con una tarea elegida en el filtro sigue siendo UNA sola columna, «Nota en la tarea» (D252): `notasPorTarea` ya cubre las grupales por `integrantes`, así que funciona si la tarea elegida es grupal (con prueba). El filtro de estado sin tarea sigue mirando la nota individual (no se tocó).
+**Why:** César: en Alumnos solo se veían las notas individuales, no las grupales de cada alumno.
+**Alternativa descartada:** una sola columna con la mezcla de ambas — oculta de cuál tarea viene la nota y rompe el significado de «Nota individual».

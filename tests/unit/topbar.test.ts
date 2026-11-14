@@ -22,6 +22,7 @@ const PROFESOR = [
   "/profe/tareas",
   "/profe/tareas/nueva",
   "/profe/tareas/[id]",
+  "/profe/tareas/[id]/entregas",
   "/profe/alumnos",
   "/profe/equipos",
   "/profe/puntos",
