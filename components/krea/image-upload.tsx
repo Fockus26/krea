@@ -281,7 +281,10 @@ export function ImageUpload({
             />
           ) : null}
           <span className="text-small-b nums absolute bottom-2 left-2 max-w-[calc(100%-1rem)] truncate rounded-sm bg-scrim-chip px-2 py-1 text-on-scrim">
-            {file.name} · {formatFileSize(file.size)}
+            {/* Sin peso conocido (imagen ya enviada, D395): solo el nombre */}
+            {file.size > 0
+              ? `${file.name} · ${formatFileSize(file.size)}`
+              : file.name}
           </span>
           <div className="absolute top-2 right-2 flex gap-2">
             <Button

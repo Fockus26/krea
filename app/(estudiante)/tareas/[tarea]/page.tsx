@@ -5,6 +5,10 @@ import { EmptyState } from "@/components/krea/empty-state";
 import { QuestionCardDetail } from "@/components/krea/question-card-detail";
 import { BackLink } from "@/components/sections/shared/back-link";
 import { CaptainNotice } from "@/components/sections/tareas/captain-notice";
+import {
+  BotonEditarEntrega,
+  EntregaEditable,
+} from "@/components/sections/tareas/editar-entrega";
 import { PrizeCard } from "@/components/sections/tareas/prize-card";
 import { TaskAnswerForm } from "@/components/sections/tareas/task-answer-form";
 import { TaskDelivered } from "@/components/sections/tareas/task-delivered";
@@ -15,6 +19,7 @@ import { enviarEntrega, subirImagenRespuesta } from "@/lib/acciones/entregas";
 import { verificarSesion } from "@/lib/dal";
 import { datosAlumno, integrantesDe } from "@/lib/datos/estudiante";
 import { urlsFirmadas } from "@/lib/datos/imagenes";
+import { inicialEdicion, puedeEditar } from "@/lib/entregas";
 import { imagenesConAlt, respuestaFirmada } from "@/lib/question";
 import { TAREA_GRUPAL_SEED } from "@/lib/seed-firestore";
 import { entregaVista, RESPUESTA_IMAGEN } from "@/lib/vistas-estudiante";
@@ -40,7 +45,8 @@ const ACCIONES = { subir: subirImagenRespuesta, enviar: enviarEntrega };
 // Entrega (HANDOFF §3, W5): el modo sale de la sesión y de los datos (`entregaVista`). Responde
 // quien puede enviar (individual, o el capitán en grupal, D012); el resto del equipo ve las
 // preguntas bloqueadas. Ya enviada: «¡Tarea entregada!» con las respuestas; las imágenes se
-// firman aquí, solo las que se pintan (D195).
+// firman aquí, solo las que se pintan (D195). Sin evaluar y con la tarea abierta, quien la envía
+// (el alumno o el capitán) la puede editar: «Editar entrega» abre el formulario con lo enviado (D395).
 export default async function TareaPage({ params }: Props) {
   const id = (await params).tarea;
   const datos = await datosAlumno();
@@ -79,7 +85,25 @@ export default async function TareaPage({ params }: Props) {
       ) : null}
 
       {d.estado === "entregada" ? (
-        <>
+        <EntregaEditable
+          editable={puedeEditar(
+            datos.usuario,
+            datos.tareas.find((t) => t.id === id) ?? null,
+            id,
+            datos.equipo,
+            datos.entregas.find((e) => e.tareaId === id) ?? null,
+          )}
+          formulario={{
+            tareaId: id,
+            titulo: d.titulo,
+            preguntas: d.preguntas,
+            inicial: inicialEdicion(d.preguntas, d.respuestas, urls),
+            autor: datos.usuario.nombres.trim().split(/\s+/)[0] ?? "",
+            titular: datos.usuario.cedula,
+            acciones: ACCIONES,
+            entregadaHref: `/tareas/${id}`,
+          }}
+        >
           <TaskDelivered
             quien={d.quien}
             fecha={d.fecha}
@@ -87,6 +111,7 @@ export default async function TareaPage({ params }: Props) {
             evaluada={d.evaluada}
             notaHref={d.notaHref}
             inicioHref="/"
+            accion={<BotonEditarEntrega />}
           />
           {d.respuestas.some((r) => r !== null) ? (
             <section
@@ -129,7 +154,7 @@ export default async function TareaPage({ params }: Props) {
               </ol>
             </section>
           ) : null}
-        </>
+        </EntregaEditable>
       ) : d.estado === "sin-equipo" ? (
         <Card>
           {/* PLACEHOLDER de copy (CONTENT_CHECKLIST fila 129) */}

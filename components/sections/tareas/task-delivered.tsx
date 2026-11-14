@@ -1,12 +1,14 @@
 import { Check } from "lucide-react";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 /**
  * Tarea entregada (HANDOFF §3): tarjeta con borde interior 2 px `--success` (también en oscuro,
  * donde la tarjeta ya no tiene sombra), cuadro 56 `--success` con Check en `--surface`, h2 "¡Tarea entregada!", quién y cuándo, y "Volver al inicio".
- * Las respuestas en solo lectura van debajo (las pinta la página).
+ * Las respuestas en solo lectura van debajo (las pinta la página). `accion`: «Editar entrega»
+ * (D395), antes de «Volver al inicio».
  */
 export function TaskDelivered({
   quien,
@@ -15,6 +17,7 @@ export function TaskDelivered({
   evaluada = false,
   notaHref,
   inicioHref,
+  accion,
 }: {
   /** Quién la envió; `null` si la nota vino del Excel sin ese registro. */
   quien: string | null;
@@ -27,6 +30,7 @@ export function TaskDelivered({
   /** Detalle de la nota (D248): con él, evaluada ofrece «Ver mi nota» en vez de mandar a Mis notas. */
   notaHref?: string | null;
   inicioHref: string;
+  accion?: ReactNode;
 }) {
   return (
     <Card className="shadow-done dark:shadow-done flex flex-col items-start gap-3">
@@ -65,6 +69,7 @@ export function TaskDelivered({
             <Link href={notaHref}>Ver mi nota</Link>
           </Button>
         ) : null}
+        {accion}
         <Button asChild variant="secondary">
           <Link href={inicioHref}>Volver al inicio</Link>
         </Button>

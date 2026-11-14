@@ -96,6 +96,11 @@ export function ReviewForm({
   tipo: "individual" | "grupal";
   preguntas: readonly ReviewQuestion[];
   inicial: {
+    /**
+     * `enviadaEn` de la entrega en pantalla (D397). Va con Guardar: si el alumno la editó
+     * mientras tanto, el servidor responde `editada` y no se guarda. Sin él (galería), no se mira.
+     */
+    enviadaEn?: number | null;
     puntajes: readonly (number | null)[];
     comentarios: readonly string[];
     /** Grupal: marcados «No participó» en la evaluación vigente (D364). */
@@ -180,6 +185,9 @@ export function ReviewForm({
           ),
           version,
           ...(conIntegrantes ? { noParticiparon } : {}),
+          ...(inicial.enviadaEn !== undefined
+            ? { enviadaEn: inicial.enviadaEn }
+            : {}),
         })
         .catch((): ResultadoEvaluar => ({ ok: false, error: "red" }));
       guardando.current = false;
