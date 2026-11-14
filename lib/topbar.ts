@@ -93,6 +93,12 @@ const PROFESOR: readonly Regla[] = [
   { ruta: "/profe/tareas" },
   { ruta: "/profe/tareas/nueva", ...CONSTRUCTOR },
   { ruta: "/profe/tareas/[id]", ...CONSTRUCTOR },
+  {
+    ruta: "/profe/tareas/[id]/entregas",
+    variante: "detalle",
+    titulo: "Entregas",
+    volver: { href: "/profe/tareas", label: "Volver a Tareas" },
+  },
   { ruta: "/profe/alumnos" },
   { ruta: "/profe/equipos" },
   { ruta: "/profe/puntos" },
