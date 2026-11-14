@@ -122,10 +122,15 @@ describe("contactosDeProfes (D380)", () => {
     for (const f of filas)
       expect(Object.keys(f).sort()).toEqual([
         "apellidos",
+        "avatar",
         "emailContacto",
         "nombres",
         "telefono",
       ]);
+    // Semilla aún con la cédula (SQL de datos sin aplicar): sin avatar, la tarjeta usa iniciales
+    for (const f of filas) expect(f.avatar).toBeNull();
+    expect(JSON.stringify(filas)).not.toContain(PROFE_TODAS);
+    expect(JSON.stringify(filas)).not.toContain(PROFE_A);
     const tarjetas = tarjetasProfes(filas);
     expect(tarjetas.map((t) => t.nombre)).toEqual([
       "Ana Contacto",
@@ -137,5 +142,22 @@ describe("contactosDeProfes (D380)", () => {
     expect(
       (await contactosDeProfes(db(), "5C")).map((f) => f.nombres).sort(),
     ).toEqual(["Ana", "Carla"]);
+  }, 30_000);
+
+  test("con semilla opaca el alumno ve el avatar del profe (D389)", async () => {
+    const SEMILLA = "0a1b2c3d4e5f60718293a4b5c6d7e8f9";
+    await docs.ponerUsuario(db(), {
+      ...persona(PROFE_C, "profesor", "5C", "Carla"),
+      avatar: { estilo: "bottts-neutral", semilla: SEMILLA },
+    });
+    const carla = (await contactosDeProfes(db(), "5C")).find(
+      (f) => f.nombres === "Carla",
+    );
+    expect(carla?.avatar).toEqual({
+      estilo: "bottts-neutral",
+      semilla: SEMILLA,
+    });
+    const [t] = tarjetasProfes(carla ? [carla] : []);
+    expect(t?.avatar).toEqual({ estilo: "bottts-neutral", seed: SEMILLA });
   }, 30_000);
 });

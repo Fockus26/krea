@@ -1,4 +1,5 @@
 import { ExternalLink, Mail, MessageCircle } from "lucide-react";
+import { UserAvatar } from "@/components/krea/user-avatar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
@@ -12,7 +13,7 @@ const SUBTITULO = "Escríbeles si tienes dudas sobre una tarea o tu nota.";
 /**
  * «Tus profesores» del Perfil del alumno (D380): cada profe que cargó algún contacto, con enlaces
  * a WhatsApp (pestaña nueva, avisado) y al correo. Sin profes con contacto no se muestra. El
- * avatar va con iniciales: la semilla del DiceBear lleva la cédula del profe (D191).
+ * avatar es el suyo (D389); si su semilla aún lleva la cédula, la lectura lo quita y van iniciales.
  */
 export function TusProfesores({ profes }: { profes: readonly TarjetaProfe[] }) {
   if (profes.length === 0) return null;
@@ -29,9 +30,18 @@ export function TusProfesores({ profes }: { profes: readonly TarjetaProfe[] }) {
             className="flex flex-wrap items-center justify-between gap-3"
           >
             <div className="flex min-w-0 items-center gap-3">
-              <Avatar size={40} aria-hidden="true">
-                <AvatarFallback>{initials(p.nombre)}</AvatarFallback>
-              </Avatar>
+              {p.avatar ? (
+                <UserAvatar
+                  estilo={p.avatar.estilo}
+                  seed={p.avatar.seed}
+                  nombre={p.nombre}
+                  size={40}
+                />
+              ) : (
+                <Avatar size={40} aria-hidden="true">
+                  <AvatarFallback>{initials(p.nombre)}</AvatarFallback>
+                </Avatar>
+              )}
               <div className="min-w-0">
                 <p className="text-body-strong text-text">{p.nombre}</p>
                 {p.whatsapp ? (

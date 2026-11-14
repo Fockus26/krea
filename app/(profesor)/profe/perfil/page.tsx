@@ -9,6 +9,7 @@ import { ProfileDataEditable } from "@/components/sections/perfil/profile-data-e
 import { PageHeader } from "@/components/sections/shared/page-header";
 import { contactoAFormulario } from "@/lib/contacto";
 import { miContacto, profesorActual } from "@/lib/datos/profesor";
+import { baseSelectorAvatar } from "@/lib/perfil";
 import { estiloDe, nombreCompleto, nombreCorto } from "@/lib/vistas-estudiante";
 
 export const metadata: Metadata = {
@@ -43,7 +44,7 @@ export default async function PerfilProfePage() {
             nombre={nombreCorto(usuario)}
             estilo={estiloDe(usuario.avatar.estilo)}
             seed={usuario.avatar.semilla}
-            base={usuario.cedula}
+            base={baseSelectorAvatar(usuario.avatar.semilla, usuario.cedula)}
           />
         </>
       ) : null}

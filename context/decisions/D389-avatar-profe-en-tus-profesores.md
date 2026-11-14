@@ -1,0 +1,5 @@
+# D389 · UI · «Tus profesores» muestra el avatar del profe; iniciales si su semilla aún tiene la cédula · Implemented
+
+**Decisión:** reemplaza la parte de avatar de D380. `contactosDeProfes` lee también `cedula` y `avatar`, y en el servidor aplica `avatarVisibleProfe(avatar, cedula)`: `{estilo, semilla}` si la semilla no contiene la cédula, `null` si la contiene (SQL de D388 sin aplicar). La cédula no sale de la lectura. `tarjetasProfes` lo pasa como `avatar: {estilo, seed} | null` (estilo desconocido → el de por defecto, `estiloDe`) y la tarjeta pinta `UserAvatar` 40 decorativo (el nombre va al lado) o, con `null`, el `Avatar` de iniciales de antes. Pedido 13 de César, 2026-11-14.
+**Why:** con la semilla opaca (D388) el avatar ya no expone la cédula y el alumno reconoce a su profe por el mismo muñeco que ve en el resto del portal. La caída a iniciales cubre el tiempo entre el despliegue y el SQL sin volver a exponer nada.
+**Alternativas descartadas:** decidir la caída en el cliente (habría que mandarle la cédula) · esconder la tarjeta entera hasta aplicar el SQL (el contacto es lo importante).

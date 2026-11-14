@@ -24,6 +24,7 @@ import { filaDeUsuario } from "@/lib/data/usuarios";
 import type { Db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { DOC_SECCIONES, type Usuario } from "@/lib/modelo";
+import { semillaAvatarNueva } from "@/lib/perfil";
 import { calcularRanking } from "@/lib/ranking-datos";
 import {
   anioDoc,
@@ -71,7 +72,10 @@ const PROFE_DEMO: Usuario = {
   seccion: null,
   equipoId: null,
   base: 20,
-  avatar: { estilo: ESTILO_AVATAR_DEFECTO, semilla: "10000000" },
+  avatar: {
+    estilo: ESTILO_AVATAR_DEFECTO,
+    semilla: semillaAvatarNueva("10000000"),
+  },
   admin: true,
   actualizadoEn: 0,
 };
@@ -82,6 +86,12 @@ const db = drizzle(pool, { schema }) as unknown as Db;
 
 const ahora = Date.now();
 const docs = docsDesdeSeed(alumnos, grupos, tarea, ahora);
+// Semilla opaca del avatar (D388): `docsDesdeSeed` pone la cédula y la URL de DiceBear la expone
+for (const d of docs.usuarios)
+  d.data.avatar = {
+    ...d.data.avatar,
+    semilla: semillaAvatarNueva(d.data.cedula),
+  };
 docs.usuarios.push({
   id: PROFE_DEMO.cedula,
   data: { ...PROFE_DEMO, actualizadoEn: ahora },

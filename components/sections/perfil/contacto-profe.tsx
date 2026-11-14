@@ -18,10 +18,10 @@ import {
   zContacto,
 } from "@/lib/contacto";
 
-// PROVISIONAL (CONTENT_CHECKLIST filas 194–195): no están en el lienzo
+// PROVISIONAL (CONTENT_CHECKLIST fila 194): no están en el lienzo. Sin ayuda bajo el teléfono:
+// César la quitó (pedido 15, D390); el error de validación sí queda.
 const TITULO = "Contacto para tus alumnos";
 const AYUDA = "Opcional. Tus alumnos lo verán en su Perfil.";
-const AYUDA_TELEFONO = "Celular venezolano: abre un chat de WhatsApp.";
 const TOAST_GUARDADO = "Contacto guardado";
 const ERROR_GUARDAR =
   "No se guardó tu contacto. Revisa tu internet y vuelve a intentar.";
@@ -97,7 +97,6 @@ export function ContactoProfe({ inicial }: { inicial: ContactoEntrada }) {
           <Field
             label="Teléfono (WhatsApp)"
             controlId={ids.telefono}
-            help={AYUDA_TELEFONO}
             error={ver.telefono}
             announce={false}
           >

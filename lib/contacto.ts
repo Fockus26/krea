@@ -4,7 +4,9 @@
 // la lectura del alumno (servidor), y las pruebas.
 import { z } from "zod";
 import { EMAIL_INVALIDO } from "@/lib/alumnos";
-import { nombreCorto } from "@/lib/vistas-estudiante";
+import type { DicebearEstilo } from "@/lib/dicebear";
+import { semillaConCedula } from "@/lib/perfil";
+import { estiloDe, nombreCorto } from "@/lib/vistas-estudiante";
 
 /**
  * Prefijos de las operadoras móviles (D379): Movilnet 0416 y 0426, Movistar 0414 y 0424, Digitel
@@ -24,7 +26,7 @@ const PAIS = "58";
 /** Cifras del número nacional sin el 0 inicial: operadora (3) + abonado (7). */
 const LARGO_NACIONAL = 10;
 
-// PROVISIONAL (CONTENT_CHECKLIST fila 195): ayuda y error del teléfono
+// PROVISIONAL (CONTENT_CHECKLIST fila 195): error del teléfono (la ayuda se quitó, D390)
 export const TELEFONO_INVALIDO =
   "Escribe un celular venezolano, como 0412-1234567.";
 
@@ -124,22 +126,41 @@ export function contactoAFormulario(c: Contacto): ContactoEntrada {
 
 /* ---------- «Tus profesores» (alumno) ---------- */
 
+/** Avatar del profe tal como lo ve el alumno: estilo y una semilla que no contiene su cédula. */
+export type AvatarContactoProfe = { estilo: string; semilla: string };
+
 /**
  * Lo único que la lectura del alumno trae de cada profe: nunca la cédula ni el email de
- * recuperación. Tampoco el avatar: su semilla lleva la cédula (D191) y la URL de DiceBear la
- * mostraría; la tarjeta usa las iniciales (D380).
+ * recuperación. El avatar viaja solo si su semilla ya es opaca (D388): si aún contiene la cédula
+ * (SQL de datos sin aplicar), la lectura lo deja en `null` y la tarjeta usa las iniciales.
  */
 export type FilaContactoProfe = {
   nombres: string;
   apellidos: string;
   telefono: string | null;
   emailContacto: string | null;
+  avatar: AvatarContactoProfe | null;
 };
+
+/**
+ * El avatar que puede ver el alumno (D388): `null` si la semilla contiene la cédula del profe.
+ * Se aplica en el servidor (`contactosDeProfes`): la cédula nunca llega al cliente.
+ */
+export function avatarVisibleProfe(
+  avatar: AvatarContactoProfe,
+  cedula: string,
+): AvatarContactoProfe | null {
+  return semillaConCedula(avatar.semilla, cedula)
+    ? null
+    : { estilo: avatar.estilo, semilla: avatar.semilla };
+}
 
 export type TarjetaProfe = {
   /** Clave de la lista: el nombre corto + su posición (no hace falta la cédula). */
   clave: string;
   nombre: string;
+  /** `null`: iniciales (semilla aún con la cédula, D388). */
+  avatar: { estilo: DicebearEstilo; seed: string } | null;
   whatsapp: { href: string; texto: string } | null;
   correo: { href: string; texto: string } | null;
 };
@@ -161,6 +182,9 @@ export function tarjetasProfes(
     if (!tel && !correo) continue;
     tarjetas.push({
       nombre: nombreCorto(f),
+      avatar: f.avatar
+        ? { estilo: estiloDe(f.avatar.estilo), seed: f.avatar.semilla }
+        : null,
       whatsapp: tel
         ? { href: enlaceWhatsApp(tel), texto: telefonoTexto(tel) }
         : null,

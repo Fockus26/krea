@@ -12,7 +12,7 @@ import {
   zMisDatos,
 } from "@/lib/cuentas-datos";
 import { claimsDe, type Usuario, zUsuario } from "@/lib/modelo";
-import { zCrearPassword } from "@/lib/perfil";
+import { semillaAvatarNueva, zCrearPassword } from "@/lib/perfil";
 
 describe("contraseña temporal (D232)", () => {
   test("12 símbolos del alfabeto en 3 bloques de 4 con guion", () => {
@@ -136,7 +136,8 @@ describe("entrada de una cuenta (genérica por rol)", () => {
 });
 
 describe("usuarioNuevo", () => {
-  test("profesor: sin sección, sin equipo, base 20, avatar con su cédula, cambio obligatorio", () => {
+  test("profesor: sin sección, sin equipo, base 20, semilla opaca, cambio obligatorio", () => {
+    const semilla = semillaAvatarNueva("32888687");
     const u = usuarioNuevo(
       {
         rol: "profesor",
@@ -146,13 +147,15 @@ describe("usuarioNuevo", () => {
         email: null,
       },
       42,
+      semilla,
     );
     expect(zUsuario.safeParse(u).success).toBe(true);
+    expect(u.avatar.semilla).not.toContain("32888687");
     expect(u).toMatchObject({
       seccion: null,
       equipoId: null,
       base: 20,
-      avatar: { semilla: "32888687" },
+      avatar: { semilla },
       debeCambiarPassword: true,
       actualizadoEn: 42,
     });
@@ -176,10 +179,24 @@ describe("usuarioNuevo", () => {
         seccion: "5C",
       },
       1,
+      semillaAvatarNueva("39800001"),
     );
     expect(zUsuario.safeParse(u).success).toBe(true);
     expect(u.seccion).toBe("5C");
     expect(u.base).toBe(20);
+  });
+
+  test("nunca con una semilla que contenga la cédula (D388)", () => {
+    const c = {
+      rol: "estudiante" as const,
+      cedula: "39800001",
+      nombres: "Luis",
+      apellidos: "Gómez",
+      email: null,
+      seccion: "5C" as const,
+    };
+    expect(() => usuarioNuevo(c, 1, "39800001")).toThrow();
+    expect(() => usuarioNuevo(c, 1, "x39800001-1-2")).toThrow();
   });
 });
 
