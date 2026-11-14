@@ -8,6 +8,9 @@ import { cn } from "@/lib/utils";
  * 28 de alto, padding 0 10, radio 10, 13/18 700, gap 6, ícono 16. Los tintes de ok/warn/prize
  * cambian con el tema (14 % en oscuro) porque salen de los tokens `--chip-*-bg` (D016).
  * El significado nunca va solo en el color: el llamador pone ícono + palabra.
+ * Otro alto = `size`, nunca `h-*` suelto: `size` cambia el alto y el padding vertical a la vez
+ * ((alto − 1lh) / 2). Con 22 px y el padding de 28 el número quedaba bajo (D381). `Badge` pasa por `cn`
+ * (tailwind-merge), así `sm`/`md` ganan a los `h-7`/`py` de la base.
  */
 const chip =
   "icono-linea inline-flex h-7 w-fit shrink-0 gap-1.5 rounded-sm px-2.5 py-[calc((--spacing(7)-1lh)/2)] text-small-b whitespace-nowrap";
@@ -33,9 +36,16 @@ const badgeVariants = cva(
         // "tú": 22 de alto, radio 999, 12 px
         tu: "icono-linea inline-flex h-5.5 w-fit shrink-0 gap-1.5 rounded-pill bg-accent px-2 py-[calc((--spacing(5.5)-1lh)/2)] font-body text-xs font-bold whitespace-nowrap text-on-accent",
       },
+      size: {
+        default: "",
+        // 22 de alto (contadores y chips de lista) y 26 (ejemplos de reglas)
+        sm: "h-5.5 py-[calc((--spacing(5.5)-1lh)/2)]",
+        md: "h-6.5 py-[calc((--spacing(6.5)-1lh)/2)]",
+      },
     },
     defaultVariants: {
       variant: "neutral",
+      size: "default",
     },
   },
 );
@@ -45,6 +55,7 @@ type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>["variant"]>;
 function Badge({
   className,
   variant = "neutral",
+  size = "default",
   asChild = false,
   ...props
 }: React.ComponentProps<"span"> &
@@ -55,7 +66,7 @@ function Badge({
     <Comp
       data-slot="badge"
       data-variant={variant}
-      className={cn(badgeVariants({ variant }), className)}
+      className={cn(badgeVariants({ variant, size }), className)}
       {...props}
     />
   );

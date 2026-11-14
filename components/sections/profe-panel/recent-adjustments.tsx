@@ -29,9 +29,15 @@ export type FilaAjuste = {
  * aspecto h4), motivo y fecha. Un ajuste mueve puntos del ranking, nunca la nota (D007): el chip dice "pts" y el
  * signo va en el ícono y en el texto para lectores, no solo en el color.
  */
-export function RecentAdjustments({ filas }: { filas: readonly FilaAjuste[] }) {
+export function RecentAdjustments({
+  filas,
+  className,
+}: {
+  filas: readonly FilaAjuste[];
+  className?: string;
+}) {
   return (
-    <Card className="h-full">
+    <Card className={className}>
       <CardHeader>
         <CardTitle level={2}>Últimos ajustes</CardTitle>
         <Button asChild variant="secondary" size="sm">

@@ -45,7 +45,7 @@ export function SideNav({
               size="side"
               trailing={
                 item.id === "evaluar" && countText ? (
-                  <Badge variant="acc" className="h-5.5 px-2 text-xs">
+                  <Badge variant="acc" size="sm" className="px-2 text-xs">
                     <span aria-hidden="true" className="nums">
                       {evaluarCount}
                     </span>

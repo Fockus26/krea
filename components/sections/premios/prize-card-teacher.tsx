@@ -78,7 +78,7 @@ export function PrizeCardTeacher({
     <li className="flex">
       <Card
         className={cn(
-          "flex w-full flex-col gap-4",
+          "flex h-full w-full flex-col gap-4",
           porDefinir &&
             "border-2 border-dashed border-input bg-transparent shadow-none dark:border-2",
         )}
@@ -227,12 +227,21 @@ export function PrizeCardTeacher({
           </div>
         ) : null}
 
+        {porDefinir ? (
+          // D383: reserva el alto de la fila de estado (chip 28 + gap 8 + meta de 2 líneas) para que, sola
+          // en su fila, mida lo mismo que una tarjeta definida sin foto
+          <div
+            aria-hidden="true"
+            className="text-small min-h-[calc(--spacing(7)+--spacing(2)+2lh)]"
+          />
+        ) : null}
+
         {onEditar && tarjeta.editable ? (
           // Diálogo de premio (D266): con premio, «Editar premio»; sin él, «Agregar premio»
           <Button
             variant="secondary"
             size="sm"
-            className="self-start"
+            className="mt-auto self-start"
             aria-label={
               tarjeta.premio
                 ? editarPremioLabel(tarjeta.premio)
@@ -244,7 +253,12 @@ export function PrizeCardTeacher({
             {tarjeta.premio ? "Editar premio" : "Agregar premio"}
           </Button>
         ) : porDefinir ? (
-          <Button asChild variant="secondary" size="sm" className="self-start">
+          <Button
+            asChild
+            variant="secondary"
+            size="sm"
+            className="mt-auto self-start"
+          >
             <Link
               href={agregarPremioHref(tarjeta.tareaId)}
               aria-label={agregarPremioLabel(tarjeta.tarea)}

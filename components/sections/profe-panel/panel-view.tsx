@@ -15,6 +15,7 @@ import {
   seccionesDelFiltro,
   TODAS_SECCIONES,
 } from "@/lib/panel";
+import { cn } from "@/lib/utils";
 import { PanelHeader } from "./panel-header";
 import { type DatosMetricas, PanelMetrics } from "./panel-metrics";
 import { type FilaEvaluar, PendingReviews } from "./pending-reviews";
@@ -51,6 +52,7 @@ export function PanelView({
   const [filtro, setFiltro] = useState<FiltroSeccion>(filtroInicial);
 
   const entregas = filtrarPorSeccion(datos.entregas, filtro);
+  const vacia = entregas.length === 0;
   const ajustes = filtrarPorSeccion(datos.ajustes, filtro);
   const raspados = filtrarPorSeccion(datos.raspados, filtro);
   // «Todas» suma todo el avance, también el de una sección que ya no esté en el catálogo
@@ -100,9 +102,16 @@ export function PanelView({
       {/* Única región viva del panel: frase estable, sin cifras sueltas */}
       <output className="sr-only">{filtroTexto(filtro)}</output>
       <PanelMetrics datos={metricas} />
-      <div className="g-home max-md:gap-6 lg:items-stretch!">
-        <PendingReviews filas={entregas} />
-        <RecentAdjustments filas={ajustes} />
+      {/* D382: cada tarjeta con su altura; iguales solo cuando "Por evaluar" está vacía */}
+      <div className={cn("g-home max-md:gap-6", vacia && "lg:items-stretch!")}>
+        <PendingReviews
+          filas={entregas}
+          className={vacia ? "h-full" : undefined}
+        />
+        <RecentAdjustments
+          filas={ajustes}
+          className={vacia ? "h-full" : undefined}
+        />
       </div>
     </>
   );

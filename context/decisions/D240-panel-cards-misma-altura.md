@@ -1,4 +1,4 @@
-# D240 · Layout · «Por evaluar» y «Últimos ajustes» miden lo mismo en fila · Implemented
+# D240 · Layout · «Por evaluar» y «Últimos ajustes» miden lo mismo en fila · Superseded by D382
 
 **Decision:** en `panel-view` la grilla `g-home` lleva `lg:items-stretch!` (anula el `align-items: start` de la utilidad solo ahí, sin afectar Inicio ni Equipo) y las dos `Card` van con `h-full`. Apiladas (< lg) conservan su altura natural.
 
