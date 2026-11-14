@@ -35,6 +35,8 @@ export const metadata: Metadata = {
   title: { default: SITE_TITLE, template: `%s · ${SITE_NAME}` },
   description: SITE_DESCRIPTION, // provisional (CONTENT_CHECKLIST fila 22)
   applicationName: SITE_NAME,
+  // iOS (D394): al agregarla a inicio abre a pantalla completa y con su nombre
+  appleWebApp: { capable: true, title: SITE_NAME, statusBarStyle: "default" },
   openGraph: {
     ...OPEN_GRAPH_BASE,
     title: SITE_TITLE,

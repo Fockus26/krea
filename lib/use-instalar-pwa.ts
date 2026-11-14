@@ -6,6 +6,7 @@ import {
   type EstadoInstalacion,
   esDispositivoIOS,
   estadoInstalacion,
+  navegadorDeIOS,
 } from "@/lib/instalar-pwa";
 
 type EventoInstalacion = Event & {
@@ -37,6 +38,7 @@ function recalcular() {
           nav.userAgent,
           nav.maxTouchPoints,
         ),
+        navegadorIOS: navegadorDeIOS(nav.userAgent),
         hayEvento: evento !== null,
       });
   for (const o of oyentes) o();

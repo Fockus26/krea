@@ -14,6 +14,7 @@ import {
   estadoAviso,
 } from "@/lib/push-cliente";
 import { useInstalarPwa } from "@/lib/use-instalar-pwa";
+import { InstalarIOS } from "./instalar-ios";
 
 // PROVISIONAL (CONTENT_CHECKLIST fila 171): rótulo y descripciones del interruptor
 const TITULO = "Avisos";
@@ -29,8 +30,6 @@ const NO_SOPORTADO =
 const INSTALAR_DESC =
   "Ábrela desde tu pantalla de inicio, como cualquier app, y recibe los avisos más fácil.";
 const INSTALAR_BOTON = "Instalar KREA";
-const INSTALAR_IOS =
-  "Para instalar KREA en tu iPhone o iPad: toca Compartir y luego Agregar a inicio. Ábrela desde ahí.";
 const DENEGADO =
   "Bloqueaste los avisos de KREA en este navegador. Para activarlos, permite las notificaciones en la configuración del sitio (el ícono junto a la dirección) y vuelve a esta página.";
 // PROVISIONAL (CONTENT_CHECKLIST fila 173): toasts
@@ -44,7 +43,7 @@ const TOAST_ERROR =
 // PROVISIONAL (CONTENT_CHECKLIST fila 189): título de la tarjeta cuando no hay avisos (sin VAPID)
 const TITULO_SOLO_INSTALAR = "KREA en tu pantalla de inicio";
 
-/** Botón (Chrome/Edge) o pasos (iPhone/iPad) para instalar; nada en otro caso (D368–D370). */
+/** Botón (Chrome/Edge) o diálogo con pasos (iPhone/iPad, D393) para instalar; nada en otro caso (D368–D370). */
 function BloqueInstalar({
   estado,
   instalar,
@@ -62,8 +61,12 @@ function BloqueInstalar({
       </div>
     );
   }
-  if (estado === "ios") {
-    return <p className="text-small text-text-2">{INSTALAR_IOS}</p>;
+  if (
+    estado === "ios" ||
+    estado === "ios-otro-navegador" ||
+    estado === "ios-en-app"
+  ) {
+    return <InstalarIOS estado={estado} />;
   }
   return null;
 }
@@ -74,7 +77,8 @@ function BloqueInstalar({
  */
 export function InstalarKrea() {
   const { estado, instalar } = useInstalarPwa();
-  if (estado !== "disponible" && estado !== "ios") return null;
+  if (estado === null || estado === "instalada" || estado === "no-disponible")
+    return null;
   return (
     <Card className="flex flex-col gap-4">
       <h2 className="text-h3 text-text">{TITULO_SOLO_INSTALAR}</h2>
