@@ -31,9 +31,7 @@ async function operar(
   const db = baseDeDatos();
   if (!db) return { ok: false, error: "red" };
   try {
-    const r = await operarMotivosEnTransaccion(db, op, Date.now());
-    if (r.ok) refresh();
-    return r;
+    return await operarMotivosEnTransaccion(db, op, Date.now());
   } catch (e) {
     console.error(donde, (e as { code?: string }).code ?? "error");
     return { ok: false, error: "red" };
@@ -45,11 +43,13 @@ export async function crearMotivo(entrada: unknown): Promise<ResultadoMotivos> {
   await exigirSesion("profesor");
   const d = zOpcion.safeParse(entrada);
   if (!d.success) return { ok: false, error: "invalida" };
-  return operar("[crearMotivo]", {
+  const r = await operar("[crearMotivo]", {
     tipo: "crear",
     id: idMotivoNuevo(),
     ...d.data,
   });
+  if (r.ok) refresh();
+  return r;
 }
 
 /** Cambia la etiqueta y el valor propuesto (los ajustes ya hechos conservan la suya). */
@@ -59,7 +59,9 @@ export async function editarMotivo(
   await exigirSesion("profesor");
   const d = zEditar.safeParse(entrada);
   if (!d.success) return { ok: false, error: "invalida" };
-  return operar("[editarMotivo]", { tipo: "editar", ...d.data });
+  const r = await operar("[editarMotivo]", { tipo: "editar", ...d.data });
+  if (r.ok) refresh();
+  return r;
 }
 
 /** Borra la opción; tiene que quedar al menos una. */
@@ -67,5 +69,7 @@ export async function borrarMotivo(id: unknown): Promise<ResultadoMotivos> {
   await exigirSesion("profesor");
   const d = zId.safeParse(id);
   if (!d.success) return { ok: false, error: "invalida" };
-  return operar("[borrarMotivo]", { tipo: "borrar", id: d.data });
+  const r = await operar("[borrarMotivo]", { tipo: "borrar", id: d.data });
+  if (r.ok) refresh();
+  return r;
 }
