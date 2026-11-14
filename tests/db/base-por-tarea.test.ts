@@ -20,7 +20,10 @@ import {
 import { baseNueva } from "./base";
 import * as docs from "./docs";
 
-const SQL = readFileSync("scripts/sql/2026-11-14-bases-por-entrega.sql", "utf8");
+const SQL = readFileSync(
+  "scripts/sql/2026-11-14-bases-por-entrega.sql",
+  "utf8",
+);
 
 let base: Db;
 const db = () => base;

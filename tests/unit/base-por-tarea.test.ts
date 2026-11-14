@@ -18,12 +18,7 @@ import {
   vistaEvaluar,
   zGuardarEvaluacion,
 } from "@/lib/evaluar-datos";
-import type {
-  Entrega,
-  Evaluacion,
-  Tarea,
-  Usuario,
-} from "@/lib/modelo";
+import type { Entrega, Evaluacion, Tarea, Usuario } from "@/lib/modelo";
 import { zEntrega, zEvaluacion } from "@/lib/modelo";
 import {
   baseDeIntegrante,
@@ -111,7 +106,10 @@ const envio = (o: Record<string, unknown> = {}) =>
 
 describe("baseDeIntegrante / notaDeIntegrante (D403)", () => {
   test("con `bases`: la de la entrega, aunque la vigente sea otra", () => {
-    const e = ent({ estado: "evaluada", evaluacion: ev({ bases: { [A]: 10 } }) });
+    const e = ent({
+      estado: "evaluada",
+      evaluacion: ev({ bases: { [A]: 10 } }),
+    });
     expect(baseDeIntegrante(e, A, 15)).toBe(10);
     // 16 × 10 / 20 = 8, no 16 × 15 / 20 = 12
     expect(notaDeIntegrante(e, 15, A)).toBe(8);
@@ -137,7 +135,10 @@ describe("baseDeIntegrante / notaDeIntegrante (D403)", () => {
   test("«No participó» sigue en 1, sin base (D365)", () => {
     const g = grupal({
       estado: "evaluada",
-      evaluacion: ev({ bases: { [A]: 20, [B]: 20, [C]: 20 }, noParticiparon: [B] }),
+      evaluacion: ev({
+        bases: { [A]: 20, [B]: 20, [C]: 20 },
+        noParticiparon: [B],
+      }),
     });
     expect(notaDeIntegrante(g, 15, B)).toBe(1);
     expect(notaDeIntegrante(g, 15, A)).toBe(16);
@@ -255,12 +256,22 @@ describe("el ranking usa la base de cada entrega (D403)", () => {
     );
     const r15 = calcularRanking(
       "5A",
-      { usuarios: [usuario(A, 15)], equipos: [], entregas: [evaluada], ajustes: [] },
+      {
+        usuarios: [usuario(A, 15)],
+        equipos: [],
+        entregas: [evaluada],
+        ajustes: [],
+      },
       1,
     );
     const r20 = calcularRanking(
       "5A",
-      { usuarios: [usuario(A, 20)], equipos: [], entregas: [evaluada], ajustes: [] },
+      {
+        usuarios: [usuario(A, 20)],
+        equipos: [],
+        entregas: [evaluada],
+        ajustes: [],
+      },
       1,
     );
     expect(r15.alumnos[A]?.puntos).toBe(r20.alumnos[A]?.puntos);
@@ -305,7 +316,10 @@ describe("vistaEvaluar con la base de la entrega (D403)", () => {
 
   test("individual evaluada: el chip, la base y el valor inicial son los guardados", () => {
     const v = vistaEvaluar({
-      entrega: ent({ estado: "evaluada", evaluacion: ev({ bases: { [A]: 12 } }) }),
+      entrega: ent({
+        estado: "evaluada",
+        evaluacion: ev({ bases: { [A]: 12 } }),
+      }),
       tarea,
       cola: [],
       mapas,
