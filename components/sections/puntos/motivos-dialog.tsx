@@ -347,12 +347,21 @@ function FormOpcion({
       className="flex flex-col gap-4"
     >
       <Field
-        label="Nombre"
+        label={
+          <>
+            Nombre{" "}
+            <span aria-hidden="true" className="text-error">
+              *
+            </span>
+            <span className="sr-only">(obligatorio)</span>
+          </>
+        }
         controlId={idEtiqueta}
         error={errores.etiqueta}
         announce={false}
       >
         <Input
+          required
           autoComplete="off"
           value={etiqueta}
           onChange={(e) => setEtiqueta(e.currentTarget.value)}
@@ -360,7 +369,11 @@ function FormOpcion({
       </Field>
       <div className="flex flex-col gap-1.5">
         <Label id={lPuntos} htmlFor={idPuntos}>
-          Puntos
+          Puntos{" "}
+          <span aria-hidden="true" className="text-error">
+            *
+          </span>
+          <span className="sr-only">(obligatorio)</span>
         </Label>
         <div className="flex flex-wrap items-center gap-2">
           <PuntosStepper
