@@ -25,24 +25,34 @@ export type ResultadoParte = { ok: true } | { ok: false; error: ErrorParte };
 export async function asignarParte(entrada: unknown): Promise<ResultadoParte> {
   const e = zAsignarParte.safeParse(entrada);
   if (!e.success) return { ok: false, error: "incompleta" };
-  return ejecutar(e.data.tareaId, e.data.preguntaId, {
+  const r = await ejecutar(e.data.tareaId, e.data.preguntaId, {
     tipo: "asignar",
     asignado: e.data.asignado,
   });
+  if (r.ok) refresh();
+  return r;
 }
 
 /** Capitán: acepta una parte entregada (pasa a precargar su formulario). */
 export async function aceptarParte(entrada: unknown): Promise<ResultadoParte> {
   const e = zDecidirParte.safeParse(entrada);
   if (!e.success) return { ok: false, error: "incompleta" };
-  return ejecutar(e.data.tareaId, e.data.preguntaId, { tipo: "aceptar" });
+  const r = await ejecutar(e.data.tareaId, e.data.preguntaId, {
+    tipo: "aceptar",
+  });
+  if (r.ok) refresh();
+  return r;
 }
 
 /** Capitán: devuelve una parte entregada o aceptada para que el integrante la rehaga. */
 export async function devolverParte(entrada: unknown): Promise<ResultadoParte> {
   const e = zDecidirParte.safeParse(entrada);
   if (!e.success) return { ok: false, error: "incompleta" };
-  return ejecutar(e.data.tareaId, e.data.preguntaId, { tipo: "devolver" });
+  const r = await ejecutar(e.data.tareaId, e.data.preguntaId, {
+    tipo: "devolver",
+  });
+  if (r.ok) refresh();
+  return r;
 }
 
 /** Integrante asignado: entrega su respuesta al capitán (otra vez, mientras no esté aceptada). */
@@ -57,12 +67,15 @@ export async function entregarParte(entrada: unknown): Promise<ResultadoParte> {
     [e.data.preguntaId]: e.data.respuesta,
   }).catch(() => "almacen" as const);
   if (faltan) return { ok: false, error: faltan };
-  return ejecutar(e.data.tareaId, e.data.preguntaId, {
+  const r = await ejecutar(e.data.tareaId, e.data.preguntaId, {
     tipo: "entregar",
     respuesta: e.data.respuesta,
   });
+  if (r.ok) refresh();
+  return r;
 }
 
+/** La transacción y, tras el commit, el borrado en B2. Quien llama refresca la página. */
 async function ejecutar(
   tareaId: string,
   preguntaId: string,
@@ -81,7 +94,6 @@ async function ejecutar(
     if (!r.ok) return r;
     const almacen = almacenB2();
     if (r.sinUso && almacen) await borrarSinUso(almacen, r.sinUso);
-    refresh();
     return { ok: true };
   } catch (e) {
     console.error("[partes]", (e as { code?: string }).code ?? "error");
