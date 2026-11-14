@@ -351,7 +351,7 @@ describe("ajustes de puntos (Postgres)", () => {
       {
         destino: "equipo",
         destinoId: EQ,
-        motivoId: "otro",
+        motivoId: "ayudo",
         valor: -1.5,
         nota: "Entregaron sin nombres",
       },
@@ -365,7 +365,7 @@ describe("ajustes de puntos (Postgres)", () => {
     expect(despues.alumnos[A1]?.puntos).toBe(antes.alumnos[A1]?.puntos ?? -1);
   });
 
-  test("«Otro» sin detalle y destinos que no existen no se guardan", async () => {
+  test("«Otro» (ya no es una opción, D376) y destinos que no existen no se guardan", async () => {
     expect(
       await aplicarAjusteEnTransaccion(
         db(),
@@ -375,11 +375,11 @@ describe("ajustes de puntos (Postgres)", () => {
           destinoId: A1,
           motivoId: "otro",
           valor: 1,
-          nota: " ",
+          nota: "Trajo material",
         },
         AHORA,
       ),
-    ).toEqual({ ok: false, error: "detalle" });
+    ).toEqual({ ok: false, error: "motivo" });
     expect(
       await aplicarAjusteEnTransaccion(
         db(),
