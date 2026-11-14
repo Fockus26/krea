@@ -1,0 +1,5 @@
+# D421 · Data · Limpieza del reparto: se va con la tarea o el equipo; quien salió del equipo cuenta como sin asignar · Implemented
+
+**Decision:** `eliminarTareaEnTransaccion` borra las partes de la tarea y suma sus imágenes a las que se borran de B2 tras el commit; `eliminarEquipoEnTransaccion` borra las del equipo (sus imágenes quedan en B2: la acción de equipos solo borra el logo, límite conocido como el de D396). Al leer, una parte cuyo `asignado` ya no está en el equipo, o es el capitán (tras un cambio de capitán), cuenta como **sin asignar** (`esVigente`): no sale en el panel, no cuenta para `sinParte` y la fila no se borra. Las imágenes que una parte deja de usar (reasignada, quitada, re-entregada con otra) se borran de B2 después del commit (D396).
+**Why:** el profe mueve alumnos y cambia capitanes (D221); el reparto no debe romperse ni marcar a quien ya no está.
+**Discarded alternative:** borrar las partes al mover a un alumno — habría que tocar la transacción de equipos en cada cambio y se perdería lo entregado si lo devuelven al equipo.
