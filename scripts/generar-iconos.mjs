@@ -1,6 +1,8 @@
-// Genera los íconos PNG y el favicon.ico a partir de un SVG de ícono (D391).
+// Genera los íconos PNG y el favicon.ico a partir de un SVG de ícono (D391, D402).
 //
-//   node scripts/generar-iconos.mjs                       # app/icon.svg → app/ y public/icons/
+//   node scripts/generar-iconos.mjs                       # los íconos de la app (dos fuentes, D402):
+//                                                         #   ≤ 32 px (favicon.ico) ← app/icon.svg, la «K»
+//                                                         #   ≥ 64 px (180, 192, 512, maskable) ← la palabra «krea»
 //   node scripts/generar-iconos.mjs <icono.svg> --salida <carpeta>
 //                                                         # juego completo en una carpeta (propuestas)
 //
@@ -22,8 +24,13 @@ const fuente =
   args.find((a, i) => !a.startsWith("--") && i !== iSalida + 1) ??
   "app/icon.svg";
 
+// D402: en la app, de 64 px en adelante va la palabra «krea»; de 32 hacia abajo, la «K».
+const FUENTE_GRANDE = "design/iconos/propuesta-krea/icono.svg";
+
 const svg = readFileSync(fuente, "utf8");
-const aSangre = svg.replace(/rx="22"/, 'rx="0"');
+// Con --salida el juego completo sale de una sola fuente (las propuestas de design/iconos/).
+const grande = salida ? svg : readFileSync(FUENTE_GRANDE, "utf8");
+const aSangre = grande.replace(/rx="22"/, 'rx="0"');
 // Zona segura de maskable: el glifo se encoge al 75 % alrededor del centro del cuadro.
 const maskable = aSangre.replace(
   /<svg x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"/,
@@ -91,12 +98,16 @@ if (salida) {
   );
   writeFileSync(join(salida, "favicon.ico"), ico(tamanos, pequenos));
 } else {
-  writeFileSync("public/icons/icon-192.png", await png(svg, 192));
-  writeFileSync("public/icons/icon-512.png", await png(svg, 512));
+  writeFileSync("public/icons/icon-192.png", await png(grande, 192));
+  writeFileSync("public/icons/icon-512.png", await png(grande, 512));
   writeFileSync("public/icons/icon-maskable-512.png", await png(maskable, 512));
   writeFileSync("app/apple-icon.png", await png(aSangre, 180));
   writeFileSync("app/favicon.ico", ico(tamanos, pequenos));
 }
 
 await browser.close();
-console.log(`Íconos generados desde ${fuente}${salida ? ` en ${salida}` : ""}`);
+console.log(
+  salida
+    ? `Íconos generados desde ${fuente} en ${salida}`
+    : `Íconos generados: ≤ 32 px desde ${fuente}, ≥ 64 px desde ${FUENTE_GRANDE}`,
+);

@@ -1,0 +1,6 @@
+# D402 · Brand · Ícono por tamaño: la palabra «krea» de 64 px en adelante, la «K» de 32 px hacia abajo · Implemented
+
+**Decisión:** los íconos de la app salen de dos fuentes. De 32 px hacia abajo (`app/favicon.ico` con 16 y 32, y `app/icon.svg`, que es lo que el navegador pinta en la pestaña) va la «K» de D391. De 64 px en adelante (`app/apple-icon.png` 180, `public/icons/icon-192.png`, `icon-512.png` e `icon-maskable-512.png`: pantalla de inicio de iOS y Android, PWA instalada) va la palabra «krea» de la propuesta B (D392), tomada de `design/iconos/propuesta-krea/icono.svg`. `node scripts/generar-iconos.mjs` sin argumentos aplica el reparto; con `--salida` sigue sacando un juego completo de una sola fuente para las propuestas.
+**Why:** decisión de César (2026-11-14) tras ver la hoja de comparación de #141: la palabra completa se lee desde 64 px y a 16–32 px es una mancha; la «K» aguanta la pestaña.
+**Discarded alternative:** una sola fuente para todos los tamaños (D391: solo «K»; o solo «krea», ilegible en la pestaña); un `icon.svg` con `@media` por tamaño (los navegadores no lo aplican de forma fiable al favicon).
+**Supersedes:** D391 en los tamaños ≥ 64 px (la «K» sigue vigente en ≤ 32 px).
