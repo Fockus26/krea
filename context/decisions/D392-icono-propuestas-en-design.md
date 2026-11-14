@@ -1,0 +1,5 @@
+# D392 · Brand · Las dos propuestas de ícono viven en `design/iconos/` y se cambian con un comando · Implemented
+
+**Decisión:** `design/iconos/propuesta-k/` y `design/iconos/propuesta-krea/` guardan cada una su `icono.svg` y el juego completo (16, 32, 180, 192, 512, maskable, favicon.ico); `design/iconos/actual-a/` conserva la «a» de D346 para comparar o volver atrás; `comparacion.png` las pone lado a lado (16, 32, 64, 180, maskable circular) sobre pestaña clara y oscura. Los SVG salen de `node design/iconos/construir-svg.mjs` (a partir del logo) y la hoja de `node design/iconos/comparar.mjs`. Propuesta B «krea»: «k» + «rea» (con sus contadores), sin gotas cian ni la leyenda «ESCUELA CREATIVA», a 88 de ancho (6 de margen por lado) y centrada. Aplicar B: `Copy-Item design/iconos/propuesta-krea/icono.svg app/icon.svg; node scripts/generar-iconos.mjs`.
+**Why:** César pidió dos propuestas visuales para elegir; el repo debe poder pasar de una a otra sin rediseñar.
+**Discarded alternative:** meter los PNG de las propuestas en `public/` (se servirían sin usarse); dejar solo la hoja sin los juegos (elegir exigiría volver a generarlos).
