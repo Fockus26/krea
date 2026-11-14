@@ -17,7 +17,10 @@ export function accesoRanking(
   return sesion.seccion === seccion ? "ok" : "prohibido";
 }
 
-/** Presencia en «Editar alumno» (D275): solo profesores; un alumno ni lee ni escribe. */
+/**
+ * Presencia en «Editar alumno» (D275) y en «Evaluar entrega» (D408): solo profesores; un alumno ni
+ * lee ni escribe.
+ */
 export function accesoPresencia(sesion: Sesion | null): Acceso {
   if (!sesion || sesion.debeCambiarPassword) return "sin-sesion";
   return sesion.rol === "profesor" ? "ok" : "prohibido";

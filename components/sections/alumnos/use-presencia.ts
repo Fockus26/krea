@@ -81,13 +81,49 @@ export function usePresenciaAlumnos(yo?: YoPresencia): Presencia | null {
   }, [uid, nombre, entradas, base]);
 }
 
-function enviar(accion: "marcar" | "quitar", cedula: string): Promise<unknown> {
+/** Qué fila marca el pedido: un alumno («Editar alumno») o una entrega («Evaluar», D408). */
+type Campo = "cedula" | "entrega";
+
+function enviar(
+  accion: "marcar" | "quitar",
+  campo: Campo,
+  id: string,
+): Promise<unknown> {
   return fetch(RUTA, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ accion, cedula }),
+    body: JSON.stringify({ accion, [campo]: id }),
     keepalive: true,
   }).catch(() => {});
+}
+
+/**
+ * Mientras está montado (y hay `uid`): marca la entrada propia, la renueva cada LATIDO_MS y la
+ * quita al desmontar y en `pagehide` (con `sendBeacon`, que sobrevive al cierre de la pestaña).
+ */
+function useLatido(uid: string | undefined, campo: Campo, id: string): void {
+  useEffect(() => {
+    if (!uid) return;
+    const quitarAlSalir = () => {
+      const cuerpo = new Blob(
+        [JSON.stringify({ accion: "quitar", [campo]: id })],
+        { type: "application/json" },
+      );
+      if (!navigator.sendBeacon?.(RUTA, cuerpo))
+        void enviar("quitar", campo, id);
+    };
+    void enviar("marcar", campo, id);
+    const latido = setInterval(
+      () => void enviar("marcar", campo, id),
+      LATIDO_MS,
+    );
+    window.addEventListener("pagehide", quitarAlSalir);
+    return () => {
+      clearInterval(latido);
+      window.removeEventListener("pagehide", quitarAlSalir);
+      void enviar("quitar", campo, id);
+    };
+  }, [uid, campo, id]);
 }
 
 /**
@@ -99,22 +135,63 @@ export function useMarcarPresencia(
   presencia: Presencia | null | undefined,
   cedula: string,
 ): void {
-  const uid = presencia?.uid;
+  useLatido(presencia?.uid, "cedula", cedula);
+}
+
+/**
+ * Presencia en «Evaluar entrega» (D408–D410): marca «estoy evaluando» `entregaId` mientras está
+ * montado y sondea `?entrega=` cada SONDEO_MS. Devuelve los OTROS profes que la evalúan ahora
+ * (vigentes, en orden de llegada); vacío sin `yo` o si la ruta falla (en silencio: guardar sigue
+ * igual y el conflicto lo atrapa `cambio`, D224).
+ */
+export function usePresenciaEntrega(
+  yo: YoPresencia | undefined,
+  entregaId: string,
+): EntradaPresencia[] {
+  const uid = yo?.uid;
+  const [entradas, setEntradas] = useState<EntradaPresencia[]>(NADIE);
+  const [base, setBase] = useState({ servidor: 0, local: 0 });
+  const [tic, setTic] = useState(0);
+
+  useLatido(uid, "entrega", entregaId);
+
+  useSondeo(
+    async (senal) => {
+      try {
+        const res = await fetch(
+          `${RUTA}?entrega=${encodeURIComponent(entregaId)}`,
+          { cache: "no-store", signal: senal },
+        );
+        if (!res.ok) throw new Error(String(res.status));
+        const cuerpo = (await res.json()) as {
+          ahora: number;
+          entradas: unknown[];
+        };
+        setEntradas(
+          cuerpo.entradas.flatMap((d) => {
+            const e = zEntradaPresencia.safeParse(d);
+            return e.success ? [e.data] : [];
+          }),
+        );
+        setBase({ servidor: cuerpo.ahora, local: Date.now() });
+      } catch {
+        if (!senal.aborted) setEntradas(NADIE);
+      }
+    },
+    SONDEO_MS,
+    Boolean(uid),
+  );
+
   useEffect(() => {
     if (!uid) return;
-    const quitarAlSalir = () => {
-      const cuerpo = new Blob([JSON.stringify({ accion: "quitar", cedula })], {
-        type: "application/json",
-      });
-      if (!navigator.sendBeacon?.(RUTA, cuerpo)) void enviar("quitar", cedula);
-    };
-    void enviar("marcar", cedula);
-    const latido = setInterval(() => void enviar("marcar", cedula), LATIDO_MS);
-    window.addEventListener("pagehide", quitarAlSalir);
-    return () => {
-      clearInterval(latido);
-      window.removeEventListener("pagehide", quitarAlSalir);
-      void enviar("quitar", cedula);
-    };
-  }, [uid, cedula]);
+    const reloj = setInterval(() => setTic((n) => n + 1), RELOJ_PRESENCIA_MS);
+    return () => clearInterval(reloj);
+  }, [uid]);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `tic` vuelve a mirar la vigencia sin una respuesta nueva
+  return useMemo(() => {
+    if (!uid) return NADIE;
+    const ahora = base.servidor + (Date.now() - base.local);
+    return editoresVigentes(entradas, ahora, uid);
+  }, [uid, entradas, base, tic]);
 }
