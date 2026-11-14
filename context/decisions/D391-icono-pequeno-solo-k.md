@@ -1,0 +1,6 @@
+# D391 · Brand · Ícono pequeño (favicon, touch icon, PWA): solo la «K» del logo, blanca sobre el azul de marca · Implemented
+
+**Decisión:** `app/icon.svg` pasa de la «a» a la «k» del logo (el primer subtrazo de `krea-logo__ink` en `public/brand/krea-logo.svg`, tal cual, sin recorte: la «k» ya es un trazo propio), blanca sobre `#295AC3`, `rx=22`, a 74 de alto en el cuadro 100×100 y centrada. Los PNG (`icon-192`, `icon-512`, `icon-maskable-512`, `apple-icon`) y `favicon.ico` (16 y 32) salen de `node scripts/generar-iconos.mjs`. El script se generalizó: acepta un SVG fuente y `--salida <carpeta>` para sacar un juego completo (16, 32, 180, 192, 512, maskable, ico) sin tocar la app. El maskable encoge el glifo al 75 % (zona segura) con el mismo cálculo para cualquier SVG.
+**Why:** pedido de César (2026-11-14): el ícono mostraba solo la «a»; quería dos propuestas, solo la «K» y la palabra completa, para elegir. Se aplicó la «K» (la conservadora: una sola letra aguanta 16 px) y la palabra queda lista en `design/iconos/propuesta-krea/`.
+**Discarded alternative:** la palabra «krea» como ícono aplicado (ver D392: se deja como propuesta B, a 16 px es una mancha); recortar la «k» con `clipPath` como en D346 (no hace falta: el logo la trae separada de «rea»).
+**Supersedes:** D346.
