@@ -1,0 +1,5 @@
+# D379 · Data · Teléfono del profe: solo celulares venezolanos, guardado en E.164 sin `+`, mostrado `0412-123 45 67`, enlace `wa.me` · Implemented
+
+**Decisión:** `normalizarTelefono` (puro, `lib/contacto.ts`) acepta `0412-1234567`, `0412 123 4567`, `(0412) 123.45.67`, `+58 412…`, `+58 0412…`, `0058…`, `58…` y `4121234567` (ignora espacios, guiones, puntos y paréntesis) y devuelve `58` + 10 cifras, o `null`. Solo las operadoras móviles: Digitel 0412 y 0422, Movistar 0414 y 0424, Movilnet 0416 y 0426. Se muestra `0412-123 45 67` (`telefonoTexto`) y enlaza a `https://wa.me/58412…` (solo cifras, como pide WhatsApp). El formulario vuelve a mostrar lo guardado ya normalizado.
+**Why:** el enlace abre WhatsApp: un fijo (02xx) o una operadora inexistente daría un chat que no existe. Guardar normalizado evita que el mismo número quede escrito de cinco formas y deja el enlace listo.
+**Alternativas descartadas:** aceptar cualquier número internacional (los profes son del liceo, en Venezuela; abre la puerta a errores de tipeo) · mostrar `+58 412-1234567` (los alumnos lo dictan con el 0) · guardar lo que escribe el profe tal cual.

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ContactoProfe } from "@/components/sections/perfil/contacto-profe";
 import {
   AparienciaConectada,
   AvatarPickerConectado,
@@ -6,7 +7,8 @@ import {
 } from "@/components/sections/perfil/perfil-conectado";
 import { ProfileDataEditable } from "@/components/sections/perfil/profile-data-editable";
 import { PageHeader } from "@/components/sections/shared/page-header";
-import { profesorActual } from "@/lib/datos/profesor";
+import { contactoAFormulario } from "@/lib/contacto";
+import { miContacto, profesorActual } from "@/lib/datos/profesor";
 import { estiloDe, nombreCompleto, nombreCorto } from "@/lib/vistas-estudiante";
 
 export const metadata: Metadata = {
@@ -16,9 +18,13 @@ export const metadata: Metadata = {
 
 // Perfil del profesor (D158 → D234): sus datos (nombres y apellidos editables, la cédula no), su
 // avatar, Apariencia y Seguridad, todo de la sesión y guardado con las Server Actions de Perfil
-// (D191, D192). Sin perfil legible quedan Apariencia y Seguridad.
+// (D191, D192). Debajo de sus datos, su contacto opcional para los alumnos (D378). Sin perfil
+// legible quedan Apariencia y Seguridad.
 export default async function PerfilProfePage() {
-  const { usuario } = await profesorActual();
+  const [{ usuario }, contacto] = await Promise.all([
+    profesorActual(),
+    miContacto(),
+  ]);
   return (
     <>
       <PageHeader
@@ -32,6 +38,7 @@ export default async function PerfilProfePage() {
             nombres={usuario.nombres}
             apellidos={usuario.apellidos}
           />
+          <ContactoProfe inicial={contactoAFormulario(contacto)} />
           <AvatarPickerConectado
             nombre={nombreCorto(usuario)}
             estilo={estiloDe(usuario.avatar.estilo)}
