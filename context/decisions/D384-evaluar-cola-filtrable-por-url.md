@@ -1,0 +1,5 @@
+# D384 · Components · La cola de Evaluar se filtra por la URL: tipo, sección, tarea y alumno · Implemented
+
+**Decision:** `/profe/evaluar` deja de redirigir a ciegas y muestra la cola con filtros (`tipo=individual|grupal`, `seccion=<código>`, `tarea=<id>`, `alumno=<cédula>`). Valores inválidos o repetidos se ignoran, sin error. `alumno` casa con `integrantes.includes(cédula)`: un alumno trae sus individuales y las grupales de su equipo. Lógica pura en `lib/evaluar-datos.ts` (`filtrosDeParams`, `filtrarCola`, `rutaCola`, `rutaEntrega(id, filtros)`).
+**Why:** la cola era global (pedidos 5 y 6): «Evaluar» de una tarea grupal llevaba a todas las entregas. Los filtros en la URL se comparten, se pueden enlazar desde otras pantallas (tarjeta de tarea, V6) y funcionan sin estado en el cliente.
+**Discarded alternative:** filtros en estado de cliente (se pierden al recargar y no se pueden enlazar); `filtrarCola(cola, filtros, mapas)` con mapas (no hacen falta: los cuatro campos están en la entrega).

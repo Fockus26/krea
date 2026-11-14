@@ -86,7 +86,14 @@ export function PendingReviews({
   );
 }
 
-function PorEvaluarFila({ fila: f }: { fila: FilaEvaluar }) {
+/** `query`: los filtros de la cola (`?tipo=grupal…`), para que Anterior/Saltar los sigan (D385). */
+export function PorEvaluarFila({
+  fila: f,
+  query = "",
+}: {
+  fila: FilaEvaluar;
+  query?: string;
+}) {
   return (
     <CardListItem>
       {f.visual.tipo === "equipo" ? (
@@ -105,7 +112,7 @@ function PorEvaluarFila({ fila: f }: { fila: FilaEvaluar }) {
       </div>
       <Button asChild variant="secondary" size="sm">
         <Link
-          href={`${HREF_COLA}/${f.id}`}
+          href={`${HREF_COLA}/${f.id}${query}`}
           aria-label={evaluarAriaLabel(f.nombreCorto)}
         >
           Evaluar

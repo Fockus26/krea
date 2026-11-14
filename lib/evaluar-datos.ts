@@ -38,8 +38,66 @@ type ConId<T> = { id: string } & T;
 /** Ruta de la cola de Evaluar (D148). */
 export const RUTA_EVALUAR = "/profe/evaluar";
 
-export function rutaEntrega(id: string): string {
-  return `${RUTA_EVALUAR}/${id}`;
+/** Filtros de la cola de Evaluar, en la URL (D384): los cuatro son opcionales. */
+export type FiltrosEvaluar = {
+  tipo?: "individual" | "grupal";
+  /** Código de sección («5A»). */
+  seccion?: string;
+  /** Id de la tarea. */
+  tarea?: string;
+  /** Cédula: casa con el titular de una individual y con cualquier integrante de una grupal. */
+  alumno?: string;
+};
+
+const zFiltroTipo = z.enum(["individual", "grupal"]);
+const zFiltroSeccion = z.string().regex(/^[A-Za-z0-9._-]{1,12}$/);
+
+/**
+ * Lee los filtros de `searchParams`: un valor inválido o repetido se ignora (no da error, D384).
+ * Acepta el objeto de Next (`string | string[] | undefined`) o un `URLSearchParams` ya vuelto objeto.
+ */
+export function filtrosDeParams(
+  raw: Readonly<Record<string, string | string[] | undefined>>,
+): FiltrosEvaluar {
+  const uno = (k: string) => {
+    const v = raw[k];
+    return Array.isArray(v) ? v[0] : v;
+  };
+  const f: FiltrosEvaluar = {};
+  const tipo = zFiltroTipo.safeParse(uno("tipo"));
+  if (tipo.success) f.tipo = tipo.data;
+  const seccion = zFiltroSeccion.safeParse(uno("seccion"));
+  if (seccion.success) f.seccion = seccion.data;
+  const tarea = zIdDocumento.safeParse(uno("tarea"));
+  if (tarea.success) f.tarea = tarea.data;
+  const alumno = zCedula.safeParse(uno("alumno"));
+  if (alumno.success) f.alumno = alumno.data;
+  return f;
+}
+
+export function hayFiltros(f: FiltrosEvaluar): boolean {
+  return Boolean(f.tipo || f.seccion || f.tarea || f.alumno);
+}
+
+/** `?tipo=grupal&seccion=5A…` (orden fijo); vacío si no hay filtros. */
+export function queryFiltros(f: FiltrosEvaluar): string {
+  const q = new URLSearchParams();
+  if (f.tipo) q.set("tipo", f.tipo);
+  if (f.seccion) q.set("seccion", f.seccion);
+  if (f.tarea) q.set("tarea", f.tarea);
+  if (f.alumno) q.set("alumno", f.alumno);
+  const s = q.toString();
+  return s ? `?${s}` : "";
+}
+
+/** La cola filtrable, con los filtros en la URL. */
+export function rutaCola(filtros: FiltrosEvaluar = {}): string {
+  return `${RUTA_EVALUAR}${queryFiltros(filtros)}`;
+}
+
+/** Una entrega; con `filtros`, conserva la cola filtrada. Sin `?ver`: se evalúa o corrige. */
+export function rutaEntrega(id: string, filtros: FiltrosEvaluar = {}): string {
+  return `${RUTA_EVALUAR}/${id}${queryFiltros(filtros)}`;
 }
 
 /* ---------- Entrada de las Server Actions ---------- */
@@ -255,6 +313,37 @@ export function colaPorEvaluar<T extends ConId<Entrega>>(
     );
 }
 
+/** ¿La entrega cumple todos los filtros activos? */
+function cumpleFiltros(e: Entrega, f: FiltrosEvaluar): boolean {
+  return (
+    (!f.tipo || e.tipo === f.tipo) &&
+    (!f.seccion || e.seccion === f.seccion) &&
+    (!f.tarea || e.tareaId === f.tarea) &&
+    // un alumno trae sus individuales y las grupales de su equipo (D384)
+    (!f.alumno || e.integrantes.includes(f.alumno))
+  );
+}
+
+/** La cola que cumple los filtros, en el mismo orden (D384). */
+export function filtrarCola<T extends ConId<Entrega>>(
+  cola: readonly T[],
+  filtros: FiltrosEvaluar,
+): T[] {
+  return cola.filter((e) => cumpleFiltros(e, filtros));
+}
+
+/**
+ * La cola filtrada para la pantalla de una entrega: si la entrega abierta está por evaluar pero
+ * no cumple el filtro (enlace viejo), igual forma parte de la cola para no perder el sitio.
+ */
+export function colaFiltradaCon<T extends ConId<Entrega>>(
+  cola: readonly T[],
+  filtros: FiltrosEvaluar,
+  actualId: string,
+): T[] {
+  return cola.filter((e) => e.id === actualId || cumpleFiltros(e, filtros));
+}
+
 /** Documentos que necesitan la cola, el Panel y la pantalla para nombrar a cada titular. */
 export type MapasEvaluar = {
   usuarios: ReadonlyMap<string, Usuario>;
@@ -301,6 +390,65 @@ export function nombreTitular(e: Entrega, m: MapasEvaluar): string {
 
 export function tituloTarea(e: Entrega, m: MapasEvaluar): string {
   return m.tareas.get(e.tareaId)?.titulo ?? TAREA_DESCONOCIDA;
+}
+
+/**
+ * Opciones de los filtros Tarea y Alumno: las de la cola entera (para poder cambiar de filtro), más
+ * la elegida si ya no tiene entregas. Ordenadas por texto (es-VE).
+ */
+export function opcionesFiltros(
+  cola: ReadonlyArray<Entrega>,
+  filtros: FiltrosEvaluar,
+  m: MapasEvaluar,
+): {
+  tareas: Array<{ valor: string; texto: string }>;
+  alumnos: Array<{ valor: string; texto: string }>;
+} {
+  const tareas = new Set(cola.map((e) => e.tareaId));
+  if (filtros.tarea) tareas.add(filtros.tarea);
+  const alumnos = new Set(cola.flatMap((e) => e.integrantes));
+  if (filtros.alumno) alumnos.add(filtros.alumno);
+  const orden = (a: { texto: string }, b: { texto: string }) =>
+    a.texto.localeCompare(b.texto, "es");
+  return {
+    tareas: [...tareas]
+      .map((id) => ({
+        valor: id,
+        texto: m.tareas.get(id)?.titulo ?? TAREA_DESCONOCIDA,
+      }))
+      .sort(orden),
+    alumnos: [...alumnos]
+      .map((cedula) => {
+        const u = m.usuarios.get(cedula);
+        return {
+          valor: cedula,
+          texto: u ? nombreCorto(u) : TITULAR_DESCONOCIDO,
+        };
+      })
+      .sort(orden),
+  };
+}
+
+/** PROVISIONAL (fila 197): textos del filtro activo. */
+export const FILTRO_TIPO_TEXTO = {
+  individual: "Individuales",
+  grupal: "Grupales",
+} as const;
+
+/** «Grupales · 5A · Identidad de marca · Yeilin Duarte»; `null` sin filtros. */
+export function resumenFiltros(
+  f: FiltrosEvaluar,
+  m: MapasEvaluar,
+): string | null {
+  const partes: string[] = [];
+  if (f.tipo) partes.push(FILTRO_TIPO_TEXTO[f.tipo]);
+  if (f.seccion) partes.push(f.seccion);
+  if (f.tarea) partes.push(m.tareas.get(f.tarea)?.titulo ?? TAREA_DESCONOCIDA);
+  if (f.alumno) {
+    const u = m.usuarios.get(f.alumno);
+    partes.push(u ? nombreCorto(u) : TITULAR_DESCONOCIDO);
+  }
+  return partes.length > 0 ? partes.join(" · ") : null;
 }
 
 /** Siguiente de la cola para «Sigue: …». */
@@ -367,6 +515,9 @@ export type VistaEvaluar = {
     /** Cédulas marcadas «No participó» en la evaluación vigente (al reevaluar vienen marcadas). */
     noParticiparon: string[];
   };
+  /** Filtro activo en texto («Grupales · 5A») o `null`; el enlace «Cambiar» va a `colaHref`. */
+  filtroTexto: string | null;
+  colaHref: string;
   /** Posición en la cola; `null` si ya está evaluada (se abre para corregir). */
   posicion: { indice: number; total: number } | null;
   siguiente: SiguienteEntrega;
@@ -402,11 +553,15 @@ export function vistaEvaluar({
   tarea,
   cola,
   mapas,
+  filtros = {},
 }: {
   entrega: ConId<Entrega>;
   tarea: ConId<TareaDoc>;
+  /** La cola ya filtrada (`colaFiltradaCon`). */
   cola: ReadonlyArray<ConId<Entrega>>;
   mapas: MapasEvaluar;
+  /** Los filtros de la URL: todos los enlaces de salida los conservan (D385). */
+  filtros?: FiltrosEvaluar;
 }): VistaEvaluar {
   const indice = cola.findIndex((c) => c.id === entrega.id);
   const enCola = indice >= 0;
@@ -502,8 +657,10 @@ export function vistaEvaluar({
     },
     posicion: enCola ? { indice, total: cola.length } : null,
     siguiente: siguienteDe(sig, mapas),
-    anteriorHref: ant ? rutaEntrega(ant.id) : null,
-    saltarHref: sig ? rutaEntrega(sig.id) : null,
-    guardarHref: sig ? rutaEntrega(sig.id) : RUTA_EVALUAR,
+    filtroTexto: resumenFiltros(filtros, mapas),
+    colaHref: rutaCola(filtros),
+    anteriorHref: ant ? rutaEntrega(ant.id, filtros) : null,
+    saltarHref: sig ? rutaEntrega(sig.id, filtros) : null,
+    guardarHref: sig ? rutaEntrega(sig.id, filtros) : rutaCola(filtros),
   };
 }

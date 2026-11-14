@@ -6,13 +6,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { DicebearEstilo } from "@/lib/dicebear";
 
+/** Móvil: cada botón reparte el ancho y mide 44 px de alto; ≥ lg, el `sm` de siempre. */
+const NAV_BTN = "max-lg:min-h-11 max-lg:flex-1";
+
 export type ReviewIdentity =
   | { tipo: "equipo"; teamId: string; tema: string }
   | { tipo: "alumno"; estilo: DicebearEstilo; seed: string; nombre: string };
 
 /**
  * Cabecera de Evaluar entrega (HANDOFF §3; lienzo Evaluar.dc.html): eyebrow "Por evaluar ·
- * entrega 1 de 7" con Anterior / Saltar (solo ≥ 1024; en móvil la topbar dice la posición),
+ * entrega 1 de 7" con Anterior / Saltar (también en móvil, a ancho completo y con área táctil de
+ * 44 px, D386), la línea del filtro activo con «Cambiar» (D385),
  * TeamLogo o avatar 56 decorativos junto al `<h1>` (alumno o equipo), la línea "{tarea} ·
  * entregó …" y chips de tipo, sección, base y premio (ícono + palabra, nunca solo color).
  * El `<h1>` lleva `tabIndex={-1}`: al guardar, el foco vuelve aquí con la entrega siguiente.
@@ -26,6 +30,8 @@ export function ReviewHeader({
   chips,
   anteriorHref,
   saltarHref,
+  filtroTexto,
+  colaHref,
 }: {
   eyebrow: string;
   titulo: string;
@@ -46,6 +52,10 @@ export function ReviewHeader({
   anteriorHref: string | null;
   /** `null` en la última (Saltar deshabilitado). */
   saltarHref: string | null;
+  /** «Grupales · 5A» si la cola está filtrada (D385). */
+  filtroTexto?: string | null;
+  /** La cola filtrable con esos mismos filtros. */
+  colaHref?: string;
 }) {
   const TipoIcon = chips.tipo === "grupal" ? Users : User;
   return (
@@ -55,35 +65,46 @@ export function ReviewHeader({
         <nav
           // PROVISIONAL (CONTENT_CHECKLIST 81): nombre de la navegación de la cola
           aria-label="Cola por evaluar"
-          className="flex gap-2 max-lg:hidden"
+          className="flex w-full gap-2 lg:w-auto"
         >
           {anteriorHref ? (
-            <Button asChild variant="ghost" size="sm">
+            <Button asChild variant="ghost" size="sm" className={NAV_BTN}>
               <Link href={anteriorHref}>
                 <ChevronLeft aria-hidden="true" />
                 Anterior
               </Link>
             </Button>
           ) : (
-            <Button variant="ghost" size="sm" disabled>
+            <Button variant="ghost" size="sm" disabled className={NAV_BTN}>
               <ChevronLeft aria-hidden="true" />
               Anterior
             </Button>
           )}
           {saltarHref ? (
-            <Button asChild variant="ghost" size="sm">
+            <Button asChild variant="ghost" size="sm" className={NAV_BTN}>
               <Link href={saltarHref}>
                 Saltar
                 <ChevronRight aria-hidden="true" />
               </Link>
             </Button>
           ) : (
-            <Button variant="ghost" size="sm" disabled>
+            <Button variant="ghost" size="sm" disabled className={NAV_BTN}>
               Saltar
               <ChevronRight aria-hidden="true" />
             </Button>
           )}
         </nav>
+        {filtroTexto && colaHref ? (
+          <p className="flex w-full flex-wrap items-center gap-x-2 text-small text-text-2">
+            {/* PROVISIONAL (CONTENT_CHECKLIST fila 197) */}
+            <span>
+              Filtro: <span className="text-body-strong">{filtroTexto}</span>
+            </span>
+            <Button asChild variant="ghost" size="sm">
+              <Link href={colaHref}>Cambiar</Link>
+            </Button>
+          </p>
+        ) : null}
       </div>
 
       <div className="flex flex-wrap items-center gap-4">
