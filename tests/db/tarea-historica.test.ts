@@ -227,7 +227,7 @@ describe("ponerPuntajeFinalEnTransaccion", () => {
     expect(e?.enviadaPor).toBe(A3);
     expect(e?.enviadaEn).toBe(AHORA + 4);
     expect(faltanRespuestas(e, tarea.preguntas)).toBe(false);
-    // Con las respuestas puestas ya no se puede volver a enviar
+    // Con las respuestas puestas y la nota, ya no se edita (D395)
     expect(
       await enviarEnTransaccion(
         db(),
@@ -235,6 +235,6 @@ describe("ponerPuntajeFinalEnTransaccion", () => {
         { tareaId: T, respuestas: { p1: { texto: "x" }, p2: { texto: "y" } } },
         AHORA + 5,
       ),
-    ).toEqual({ ok: false, error: "ya-entregada" });
+    ).toEqual({ ok: false, error: "ya-evaluada" });
   });
 });

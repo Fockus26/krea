@@ -258,6 +258,8 @@ const ENTREGA_RECHAZADA = new Set([
   "no-existe",
   "cerrada",
   "ya-entregada",
+  // Una edición en cola no pisa una entrega que el profe evaluó mientras tanto (D395)
+  "ya-evaluada",
   "sin-equipo",
   "no-capitan",
   "incompleta",
@@ -327,6 +329,8 @@ export function mensajeRechazoEntrega(error: string): string {
       return "No se pudo enviar: la tarea ya cerró.";
     case "ya-entregada":
       return "No se pudo enviar: la tarea ya se entregó o ya fue evaluada.";
+    case "ya-evaluada":
+      return "No se pudo enviar: tu profe ya evaluó la entrega y no se puede cambiar.";
     case "no-existe":
       return "No se pudo enviar: la tarea ya no está disponible.";
     case "no-capitan":

@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, Send } from "lucide-react";
+import { Clock, Save, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, useTransition } from "react";
 import { ErrorEnPantalla } from "@/components/estados/errores";
@@ -95,6 +95,14 @@ export type ImagenItem = ImagenRespuesta & { id: string };
 
 const IMAGEN_VACIA: ImagenRespuesta = { status: "vacia" };
 
+/**
+ * PROVISIONAL (CONTENT_CHECKLIST fila 205): la confirmación ya no dice «Después no se puede
+ * cambiar» (D395): se edita mientras no esté evaluada y la tarea siga abierta.
+ */
+const AVISO_EDITAR =
+  "Podrás editarla mientras tu profe no la evalúe y la tarea siga abierta.";
+const CAMBIOS_GUARDADOS = "Cambios guardados";
+
 const nuevoId = () => crypto.randomUUID();
 
 const imagenDeBorrador = (v: ImagenBorrador): ImagenRespuesta => ({
@@ -144,31 +152,7 @@ function variasIniciales(
     .map((x) => ({ ...x, id: nuevoId() }));
 }
 
-/**
- * Preguntas y acción de la entrega (HANDOFF §3 Tareas y entrega). Cada pregunta es un
- * `QuestionCardAnswer` (cuerpo propio, §8). El borrador vive en el dispositivo (`localStorage`,
- * 2 s después del último cambio, D196): los textos y, de las imágenes, solo la ruta de las ya
- * subidas. Con `acciones` (la ruta real) cada imagen se sube al elegirla y «Entregar» envía la
- * entrega por Server Action; sin ellas (galerías) la imagen queda lista sin subir y «Entregar»
- * solo navega. "Entregar tarea" está deshabilitado hasta completar y pide confirmación. Con
- * `bloqueadaPor` (no capitán, D012) las preguntas se ven sin campos y no hay barra de acción.
- * Sin conexión (D292, D295): una imagen elegida queda lista en el teléfono y «Entregar» deja la
- * entrega en la cola (IndexedDB) con el mismo `opId`; se envía sola al volver la red. Mientras
- * espera, «Pendiente de enviar»; si el servidor la rechaza (tarea cerrada o evaluada), el aviso
- * y las respuestas siguen aquí. «Varias imágenes» (D373): cada imagen se sube sola al elegirla,
- * hasta el límite; la pregunta cuenta como respondida con al menos una y ninguna subiendo.
- */
-export function TaskAnswerForm({
-  tareaId,
-  titulo = "",
-  preguntas,
-  inicial = {},
-  bloqueadaPor,
-  autor,
-  titular,
-  acciones,
-  entregadaHref,
-}: {
+export type TaskAnswerFormProps = {
   tareaId: string;
   /** Título de la tarea: lo nombra el aviso cuando la entrega pendiente se envía. */
   titulo?: string;
@@ -183,7 +167,41 @@ export function TaskAnswerForm({
   acciones?: AccionesEntrega;
   /** A dónde ir tras entregar sin `acciones` (galerías). */
   entregadaHref: string;
-}) {
+  /**
+   * Editar la entrega enviada (D395): `alSalir` al guardar o cancelar; `enfocar` si se abrió con
+   * «Editar entrega» (no si se muestra sola porque hay una edición en la cola).
+   */
+  edicion?: { alSalir: (enfocar?: boolean) => void; enfocar?: boolean };
+};
+
+/**
+ * Preguntas y acción de la entrega (HANDOFF §3 Tareas y entrega). Cada pregunta es un
+ * `QuestionCardAnswer` (cuerpo propio, §8). El borrador vive en el dispositivo (`localStorage`,
+ * 2 s después del último cambio, D196): los textos y, de las imágenes, solo la ruta de las ya
+ * subidas. Con `acciones` (la ruta real) cada imagen se sube al elegirla y «Entregar» envía la
+ * entrega por Server Action; sin ellas (galerías) la imagen queda lista sin subir y «Entregar»
+ * solo navega. "Entregar tarea" está deshabilitado hasta completar y pide confirmación. Con
+ * `bloqueadaPor` (no capitán, D012) las preguntas se ven sin campos y no hay barra de acción.
+ * Sin conexión (D292, D295): una imagen elegida queda lista en el teléfono y «Entregar» deja la
+ * entrega en la cola (IndexedDB) con el mismo `opId`; se envía sola al volver la red. Mientras
+ * espera, «Pendiente de enviar»; si el servidor la rechaza (tarea cerrada o evaluada), el aviso
+ * y las respuestas siguen aquí. «Varias imágenes» (D373): cada imagen se sube sola al elegirla,
+ * hasta el límite; la pregunta cuenta como respondida con al menos una y ninguna subiendo.
+ * Con `edicion` (D395) edita una entrega ya enviada: `inicial` trae lo enviado, el botón es
+ * «Guardar cambios» (misma confirmación) y «Cancelar» vuelve sin cambios (y sin borrador).
+ */
+export function TaskAnswerForm({
+  tareaId,
+  titulo = "",
+  preguntas,
+  inicial = {},
+  bloqueadaPor,
+  autor,
+  titular,
+  acciones,
+  entregadaHref,
+  edicion,
+}: TaskAnswerFormProps) {
   const router = useRouter();
   const helpId = useId();
   const titleId = useId();
@@ -247,6 +265,12 @@ export function TaskAnswerForm({
       }),
     [claveCola, clave],
   );
+
+  // Edición recién abierta: el foco al título del formulario (el botón que la abrió ya no está)
+  const enfocar = Boolean(edicion?.enfocar);
+  useEffect(() => {
+    if (enfocar) document.getElementById(titleId)?.focus();
+  }, [enfocar, titleId]);
 
   // Recupera el borrador del dispositivo una vez (gana sobre lo inicial). Un refresco del
   // servidor trae props nuevas: el ref evita pisar lo que el alumno ya escribió.
@@ -471,6 +495,12 @@ export function TaskAnswerForm({
     }
   }
 
+  /** «Cancelar» la edición: lo enviado queda como estaba y el borrador de la edición se descarta. */
+  function cancelarEdicion() {
+    limpiarBorrador();
+    edicion?.alSalir();
+  }
+
   function entregar() {
     if (!acciones) {
       limpiarBorrador();
@@ -520,13 +550,24 @@ export function TaskAnswerForm({
           // La acción refresca la página: pasa a «¡Tarea entregada!»
           setConfirmar(false);
           limpiarBorrador();
+          if (edicion) {
+            toast.success(CAMBIOS_GUARDADOS);
+            edicion.alSalir();
+          }
           return;
         }
         if (r.error !== "red" || !titular) {
           setConfirmar(false);
           setError(mensajeErrorEntrega(r.error));
-          if (r.error === "ya-entregada" || r.error === "cerrada")
+          if (
+            r.error === "ya-entregada" ||
+            r.error === "ya-evaluada" ||
+            r.error === "cerrada"
+          ) {
+            // Al editar, la página deja de ofrecer el formulario: el aviso queda en un toast
+            if (edicion) toast.error(mensajeErrorEntrega(r.error));
             router.refresh();
+          }
           return;
         }
       }
@@ -543,6 +584,8 @@ export function TaskAnswerForm({
       setConfirmar(false);
       if (e === "ok") {
         toast(TOAST_ENCOLADA_ENTREGA);
+        // Edición: el formulario sigue a la vista mientras esté en la cola (`EntregaEditable`)
+        edicion?.alSalir(false);
         void drenarCola();
         return;
       }
@@ -553,8 +596,13 @@ export function TaskAnswerForm({
   return (
     <>
       <section aria-labelledby={titleId} className="flex flex-col gap-3">
-        <h2 id={titleId} className="text-h2 text-text">
-          Preguntas
+        {/* Al abrir la edición el foco llega aquí (D395). PROVISIONAL (fila 205) */}
+        <h2
+          id={titleId}
+          tabIndex={edicion ? -1 : undefined}
+          className="text-h2 text-text"
+        >
+          {edicion ? "Edita tus respuestas" : "Preguntas"}
         </h2>
         <ol className="m-0 flex list-none flex-col gap-4 p-0">
           {preguntas.map((p, i) =>
@@ -704,21 +752,37 @@ export function TaskAnswerForm({
                   if (!enviando) setConfirmar(o);
                 }}
               >
-                <DialogTrigger asChild>
-                  <Button
-                    disabled={!listo}
-                    aria-describedby={listo ? undefined : helpId}
-                  >
-                    <Send aria-hidden="true" />
-                    Entregar tarea
-                  </Button>
-                </DialogTrigger>
+                <div className="flex flex-wrap justify-end gap-2">
+                  {edicion && !enEspera ? (
+                    <Button
+                      variant="secondary"
+                      onClick={cancelarEdicion}
+                      disabled={enviando}
+                    >
+                      Cancelar
+                    </Button>
+                  ) : null}
+                  <DialogTrigger asChild>
+                    <Button
+                      disabled={!listo}
+                      aria-describedby={listo ? undefined : helpId}
+                    >
+                      {edicion ? (
+                        <Save aria-hidden="true" />
+                      ) : (
+                        <Send aria-hidden="true" />
+                      )}
+                      {edicion ? "Guardar cambios" : "Entregar tarea"}
+                    </Button>
+                  </DialogTrigger>
+                </div>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>¿Entregar ahora?</DialogTitle>
-                    <DialogDescription>
-                      Después no se puede cambiar.
-                    </DialogDescription>
+                    {/* PROVISIONAL (CONTENT_CHECKLIST fila 205) */}
+                    <DialogTitle>
+                      {edicion ? "¿Guardar los cambios?" : "¿Entregar ahora?"}
+                    </DialogTitle>
+                    <DialogDescription>{AVISO_EDITAR}</DialogDescription>
                   </DialogHeader>
                   <DialogFooter>
                     <DialogClose asChild>
@@ -729,10 +793,14 @@ export function TaskAnswerForm({
                     <Button
                       onClick={entregar}
                       loading={enviando}
-                      loadingLabel="Entregando…"
+                      loadingLabel={edicion ? "Guardando…" : "Entregando…"}
                     >
-                      <Send aria-hidden="true" />
-                      Entregar
+                      {edicion ? (
+                        <Save aria-hidden="true" />
+                      ) : (
+                        <Send aria-hidden="true" />
+                      )}
+                      {edicion ? "Guardar" : "Entregar"}
                     </Button>
                   </DialogFooter>
                 </DialogContent>

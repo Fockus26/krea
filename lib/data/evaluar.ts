@@ -38,11 +38,24 @@ export async function evaluarEnTransaccion(
     if (!e) return { ok: false, error: "invalida" };
     const { id, ...entrega } = e;
     const datos = await leerSeccion(tx, entrega.seccion);
-    // Releída tras el bloqueo: otro profe pudo evaluarla mientras esperábamos el turno
-    const [f2] = await tx.select().from(entregas).where(eq(entregas.id, id));
+    // Releída tras el bloqueo: otro profe pudo evaluarla mientras esperábamos el turno. La fila
+    // se bloquea (como al enviar, `enviarEnTransaccion`): si el alumno la está editando, se espera
+    // a su commit y se ve la versión nueva (D397)
+    const [f2] = await tx
+      .select()
+      .from(entregas)
+      .where(eq(entregas.id, id))
+      .for("update");
     const actual = f2 ? entregaDeFila(f2) : null;
     if (!actual) return { ok: false, error: "no-existe" };
     const { id: _, ...entregaActual } = actual;
+    // El alumno la editó desde que el profe abrió el formulario: no se puntúa lo que no vio
+    if (
+      envio.enviadaEn !== undefined &&
+      envio.enviadaEn !== entregaActual.enviadaEn
+    ) {
+      return { ok: false, error: "editada" };
+    }
     const [ft] = await tx
       .select()
       .from(tareas)
