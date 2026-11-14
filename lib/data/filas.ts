@@ -1,15 +1,23 @@
 // Filas de Postgres ↔ documentos de `lib/modelo` (D327). Cada lectura valida con el mismo esquema
 // zod que validaba el documento de Firestore: una fila que no valida se omite y se registra (sin
 // datos personales, D189). Los campos que en Firestore estaban ausentes se devuelven ausentes.
-import type { ajustes, entregas, equipos, tareas } from "@/lib/db/schema";
+import type {
+  ajustes,
+  entregas,
+  equipos,
+  partes,
+  tareas,
+} from "@/lib/db/schema";
 import {
   type Ajuste,
   type Entrega,
   type Equipo,
+  type Parte,
   type TareaDoc,
   zAjuste,
   zEntrega,
   zEquipo,
+  zParte,
   zTareaDoc,
 } from "@/lib/modelo";
 
@@ -100,7 +108,7 @@ export type FilaEntrega = typeof entregas.$inferSelect;
 export function entregaDeFila(f: FilaEntrega): ConId<Entrega> | null {
   const { id, evaluacionAnterior, ...resto } = f;
   const e = validar(zEntrega, "entregas", id, {
-    ...sinNull(resto, ["titularNombre"]),
+    ...sinNull(resto, ["titularNombre", "sinParte"]),
     ...(evaluacionAnterior
       ? { evaluacionAnterior: evaluacionAnterior.previa }
       : {}),
@@ -126,7 +134,21 @@ export function filaDeEntrega(id: string, e: Entrega): FilaEntrega {
       e.evaluacionAnterior === undefined
         ? null
         : { previa: e.evaluacionAnterior },
+    // Solo si hay alguno (D416): una grupal sin reparto queda como las de antes
+    sinParte: e.sinParte?.length ? [...e.sinParte] : null,
   };
+}
+
+/* ---------- partes (D416) ---------- */
+
+export type FilaParte = typeof partes.$inferSelect;
+
+export function parteDeFila(f: FilaParte): Parte | null {
+  return validar(zParte, "partes", `${f.entregaId}/${f.preguntaId}`, f);
+}
+
+export function filaDeParte(p: Parte): FilaParte {
+  return { ...p };
 }
 
 /* ---------- ajustes ---------- */

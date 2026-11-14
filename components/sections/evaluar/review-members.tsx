@@ -14,6 +14,7 @@ import {
   NO_PARTICIPO_AYUDA,
   NO_PARTICIPO_CASILLA,
   NO_PARTICIPO_ESTADO,
+  SIN_PARTE_MOTIVO,
 } from "@/lib/evaluar-datos";
 import { BASE_MAX, BASE_MIN } from "@/lib/grades";
 import { STEP_DEFAULT } from "@/lib/stepper";
@@ -25,7 +26,8 @@ import { STEP_DEFAULT } from "@/lib/stepper";
  * nombre, no solo por el color; su base queda deshabilitada (el 1 no lleva base, D365). El
  * nombre accesible de cada control lleva el nombre del integrante («Base de …», «No participó
  * …»), así cada uno se distingue con lector de pantalla. Sin `bases` (galería vieja), sin control
- * de base.
+ * de base. Quien llega premarcado por el reparto (D420) lleva «No entregó ninguna parte» junto
+ * al nombre: el motivo se lee en texto, no solo por la casilla.
  */
 export function ReviewMembers({
   integrantes,
@@ -34,7 +36,12 @@ export function ReviewMembers({
   bases,
   onBase,
 }: {
-  integrantes: ReadonlyArray<{ cedula: string; nombre: string }>;
+  /** `sinParte`: tenía preguntas repartidas y no entregó ninguna (D420). */
+  integrantes: ReadonlyArray<{
+    cedula: string;
+    nombre: string;
+    sinParte?: boolean;
+  }>;
   marcados: readonly string[];
   onCambio: (cedula: string, marcado: boolean) => void;
   /** Base de cada integrante en esta tarea (cédula → base). */
@@ -77,6 +84,12 @@ export function ReviewMembers({
                     <span id={nombreId} className="text-body text-text">
                       {m.nombre}
                     </span>
+                    {/* El motivo del premarcado en texto (D420), marcado o no */}
+                    {m.sinParte ? (
+                      <span className="text-small text-text-2">
+                        {SIN_PARTE_MOTIVO}
+                      </span>
+                    ) : null}
                     {marcado ? (
                       <span className="text-small text-text-2">
                         {NO_PARTICIPO_ESTADO}

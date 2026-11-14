@@ -20,6 +20,7 @@ import type {
   DecisionesPremio,
   Evaluacion,
   RankingSeccion,
+  Respuesta,
 } from "@/lib/modelo";
 
 const ms = (nombre: string) => bigint(nombre, { mode: "number" });
@@ -217,11 +218,39 @@ export const entregas = pgTable(
     evaluacionAnterior: jsonb("evaluacion_anterior").$type<{
       previa: Evaluacion | null;
     }>(),
+    /** Grupal por partes (D416): quienes tenían pregunta y no entregaron ninguna. */
+    sinParte: text("sin_parte").array(),
   },
   (t) => [
     index("entregas_tarea_idx").on(t.tareaId),
     index("entregas_seccion_idx").on(t.seccion),
     index("entregas_integrantes_idx").using("gin", t.integrantes),
+  ],
+);
+
+/**
+ * Preguntas de una grupal que el capitán repartió (D416): una fila por pregunta asignada (sin fila
+ * = la responde el capitán). `entregaId` = `idEntrega(tareaId, equipoId)` aunque la entrega aún no
+ * exista. Se borran con la tarea o el equipo.
+ */
+export const partes = pgTable(
+  "partes",
+  {
+    entregaId: text("entrega_id").notNull(),
+    preguntaId: text("pregunta_id").notNull(),
+    tareaId: text("tarea_id").notNull(),
+    equipoId: text("equipo_id").notNull(),
+    asignado: text("asignado").notNull(),
+    estado: text("estado", {
+      enum: ["asignada", "entregada", "aceptada", "devuelta"],
+    }).notNull(),
+    respuesta: jsonb("respuesta").$type<Respuesta>(),
+    entregadaEn: ms("entregada_en"),
+    actualizadoEn: ms("actualizado_en").notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.entregaId, t.preguntaId] }),
+    index("partes_tarea_idx").on(t.tareaId),
   ],
 );
 

@@ -547,6 +547,11 @@ export const NO_PARTICIPO_AYUDA = `Quien no participó queda con ${formatNota(NO
 export const NO_PARTICIPO_CASILLA = "No participó";
 /** Estado en texto junto al nombre marcado (no solo el ✓). PROVISIONAL (fila 184). */
 export const NO_PARTICIPO_ESTADO = `Queda con ${formatNota(NOTA_MIN)}`;
+/**
+ * Motivo junto al nombre de quien tenía preguntas repartidas y no entregó ninguna (D420): llega
+ * premarcado «No participó» y el profe lo puede desmarcar. PROVISIONAL (CONTENT_CHECKLIST fila 229).
+ */
+export const SIN_PARTE_MOTIVO = "No entregó ninguna parte";
 
 /**
  * «Solo ver» de una grupal evaluada: la base de cada integrante en esta tarea (D403), en el orden
@@ -598,14 +603,18 @@ export type VistaEvaluar = {
   }>;
   /**
    * Grupal: quiénes entregaron (D221), para marcar «No participó» (D364); vacío en individuales.
+   * `sinParte`: tenía preguntas repartidas y no entregó ninguna (D420); ausente si no.
    */
-  integrantes: Array<{ cedula: string; nombre: string }>;
+  integrantes: Array<{ cedula: string; nombre: string; sinParte?: boolean }>;
   inicial: {
     /** `enviadaEn` de la entrega que se ve: va con Guardar (D397). */
     enviadaEn: number | null;
     puntajes: (number | null)[];
     comentarios: string[];
-    /** Cédulas marcadas «No participó» en la evaluación vigente (al reevaluar vienen marcadas). */
+    /**
+     * Cédulas marcadas «No participó» en la evaluación vigente (al reevaluar vienen marcadas).
+     * Sin evaluación, las de `entrega.sinParte` (D420): premarcadas, el profe las puede desmarcar.
+     */
     noParticiparon: string[];
     /**
      * Base de cada integrante en esta tarea (cédula → base, D403; en individual, solo el
@@ -748,6 +757,7 @@ export function vistaEvaluar({
             return {
               cedula,
               nombre: u ? nombreCorto(u) : TITULAR_DESCONOCIDO,
+              ...(entrega.sinParte?.includes(cedula) ? { sinParte: true } : {}),
             };
           })
         : [],
@@ -755,8 +765,15 @@ export function vistaEvaluar({
       enviadaEn: entrega.enviadaEn,
       puntajes: preguntas.map((p) => ev?.puntos?.[p.id] ?? null),
       comentarios: preguntas.map((p) => ev?.comentarios[p.id] ?? ""),
+      // Con evaluación manda lo que el profe guardó; sin ella, el premarcado del reparto (D420)
       noParticiparon:
-        entrega.tipo === "grupal" ? [...(ev?.noParticiparon ?? [])] : [],
+        entrega.tipo !== "grupal"
+          ? []
+          : ev
+            ? [...(ev.noParticiparon ?? [])]
+            : (entrega.sinParte ?? []).filter((c) =>
+                entrega.integrantes.includes(c),
+              ),
       bases,
     },
     posicion: enCola ? { indice, total: cola.length } : null,
