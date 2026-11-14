@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, Pencil, UserPen } from "lucide-react";
+import { Pencil, UserPen } from "lucide-react";
 import Link from "next/link";
 import { type ReactNode, useId, useRef, useState } from "react";
 import { ErrorEnPantalla } from "@/components/estados/errores";
@@ -24,12 +24,15 @@ import { toast } from "@/components/ui/sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { ponerPuntajeFinal } from "@/lib/acciones/puntaje-final";
 import {
+  accionDeEntrega,
   BASE_PASO,
   baseCambio,
   type EntregaDeAlumno,
   editarLabel,
+  entregaAccionLabel,
   type FilaAlumno,
   type PuntajeFinalAlumno,
+  separarEntregas,
   subtituloEdicion,
   unirNombre,
   validarEdicion,
@@ -50,6 +53,7 @@ import {
   errorPuntajeFinalTexto,
   type ResultadoPuntajeFinal,
 } from "@/lib/puntaje-final";
+import { puntajeTexto } from "@/lib/tareas-profe-entregas";
 import { type Presencia, useMarcarPresencia } from "./use-presencia";
 
 /** Lo que cambia en la fila al guardar. */
@@ -518,8 +522,10 @@ function PuntajeFinal({
 }
 
 /**
- * Las tareas que entregó el alumno, cada una con su nota (o Pendiente) y enlace a su entrega,
- * solo para ver las respuestas y la nota (`?ver`: sin corregir desde aquí).
+ * Las tareas que entregó el alumno, separadas en Individuales y Grupales (D400). Cada una con su
+ * puntaje sobre 20 y su nota (o Pendiente), «Ver» (`?ver`: solo leer) y «Corregir» si ya está
+ * evaluada o «Evaluar» si no (la entrega sin `?ver`, D401). Los enlaces no son una sola fila:
+ * cada acción lleva a la tarea en su nombre accesible.
  */
 function TareasEntregadas({
   entregas,
@@ -527,41 +533,89 @@ function TareasEntregadas({
   entregas: readonly EntregaDeAlumno[];
 }) {
   const tituloId = useId();
+  const { individuales, grupales } = separarEntregas(entregas);
   return (
     <>
       <Separator />
-      <section aria-labelledby={tituloId} className="flex flex-col gap-2">
+      <section aria-labelledby={tituloId} className="flex flex-col gap-3">
         <h3 id={tituloId} className="text-small-b text-text">
           Tareas entregadas
         </h3>
         {entregas.length === 0 ? (
           <p className="text-small text-text-2">Todavía no entregó ninguna.</p>
         ) : (
-          <ul className="flex flex-col divide-y divide-divider">
-            {entregas.map((e) => (
-              <li key={e.id}>
-                <Link
-                  href={`${rutaEntrega(e.id)}?ver`}
-                  className="flex min-h-11 items-center gap-3 rounded-sm py-2 text-text hover:text-accent-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-                >
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-small-b">{e.titulo}</span>
-                    <span className="block text-small text-text-2">
-                      {e.tipo === "grupal" ? "Grupal" : "Individual"} · Ver
-                      respuestas y nota
-                    </span>
-                  </span>
-                  <GradePill nota={e.nota} size="sm" />
-                  <ChevronRight
-                    aria-hidden="true"
-                    className="size-4 shrink-0"
-                  />
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <>
+            <ListaEntregas titulo="Individuales" entregas={individuales} />
+            <ListaEntregas titulo="Grupales" entregas={grupales} />
+          </>
         )}
       </section>
     </>
+  );
+}
+
+function ListaEntregas({
+  titulo,
+  entregas,
+}: {
+  titulo: string;
+  entregas: readonly EntregaDeAlumno[];
+}) {
+  const id = useId();
+  return (
+    <div className="flex flex-col gap-1">
+      <h4 id={id} className="text-eyebrow text-text-2">
+        {titulo}
+      </h4>
+      {entregas.length === 0 ? (
+        <p className="text-small text-text-2">Ninguna todavía.</p>
+      ) : (
+        <ul
+          aria-labelledby={id}
+          className="flex flex-col divide-y divide-divider"
+        >
+          {entregas.map((e) => {
+            const accion = accionDeEntrega(e);
+            return (
+              <li
+                key={e.id}
+                className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2"
+              >
+                <span className="min-w-[min(--spacing(40),100%)] flex-1">
+                  <span className="block text-small-b text-text">
+                    {e.titulo}
+                  </span>
+                  <span className="nums block text-small text-text-2">
+                    {e.estado === "evaluada"
+                      ? `Puntaje ${puntajeTexto(e.puntaje)}`
+                      : "Por evaluar"}
+                    {e.noParticipo ? " · No participó" : ""}
+                  </span>
+                </span>
+                <GradePill nota={e.nota} size="sm" />
+                <span className="flex items-center gap-1">
+                  <Button asChild variant="ghost" size="sm">
+                    <Link
+                      href={`${rutaEntrega(e.id)}?ver`}
+                      aria-label={entregaAccionLabel("ver", e.titulo)}
+                    >
+                      Ver
+                    </Link>
+                  </Button>
+                  <Button asChild variant="secondary" size="sm">
+                    <Link
+                      href={rutaEntrega(e.id)}
+                      aria-label={entregaAccionLabel(accion, e.titulo)}
+                    >
+                      {accion === "corregir" ? "Corregir" : "Evaluar"}
+                    </Link>
+                  </Button>
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
   );
 }

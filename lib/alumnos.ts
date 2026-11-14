@@ -15,7 +15,40 @@ export type EntregaDeAlumno = {
   tipo: "individual" | "grupal";
   /** Nota con su base; `null` = Pendiente (entregada sin evaluar, D003). */
   nota: number | null;
+  /** Puntaje de la evaluación sobre 20; `null` mientras no esté evaluada. */
+  puntaje: number | null;
+  estado: "entregada" | "evaluada";
+  /** En una grupal evaluada, el profe lo marcó «No participó» (D365): su nota es la mínima. */
+  noParticipo: boolean;
 };
+
+/** La ficha separa «Individuales» y «Grupales» (D400); cada lista conserva el orden recibido. */
+export function separarEntregas(entregas: readonly EntregaDeAlumno[]): {
+  individuales: EntregaDeAlumno[];
+  grupales: EntregaDeAlumno[];
+} {
+  return {
+    individuales: entregas.filter((e) => e.tipo === "individual"),
+    grupales: entregas.filter((e) => e.tipo === "grupal"),
+  };
+}
+
+/** Qué se hace con una entrega desde la ficha: evaluar la pendiente, corregir la evaluada. */
+export function accionDeEntrega(
+  e: Pick<EntregaDeAlumno, "estado">,
+): "evaluar" | "corregir" {
+  return e.estado === "evaluada" ? "corregir" : "evaluar";
+}
+
+/** Nombre accesible de «Ver», «Evaluar» o «Corregir» de la ficha: incluye la tarea. */
+export function entregaAccionLabel(
+  accion: "ver" | "evaluar" | "corregir",
+  titulo: string,
+): string {
+  const verbo =
+    accion === "ver" ? "Ver" : accion === "evaluar" ? "Evaluar" : "Corregir";
+  return `${verbo} la entrega de ${titulo}`;
+}
 
 /**
  * La tarea 1 en la ficha (`lib/puntaje-final`): el profe pone su puntaje final, haya entregado o
@@ -38,6 +71,11 @@ export type FilaAlumno = {
   base: number;
   /** Nota individual vigente; `null` = Pendiente (D003). */
   nota: number | null;
+  /**
+   * Nota grupal vigente: la de su grupal evaluada más reciente, con su base (D399); `null` =
+   * Pendiente. Ausente en la vista previa.
+   */
+  notaGrupal?: number | null;
   /** Nota en cada tarea evaluada (id → nota, con su base); sin entrada = Pendiente (D252). */
   notas?: Readonly<Record<string, number>>;
   /** Puntos del ranking (D007). */
