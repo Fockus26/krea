@@ -3,79 +3,30 @@
 import { normalizar, rutaAlumnos } from "@/lib/alumnos";
 import type { DicebearEstilo } from "@/lib/dicebear";
 import type { SeccionId } from "@/lib/modelo";
+import type { CatalogoMotivos, Motivo } from "@/lib/motivos";
 import { chipAjuste, fechaAjusteTexto } from "@/lib/panel";
 import { rankCompetition } from "@/lib/ranking";
 import { formatDecimal, STEP_DEFAULT } from "@/lib/stepper";
 
 export type TipoDestino = "alumno" | "equipo";
 
-/* ---------- Motivos fijos (HANDOFF §3 Ajustes de puntos; D007) ---------- */
-
-export type MotivoId =
-  | "participacion"
-  | "ayudo"
-  | "extra"
-  | "ausente"
-  | "atencion"
-  | "celular"
-  | "respeto"
-  | "otro";
-
-export type Motivo = {
-  id: MotivoId;
-  etiqueta: string;
-  /** Valor propuesto; `null` en «Otro» (valor libre ±). */
-  valor: number | null;
-};
-
-/** Los 8 motivos, en el orden del lienzo. Valores propuestos: el profe los puede cambiar en el stepper. */
-export const MOTIVOS: readonly Motivo[] = [
-  { id: "participacion", etiqueta: "Participación destacada", valor: 2 },
-  { id: "ayudo", etiqueta: "Ayudó a un compañero", valor: 1 },
-  { id: "extra", etiqueta: "Trabajo extra", valor: 2 },
-  { id: "ausente", etiqueta: "No estuvo en clase", valor: -2 },
-  { id: "atencion", etiqueta: "No prestó atención", valor: -1 },
-  { id: "celular", etiqueta: "Uso del celular", valor: -1 },
-  { id: "respeto", etiqueta: "Falta de respeto", valor: -3 },
-  { id: "otro", etiqueta: "Otro", valor: null },
-];
+/* ---------- Opciones fijas de motivo (D375: editables, en `config/motivos`; lib/motivos.ts) ---------- */
 
 /** Motivo del ajuste inverso que crea «Anular ajuste» (D121). No se elige en el formulario. */
 export const MOTIVO_ANULACION = "Anulación";
+/** Motivo de los ajustes viejos de «Otro» (D376: ya no es una opción; se siguen mostrando). */
 export const MOTIVO_OTRO = "Otro";
 
-export function motivoPorId(id: MotivoId): Motivo {
-  const m = MOTIVOS.find((x) => x.id === id);
-  if (!m) throw new RangeError(`Motivo desconocido: ${id}`);
-  return m;
-}
-
-export function esMotivoId(valor: string): valor is MotivoId {
-  return MOTIVOS.some((m) => m.id === valor);
-}
-
-/** Valor que el stepper toma al elegir el motivo; `null` en «Otro» (sin valor hasta que el profe lo ponga, D103). */
-export function valorPropuesto(id: MotivoId): number | null {
-  return motivoPorId(id).valor;
-}
-
 export type ChipMotivo = {
-  variante: "ok" | "err" | "neutral";
-  /** Lo visible: "+2", "−3" o "± escribe". */
+  variante: "ok" | "err";
+  /** Lo visible: "+2", "−3". */
   visible: string;
-  /** Lo que lee el lector de pantalla: "más 2 puntos" / "valor libre". */
+  /** Lo que lee el lector de pantalla: "más 2 puntos". */
   accesible: string;
 };
 
 /** Chip del valor de cada opción de motivo (el signo va en el texto, no solo en el color). */
-export function chipMotivo(valor: number | null): ChipMotivo {
-  if (valor === null) {
-    return {
-      variante: "neutral",
-      visible: "± escribe",
-      accesible: "valor libre",
-    };
-  }
+export function chipMotivo(valor: number): ChipMotivo {
   const chip = chipAjuste(valor);
   return {
     variante: chip.signo === "mas" ? "ok" : "err",
@@ -250,18 +201,17 @@ export const VALOR_VACIO = "Escribe cuántos puntos sumas o restas.";
 export const VALOR_CERO = "Un ajuste no puede ser de 0 puntos.";
 export const VALOR_PASO = "Usa pasos de 0,5.";
 export const VALOR_RANGO = `Va de −${PUNTOS_MAX} a +${PUNTOS_MAX} puntos.`;
-export const DETALLE_VACIO = "En «Otro», explica el motivo en el detalle.";
-
 export type BorradorAjuste = {
   tipo: TipoDestino;
   destinoId: string | null;
-  motivo: MotivoId | null;
+  /** Id de una opción del catálogo vigente (`null` si no hay o se borró). */
+  motivo: string | null;
   valor: number | null;
   detalle: string;
 };
 
 export type ErroresAjuste = Partial<
-  Record<"destino" | "motivo" | "valor" | "detalle", string>
+  Record<"destino" | "motivo" | "valor", string>
 >;
 
 export function validarAjuste(b: BorradorAjuste): ErroresAjuste {
@@ -275,7 +225,7 @@ export function validarAjuste(b: BorradorAjuste): ErroresAjuste {
     Math.abs(b.valor / PUNTOS_PASO - Math.round(b.valor / PUNTOS_PASO)) > 1e-9
   )
     e.valor = VALOR_PASO;
-  if (b.motivo === "otro" && !b.detalle.trim()) e.detalle = DETALLE_VACIO;
+  // El detalle es opcional siempre (D376)
   return e;
 }
 
@@ -294,7 +244,7 @@ export type FilaHistorial = {
   nombre: string;
   valor: number;
   motivo: string;
-  /** Texto de «Otro», o lo que anula una «Anulación». */
+  /** Detalle opcional (o el de «Otro» en ajustes viejos), o lo que anula una «Anulación». */
   detalle?: string;
   /** ISO local sin zona (`DemoAjuste.fecha`). */
   fecha: string;
@@ -369,7 +319,8 @@ export function nuevoAjuste({
 }: {
   id: string;
   destino: Candidato;
-  motivo: MotivoId;
+  /** La opción elegida: se guarda su etiqueta (el catálogo puede cambiar, D375). */
+  motivo: Motivo;
   valor: number;
   detalle: string;
   fecha: string;
@@ -383,13 +334,13 @@ export function nuevoAjuste({
     seccion: destino.seccion,
     nombre: nombreDestino(destino.tipo, destino.nombre),
     valor,
-    motivo: motivoPorId(motivo).etiqueta,
+    motivo: motivo.etiqueta,
     fecha,
     profe,
     anulado: false,
     nuevo: true,
   };
-  // El detalle es obligatorio en «Otro» y opcional en el resto (el lienzo lo trae en Participación)
+  // El detalle es opcional (D376; el lienzo lo trae en Participación)
   return texto ? { ...fila, detalle: texto } : fila;
 }
 
@@ -486,11 +437,24 @@ export const FILTRO_VACIO: FiltroHistorial = {
   motivo: "todos",
 };
 
-/** Motivos por los que se puede filtrar: los 8 fijos + «Anulación». */
-export const MOTIVOS_FILTRO: readonly string[] = [
-  ...MOTIVOS.map((m) => m.etiqueta),
-  MOTIVO_ANULACION,
-];
+const porEtiqueta = new Intl.Collator("es", { sensitivity: "base" });
+
+/**
+ * Motivos por los que se puede filtrar (D376): las opciones vigentes en su orden, luego las
+ * etiquetas del historial que ya no están (opciones borradas o renombradas, «Otro» viejo) por
+ * orden alfabético, y «Anulación» al final. Sin repetir.
+ */
+export function motivosFiltro(
+  catalogo: CatalogoMotivos,
+  filas: readonly Pick<FilaHistorial, "motivo">[],
+): string[] {
+  const vigentes = catalogo.map((m) => m.etiqueta);
+  const vistos = new Set([...vigentes, MOTIVO_ANULACION]);
+  const viejas = [...new Set(filas.map((f) => f.motivo))]
+    .filter((m) => !vistos.has(m))
+    .sort(porEtiqueta.compare);
+  return [...vigentes, ...viejas, MOTIVO_ANULACION];
+}
 
 /** `motivoId` de los ajustes que trajo la importación del Excel. */
 export const MOTIVO_ID_IMPORTADO = "importado";

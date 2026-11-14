@@ -5,6 +5,7 @@ import {
   candidatosPuntos,
   historialPuntos,
 } from "@/lib/demo/puntos";
+import { MOTIVOS_INICIALES } from "@/lib/motivos";
 import {
   ajusteAnuladoTexto,
   ajusteAplicadoTexto,
@@ -12,7 +13,6 @@ import {
   type Candidato,
   chipMotivo,
   conDeltas,
-  DETALLE_VACIO,
   deltasSesion,
   esAjusteImportado,
   FILTRO_VACIO,
@@ -25,9 +25,8 @@ import {
   historialMostrable,
   isoLocal,
   MOTIVO_VACIO,
-  MOTIVOS,
-  MOTIVOS_FILTRO,
   motivoNoAnulable,
+  motivosFiltro,
   motivoTexto,
   nuevoAjuste,
   opcionesAjusteLabel,
@@ -42,7 +41,6 @@ import {
   VALOR_RANGO,
   VALOR_VACIO,
   validarAjuste,
-  valorPropuesto,
   vistaPrevia,
 } from "@/lib/puntos";
 
@@ -62,8 +60,8 @@ const cand = (
 });
 
 describe("motivos", () => {
-  test("los 8 del handoff, en orden, con sus valores", () => {
-    expect(MOTIVOS.map((m) => [m.etiqueta, m.valor])).toEqual([
+  test("los 7 iniciales del handoff, en orden, con sus valores y sin «Otro» (D376)", () => {
+    expect(MOTIVOS_INICIALES.map((m) => [m.etiqueta, m.valor])).toEqual([
       ["Participación destacada", 2],
       ["Ayudó a un compañero", 1],
       ["Trabajo extra", 2],
@@ -71,13 +69,7 @@ describe("motivos", () => {
       ["No prestó atención", -1],
       ["Uso del celular", -1],
       ["Falta de respeto", -3],
-      ["Otro", null],
     ]);
-  });
-  test("valor propuesto; «Otro» sin valor (D103)", () => {
-    expect(valorPropuesto("participacion")).toBe(2);
-    expect(valorPropuesto("respeto")).toBe(-3);
-    expect(valorPropuesto("otro")).toBeNull();
   });
   test("chip con signo tipográfico y texto accesible", () => {
     expect(chipMotivo(2)).toEqual({
@@ -90,11 +82,22 @@ describe("motivos", () => {
       visible: "−3",
       accesible: "menos 3 puntos",
     });
-    expect(chipMotivo(null).visible).toBe("± escribe");
   });
-  test("el filtro suma «Anulación» a los 8", () => {
-    expect(MOTIVOS_FILTRO).toHaveLength(9);
-    expect(MOTIVOS_FILTRO.at(-1)).toBe("Anulación");
+  test("el filtro: las vigentes, las del historial que ya no están y «Anulación» al final", () => {
+    expect(motivosFiltro(MOTIVOS_INICIALES, [])).toEqual([
+      ...MOTIVOS_INICIALES.map((m) => m.etiqueta),
+      "Anulación",
+    ]);
+    const cat = [{ id: "a", etiqueta: "Trabajo extra", valor: 2 }];
+    expect(
+      motivosFiltro(cat, [
+        { motivo: "Trabajo extra" },
+        { motivo: "Otro" },
+        { motivo: "Anulación" },
+        { motivo: "Ayudó a un compañero" },
+        { motivo: "Otro" },
+      ]),
+    ).toEqual(["Trabajo extra", "Ayudó a un compañero", "Otro", "Anulación"]);
   });
 });
 
@@ -178,7 +181,7 @@ describe("validarAjuste", () => {
   const ok = {
     tipo: "alumno" as const,
     destinoId: "1",
-    motivo: "participacion" as const,
+    motivo: "participacion",
     valor: 2,
     detalle: "",
   };
@@ -200,14 +203,8 @@ describe("validarAjuste", () => {
     expect(validarAjuste({ ...ok, valor: 21 }).valor).toBe(VALOR_RANGO);
     expect(validarAjuste({ ...ok, valor: -0.5 }).valor).toBeUndefined();
   });
-  test("«Otro» exige detalle; los demás no", () => {
-    expect(
-      validarAjuste({ ...ok, motivo: "otro", detalle: "  " }).detalle,
-    ).toBe(DETALLE_VACIO);
-    expect(
-      validarAjuste({ ...ok, motivo: "otro", detalle: "Trajo materiales" })
-        .detalle,
-    ).toBeUndefined();
+  test("el detalle es opcional siempre (D376)", () => {
+    expect(sinErrores(validarAjuste({ ...ok, detalle: "  " }))).toBe(true);
   });
 });
 
@@ -275,7 +272,7 @@ describe("nuevoAjuste", () => {
     const f = nuevoAjuste({
       id: "n",
       destino: { ...eq, nombre: "5A-G3 Ropa" },
-      motivo: "otro",
+      motivo: { id: "m-1", etiqueta: "Llegó tarde", valor: -1 },
       valor: -1.5,
       detalle: "  Llegaron tarde ",
       fecha: "2026-10-30T09:05",
@@ -283,12 +280,13 @@ describe("nuevoAjuste", () => {
     });
     expect(f).toMatchObject({
       nombre: "Equipo 5A-G3 Ropa",
-      motivo: "Otro",
+      motivo: "Llegó tarde",
+      valor: -1.5,
       detalle: "Llegaron tarde",
       nuevo: true,
       anulado: false,
     });
-    expect(motivoTexto(f)).toBe('Otro: "Llegaron tarde"');
+    expect(motivoTexto(f)).toBe("Llegó tarde");
   });
   test("isoLocal", () => {
     expect(isoLocal(new Date(2026, 9, 3, 7, 5))).toBe("2026-10-03T07:05");

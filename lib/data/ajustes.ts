@@ -14,6 +14,7 @@ import {
   type ResultadoAjuste,
 } from "@/lib/ajustes-datos";
 import { ajusteDeFila, equipoDeFila, filaDeAjuste } from "@/lib/data/filas";
+import { leerMotivos } from "@/lib/data/motivos";
 import { conAjuste, escribirRanking, leerSeccion } from "@/lib/data/ranking";
 import { leerUsuario } from "@/lib/data/usuarios";
 import type { Db } from "@/lib/db";
@@ -27,7 +28,8 @@ export const idNuevo = () =>
 /**
  * Aplica un ajuste a un alumno o a un equipo y recalcula el ranking de su sección. Con
  * `secciones` (las del catálogo), un destino cuya sección no está en la lista da `seccion` sin
- * escribir nada (D323).
+ * escribir nada (D323). La opción de motivo se busca en `config/motivos` dentro de la misma
+ * transacción: si otro profe la borró, `motivo` sin escribir nada (D375).
  */
 export async function aplicarAjusteEnTransaccion(
   db: Db,
@@ -57,8 +59,10 @@ export async function aplicarAjusteEnTransaccion(
     }
     if (secciones && !secciones.includes(seccion))
       return { ok: false, error: "seccion" };
+    const motivos = await leerMotivos(tx, "share");
+    if (!motivos) return { ok: false, error: "invalida" };
     const datos = await leerSeccion(tx, seccion);
-    const r = armarAjuste({ entrada, seccion, autorId, ahora });
+    const r = armarAjuste({ entrada, motivos, seccion, autorId, ahora });
     if (!r.ok) return r;
     await tx.insert(ajustes).values(filaDeAjuste(id, r.ajuste));
     await escribirRanking(

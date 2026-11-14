@@ -15,7 +15,6 @@ import { USUARIO_PROFESOR } from "@/lib/demo/usuarios";
 import {
   type Candidato,
   type FilaHistorial,
-  type MotivoId,
   nombreDestino,
   separarMotivo,
   type TipoDestino,
@@ -121,7 +120,8 @@ export type InicialAjuste = {
   tipo: TipoDestino;
   seccion: Seccion;
   destinoId: string;
-  motivo: MotivoId;
+  /** Id de una opción de `MOTIVOS_INICIALES` (lib/motivos.ts). */
+  motivo: string;
   detalle: string;
 };
 

@@ -41,12 +41,15 @@ export const COL = {
    * que un reintento devuelva el mismo resultado sin duplicar (D293). Solo servidor; vence a los 30 días.
    */
   operaciones: "operaciones",
-  /** `config/{doc}`: configuración de la escuela; hoy solo `config/secciones` (D317). */
+  /** `config/{doc}`: configuración de la escuela: `config/secciones` (D317) y `config/motivos` (D375). */
   config: "config",
 } as const;
 
 /** Id del catálogo de años y secciones en `config/` (D317). */
 export const DOC_SECCIONES = "secciones";
+
+/** Id de las opciones fijas de Ajustes de puntos en `config/` (D375). */
+export const DOC_MOTIVOS = "motivos";
 
 /** Subcolección de `presencia/{cedulaAlumno}` (una entrada por profe). */
 export const SUBCOL_EDITORES = "editores";
@@ -468,7 +471,7 @@ export const zAjuste = z.object({
   destino: z.enum(["alumno", "equipo"]),
   destinoId: z.string().min(1),
   seccion: zSeccion,
-  /** Id del catálogo (`lib/puntos.ts` MOTIVOS) o `anulacion` / `importado`. */
+  /** Id de la opción de `config/motivos` (D375), `anulacion` / `importado`, u `otro` en ajustes viejos (D376). */
   motivoId: z.string().min(1).max(40),
   /** Etiqueta visible en el historial (se guarda: el catálogo puede cambiar). */
   motivo: texto(80),
@@ -478,7 +481,7 @@ export const zAjuste = z.object({
     .min(-20)
     .max(20)
     .refine((n) => n !== 0 && esMedio(n), "Valor inválido"),
-  /** Nota escrita (obligatoria con «Otro»). */
+  /** Detalle escrito, opcional (D376). */
   nota: z.string().trim().max(300).nullable(),
   autorId: zCedula.nullable(),
   en: zInstante,
@@ -534,6 +537,26 @@ export const zCatalogoSecciones = z.object({
   actualizadoEn: zInstante,
 });
 export type CatalogoSeccionesDoc = z.infer<typeof zCatalogoSecciones>;
+
+/** Una opción fija de Ajustes de puntos: el valor solo se propone al elegirla (D103, D375). */
+export const zMotivo = z.object({
+  id: z.string().min(1).max(40),
+  etiqueta: texto(40),
+  valor: zAjuste.shape.valor,
+});
+
+/**
+ * `config/motivos`: las opciones fijas de Ajustes de puntos, comunes a todos los profes (D375).
+ * Ausente = `MOTIVOS_INICIALES` (`lib/motivos.ts`); nunca vacía.
+ */
+export const zCatalogoMotivos = z.object({
+  motivos: z
+    .array(zMotivo)
+    .min(1)
+    .max(60)
+    .refine((m) => sinRepetir(m.map((x) => x.id)), "Id repetido"),
+  actualizadoEn: zInstante,
+});
 
 /* ---------- Custom claims de Auth (D174) ---------- */
 

@@ -9,6 +9,7 @@ import {
   zAplicarAjuste,
 } from "@/lib/ajustes-datos";
 import type { Ajuste, Equipo, Usuario } from "@/lib/modelo";
+import { MOTIVOS_INICIALES } from "@/lib/motivos";
 import { anular, deltasSesion } from "@/lib/puntos";
 
 const usuario = (cedula: string, o: Partial<Usuario> = {}): Usuario => ({
@@ -59,6 +60,7 @@ describe("armarAjuste", () => {
     expect(
       armarAjuste({
         entrada: entrada(),
+        motivos: MOTIVOS_INICIALES,
         seccion: "5C",
         autorId: "30262232",
         ahora: 9,
@@ -80,24 +82,55 @@ describe("armarAjuste", () => {
     });
   });
 
-  test("«Otro» exige detalle; el valor no puede ser 0 ni salir de los pasos de 0,5", () => {
+  test("la etiqueta sale del catálogo leído, nunca del body; el valor, del stepper (D375)", () => {
+    const motivos = [{ id: "m-1", etiqueta: "Trajo material", valor: 1 }];
+    const r = armarAjuste({
+      entrada: entrada({ motivoId: "m-1", valor: 2.5, nota: " Para todos " }),
+      motivos,
+      seccion: "5A",
+      autorId: "1",
+      ahora: 0,
+    });
+    expect(r.ok && r.ajuste).toMatchObject({
+      motivoId: "m-1",
+      motivo: "Trajo material",
+      valor: 2.5,
+      nota: "Para todos",
+    });
+  });
+
+  test("una opción que ya no está en el catálogo da `motivo` (D375); sin detalle vale (D376)", () => {
     expect(
       armarAjuste({
-        entrada: entrada({ motivoId: "otro" }),
+        entrada: entrada({ motivoId: "m-borrada" }),
+        motivos: MOTIVOS_INICIALES,
         seccion: "5A",
         autorId: "1",
         ahora: 0,
       }),
-    ).toEqual({ ok: false, error: "detalle" });
+    ).toEqual({ ok: false, error: "motivo" });
+    expect(
+      armarAjuste({
+        entrada: entrada({ motivoId: "ayudo", nota: "" }),
+        motivos: MOTIVOS_INICIALES,
+        seccion: "5A",
+        autorId: "1",
+        ahora: 0,
+      }).ok,
+    ).toBe(true);
+  });
+
+  test("el valor no puede ser 0 ni salir de los pasos de 0,5; los ids reservados no pasan", () => {
     expect(zAplicarAjuste.safeParse({ ...entrada(), valor: 0 }).success).toBe(
       false,
     );
     expect(zAplicarAjuste.safeParse({ ...entrada(), valor: 1.2 }).success).toBe(
       false,
     );
-    expect(
-      zAplicarAjuste.safeParse({ ...entrada(), motivoId: "anulacion" }).success,
-    ).toBe(false);
+    for (const motivoId of ["anulacion", "importado", "otro"])
+      expect(zAplicarAjuste.safeParse({ ...entrada(), motivoId }).success).toBe(
+        false,
+      );
   });
 });
 

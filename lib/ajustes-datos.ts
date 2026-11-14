@@ -13,14 +13,16 @@ import {
   type Usuario,
   zAjuste,
 } from "@/lib/modelo";
+import {
+  type CatalogoMotivos,
+  IDS_RESERVADOS,
+  motivoPorId,
+} from "@/lib/motivos";
 import { fechaAjusteTexto } from "@/lib/panel";
 import {
   type Candidato,
   type FilaHistorial,
   MOTIVO_ANULACION,
-  MOTIVOS,
-  type MotivoId,
-  motivoPorId,
   nombreDestino,
 } from "@/lib/puntos";
 import { primerApellido } from "@/lib/ranking";
@@ -32,16 +34,19 @@ type ConId<T> = { id: string } & T;
 /** `motivoId` del ajuste inverso que crea «Anular ajuste» (D121). */
 export const MOTIVO_ID_ANULACION = "anulacion";
 
-const MOTIVO_IDS = MOTIVOS.map((m) => m.id) as [MotivoId, ...MotivoId[]];
-
 /* ---------- Entrada de las Server Actions ---------- */
 
 export const zAplicarAjuste = z.object({
   destino: z.enum(["alumno", "equipo"]),
   destinoId: zIdDocumento,
-  motivoId: z.enum(MOTIVO_IDS),
+  /** Id de una opción de `config/motivos`: se comprueba en la transacción del ajuste (D375). */
+  motivoId: z
+    .string()
+    .min(1)
+    .max(40)
+    .refine((id) => !IDS_RESERVADOS.includes(id), "Motivo reservado"),
   valor: zAjuste.shape.valor,
-  /** Detalle escrito: obligatorio con «Otro», opcional en el resto. */
+  /** Detalle escrito, opcional siempre (D376). */
   nota: z.string().trim().max(300),
 });
 export type AplicarAjuste = z.infer<typeof zAplicarAjuste>;
@@ -51,7 +56,8 @@ export const zAnularAjuste = z.object({ ajusteId: zIdDocumento });
 export type ErrorAjuste =
   | "invalida"
   | "no-existe"
-  | "detalle"
+  /** La opción elegida ya no está en `config/motivos` (otro profe la borró, D375). */
+  | "motivo"
   | "anulado"
   /** La sección del destino ya no está en el catálogo (D323). */
   | "seccion"
@@ -68,8 +74,9 @@ export function errorAjusteTexto(e: ErrorAjuste): string {
       return "No se pudo guardar el ajuste. Revisa tu conexión e inténtalo de nuevo.";
     case "anulado":
       return "Ese ajuste ya estaba anulado.";
-    case "detalle":
-      return "En «Otro», explica el motivo en el detalle.";
+    case "motivo":
+      // PROVISIONAL (CONTENT_CHECKLIST fila 193)
+      return "Esa opción ya no existe. Recarga la página.";
     case "no-existe":
       return "Ese alumno, equipo o ajuste ya no existe. Recarga la página.";
     case "seccion":
@@ -82,24 +89,26 @@ export function errorAjusteTexto(e: ErrorAjuste): string {
 /* ---------- Escritura ---------- */
 
 /**
- * Ajuste nuevo. La sección sale del documento del destino (nunca del body), la etiqueta del
- * motivo se guarda (el catálogo puede cambiar) y «Otro» exige detalle (D007).
+ * Ajuste nuevo. La sección sale del documento del destino (nunca del body); la etiqueta del
+ * motivo, del catálogo leído en la misma transacción (nunca del body), y se guarda porque el
+ * catálogo puede cambiar (D375). El valor es el del stepper: la opción solo lo propone (D103).
  */
 export function armarAjuste({
   entrada,
+  motivos,
   seccion,
   autorId,
   ahora,
 }: {
   entrada: AplicarAjuste;
+  motivos: CatalogoMotivos;
   seccion: SeccionId;
   autorId: string;
   ahora: number;
 }): { ok: true; ajuste: Ajuste } | { ok: false; error: ErrorAjuste } {
+  const motivo = motivoPorId(motivos, entrada.motivoId);
+  if (!motivo) return { ok: false, error: "motivo" };
   const nota = entrada.nota.trim();
-  if (entrada.motivoId === "otro" && !nota) {
-    return { ok: false, error: "detalle" };
-  }
   return {
     ok: true,
     ajuste: {
@@ -107,7 +116,7 @@ export function armarAjuste({
       destinoId: entrada.destinoId,
       seccion,
       motivoId: entrada.motivoId,
-      motivo: motivoPorId(entrada.motivoId).etiqueta,
+      motivo: motivo.etiqueta,
       valor: entrada.valor,
       nota: nota || null,
       autorId,
