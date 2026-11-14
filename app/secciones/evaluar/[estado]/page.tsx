@@ -76,6 +76,7 @@ export default async function EvaluarVista({
           inicial={{
             puntajes: v.entrega.preguntas.map((p) => p.puntaje ?? null),
             comentarios: v.entrega.preguntas.map((p) => p.comentario ?? ""),
+            bases: v.bases,
           }}
           base={v.base}
           siguiente={v.siguiente}

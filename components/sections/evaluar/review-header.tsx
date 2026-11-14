@@ -5,6 +5,7 @@ import { UserAvatar } from "@/components/krea/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { DicebearEstilo } from "@/lib/dicebear";
+import { BaseChip } from "./review-base";
 
 /** Móvil: cada botón reparte el ancho y mide 44 px de alto; ≥ lg, el `sm` de siempre. */
 const NAV_BTN = "max-lg:min-h-11 max-lg:flex-1";
@@ -44,7 +45,7 @@ export function ReviewHeader({
     tipoTexto: string;
     /** "Sección 5A". */
     seccion: string;
-    /** "Base 20 · todos". */
+    /** "Base 15" (individual: la de esta tarea al abrir) / "Base de cada integrante". */
     base: string;
     premio?: string;
   };
@@ -138,7 +139,8 @@ export function ReviewHeader({
           <Badge variant="neutral">{chips.seccion}</Badge>
         </li>
         <li>
-          <Badge variant="base">{chips.base}</Badge>
+          {/* En individual sigue en vivo la «Base de esta tarea» del formulario (D405) */}
+          <BaseChip texto={chips.base} />
         </li>
         {chips.premio ? (
           <li>
