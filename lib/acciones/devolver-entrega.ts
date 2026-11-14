@@ -64,7 +64,8 @@ export async function eliminarEntrega(
     return { ok: false, error: "red" };
   }
   await borrarImagenes(imagenes);
-  refresh();
+  // Sin `refresh()`: desde Evaluar, la página de esta entrega ya no existe (404) y el cliente
+  // navega a la cola; desde la lista, el cliente refresca (components/sections/evaluar/acciones-entrega.tsx)
   return { ok: true, id };
 }
 

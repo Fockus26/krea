@@ -5,6 +5,10 @@ import Link from "next/link";
 import { Fragment, useState } from "react";
 import { EmptyState } from "@/components/krea/empty-state";
 import { GradePill } from "@/components/krea/grade-pill";
+import {
+  type AccionesDevolverEntrega,
+  AccionesEntrega,
+} from "@/components/sections/evaluar/acciones-entrega";
 import { SelectorSeccion } from "@/components/sections/shared/selector-seccion";
 import { Badge, type BadgeVariant } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { DEVOLVER_SOLO_ABIERTAS } from "@/lib/devolver-entrega";
 import { formatNota } from "@/lib/grades";
 import type { SeccionId } from "@/lib/modelo";
 import {
@@ -55,20 +60,28 @@ const SIN_DATO = <span aria-hidden="true">—</span>;
  * Entregas de una tarea (D398–D401): selector de sección, el conteo y una fila por titular —el
  * alumno o el equipo con sus integrantes debajo— con estado (ícono + palabra), puntaje sobre 20,
  * base y nota (`GradePill`; Pendiente si no hay, D003). «Ver» abre la entrega para leerla (`?ver`)
- * y «Evaluar»/«Corregir» sin `?ver` (D401). La última columna queda lista para recibir otras
- * acciones (devolver, eliminar: ola 3). La sección elegida viaja en la URL sin recargar.
+ * y «Evaluar»/«Corregir» sin `?ver` (D401). Cada fila con entrega suma «Más acciones»:
+ * «Devolver al alumno» (evaluada y tarea abierta, D411) y «Eliminar entrega» (D413); con la tarea
+ * cerrada, una línea bajo el conteo explica por qué no hay «Devolver». La sección elegida viaja en
+ * la URL sin recargar.
  */
 export function TaskSubmissions({
   titulo,
   filas,
   secciones,
   seccionInicial,
+  acciones,
+  tareaCerrada = false,
 }: {
   titulo: string;
   filas: readonly FilaEntregaTarea[];
   /** Secciones de la tarea con filas, ordenadas. */
   secciones: readonly SeccionId[];
   seccionInicial: SeccionId | null;
+  /** Devolver y eliminar (Server Actions); sin ellas (galería), el menú solo muestra el toast. */
+  acciones?: AccionesDevolverEntrega;
+  /** La tarea ya no está abierta: no hay «Devolver» y se explica (D411). */
+  tareaCerrada?: boolean;
 }) {
   const [seccion, setSeccion] = useState(seccionInicial);
   const visibles = filasDeSeccion(filas, seccion);
@@ -114,6 +127,11 @@ export function TaskSubmissions({
         >
           {conteo}
         </output>
+        {tareaCerrada ? (
+          <p className="w-full text-small text-text-2">
+            {DEVOLVER_SOLO_ABIERTAS}
+          </p>
+        ) : null}
       </section>
       <Table label={`Entregas de ${titulo} en ${seccion}`}>
         <TableHeader>
@@ -195,6 +213,21 @@ export function TaskSubmissions({
                             {ACCION_TEXTO[f.accion]}
                           </Link>
                         </Button>
+                      ) : null}
+                      {f.entregaId ? (
+                        <AccionesEntrega
+                          variante="menu"
+                          entregaId={f.entregaId}
+                          titular={{
+                            nombre: f.nombre,
+                            tipo: f.tipo,
+                            evaluada: f.estado === "evaluada",
+                          }}
+                          enviadaEn={f.enviadaEn}
+                          evaluadaEn={f.evaluadaEn}
+                          puedeDevolver={f.puedeDevolver}
+                          acciones={acciones}
+                        />
                       ) : null}
                     </span>
                   </TableCell>

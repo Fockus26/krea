@@ -296,3 +296,48 @@ describe("selector de sección y textos", () => {
     );
   });
 });
+
+describe("filasEntregasTarea · devolver y eliminar (D411, D413)", () => {
+  const usuarios = [alumno("1111111"), alumno("2222222"), alumno("3333333")];
+  const entregas = [
+    entrega("t1__1111111", "t1", "1111111", evaluacion(16)),
+    entrega("t1__2222222", "t1", "2222222", { enviadaEn: 7 }),
+  ];
+  const filasCon = (estado?: "abierta" | "evaluada") =>
+    filasEntregasTarea({
+      tarea: {
+        id: "t1",
+        tipo: "individual",
+        secciones: ["5A"],
+        ...(estado ? { estado } : {}),
+      },
+      entregas,
+      usuarios,
+      equipos: [],
+    });
+  const de = (filas: ReturnType<typeof filasCon>, c: string) =>
+    filas.find((f) => f.titularId === c);
+
+  test("tarea abierta: solo la evaluada se puede devolver; cada fila lleva lo que el profe ve", () => {
+    const filas = filasCon("abierta");
+    expect(de(filas, "1111111")).toMatchObject({
+      puedeDevolver: true,
+      enviadaEn: 1,
+      evaluadaEn: 5,
+    });
+    expect(de(filas, "2222222")).toMatchObject({
+      puedeDevolver: false,
+      enviadaEn: 7,
+      evaluadaEn: null,
+    });
+    expect(de(filas, "3333333")).toMatchObject({
+      entregaId: null,
+      puedeDevolver: false,
+    });
+  });
+
+  test("tarea cerrada o sin estado: ninguna", () => {
+    expect(filasCon("evaluada").some((f) => f.puedeDevolver)).toBe(false);
+    expect(filasCon().some((f) => f.puedeDevolver)).toBe(false);
+  });
+});

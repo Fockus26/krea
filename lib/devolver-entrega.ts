@@ -70,7 +70,8 @@ export function errorDevolverTexto(e: ErrorDevolverEntrega): string {
 /** ¿Se ofrece «Devolver»? La entrega tiene nota y la tarea sigue abierta (D411). */
 export function puedeDevolver(
   entrega: Pick<Entrega, "estado">,
-  tarea: Pick<TareaDoc, "estado"> | null | undefined,
+  /** Sin la tarea o sin su estado, no se ofrece. */
+  tarea: { estado?: TareaDoc["estado"] } | null | undefined,
 ): boolean {
   return entrega.estado === "evaluada" && tarea?.estado === "abierta";
 }

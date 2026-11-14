@@ -87,9 +87,9 @@ describe("devolverEntrega (D412)", () => {
   });
   test("conserva los campos que no conoce (otra unidad los añade)", () => {
     const conExtra = { ...evaluada, extra: ["x"] } as Entrega;
-    expect((devolverEntrega(conExtra) as Record<string, unknown>).extra).toEqual(
-      ["x"],
-    );
+    expect(
+      (devolverEntrega(conExtra) as Record<string, unknown>).extra,
+    ).toEqual(["x"]);
   });
 });
 
@@ -147,7 +147,9 @@ describe("textos (filas 218–222)", () => {
     expect(devolverTextoBoton("grupal")).toBe("Devolver al equipo");
   });
   test("qué se pierde: nombra al equipo y a todos sus integrantes", () => {
-    expect(devolverDescripcion({ nombre: "Ana Pérez", tipo: "individual" })).toBe(
+    expect(
+      devolverDescripcion({ nombre: "Ana Pérez", tipo: "individual" }),
+    ).toBe(
       "Se borra la nota de Ana Pérez en esta tarea y su puntaje sale del ranking; podrá editar y volver a entregar.",
     );
     expect(

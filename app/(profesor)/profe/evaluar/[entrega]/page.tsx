@@ -6,11 +6,16 @@ import {
   type QuestionAnswer,
   QuestionCardDetail,
 } from "@/components/krea/question-card-detail";
+import { AccionesEntrega } from "@/components/sections/evaluar/acciones-entrega";
 import { PresenciaEvaluar } from "@/components/sections/evaluar/presencia-evaluar";
 import { ReviewForm } from "@/components/sections/evaluar/review-form";
 import { ReviewHeader } from "@/components/sections/evaluar/review-header";
 import { Card } from "@/components/ui/card";
 import tareaSeed from "@/data/seed/tarea-identidad-marca.json";
+import {
+  devolverAlAlumno,
+  eliminarEntrega,
+} from "@/lib/acciones/devolver-entrega";
 import { deshacerEvaluacion, guardarEvaluacion } from "@/lib/acciones/evaluar";
 import { verificarSesion } from "@/lib/dal";
 import { urlsFirmadas } from "@/lib/datos/imagenes";
@@ -20,6 +25,7 @@ import {
   mapasProfe,
   profesorActual,
 } from "@/lib/datos/profesor";
+import { puedeDevolver } from "@/lib/devolver-entrega";
 import {
   basesIntegrantesTexto,
   colaFiltradaCon,
@@ -39,6 +45,10 @@ type Props = PageProps<"/profe/evaluar/[entrega]">;
 const TITULO_ID = "entrega-titulo";
 
 const ACCIONES = { guardar: guardarEvaluacion, deshacer: deshacerEvaluacion };
+const ACCIONES_ENTREGA = {
+  devolver: devolverAlAlumno,
+  eliminar: eliminarEntrega,
+};
 
 // `cacheComponents` pide al menos un parámetro para validar el shell: una entrega del seed. Las
 // demás se renderizan al pedirlas (como /profe/tareas/[id]).
@@ -120,6 +130,22 @@ export default async function EvaluarEntregaPage({
         saltarHref={soloVer ? null : v.saltarHref}
         filtroTexto={soloVer ? null : v.filtroTexto}
         colaHref={v.colaHref}
+      />
+      {/* Devolver al alumno y Eliminar entrega (D411–D415), también en «Solo ver» */}
+      <AccionesEntrega
+        variante="botones"
+        entregaId={v.entregaId}
+        titular={{
+          nombre: v.titulo,
+          tipo: v.tipo,
+          evaluada: entrega.estado === "evaluada",
+        }}
+        enviadaEn={entrega.enviadaEn}
+        evaluadaEn={entrega.evaluacion?.evaluadaEn ?? null}
+        puedeDevolver={puedeDevolver(entrega, tarea)}
+        tareaCerrada={tarea.estado !== "abierta"}
+        acciones={ACCIONES_ENTREGA}
+        despuesHref={v.colaHref}
       />
       {soloVer || preguntas.length === 0 ? null : (
         <PresenciaEvaluar
