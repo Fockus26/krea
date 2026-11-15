@@ -12,12 +12,14 @@ import { ReviewForm } from "@/components/sections/evaluar/review-form";
 import { ReviewHeader } from "@/components/sections/evaluar/review-header";
 import { Card } from "@/components/ui/card";
 import tareaSeed from "@/data/seed/tarea-identidad-marca.json";
+import { analizarTextoIA } from "@/lib/acciones/analisis-ia";
 import {
   devolverAlAlumno,
   eliminarEntrega,
 } from "@/lib/acciones/devolver-entrega";
 import { deshacerEvaluacion, guardarEvaluacion } from "@/lib/acciones/evaluar";
 import { verificarSesion } from "@/lib/dal";
+import { analisisIAEntrega } from "@/lib/datos/analisis-ia";
 import { urlsFirmadas } from "@/lib/datos/imagenes";
 import {
   colaEvaluar,
@@ -116,6 +118,18 @@ export default async function EvaluarEntregaPage({
     }
     return { ...p, respuesta: r };
   });
+  // % orientativo de IA (D425–D429): solo respuestas de texto; sin clave, `null` y no aparece
+  const porPreguntaIA = soloVer
+    ? null
+    : await analisisIAEntrega(
+        entrega.id,
+        v.preguntas.flatMap((p) => {
+          const r = entrega.respuestas[p.id];
+          return r && "texto" in r
+            ? [{ preguntaId: p.id, texto: r.texto }]
+            : [];
+        }),
+      );
 
   return (
     <>
@@ -216,6 +230,11 @@ export default async function EvaluarEntregaPage({
           acciones={ACCIONES}
           titular={v.titulo}
           integrantes={v.integrantes}
+          ia={
+            porPreguntaIA
+              ? { analizar: analizarTextoIA, porPregunta: porPreguntaIA }
+              : undefined
+          }
         />
       )}
     </>
