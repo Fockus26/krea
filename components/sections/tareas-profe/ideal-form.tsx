@@ -164,7 +164,12 @@ export function IdealForm({
     autor && autor.tipo !== "profe" ? autor.nombre : "los profesores";
 
   return (
-    <form noValidate onSubmit={alEnviar} className="flex flex-col gap-4">
+    <form
+      method="post"
+      noValidate
+      onSubmit={alEnviar}
+      className="flex flex-col gap-4"
+    >
       {autor ? (
         <Card variant="flat" className="flex flex-col gap-3">
           <AutorFila autor={autor} logoUrl={logoUrl} />
