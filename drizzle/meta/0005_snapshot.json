@@ -1,5 +1,5 @@
 {
-  "id": "94191eed-f111-4c9b-8472-d044a039f64a",
+  "id": "5e616e3e-6cbe-49dd-bae9-5c07fa30ab12",
   "prevId": "02030ea5-1843-48f9-96cf-facb49f9d17b",
   "version": "7",
   "dialect": "postgresql",
@@ -232,6 +232,69 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.analisis_ia": {
+      "name": "analisis_ia",
+      "schema": "",
+      "columns": {
+        "entrega_id": {
+          "name": "entrega_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pregunta_id": {
+          "name": "pregunta_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "porcentaje": {
+          "name": "porcentaje",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "huella": {
+          "name": "huella",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "modelo": {
+          "name": "modelo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "autor_id": {
+          "name": "autor_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "analizado_en": {
+          "name": "analizado_en",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "analisis_ia_entrega_id_pregunta_id_pk": {
+          "name": "analisis_ia_entrega_id_pregunta_id_pk",
+          "columns": [
+            "entrega_id",
+            "pregunta_id"
+          ]
+        }
+      },
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -540,66 +603,6 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.ideales": {
-      "name": "ideales",
-      "schema": "",
-      "columns": {
-        "tarea_id": {
-          "name": "tarea_id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "entrega_id": {
-          "name": "entrega_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "respuestas": {
-          "name": "respuestas",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "nota": {
-          "name": "nota",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "notas": {
-          "name": "notas",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "autor_id": {
-          "name": "autor_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "actualizado_en": {
-          "name": "actualizado_en",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "ideales_una_forma": {
-          "name": "ideales_una_forma",
-          "value": "(\"ideales\".\"entrega_id\" IS NULL) <> (\"ideales\".\"respuestas\" IS NULL)"
-        }
-      },
       "isRLSEnabled": false
     },
     "public.operaciones": {

@@ -357,3 +357,22 @@ export const config = pgTable("config", {
   id: text("id").primaryKey(),
   datos: jsonb("datos").$type<Record<string, unknown>>().notNull(),
 });
+
+/**
+ * % orientativo de uso de IA de una respuesta de texto (D425–D429): uno por respuesta, se
+ * sobrescribe. `huella` = SHA-256 del texto analizado (si el alumno lo edita, queda desactualizado).
+ * Sin claves foráneas ni borrado en cascada: quien lee tolera que la entrega ya no exista.
+ */
+export const analisisIa = pgTable(
+  "analisis_ia",
+  {
+    entregaId: text("entrega_id").notNull(),
+    preguntaId: text("pregunta_id").notNull(),
+    porcentaje: integer("porcentaje").notNull(),
+    huella: text("huella").notNull(),
+    modelo: text("modelo").notNull(),
+    autorId: text("autor_id").notNull(),
+    analizadoEn: ms("analizado_en").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.entregaId, t.preguntaId] })],
+);

@@ -2,6 +2,7 @@
 // en la transacción real de `lib/acciones/partes.ts`; el envío del capitán calcula `sinParte`; con
 // la entrega enviada o la tarea cerrada todo queda congelado; eliminar la tarea borra las partes.
 import { beforeAll, beforeEach, describe, expect, test } from "bun:test";
+import { eliminarEntregaEnTransaccion } from "@/lib/data/devolver-entrega";
 import { enviarEnTransaccion, permisoSubida } from "@/lib/data/entregas";
 import { accionParteEnTransaccion, leerPartes } from "@/lib/data/partes";
 import { eliminarTareaEnTransaccion } from "@/lib/data/tareas";
@@ -320,6 +321,65 @@ describe("limpieza (D421)", () => {
     const r = await eliminarTareaEnTransaccion(db(), TAREA, AHORA);
     expect(r.resultado.ok).toBe(true);
     expect(r.imagenes).toContain(ruta);
+    expect(await leerPartes(db(), ENTREGA)).toEqual([]);
+  });
+
+  test("eliminar la entrega borra sus partes y suma sus imágenes, sin repetir", async () => {
+    // p2: Ana entrega una imagen que el capitán NO usa en su envío; p1: texto, sin imagen
+    await asignar(CAPITAN, "p1", LUIS);
+    await entregarTexto(LUIS, "p1", "Mi parte");
+    await asignar(CAPITAN, "p2", ANA);
+    const deParte = await imagen(UUID_1);
+    await accion(ANA, "p2", {
+      tipo: "entregar",
+      respuesta: { imagenPath: deParte },
+    });
+    await enviarEnTransaccion(db(), CAPITAN, await envio(), AHORA);
+    // Otra entrega con reparto, que no se toca
+    const otraEntrega = idEntrega(TAREA, EQUIPO_OTRO);
+    await db().insert(partes).values({
+      entregaId: otraEntrega,
+      preguntaId: "p1",
+      tareaId: TAREA,
+      equipoId: EQUIPO_OTRO,
+      asignado: OTRO,
+      estado: "asignada",
+      respuesta: null,
+      entregadaEn: null,
+      actualizadoEn: AHORA,
+    });
+
+    const r = await eliminarEntregaEnTransaccion(
+      db(),
+      { entregaId: ENTREGA, enviadaEn: AHORA, evaluadaEn: null },
+      AHORA + 1,
+    );
+    expect(r).toEqual({
+      ok: true,
+      id: ENTREGA,
+      imagenes: [await imagen(UUID_2), deParte],
+    });
+    expect(await leerPartes(db(), ENTREGA)).toEqual([]);
+    expect(await docs.entrega(db(), ENTREGA)).toBeNull();
+    const quedan = await db().select().from(partes);
+    expect(quedan.map((p) => p.entregaId)).toEqual([otraEntrega]);
+  });
+
+  test("eliminar la entrega: la imagen de una parte aceptada que el capitán envió va una sola vez", async () => {
+    await asignar(CAPITAN, "p2", ANA);
+    const ruta = await imagen(UUID_2);
+    await accion(ANA, "p2", {
+      tipo: "entregar",
+      respuesta: { imagenPath: ruta },
+    });
+    await accion(CAPITAN, "p2", { tipo: "aceptar" });
+    await enviarEnTransaccion(db(), CAPITAN, await envio(), AHORA);
+    const r = await eliminarEntregaEnTransaccion(
+      db(),
+      { entregaId: ENTREGA, enviadaEn: AHORA, evaluadaEn: null },
+      AHORA + 1,
+    );
+    expect(r).toEqual({ ok: true, id: ENTREGA, imagenes: [ruta] });
     expect(await leerPartes(db(), ENTREGA)).toEqual([]);
   });
 });

@@ -136,6 +136,21 @@ export async function borrarPartesDeTarea(
 }
 
 /**
+ * Al eliminar una entrega grupal: su reparto se va con ella (D421). Devuelve las imágenes que
+ * tenían sus partes, para sumarlas a las que se borran de B2 tras el commit.
+ */
+export async function borrarPartesDeEntrega(
+  tx: Tx,
+  entregaId: string,
+): Promise<string[]> {
+  const filas = await tx
+    .delete(partes)
+    .where(eq(partes.entregaId, entregaId))
+    .returning({ respuesta: partes.respuesta });
+  return rutasDe(filas);
+}
+
+/**
  * Al eliminar un equipo: sus partes se van con él (D421). Sus imágenes sin enviar quedan en B2
  * (como las de una entrega cancelada, límite de D396): la acción de equipos solo borra el logo.
  */
