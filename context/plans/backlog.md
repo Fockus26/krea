@@ -47,7 +47,8 @@
 - (2026-11-14, W1, visto de paso, Low) `NumberStepper` llama a `onChange` con valores fuera de paso mientras se escribe («17,3») y `notaFinal` lanza `RangeError` con una base así. Evaluar lo cubre con `normalizarBase`; «Editar alumno» depende de su validación (sin revisar a fondo).
 
 ## Tras la ola 3 de la tanda 2026-11-14 (#148 + #149)
-- **Costura X1×X2:** «Eliminar entrega» (#148) de una grupal no borra sus `partes` ni sabe de ellas; borra de B2 las imágenes de la entrega, que las partes aceptadas pueden seguir citando. Fix chico con las dos en main: en `eliminarEntregaEnTransaccion`, borrar las partes de esa entrega (`borrarPartesDeEntrega`) y sumar sus imágenes al borrado.
+- ~~Costura X1×X2~~ (hecho: PR #150) — «Eliminar entrega» (#148) de una grupal no borra sus `partes` ni sabe de ellas; borra de B2 las imágenes de la entrega, que las partes aceptadas pueden seguir citando. Fix chico con las dos en main: en `eliminarEntregaEnTransaccion`, borrar las partes de esa entrega (`borrarPartesDeEntrega`) y sumar sus imágenes al borrado.
 - Avisos push al capitán cuando un integrante entrega su parte (D424).
 - Eliminar equipo deja en B2 las imágenes de sus partes (D421).
 - Galería `app/secciones/tareas`: faltan los estados del reparto.
+- Ola 4 (experimentales): `analisis_ia` (Z1) e `ideales` (Z2) no se borran en cascada al eliminar entrega o tarea (toleran al leer). Si los experimentales se quedan, sumar la limpieza a `eliminarEntregaEnTransaccion` y `eliminarTareaEnTransaccion`.
