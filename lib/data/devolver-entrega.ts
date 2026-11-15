@@ -7,6 +7,7 @@
 // alumno la está editando, se espera a su commit y se compara con la versión nueva).
 import { eq } from "drizzle-orm";
 import { entregaDeFila, filaDeEntrega, tareaDeFila } from "@/lib/data/filas";
+import { borrarPartesDeEntrega } from "@/lib/data/partes";
 import {
   conEntrega,
   type DatosSeccion,
@@ -96,8 +97,9 @@ export async function devolverEnTransaccion(
 }
 
 /**
- * Elimina la entrega (D413): borra la fila y recalcula el ranking de su sección, en cualquier
- * estado de la tarea. Devuelve las rutas de sus imágenes para borrarlas de B2 DESPUÉS del commit.
+ * Elimina la entrega (D413): borra la fila, las partes de su reparto (D421) y recalcula el ranking
+ * de su sección, en cualquier estado de la tarea. Devuelve las rutas de sus imágenes (las de la
+ * entrega y las de sus partes) para borrarlas de B2 DESPUÉS del commit.
  */
 export async function eliminarEntregaEnTransaccion(
   db: Db,
@@ -113,11 +115,15 @@ export async function eliminarEntregaEnTransaccion(
 
     const id = envio.entregaId;
     await tx.delete(entregas).where(eq(entregas.id, id));
+    // Grupal por partes (D421): el reparto se va con la entrega. Una parte aceptada comparte la
+    // imagen con la respuesta del capitán: cada ruta va una sola vez
+    const dePartes = await borrarPartesDeEntrega(tx, id);
     await escribirRanking(tx, entrega.seccion, sinEntrega(datos, id), ahora);
+    const deEntrega = Object.values(entrega.respuestas).flatMap(rutasImagen);
     return {
       ok: true,
       id,
-      imagenes: Object.values(entrega.respuestas).flatMap(rutasImagen),
+      imagenes: [...new Set([...deEntrega, ...dePartes])],
     };
   });
 }
