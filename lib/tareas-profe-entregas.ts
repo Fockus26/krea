@@ -4,13 +4,21 @@
 // nota y a dónde lleva «Ver» y «Evaluar»/«Corregir». La nota no se guarda: sale de
 // `puntaje × base / 20` con la base de esa entrega (D013, D403; si no la guardó, la vigente);
 // «No participó» queda en NOTA_MIN (D365).
+
+import { puedeDevolver } from "@/lib/devolver-entrega";
 import {
   nombreGrupal,
   rutaEntrega,
   TITULAR_DESCONOCIDO,
 } from "@/lib/evaluar-datos";
 import { formatNota, NOTA_MIN } from "@/lib/grades";
-import type { Entrega, Equipo, SeccionId, Usuario } from "@/lib/modelo";
+import type {
+  Entrega,
+  Equipo,
+  EstadoTareaId,
+  SeccionId,
+  Usuario,
+} from "@/lib/modelo";
 import {
   baseDeIntegrante,
   noParticipo,
@@ -57,6 +65,11 @@ export type FilaEntregaTarea = {
   /** «Evaluar» (por evaluar) o «Corregir» (evaluada): abre la entrega SIN `?ver`. */
   accion: "evaluar" | "corregir" | null;
   accionHref: string | null;
+  /** «Devolver al alumno»: evaluada y con la tarea abierta (D411). */
+  puedeDevolver: boolean;
+  /** Lo que el profe ve, para que devolver o eliminar no pisen un cambio (D413). */
+  enviadaEn: number | null;
+  evaluadaEn: number | null;
 };
 
 const comparaNombre = new Intl.Collator("es", { sensitivity: "base" });
@@ -93,6 +106,7 @@ function filaDeEntrega(
   e: ConId<Entrega>,
   usuarios: ReadonlyMap<string, Usuario>,
   equipos: ReadonlyMap<string, Pick<Equipo, "nombre">>,
+  tarea: { estado?: EstadoTareaId },
 ): FilaEntregaTarea {
   const evaluada = e.estado === "evaluada";
   const grupal = e.tipo === "grupal";
@@ -125,6 +139,10 @@ function filaDeEntrega(
     verHref: `${rutaEntrega(e.id)}?ver`,
     accion: evaluada ? "corregir" : "evaluar",
     accionHref: rutaEntrega(e.id),
+    // Sin el estado de la tarea no se ofrece: devolver en una cerrada no tiene arreglo (D411)
+    puedeDevolver: puedeDevolver(e, tarea),
+    enviadaEn: e.enviadaEn,
+    evaluadaEn: e.evaluacion?.evaluadaEn ?? null,
   };
 }
 
@@ -139,6 +157,8 @@ export function filasEntregasTarea(datos: {
     id: string;
     tipo: "individual" | "grupal";
     secciones: readonly SeccionId[];
+    /** Sin él, ninguna fila ofrece «Devolver» (D411). */
+    estado?: EstadoTareaId;
   };
   entregas: ReadonlyArray<ConId<Entrega>>;
   usuarios: readonly Usuario[];
@@ -150,7 +170,7 @@ export function filasEntregasTarea(datos: {
   const enviadas = datos.entregas.filter(
     (e) => e.tareaId === tarea.id && e.estado !== "borrador",
   );
-  const filas = enviadas.map((e) => filaDeEntrega(e, usuarios, equipos));
+  const filas = enviadas.map((e) => filaDeEntrega(e, usuarios, equipos, tarea));
   const entregaron = new Set(enviadas.map((e) => e.titularId));
 
   const sinEntregar = (
@@ -172,6 +192,9 @@ export function filasEntregasTarea(datos: {
     verHref: null,
     accion: null,
     accionHref: null,
+    puedeDevolver: false,
+    enviadaEn: null,
+    evaluadaEn: null,
   });
 
   if (tarea.tipo === "grupal") {

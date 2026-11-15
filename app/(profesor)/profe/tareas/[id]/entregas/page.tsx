@@ -4,6 +4,10 @@ import { BackLink } from "@/components/sections/shared/back-link";
 import { PageHeader } from "@/components/sections/shared/page-header";
 import { TaskSubmissions } from "@/components/sections/tareas-profe/task-submissions";
 import tareaSeed from "@/data/seed/tarea-identidad-marca.json";
+import {
+  devolverAlAlumno,
+  eliminarEntrega,
+} from "@/lib/acciones/devolver-entrega";
 import { verificarSesion } from "@/lib/dal";
 import {
   entregasTodas,
@@ -21,6 +25,8 @@ import {
 
 type Props = PageProps<"/profe/tareas/[id]/entregas">;
 
+const ACCIONES = { devolver: devolverAlAlumno, eliminar: eliminarEntrega };
+
 // Como el constructor: `cacheComponents` pide un parámetro de ejemplo para validar el shell.
 export function generateStaticParams() {
   return [{ id: tareaSeed.id }, { id: TAREA_GRUPAL_SEED.id }];
@@ -35,8 +41,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 // Notas de una tarea (D398–D401): una fila por alumno o equipo con su estado, puntaje, base y nota,
-// y el camino a corregir la evaluación. La sección viaja en `?seccion=`. Un borrador no tiene
-// entregas: vuelve al constructor.
+// y el camino a corregir la evaluación; «Devolver al alumno» y «Eliminar entrega» en el menú de
+// cada fila (D411–D415). La sección viaja en `?seccion=`. Un borrador no tiene entregas: vuelve
+// al constructor.
 export default async function EntregasTareaPage({
   params,
   searchParams,
@@ -50,7 +57,7 @@ export default async function EntregasTareaPage({
     equiposTodos(),
   ]);
   const filas = filasEntregasTarea({
-    tarea: { id, tipo: t.tipo, secciones: t.secciones },
+    tarea: { id, tipo: t.tipo, secciones: t.secciones, estado: t.estado },
     entregas,
     usuarios,
     equipos,
@@ -75,6 +82,8 @@ export default async function EntregasTareaPage({
         filas={filas}
         secciones={secciones}
         seccionInicial={seccionElegida(pedida, secciones)}
+        acciones={ACCIONES}
+        tareaCerrada={t.estado !== "abierta"}
       />
     </>
   );
