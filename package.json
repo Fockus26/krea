@@ -24,6 +24,7 @@
     "seed:db": "bun scripts/seed-db.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0",
     "aws4fetch": "^1.0.20",
     "better-auth": "^1.7.18",
     "class-variance-authority": "^0.7.1",
