@@ -12,6 +12,7 @@ import {
   TITULAR_DESCONOCIDO,
 } from "@/lib/evaluar-datos";
 import { formatNota, NOTA_MIN } from "@/lib/grades";
+import { esElegible, rutaIdealProfe } from "@/lib/ideal";
 import type {
   Entrega,
   Equipo,
@@ -70,6 +71,8 @@ export type FilaEntregaTarea = {
   /** Lo que el profe ve, para que devolver o eliminar no pisen un cambio (D413). */
   enviadaEn: number | null;
   evaluadaEn: number | null;
+  /** «Marcar como entrega ideal»: solo evaluada con 20 / 20 (D431); `null` si no es elegible. */
+  idealHref: string | null;
 };
 
 const comparaNombre = new Intl.Collator("es", { sensitivity: "base" });
@@ -106,7 +109,7 @@ function filaDeEntrega(
   e: ConId<Entrega>,
   usuarios: ReadonlyMap<string, Usuario>,
   equipos: ReadonlyMap<string, Pick<Equipo, "nombre">>,
-  tarea: { estado?: EstadoTareaId },
+  tarea: { id: string; estado?: EstadoTareaId },
 ): FilaEntregaTarea {
   const evaluada = e.estado === "evaluada";
   const grupal = e.tipo === "grupal";
@@ -143,6 +146,9 @@ function filaDeEntrega(
     puedeDevolver: puedeDevolver(e, tarea),
     enviadaEn: e.enviadaEn,
     evaluadaEn: e.evaluacion?.evaluadaEn ?? null,
+    idealHref: esElegible(e, tarea.id)
+      ? rutaIdealProfe(tarea.id, { entrega: e.id })
+      : null,
   };
 }
 
@@ -195,6 +201,7 @@ export function filasEntregasTarea(datos: {
     puedeDevolver: false,
     enviadaEn: null,
     evaluadaEn: null,
+    idealHref: null,
   });
 
   if (tarea.tipo === "grupal") {

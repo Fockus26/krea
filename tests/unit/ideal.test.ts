@@ -17,6 +17,7 @@ import {
   zIdeal,
 } from "@/lib/ideal";
 import type { Entrega, Evaluacion, Pregunta } from "@/lib/modelo";
+import { filasEntregasTarea } from "@/lib/tareas-profe-entregas";
 
 const T = "t-ideal";
 const PREGUNTAS: Pregunta[] = [
@@ -39,7 +40,7 @@ const evaluacion = (puntaje: number): Evaluacion => ({
 
 const entrega = (
   puntaje: number | null,
-  extra: Partial<Entrega> = {},
+  extra: Partial<Entrega & { id: string }> = {},
 ): Entrega & { id: string } => ({
   id: `${T}__39711001`,
   tareaId: T,
@@ -215,9 +216,9 @@ describe("autor y estado del profe", () => {
         equipos,
       ),
     ).toMatchObject({ tipo: "equipo", nombre: "Los Pixel", tema: "Pixel" });
-    expect(
-      autorDe({ entregaId: null }, null, usuarios, equipos),
-    ).toEqual({ tipo: "profe" });
+    expect(autorDe({ entregaId: null }, null, usuarios, equipos)).toEqual({
+      tipo: "profe",
+    });
   });
 
   test("ninguna, vigente y caducada", () => {
@@ -283,6 +284,31 @@ describe("vista del alumno", () => {
       { tipo: "texto", texto: "b" },
     ]);
     expect(rutasVista(v)).toEqual([]);
+  });
+});
+
+describe("«Marcar como entrega ideal» en la lista de entregas", () => {
+  test("solo las filas evaluadas con 20 / 20", () => {
+    const filas = filasEntregasTarea({
+      tarea: {
+        id: T,
+        tipo: "individual",
+        secciones: ["5A"],
+        estado: "abierta",
+      },
+      entregas: [
+        entrega(20),
+        entrega(18, { id: `${T}__2`, titularId: "2", integrantes: ["2"] }),
+        entrega(null, { id: `${T}__3`, titularId: "3", integrantes: ["3"] }),
+      ],
+      usuarios: [],
+      equipos: [],
+    });
+    expect(filas.map((f) => f.idealHref)).toEqual([
+      rutaIdealProfe(T, { entrega: `${T}__39711001` }),
+      null,
+      null,
+    ]);
   });
 });
 

@@ -1,0 +1,5 @@
+# D433 · Auth · El alumno ve la ideal solo con la tarea cerrada y de su sección · Implemented
+
+**Decision:** la ideal se puede preparar con la tarea abierta, pero un alumno solo la ve cuando la tarea ya no está abierta (`evaluada`) y su sección está en `tarea.secciones` (`alumnoPuedeVer`). Lo decide el servidor en `idealDelAlumno` con la sección del perfil de la sesión; la página `/tareas/[tarea]/ideal` responde 404 en cualquier otro caso y firma las imágenes solo después de autorizar. En `/tareas/[tarea]`, con la tarea cerrada y una ideal vigente, aparece «Ver la entrega ideal» (en cualquier estado del alumno, también si entregó). La página muestra el porqué general, el autor (avatar y nombre; en grupal, el logo y nombre del equipo; o «Respuesta de tus profesores») y, por pregunta, enunciado, respuesta y su porqué; nunca la nota, la base, el puntaje ni los comentarios de la evaluación del autor.
+**Why:** con la tarea abierta la ideal sería la respuesta para copiar.
+**Discarded alternative:** mostrarla también en Mis notas (`/notas/[tarea]`) — `lib/vistas-estudiante.ts` y esa ruta quedaban fuera de esta unidad; se puede sumar después.

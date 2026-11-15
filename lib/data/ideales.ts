@@ -24,13 +24,7 @@ import {
   vigencia,
   zIdeal,
 } from "@/lib/ideal";
-import type {
-  Entrega,
-  Equipo,
-  SeccionId,
-  Tarea,
-  Usuario,
-} from "@/lib/modelo";
+import type { Entrega, Equipo, SeccionId, Tarea, Usuario } from "@/lib/modelo";
 
 type FilaIdeal = typeof ideales.$inferSelect;
 
@@ -39,7 +33,10 @@ export function idealDeFila(f: FilaIdeal): Ideal | null {
 }
 
 /** La ideal guardada de una tarea (valide o no su entrega: eso lo dice `vigencia`). */
-export async function leerIdeal(db: Tx, tareaId: string): Promise<Ideal | null> {
+export async function leerIdeal(
+  db: Tx,
+  tareaId: string,
+): Promise<Ideal | null> {
   const [f] = await db
     .select()
     .from(ideales)

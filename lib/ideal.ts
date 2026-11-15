@@ -43,10 +43,7 @@ export const zIdeal = z
       .record(zIdPregunta, z.string().trim().min(1).max(RESPUESTA_IDEAL_MAX))
       .nullable(),
     nota: z.string().trim().min(1).max(NOTA_IDEAL_MAX),
-    notas: z.record(
-      zIdPregunta,
-      z.string().trim().min(1).max(NOTA_IDEAL_MAX),
-    ),
+    notas: z.record(zIdPregunta, z.string().trim().min(1).max(NOTA_IDEAL_MAX)),
     autorId: z.string().min(1),
     actualizadoEn: zInstante,
   })
@@ -333,7 +330,8 @@ export type VistaIdeal = {
 
 function respuestaDe(r: Respuesta | undefined): RespuestaIdeal | null {
   if (!r) return null;
-  if ("texto" in r) return r.texto.trim() ? { tipo: "texto", texto: r.texto } : null;
+  if ("texto" in r)
+    return r.texto.trim() ? { tipo: "texto", texto: r.texto } : null;
   return { tipo: "imagen", rutas: rutasImagen(r) };
 }
 
@@ -370,6 +368,14 @@ export function vistaIdeal(datos: {
       };
     }),
   };
+}
+
+/** Las respuestas de una entrega en el orden de las preguntas (el formulario del profe). */
+export function respuestasDeEntrega(
+  preguntas: ReadonlyArray<Pick<Pregunta, "id">>,
+  e: Pick<Entrega, "respuestas">,
+): Array<RespuestaIdeal | null> {
+  return preguntas.map((p) => respuestaDe(e.respuestas[p.id]));
 }
 
 /** Rutas de imagen que pinta la vista (las únicas que se firman, D195). */

@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, CircleDashed, Hourglass, Inbox } from "lucide-react";
+import { Check, CircleDashed, Hourglass, Inbox, Star } from "lucide-react";
 import Link from "next/link";
 import { Fragment, useState } from "react";
 import { EmptyState } from "@/components/krea/empty-state";
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/table";
 import { DEVOLVER_SOLO_ABIERTAS } from "@/lib/devolver-entrega";
 import { formatNota } from "@/lib/grades";
+import { ES_IDEAL_TEXTO } from "@/lib/ideal";
 import type { SeccionId } from "@/lib/modelo";
 import {
   ACCION_TEXTO,
@@ -72,6 +73,7 @@ export function TaskSubmissions({
   seccionInicial,
   acciones,
   tareaCerrada = false,
+  idealEntregaId = null,
 }: {
   titulo: string;
   filas: readonly FilaEntregaTarea[];
@@ -82,6 +84,8 @@ export function TaskSubmissions({
   acciones?: AccionesDevolverEntrega;
   /** La tarea ya no está abierta: no hay «Devolver» y se explica (D411). */
   tareaCerrada?: boolean;
+  /** Entrega que hoy es la ideal vigente de la tarea (D430): su fila lleva la etiqueta. */
+  idealEntregaId?: string | null;
 }) {
   const [seccion, setSeccion] = useState(seccionInicial);
   const visibles = filasDeSeccion(filas, seccion);
@@ -166,7 +170,16 @@ export function TaskSubmissions({
               <Fragment key={f.titularId}>
                 <TableRow>
                   <TableCell>
-                    <span className="text-label text-text">{f.nombre}</span>
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="text-label text-text">{f.nombre}</span>
+                      {f.entregaId !== null &&
+                      f.entregaId === idealEntregaId ? (
+                        <Badge variant="acc">
+                          <Star aria-hidden="true" />
+                          {ES_IDEAL_TEXTO}
+                        </Badge>
+                      ) : null}
+                    </span>
                   </TableCell>
                   <TableCell>
                     <EstadoChip estado={f.estado} />
@@ -227,6 +240,7 @@ export function TaskSubmissions({
                           evaluadaEn={f.evaluadaEn}
                           puedeDevolver={f.puedeDevolver}
                           acciones={acciones}
+                          idealHref={f.idealHref}
                         />
                       ) : null}
                     </span>

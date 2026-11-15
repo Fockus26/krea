@@ -14,10 +14,12 @@ import { alumnoActual } from "@/lib/datos/estudiante";
 import type { Ideal } from "@/lib/ideal";
 
 /** La ideal guardada de la tarea, para el profe (vigente o no). */
-export const idealProfe = cache(async (tareaId: string): Promise<Ideal | null> => {
-  await exigirSesion("profesor");
-  return leerIdeal(db(), tareaId);
-});
+export const idealProfe = cache(
+  async (tareaId: string): Promise<Ideal | null> => {
+    await exigirSesion("profesor");
+    return leerIdeal(db(), tareaId);
+  },
+);
 
 /** La ideal que puede ver el alumno de la sesión, o `null` (abierta, otra sección, caducada…). */
 export const idealAlumno = cache(

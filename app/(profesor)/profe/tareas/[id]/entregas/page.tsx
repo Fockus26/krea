@@ -2,19 +2,23 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BackLink } from "@/components/sections/shared/back-link";
 import { PageHeader } from "@/components/sections/shared/page-header";
+import { EstadoIdeal } from "@/components/sections/tareas-profe/estado-ideal";
 import { TaskSubmissions } from "@/components/sections/tareas-profe/task-submissions";
 import tareaSeed from "@/data/seed/tarea-identidad-marca.json";
 import {
   devolverAlAlumno,
   eliminarEntrega,
 } from "@/lib/acciones/devolver-entrega";
+import { quitarIdealTarea } from "@/lib/acciones/ideales";
 import { verificarSesion } from "@/lib/dal";
+import { idealProfe } from "@/lib/datos/ideal";
 import {
   entregasTodas,
   equiposTodos,
   tareaProfe,
   usuariosTodos,
 } from "@/lib/datos/profesor";
+import { estadoIdealProfe } from "@/lib/ideal";
 import { TAREA_GRUPAL_SEED } from "@/lib/seed-firestore";
 import { rutaTarea } from "@/lib/tareas-profe";
 import {
@@ -42,7 +46,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 // Notas de una tarea (D398–D401): una fila por alumno o equipo con su estado, puntaje, base y nota,
 // y el camino a corregir la evaluación; «Devolver al alumno» y «Eliminar entrega» en el menú de
-// cada fila (D411–D415). La sección viaja en `?seccion=`. Un borrador no tiene entregas: vuelve
+// cada fila (D411–D415). Arriba, el estado de la entrega ideal (D430–D435): las filas con 20 / 20
+// suman «Marcar como entrega ideal» al menú. La sección viaja en `?seccion=`. Un borrador no tiene entregas: vuelve
 // al constructor.
 export default async function EntregasTareaPage({
   params,
@@ -51,11 +56,18 @@ export default async function EntregasTareaPage({
   const [{ id }, consulta] = await Promise.all([params, searchParams]);
   const t = await tareaProfe(id);
   if (!t || t.estado === "borrador") notFound();
-  const [entregas, usuarios, equipos] = await Promise.all([
+  const [entregas, usuarios, equipos, ideal] = await Promise.all([
     entregasTodas(),
     usuariosTodos(),
     equiposTodos(),
+    idealProfe(id),
   ]);
+  const estadoIdeal = estadoIdealProfe(
+    ideal,
+    entregas.find((e) => e.id === ideal?.entregaId) ?? null,
+    new Map(usuarios.map((u) => [u.cedula, u])),
+    new Map(equipos.map((e) => [e.id, e])),
+  );
   const filas = filasEntregasTarea({
     tarea: { id, tipo: t.tipo, secciones: t.secciones, estado: t.estado },
     entregas,
@@ -77,6 +89,12 @@ export default async function EntregasTareaPage({
           description="Revisa el puntaje de cada entrega y corrige una evaluación si hace falta."
         />
       </div>
+      <EstadoIdeal
+        tareaId={id}
+        estado={estadoIdeal}
+        tareaAbierta={t.estado === "abierta"}
+        quitar={quitarIdealTarea}
+      />
       <TaskSubmissions
         titulo={t.titulo}
         filas={filas}
@@ -84,6 +102,9 @@ export default async function EntregasTareaPage({
         seccionInicial={seccionElegida(pedida, secciones)}
         acciones={ACCIONES}
         tareaCerrada={t.estado !== "abierta"}
+        idealEntregaId={
+          estadoIdeal.tipo === "vigente" ? estadoIdeal.entregaId : null
+        }
       />
     </>
   );

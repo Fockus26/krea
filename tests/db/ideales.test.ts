@@ -18,12 +18,7 @@ import {
   type Usuario,
 } from "@/lib/modelo";
 import { baseNueva } from "./base";
-import {
-  ponerEntrega,
-  ponerEquipo,
-  ponerTarea,
-  ponerUsuario,
-} from "./docs";
+import { ponerEntrega, ponerEquipo, ponerTarea, ponerUsuario } from "./docs";
 
 let base: Db;
 const db = () => base;
@@ -164,7 +159,10 @@ describe("guardar, reemplazar y quitar (Postgres)", () => {
         PROFE,
         {
           tareaId: T,
-          forma: { tipo: "profe", respuestas: { p1: "Ideal 1", p2: "Ideal 2" } },
+          forma: {
+            tipo: "profe",
+            respuestas: { p1: "Ideal 1", p2: "Ideal 2" },
+          },
           nota: "La nuestra",
           notas: {},
         },
