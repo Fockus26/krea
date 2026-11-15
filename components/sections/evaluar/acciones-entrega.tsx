@@ -4,7 +4,8 @@
 // acciones de …» con un menú) y `botones` (Evaluar entrega, bajo la cabecera). Las dos piden
 // confirmación en un diálogo que dice QUÉ SE PIERDE; si falla, el diálogo sigue abierto con el
 // error (D171). Sin `acciones` (galería) solo se cierra con el toast.
-import { EllipsisVertical, Trash2, Undo2 } from "lucide-react";
+import { EllipsisVertical, Star, Trash2, Undo2 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { ErrorEnPantalla } from "@/components/estados/errores";
@@ -44,6 +45,7 @@ import {
   type ResultadoEliminarEntrega,
   type TitularAccion,
 } from "@/lib/devolver-entrega";
+import { MARCAR_IDEAL_TEXTO } from "@/lib/ideal";
 
 export type AccionesDevolverEntrega = {
   devolver: (e: DevolverEntrega) => Promise<ResultadoDevolver>;
@@ -62,6 +64,7 @@ export function AccionesEntrega({
   acciones,
   variante,
   despuesHref,
+  idealHref,
 }: {
   entregaId: string;
   titular: TitularAccion;
@@ -76,6 +79,8 @@ export function AccionesEntrega({
   variante: "menu" | "botones";
   /** A dónde ir al terminar (Evaluar: la cola); sin él, se queda y se refresca. */
   despuesHref?: string;
+  /** Solo en `menu`: «Marcar como entrega ideal» (20 / 20, tanda 11-14 Z2, D431). */
+  idealHref?: string | null;
 }) {
   const router = useRouter();
   const [abierto, setAbierto] = useState(false);
@@ -161,6 +166,17 @@ export function AccionesEntrega({
               if (desdeMenu.current) e.preventDefault();
             }}
           >
+            {idealHref ? (
+              <>
+                <DropdownMenuItem asChild>
+                  <Link href={idealHref}>
+                    <Star aria-hidden="true" />
+                    {MARCAR_IDEAL_TEXTO}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            ) : null}
             {puedeDevolver ? (
               <>
                 <DropdownMenuItem onSelect={() => abrir("devolver")}>

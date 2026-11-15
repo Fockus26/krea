@@ -9,6 +9,7 @@ import {
   BotonEditarEntrega,
   EntregaEditable,
 } from "@/components/sections/tareas/editar-entrega";
+import { IdealEnlace } from "@/components/sections/tareas/ideal-enlace";
 import { PartesIntegrante } from "@/components/sections/tareas/partes-integrante";
 import { PrizeCard } from "@/components/sections/tareas/prize-card";
 import { RepartoPanel } from "@/components/sections/tareas/reparto-panel";
@@ -30,8 +31,10 @@ import {
   integrantesDe,
   partesDelEquipo,
 } from "@/lib/datos/estudiante";
+import { idealAlumno } from "@/lib/datos/ideal";
 import { urlsFirmadas } from "@/lib/datos/imagenes";
 import { inicialEdicion, puedeEditar } from "@/lib/entregas";
+import { rutaIdealAlumno } from "@/lib/ideal";
 import { imagenesConAlt, respuestaFirmada } from "@/lib/question";
 import { TAREA_GRUPAL_SEED } from "@/lib/seed-firestore";
 import {
@@ -101,6 +104,13 @@ export default async function TareaPage({ params }: Props) {
   ]);
   const reparto = repartoVista({ ...entradaReparto, urls });
 
+  // Entrega ideal (D433): solo con la tarea cerrada; `idealAlumno` vuelve a comprobar sección y vigencia
+  const tareaDoc = datos.tareas.find((t) => t.id === id);
+  const hayIdeal =
+    tareaDoc !== undefined && tareaDoc.estado !== "abierta"
+      ? (await idealAlumno(id)) !== null
+      : false;
+
   return (
     <>
       <BackLink href="/tareas">Tareas</BackLink>
@@ -119,6 +129,7 @@ export default async function TareaPage({ params }: Props) {
           fotoUrl={d.premioFoto ? urls.get(d.premioFoto) : null}
         />
       ) : null}
+      {hayIdeal ? <IdealEnlace href={rutaIdealAlumno(id)} /> : null}
       {d.estado === "lector" && d.capitan ? (
         <CaptainNotice capitan={d.capitan} />
       ) : null}

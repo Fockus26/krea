@@ -43,6 +43,13 @@
       "when": 1794703118149,
       "tag": "0005_analisis_ia",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794705466909,
+      "tag": "0006_entrega_ideal",
+      "breakpoints": true
     }
   ]
 }

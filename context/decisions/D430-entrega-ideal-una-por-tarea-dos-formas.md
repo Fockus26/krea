@@ -1,0 +1,5 @@
+# D430 · Data · Entrega ideal: una por tarea, de un alumno o escrita por el profe · Implemented
+
+**Decision:** tabla `ideales` (PK `tarea_id`): o `entrega_id` (la entrega de un alumno o equipo) o `respuestas` (`jsonb`, un texto por pregunta escrito por el profe), nunca las dos (CHECK `ideales_una_forma` + `zIdeal`). `nota` = porqué general, obligatorio; `notas` = porqué por pregunta, opcional (las vacías no se guardan). Guardar reemplaza (upsert); «Quitar» borra la fila. La lógica pura vive en `lib/ideal.ts`, la persistencia en `lib/data/ideales.ts` y las Server Actions (`guardarIdeal`, `quitarIdealTarea`) en `lib/acciones/ideales.ts`, solo para profesores.
+**Why:** César pidió una ideal por tarea, elegida entre las de 20 o escrita por los profes; una fila por tarea hace imposible tener dos a la vez.
+**Discarded alternative:** una columna `ideal` en `tareas` — mezclaría la ideal con el constructor y con `lib/data/tareas.ts`, que esta ola no puede tocar; copiar las respuestas del alumno a la fila — se desincroniza si el profe corrige o devuelve la entrega.

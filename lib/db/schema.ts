@@ -6,6 +6,7 @@ import { sql } from "drizzle-orm";
 import {
   bigint,
   boolean,
+  check,
   doublePrecision,
   index,
   integer,
@@ -251,6 +252,31 @@ export const partes = pgTable(
   (t) => [
     primaryKey({ columns: [t.entregaId, t.preguntaId] }),
     index("partes_tarea_idx").on(t.tareaId),
+  ],
+);
+
+/**
+ * Entrega ideal de una tarea (D430): una por tarea. O es la entrega de un alumno o equipo
+ * (`entregaId`, con 20 / 20) o la respuesta que escribe el profe (`respuestas`, un texto por
+ * pregunta); nunca las dos. `nota` = por qué es ideal (obligatoria); `notas` = por pregunta. Sin
+ * cascada (D434): si la entrega o la tarea ya no existen, la lectura no la muestra.
+ */
+export const ideales = pgTable(
+  "ideales",
+  {
+    tareaId: text("tarea_id").primaryKey(),
+    entregaId: text("entrega_id"),
+    respuestas: jsonb("respuestas").$type<Record<string, string>>(),
+    nota: text("nota").notNull(),
+    notas: jsonb("notas").$type<Record<string, string>>().notNull(),
+    autorId: text("autor_id").notNull(),
+    actualizadoEn: ms("actualizado_en").notNull(),
+  },
+  (t) => [
+    check(
+      "ideales_una_forma",
+      sql`(${t.entregaId} IS NULL) <> (${t.respuestas} IS NULL)`,
+    ),
   ],
 );
 
