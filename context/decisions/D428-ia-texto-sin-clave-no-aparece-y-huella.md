@@ -1,0 +1,5 @@
+# D428 · Data · Sin `ANTHROPIC_API_KEY` la función no aparece; la huella marca lo desactualizado · Implemented
+
+**Decision:** la clave vive solo en `ANTHROPIC_API_KEY` (servidor; vacía en `.env.example`). La página de Evaluar pregunta en el servidor `iaConfigurada()` (un booleano) y, sin clave, no pasa nada al cliente: no hay bloque «Uso de IA». La acción repite la comprobación (`sin-configurar`). Cada análisis guarda la `huella` (SHA-256 del texto analizado, sin espacios de borde); si el alumno edita la respuesta (D395) la huella deja de coincidir y Evaluar muestra «El estudiante cambió su respuesta después del último análisis (N %).» con «Analizar de nuevo», nunca el número como vigente.
+**Why:** el experimento no debe romper Preview ni local sin la clave; el profe no puede confiar en un número de un texto que ya no es el que ve.
+**Discarded alternative:** mostrar el botón deshabilitado con «no configurado» — ruido para el profe por algo que solo arregla César; borrar el análisis al reenviar — tocaría el flujo de entregas (archivos de otra unidad) y perdería el dato anterior.

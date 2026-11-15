@@ -21,6 +21,8 @@ type QuestionCardReviewProps = {
    * Para nombrarlos con el enunciado, pásales el mismo `titleId`.
    */
   score: React.ReactNode;
+  /** Hueco opcional bajo la respuesta (el % orientativo de IA, D425); nada si falta. */
+  bajoRespuesta?: React.ReactNode;
   /** `id` del enunciado (el `aria-labelledby` del puntaje). Si falta, se genera uno. */
   titleId?: string;
   /** Comentario opcional del profe. Controlado. */
@@ -69,6 +71,7 @@ export function QuestionCardReview({
   valor,
   respuesta,
   score,
+  bajoRespuesta,
   titleId,
   comentario,
   onComentarioChange,
@@ -104,6 +107,7 @@ export function QuestionCardReview({
             ))}
           </ul>
         )}
+        {bajoRespuesta}
         {score}
         <Field
           label={

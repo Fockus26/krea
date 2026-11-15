@@ -36,6 +36,13 @@
       "when": 1794698076490,
       "tag": "0004_grupal_por_partes",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794703118149,
+      "tag": "0005_analisis_ia",
+      "breakpoints": true
     }
   ]
 }

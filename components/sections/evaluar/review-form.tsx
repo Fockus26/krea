@@ -34,6 +34,8 @@ import {
   type GuardarEvaluacion,
   type ResultadoEvaluar,
 } from "@/lib/evaluar-datos";
+import type { EstadoAnalisisIA } from "@/lib/ia-texto";
+import { AnalisisIA, type AnalizarIA } from "./analisis-ia";
 import { ReviewBase, usePublicarBaseChip } from "./review-base";
 import { ReviewIndex } from "./review-index";
 import { ReviewMembers } from "./review-members";
@@ -97,6 +99,7 @@ export function ReviewForm({
   acciones,
   titular,
   integrantes = [],
+  ia,
 }: {
   /** Clave de la entrega (para deshacer). */
   entregaId: string;
@@ -138,6 +141,14 @@ export function ReviewForm({
   titular?: string;
   /** Grupal: integrantes de la entrega para marcar «No participó» (D366); vacío = sin bloque. */
   integrantes?: ReadonlyArray<{ cedula: string; nombre: string }>;
+  /**
+   * % orientativo de IA (D425–D429): el estado de cada respuesta de texto (pregunta → estado) y
+   * la acción. Sin él (sin `ANTHROPIC_API_KEY`, galería) no aparece nada.
+   */
+  ia?: {
+    analizar: AnalizarIA;
+    porPregunta: Readonly<Record<string, EstadoAnalisisIA>>;
+  };
 }) {
   const router = useRouter();
   const [falloRed, setFalloRed] = React.useState(false);
@@ -332,6 +343,17 @@ export function ReviewForm({
                   comentario={comentarios[i] ?? ""}
                   onComentarioChange={(v) => setComentario(i, v)}
                   comentarioAyuda={ayuda}
+                  bajoRespuesta={
+                    ia?.porPregunta[p.id] ? (
+                      <AnalisisIA
+                        entregaId={entregaId}
+                        preguntaId={p.id}
+                        numero={numero}
+                        estado={ia.porPregunta[p.id]}
+                        analizar={ia.analizar}
+                      />
+                    ) : null
+                  }
                   score={
                     <div className="flex flex-col gap-2">
                       {/* Copy del lienzo: "Puntaje · sin puntuar" (el estado también en texto) */}
