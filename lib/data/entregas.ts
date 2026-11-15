@@ -19,7 +19,7 @@ import {
 } from "@/lib/data/operaciones";
 import { leerUsuario } from "@/lib/data/usuarios";
 import { type Db, enSerie, type Tx } from "@/lib/db";
-import { entregas, equipos, tareas, usuarios } from "@/lib/db/schema";
+import { entregas, equipos, partes, tareas, usuarios } from "@/lib/db/schema";
 import {
   armarEntrega,
   carpetaEntrega,
@@ -35,11 +35,13 @@ import {
 import {
   type Entrega,
   type Equipo,
+  type Parte,
   type Tarea,
   type Usuario,
   zEntrega,
   zTarea,
 } from "@/lib/modelo";
+import { permisoParte, repartoCongelado, sinParteDe } from "@/lib/partes";
 
 export type ResultadoEnvio = { ok: true } | { ok: false; error: ErrorEnvio };
 
@@ -51,14 +53,14 @@ export type ResultadoEnvioTx =
   | { ok: true; sinUso?: string[] }
   | { ok: false; error: ErrorEnvio };
 
-type Contexto = {
+export type Contexto = {
   usuario: Usuario;
   tarea: Tarea | null;
   equipo: ({ id: string } & Equipo) | null;
 };
 
 /** Perfil, tarea (solo publicada válida: el alumno no ve borradores) y equipo. */
-async function contexto(
+export async function contexto(
   db: Tx,
   uid: string,
   tareaId: string,
@@ -103,6 +105,10 @@ export async function permisoSubida(
   const c = await contexto(db, uid, tareaId, false);
   if (!c) return { ok: false, error: "no-existe" };
   const p = permisoEntrega(c.usuario, c.tarea, tareaId, c.equipo);
+  // Grupal por partes (D417): el integrante sube la imagen de SU pregunta a la carpeta de la
+  // entrega del equipo, mientras la entrega no salga y su parte no esté aceptada
+  if (!p.ok && p.error === "no-capitan")
+    return permisoSubidaParte(db, c, tareaId, preguntaId, p);
   if (!p.ok) return p;
   const pregunta = c.tarea?.preguntas.find((x) => x.id === preguntaId);
   if (pregunta?.formato !== "imagen") return { ok: false, error: "incompleta" };
@@ -113,6 +119,39 @@ export async function permisoSubida(
   // También para editar una entregada sin evaluar (D395); evaluada, no (salvo completar)
   const m = modoEnvio(existente ?? null, c.tarea?.preguntas ?? []);
   return m.ok ? p : m;
+}
+
+async function permisoSubidaParte(
+  db: Db,
+  c: Contexto,
+  tareaId: string,
+  preguntaId: string,
+  sinPermiso: { ok: false; error: ErrorEntrega },
+): Promise<
+  { ok: true; permiso: PermisoEntrega } | { ok: false; error: ErrorEntrega }
+> {
+  const pp = permisoParte(c.usuario, c.tarea, tareaId, c.equipo);
+  if (!pp.ok || pp.permiso.capitan) return sinPermiso;
+  const pregunta = c.tarea?.preguntas.find((x) => x.id === preguntaId);
+  if (pregunta?.formato !== "imagen") return { ok: false, error: "incompleta" };
+  const entregaId = pp.permiso.entregaId;
+  const [[existente], [parte]] = await enSerie([
+    db
+      .select({ estado: entregas.estado })
+      .from(entregas)
+      .where(eq(entregas.id, entregaId)),
+    db
+      .select({ asignado: partes.asignado, estado: partes.estado })
+      .from(partes)
+      .where(
+        and(eq(partes.entregaId, entregaId), eq(partes.preguntaId, preguntaId)),
+      ),
+  ]);
+  if (repartoCongelado(existente ?? null)) return sinPermiso;
+  if (parte?.asignado !== c.usuario.cedula || parte.estado === "aceptada")
+    return sinPermiso;
+  const { capitan: _, equipoId: __, ...permiso } = pp.permiso;
+  return { ok: true, permiso };
 }
 
 /**
@@ -155,9 +194,10 @@ export async function enviarEnTransaccion(
     if (!m.ok) return m;
     let integrantes: string[] = [];
     let excluidos = new Set<string>();
+    let reparto: Array<Pick<Parte, "asignado" | "estado">> = [];
     // Al editar, los integrantes no se recalculan (D396): no hace falta leer el equipo
     if (p.permiso.tipo === "grupal" && m.modo === "nueva") {
-      const [miembros, otras] = await enSerie([
+      const [miembros, otras, filasPartes] = await enSerie([
         tx
           .select({ cedula: usuarios.cedula })
           .from(usuarios)
@@ -169,7 +209,13 @@ export async function enviarEnTransaccion(
           ),
         // Las demás entregas de la tarea (pocas: una por equipo de la sección)
         tx.select().from(entregas).where(eq(entregas.tareaId, tareaId)),
+        // El reparto del equipo (D420): de él sale `sinParte`
+        tx
+          .select({ asignado: partes.asignado, estado: partes.estado })
+          .from(partes)
+          .where(eq(partes.entregaId, entregaId)),
       ]);
+      reparto = filasPartes;
       integrantes = miembros.map((m) => m.cedula);
       excluidos = enOtraEntrega(
         validas(otras.map(entregaDeFila)).map(({ id, ...entrega }) => ({
@@ -191,6 +237,14 @@ export async function enviarEnTransaccion(
       ahora,
     });
     if (!armada.ok) return armada;
+    // Nueva y grupal (D420): quien tenía pregunta y no entregó ninguna, entre los que reciben la
+    // nota (un alumno que ya está en otra entrega no entra, D221). Al editar o completar se
+    // conserva el de la entrega, como los integrantes (D396).
+    const sinParte =
+      m.modo === "nueva"
+        ? sinParteDe(reparto, armada.entrega.integrantes, uid)
+        : (existente?.sinParte ?? []);
+    const conSinParte = sinParte.length > 0 ? { sinParte } : {};
     // Completar: mismas personas y misma nota (el ranking no cambia), solo las respuestas y el
     // envío. Reenviar: mismas personas (la foto del primer envío, D396), respuestas y envío nuevos.
     const doc: Entrega = zEntrega.parse(
@@ -203,6 +257,7 @@ export async function enviarEnTransaccion(
             ...(existente.evaluacionAnterior !== undefined
               ? { evaluacionAnterior: existente.evaluacionAnterior }
               : {}),
+            ...conSinParte,
           }
         : m.modo === "reenvio" && existente
           ? {
@@ -211,8 +266,9 @@ export async function enviarEnTransaccion(
               ...(existente.titularNombre
                 ? { titularNombre: existente.titularNombre }
                 : {}),
+              ...conSinParte,
             }
-          : armada.entrega,
+          : { ...armada.entrega, ...conSinParte },
     );
     const fila = filaDeEntrega(entregaId, doc);
     await tx

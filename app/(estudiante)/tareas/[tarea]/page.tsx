@@ -9,20 +9,37 @@ import {
   BotonEditarEntrega,
   EntregaEditable,
 } from "@/components/sections/tareas/editar-entrega";
+import { PartesIntegrante } from "@/components/sections/tareas/partes-integrante";
 import { PrizeCard } from "@/components/sections/tareas/prize-card";
+import { RepartoPanel } from "@/components/sections/tareas/reparto-panel";
 import { TaskAnswerForm } from "@/components/sections/tareas/task-answer-form";
 import { TaskDelivered } from "@/components/sections/tareas/task-delivered";
 import { TaskHeader } from "@/components/sections/tareas/task-header";
 import { Card } from "@/components/ui/card";
 import tareaSeed from "@/data/seed/tarea-identidad-marca.json";
 import { enviarEntrega, subirImagenRespuesta } from "@/lib/acciones/entregas";
+import {
+  aceptarParte,
+  asignarParte,
+  devolverParte,
+  entregarParte,
+} from "@/lib/acciones/partes";
 import { verificarSesion } from "@/lib/dal";
-import { datosAlumno, integrantesDe } from "@/lib/datos/estudiante";
+import {
+  datosAlumno,
+  integrantesDe,
+  partesDelEquipo,
+} from "@/lib/datos/estudiante";
 import { urlsFirmadas } from "@/lib/datos/imagenes";
 import { inicialEdicion, puedeEditar } from "@/lib/entregas";
 import { imagenesConAlt, respuestaFirmada } from "@/lib/question";
 import { TAREA_GRUPAL_SEED } from "@/lib/seed-firestore";
-import { entregaVista, RESPUESTA_IMAGEN } from "@/lib/vistas-estudiante";
+import {
+  entregaVista,
+  RESPUESTA_IMAGEN,
+  repartoVista,
+  rutasReparto,
+} from "@/lib/vistas-estudiante";
 
 type Props = PageProps<"/tareas/[tarea]">;
 
@@ -41,6 +58,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 const ACCIONES = { subir: subirImagenRespuesta, enviar: enviarEntrega };
+const ACCIONES_REPARTO = {
+  asignar: asignarParte,
+  aceptar: aceptarParte,
+  devolver: devolverParte,
+};
+const ACCIONES_PARTE = { subir: subirImagenRespuesta, entregar: entregarParte };
 
 // Entrega (HANDOFF §3, W5): el modo sale de la sesión y de los datos (`entregaVista`). Responde
 // quien puede enviar (individual, o el capitán en grupal, D012); el resto del equipo ve las
@@ -54,13 +77,29 @@ export default async function TareaPage({ params }: Props) {
   const d = entregaVista(datos, id, companeros, Date.now());
   if (d.estado === "no-existe") notFound();
 
-  // Respuestas en imagen (ya enviada) y la foto del premio (D265), en una sola pasada
+  // Grupal abierta sin enviar: el reparto del equipo (D422)
+  const entradaReparto = {
+    vista: d,
+    usuario: datos.usuario,
+    equipo: datos.equipo,
+    companeros,
+    partes:
+      d.tipo === "grupal" &&
+      datos.equipo &&
+      (d.estado === "responder" || d.estado === "lector")
+        ? await partesDelEquipo(id, datos.equipo.id)
+        : [],
+  };
+
+  // Respuestas en imagen (ya enviada o del reparto) y la foto del premio (D265), en una pasada
   const urls = await urlsFirmadas([
     ...(d.estado === "entregada"
       ? d.respuestas.flatMap((r) => (r?.tipo === "imagen" ? r.imagenPaths : []))
       : []),
+    ...rutasReparto(entradaReparto),
     ...(d.premioFoto ? [d.premioFoto] : []),
   ]);
+  const reparto = repartoVista({ ...entradaReparto, urls });
 
   return (
     <>
@@ -175,21 +214,48 @@ export default async function TareaPage({ params }: Props) {
             description="Ya no recibe entregas. Si crees que es un error, habla con tu profe."
           />
         </Card>
-      ) : (
-        <TaskAnswerForm
+      ) : reparto?.modo === "integrante" ? (
+        <PartesIntegrante
           tareaId={id}
-          titulo={d.titulo}
           preguntas={d.preguntas}
-          bloqueadaPor={
-            d.estado === "lector"
-              ? (d.capitan?.corto ?? "el capitán")
-              : undefined
-          }
-          autor={d.estado === "responder" ? d.autor : ""}
+          partes={reparto.partes}
+          capitan={reparto.capitan}
+          autor={datos.usuario.nombres.trim().split(/\s+/)[0] ?? ""}
           titular={datos.usuario.cedula}
-          acciones={ACCIONES}
-          entregadaHref="/tareas"
+          acciones={ACCIONES_PARTE}
         />
+      ) : (
+        <>
+          {reparto?.modo === "capitan" ? (
+            <RepartoPanel
+              tareaId={id}
+              filas={reparto.filas}
+              integrantes={reparto.integrantes}
+              acciones={ACCIONES_REPARTO}
+            />
+          ) : null}
+          <TaskAnswerForm
+            // Lo aceptado cambió: se remonta con lo nuevo precargado (D418)
+            key={reparto?.modo === "capitan" ? reparto.version : 0}
+            tareaId={id}
+            titulo={d.titulo}
+            preguntas={d.preguntas}
+            inicial={reparto?.modo === "capitan" ? reparto.inicial : undefined}
+            prioridad={
+              reparto?.modo === "capitan" ? reparto.prioridad : undefined
+            }
+            avisoEnvio={reparto?.modo === "capitan" ? reparto.aviso : null}
+            bloqueadaPor={
+              d.estado === "lector"
+                ? (d.capitan?.corto ?? "el capitán")
+                : undefined
+            }
+            autor={d.estado === "responder" ? d.autor : ""}
+            titular={datos.usuario.cedula}
+            acciones={ACCIONES}
+            entregadaHref="/tareas"
+          />
+        </>
       )}
     </>
   );

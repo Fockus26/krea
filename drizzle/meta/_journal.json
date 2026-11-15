@@ -29,6 +29,13 @@
       "when": 1794605519563,
       "tag": "0003_usuario_contacto",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794698076490,
+      "tag": "0004_grupal_por_partes",
+      "breakpoints": true
     }
   ]
 }

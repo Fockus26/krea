@@ -172,6 +172,13 @@ export type TaskAnswerFormProps = {
    * «Editar entrega» (no si se muestra sola porque hay una edición en la cola).
    */
   edicion?: { alSalir: (enfocar?: boolean) => void; enfocar?: boolean };
+  /**
+   * Grupal por partes (D418): preguntas cuya respuesta de `inicial` gana sobre el borrador del
+   * teléfono (las partes aceptadas). La página remonta el formulario (`key`) cuando cambian.
+   */
+  prioridad?: readonly string[];
+  /** Línea extra de la confirmación: a quién se premarcará «No participó» (D420). */
+  avisoEnvio?: string | null;
 };
 
 /**
@@ -201,6 +208,8 @@ export function TaskAnswerForm({
   acciones,
   entregadaHref,
   edicion,
+  prioridad,
+  avisoEnvio,
 }: TaskAnswerFormProps) {
   const router = useRouter();
   const helpId = useId();
@@ -272,21 +281,25 @@ export function TaskAnswerForm({
     if (enfocar) document.getElementById(titleId)?.focus();
   }, [enfocar, titleId]);
 
-  // Recupera el borrador del dispositivo una vez (gana sobre lo inicial). Un refresco del
-  // servidor trae props nuevas: el ref evita pisar lo que el alumno ya escribió.
+  // Recupera el borrador del dispositivo una vez (gana sobre lo inicial, salvo en las preguntas
+  // de `prioridad`: una parte aceptada, D418). Un refresco del servidor trae props nuevas: el ref
+  // evita pisar lo que el alumno ya escribió.
   const restaurado = useRef(false);
+  const prioritarias = (prioridad ?? []).join("\u0000");
   useEffect(() => {
     if (bloqueadaPor || restaurado.current) return;
     restaurado.current = true;
+    const ganaInicial = new Set(
+      prioritarias ? prioritarias.split("\u0000") : [],
+    );
     try {
       const [t, i, v] = desdeBorrador(
         leerBorrador(window.localStorage.getItem(clave)),
       );
       const formato = new Map(
-        preguntas.map((p) => [
-          p.id,
-          esVarias(p) ? ("varias" as const) : p.formato,
-        ]),
+        preguntas
+          .filter((p) => !ganaInicial.has(p.id))
+          .map((p) => [p.id, esVarias(p) ? ("varias" as const) : p.formato]),
       );
       const soloDe = <T,>(
         m: Record<string, T>,
@@ -308,7 +321,7 @@ export function TaskAnswerForm({
     } catch {
       // Sin almacenamiento (modo privado): se trabaja sin borrador
     }
-  }, [clave, bloqueadaPor, preguntas, acciones]);
+  }, [clave, bloqueadaPor, preguntas, acciones, prioritarias]);
 
   // Borrador automático: 2 s después del último cambio
   useEffect(() => {
@@ -782,7 +795,15 @@ export function TaskAnswerForm({
                     <DialogTitle>
                       {edicion ? "¿Guardar los cambios?" : "¿Entregar ahora?"}
                     </DialogTitle>
-                    <DialogDescription>{AVISO_EDITAR}</DialogDescription>
+                    {/* El aviso del reparto va en la descripción: el lector lo anuncia al abrir */}
+                    <DialogDescription>
+                      {AVISO_EDITAR}
+                      {avisoEnvio && !edicion ? (
+                        <span className="mt-2 block text-text">
+                          {avisoEnvio}
+                        </span>
+                      ) : null}
+                    </DialogDescription>
                   </DialogHeader>
                   <DialogFooter>
                     <DialogClose asChild>

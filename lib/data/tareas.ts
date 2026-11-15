@@ -18,6 +18,7 @@ import {
   leerOperacionEnTx,
   registrarOperacionEnTx,
 } from "@/lib/data/operaciones";
+import { borrarPartesDeTarea } from "@/lib/data/partes";
 import { escribirRanking, leerSeccion } from "@/lib/data/ranking";
 import { usuarioDeFila } from "@/lib/data/usuarios";
 import { type Db, enSerie, type Tx } from "@/lib/db";
@@ -151,6 +152,8 @@ export async function eliminarTareaEnTransaccion(
     const fotoPremio = t?.premioFoto ?? null;
     const datos = [];
     for (const s of plan.secciones) datos.push(await leerSeccion(tx, s));
+    // El reparto de sus grupales se va con ella (D421), y con él sus imágenes
+    const dePartes = await borrarPartesDeTarea(tx, id);
     await tx.delete(entregas).where(eq(entregas.tareaId, id));
     await tx.delete(tareas).where(eq(tareas.id, id));
     for (const [i, s] of plan.secciones.entries()) {
@@ -168,7 +171,13 @@ export async function eliminarTareaEnTransaccion(
     }
     return {
       resultado: { ok: true, id } as ResultadoTarea,
-      imagenes: fotoPremio ? [...plan.imagenes, fotoPremio] : plan.imagenes,
+      imagenes: [
+        ...new Set([
+          ...plan.imagenes,
+          ...dePartes,
+          ...(fotoPremio ? [fotoPremio] : []),
+        ]),
+      ],
     };
   });
 }

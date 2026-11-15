@@ -16,18 +16,21 @@ import {
   tareaDeFila,
   validas,
 } from "@/lib/data/filas";
+import { leerPartes } from "@/lib/data/partes";
 import { leerRanking } from "@/lib/data/ranking";
 import { leerUsuario, usuarioDeFila } from "@/lib/data/usuarios";
 import { db } from "@/lib/datos/comun";
 import { urlsFirmadas } from "@/lib/datos/imagenes";
 import { ajustes, entregas, equipos, tareas, usuarios } from "@/lib/db/schema";
-import type {
-  Entrega,
-  Equipo,
-  RankingSeccion,
-  SeccionId,
-  Tarea,
-  Usuario,
+import {
+  type Entrega,
+  type Equipo,
+  idEntrega,
+  type Parte,
+  type RankingSeccion,
+  type SeccionId,
+  type Tarea,
+  type Usuario,
 } from "@/lib/modelo";
 import { type InfoEquipos, infoDeEquipos } from "@/lib/ranking-en-vivo";
 import type { Sesion } from "@/lib/sesion";
@@ -91,6 +94,15 @@ export const integrantesDe = cache(
       );
     return validas(filas.map(usuarioDeFila));
   },
+);
+
+/**
+ * El reparto de una grupal de SU equipo (D416). Las respuestas de cada parte las filtra la vista
+ * (`partesDeIntegrante`): al integrante solo le llega la suya (D423).
+ */
+export const partesDelEquipo = cache(
+  async (tareaId: string, equipoId: string): Promise<Parte[]> =>
+    leerPartes(db(), idEntrega(tareaId, equipoId)),
 );
 
 /** Todo lo del alumno que pintan Inicio, Notas y Detalle. */

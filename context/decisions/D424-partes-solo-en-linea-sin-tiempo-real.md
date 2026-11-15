@@ -1,0 +1,5 @@
+# D424 · Data · Las acciones de partes son solo en línea y sin tiempo real: «Actualizar» · Implemented
+
+**Decision:** asignar, entregar, aceptar y devolver no entran en la cola sin conexión (D292): sin red, el cliente avisa con el copy de `red` y no hace nada. El envío del capitán sigue yendo por la cola como siempre y calcula `sinParte` en el servidor. No hay sondeo nuevo: el capitán ve lo entregado al tocar «Actualizar» (`router.refresh()`) o al recargar, y el panel lo dice. El texto de una parte se guarda en el teléfono mientras se escribe (2 s, como D196) y se borra al entregarla. Avisos push al capitán cuando le entregan: fuera de alcance (pendiente).
+**Why:** cada acción depende del estado vivo de la parte (un capitán puede reasignar mientras el integrante escribe); encolarlas produciría conflictos difíciles de explicar a un alumno.
+**Discarded alternative:** encolar «Entregar al capitán» — si al volver la red la pregunta ya es de otro, el rechazo llegaría tarde y sin contexto; sondeo cada N segundos — gasto de servidor para algo que el capitán mira pocas veces.

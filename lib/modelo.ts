@@ -451,8 +451,25 @@ export const zEntrega = z
      * «Deshacer» la devuelva (D205). Ausente si nunca se evaluó desde la app o ya se deshizo.
      */
     evaluacionAnterior: zEvaluacion.nullable().optional(),
+    /**
+     * Solo en grupales repartidas por partes (D416): integrantes que tenían al menos una pregunta
+     * asignada y no entregaron ninguna al capitán. Lo calcula el servidor al enviar; Evaluar lo
+     * trae premarcado como «No participó» (D364) y el profe lo puede desmarcar. Opcional: las
+     * entregas de antes y las grupales sin reparto no lo traen; se escribe solo si hay alguno.
+     */
+    sinParte: z.array(zCedula).optional(),
   })
   .superRefine((e, ctx) => {
+    if (
+      e.sinParte &&
+      (e.tipo !== "grupal" ||
+        e.sinParte.some((c) => !e.integrantes.includes(c)))
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "«Sin parte» va solo en grupales y entre sus integrantes",
+      });
+    }
     if ((e.estado === "evaluada") !== (e.evaluacion !== null)) {
       ctx.addIssue({
         code: "custom",
@@ -470,6 +487,39 @@ export const zEntrega = z
     }
   });
 export type Entrega = z.infer<typeof zEntrega>;
+
+/* ---------- partes de una grupal (D416) ---------- */
+
+/**
+ * Estado de una pregunta que el capitán repartió (D417): `asignada` (aún sin entregar),
+ * `entregada` al capitán, `aceptada` por él o `devuelta` para rehacerla.
+ */
+export const ESTADOS_PARTE = [
+  "asignada",
+  "entregada",
+  "aceptada",
+  "devuelta",
+] as const;
+export type EstadoParteId = (typeof ESTADOS_PARTE)[number];
+
+/**
+ * Una pregunta de una grupal asignada a un integrante (D416). Solo hay parte si la pregunta está
+ * asignada: sin parte, la responde el capitán. `entregaId` = `idEntrega(tareaId, equipoId)`, exista
+ * o no la entrega todavía.
+ */
+export const zParte = z.object({
+  entregaId: z.string().min(1),
+  preguntaId: z.string().min(1).max(40),
+  tareaId: z.string().min(1),
+  equipoId: z.string().min(1),
+  asignado: zCedula,
+  estado: z.enum(ESTADOS_PARTE),
+  /** Lo que entregó el integrante; `null` mientras no haya entregado nada. */
+  respuesta: zRespuesta.nullable(),
+  entregadaEn: zInstante.nullable(),
+  actualizadoEn: zInstante,
+});
+export type Parte = z.infer<typeof zParte>;
 
 /* ---------- ajustes ---------- */
 

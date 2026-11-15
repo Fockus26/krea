@@ -9,6 +9,7 @@
 import { and, eq, inArray, ne } from "drizzle-orm";
 import { idNuevo } from "@/lib/data/ajustes";
 import { equipoDeFila, filaDeEquipo } from "@/lib/data/filas";
+import { borrarPartesDeEquipo } from "@/lib/data/partes";
 import { escribirRanking, leerSeccion } from "@/lib/data/ranking";
 import { leerUsuarioParaActualizar } from "@/lib/data/usuarios";
 import type { Db, Tx } from "@/lib/db";
@@ -292,6 +293,8 @@ export async function eliminarEquipoEnTransaccion(
     const borrados = new Set(borrar.map((a) => a.id));
     if (borrados.size)
       await tx.delete(ajustes).where(inArray(ajustes.id, [...borrados]));
+    // El reparto de sus grupales sin enviar se va con él (D421)
+    await borrarPartesDeEquipo(tx, equipoId);
     await tx.delete(equipos).where(eq(equipos.id, equipoId));
 
     const sinEl = conCambios(datos, cambios, ahora);

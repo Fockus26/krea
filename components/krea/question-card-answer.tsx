@@ -1,5 +1,5 @@
 import { Image as ImageIcon, Lock, Type } from "lucide-react";
-import { useId } from "react";
+import { type ReactNode, useId } from "react";
 import {
   ImageUpload,
   type ImageUploadProps,
@@ -24,7 +24,11 @@ type QuestionCardAnswerBase = {
    * "Solo {Nombre} puede responder." con candado y ningún campo.
    */
   bloqueadaPor?: string;
+  /** Otro motivo de bloqueo, con su texto (una parte ya aceptada, D422): mismo candado. */
+  bloqueo?: string;
   level?: 2 | 3 | 4;
+  /** Debajo del campo, dentro de la tarjeta: estado y acción de una parte (D422). */
+  children?: ReactNode;
 };
 
 type QuestionCardAnswerProps = QuestionCardAnswerBase &
@@ -52,7 +56,8 @@ type QuestionCardAnswerProps = QuestionCardAnswerBase &
  * El campo se nombra con el enunciado (`aria-labelledby`).
  */
 export function QuestionCardAnswer(props: QuestionCardAnswerProps) {
-  const { numero, enunciado, valor, bloqueadaPor, level, formato } = props;
+  const { numero, enunciado, valor, bloqueadaPor, bloqueo, level, formato } =
+    props;
   const titleId = useId();
   const helpId = useId();
   const FormatIcon = formato === "texto" ? Type : ImageIcon;
@@ -75,10 +80,10 @@ export function QuestionCardAnswer(props: QuestionCardAnswerProps) {
               ? "Imagen"
               : "Imágenes"}
         </Badge>
-        {bloqueadaPor ? (
+        {bloqueo || bloqueadaPor ? (
           <p className="text-small-b flex icono-linea gap-2 rounded-nav bg-surface-2 px-3.5 py-3 text-text-2">
             <Lock aria-hidden="true" className="size-4 shrink-0" />
-            {lockedMessage(bloqueadaPor)}
+            {bloqueo ?? lockedMessage(bloqueadaPor ?? "")}
           </p>
         ) : props.formato === "texto" ? (
           <Textarea
@@ -107,6 +112,7 @@ export function QuestionCardAnswer(props: QuestionCardAnswerProps) {
             {props.agregar ? <ImageUpload {...props.agregar} /> : null}
           </fieldset>
         )}
+        {props.children}
       </Card>
     </li>
   );
