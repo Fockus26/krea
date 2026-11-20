@@ -52,3 +52,8 @@
 - Eliminar equipo deja en B2 las imágenes de sus partes (D421).
 - Galería `app/secciones/tareas`: faltan los estados del reparto.
 - Ola 4 (experimentales): `analisis_ia` (Z1) e `ideales` (Z2) no se borran en cascada al eliminar entrega o tarea (toleran al leer). Si los experimentales se quedan, sumar la limpieza a `eliminarEntregaEnTransaccion` y `eliminarTareaEnTransaccion`.
+- (2026-11-20, visto por Q3) `lib/data/puntaje-final.ts` arma la evaluación con `comentarios: {}`: poner el puntaje final borra los comentarios y el comentario general. Ya pasaba antes. Medio.
+- (2026-11-20, visto por Q1) `usePresenciaAlumnos`: el `useMemo` no depende del `tic`, las entradas no caducan por reloj sin respuesta nueva. Bajo.
+- (2026-11-20, visto por Q1) 24 archivos atrapan errores de Server Actions con su propio try/catch: un `UnrecognizedActionError` no llega a `error.tsx` (lo cubre Skew Protection). Bajo.
+- (2026-11-20, D457, Q4) Costura: `app/(profesor)/profe/evaluar/[entrega]/page.tsx:159-160` aún llama `puedeDevolver` sin `ahora`: con la tarea vencida ofrece «Devolver» y el servidor responde `tarea-cerrada`. Pasar `Date.now()` y `tareaCerrada={estadoEfectivo(tarea, ahora) !== "abierta"}` tras mergear Q2/Q3/Q4. Medio → va en la ola 2.
+- (2026-11-20, Q4) `bun run lint` falla en main por formato en `app/layout.tsx` y `tests/unit/instalar-pwa.test.ts`. Bajo.
