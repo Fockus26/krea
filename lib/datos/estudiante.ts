@@ -19,7 +19,7 @@ import {
 import { leerPartes } from "@/lib/data/partes";
 import { leerRanking } from "@/lib/data/ranking";
 import { leerUsuario, usuarioDeFila } from "@/lib/data/usuarios";
-import { db } from "@/lib/datos/comun";
+import { db, opcional } from "@/lib/datos/comun";
 import { urlsFirmadas } from "@/lib/datos/imagenes";
 import { ajustes, entregas, equipos, tareas, usuarios } from "@/lib/db/schema";
 import {
@@ -98,11 +98,16 @@ export const integrantesDe = cache(
 
 /**
  * El reparto de una grupal de SU equipo (D416). Las respuestas de cada parte las filtra la vista
- * (`partesDeIntegrante`): al integrante solo le llega la suya (D423).
+ * (`partesDeIntegrante`): al integrante solo le llega la suya (D423). Si la lectura falla, sin
+ * reparto: el formulario normal sigue (D436).
  */
 export const partesDelEquipo = cache(
   async (tareaId: string, equipoId: string): Promise<Parte[]> =>
-    leerPartes(db(), idEntrega(tareaId, equipoId)),
+    opcional(
+      "partes del equipo",
+      () => leerPartes(db(), idEntrega(tareaId, equipoId)),
+      [],
+    ),
 );
 
 /** Todo lo del alumno que pintan Inicio, Notas y Detalle. */
