@@ -38,9 +38,17 @@ export const rutaEntregasTarea = (id: string) =>
 
 /* ---------- Lista ---------- */
 
-export type EstadoTareaProfe = "borrador" | "abierta" | "evaluada";
+/**
+ * Estado EFECTIVO de la tarjeta (D451): el servidor lo calcula con `ahora` (`estadoEfectivo`); una
+ * abierta vencida o cerrada a mano llega `cerrada`.
+ */
+export type EstadoTareaProfe = "borrador" | "abierta" | "cerrada";
 export type TipoTareaProfe = "individual" | "grupal";
-export type FiltroEstado = "todas" | EstadoTareaProfe;
+/**
+ * Filtros de la lista (D454): los tres estados más «Evaluadas», que no es un estado sino que todas
+ * sus entregas tienen nota (`evaluadaToda`): una tarea puede salir en dos filtros.
+ */
+export type FiltroEstado = "todas" | EstadoTareaProfe | "evaluada";
 
 /** Avance de una tarea publicada: entregas recibidas o entregas evaluadas. */
 export type AvanceTarea =
@@ -66,6 +74,13 @@ export type TareaProfe = {
   avance: AvanceTarea | null;
   /** Entregas en la cola "Por evaluar" de esta tarea. */
   porEvaluar: number;
+  /**
+   * Al menos una entrega enviada y todas con nota (D454), abierta o cerrada: el filtro
+   * «Evaluadas» y el chip «Evaluada». Ausente = no.
+   */
+  evaluadaToda?: boolean;
+  /** Cerrada con prórrogas sin vencer (D452): «Prórrogas abiertas: N». Ausente = 0. */
+  prorrogas?: number;
   /** Lo que se pierde al eliminarla; ausente en la vista previa (no lo sabe). */
   perdida?: PerdidaEliminar;
 };
@@ -75,6 +90,8 @@ export const FILTROS_ESTADO: ReadonlyArray<readonly [FiltroEstado, string]> = [
   ["todas", "Todas"],
   ["borrador", "Borradores"],
   ["abierta", "Abiertas"],
+  // PROVISIONAL (fila 255): «Cerradas» es nuevo (D454)
+  ["cerrada", "Cerradas"],
   ["evaluada", "Evaluadas"],
 ];
 
@@ -82,13 +99,15 @@ export function esFiltroEstado(valor: string): valor is FiltroEstado {
   return FILTROS_ESTADO.some(([k]) => k === valor);
 }
 
+/** Cerradas = vencidas o cerradas a mano; Evaluadas = todas sus entregas con nota (D454). */
 export function filtrarTareas(
   tareas: readonly TareaProfe[],
   filtro: FiltroEstado,
 ): TareaProfe[] {
-  return filtro === "todas"
-    ? [...tareas]
-    : tareas.filter((t) => t.estado === filtro);
+  if (filtro === "todas") return [...tareas];
+  if (filtro === "evaluada")
+    return tareas.filter((t) => t.evaluadaToda === true);
+  return tareas.filter((t) => t.estado === filtro);
 }
 
 /** Frase estable de la región viva del filtro (D099): sin cifras sueltas. PROVISIONAL (fila 89). */
@@ -100,6 +119,9 @@ export function filtroFrase(filtro: FiltroEstado): string {
       return "Mostrando los borradores";
     case "abierta":
       return "Mostrando las tareas abiertas";
+    // PROVISIONAL (fila 255)
+    case "cerrada":
+      return "Mostrando las tareas cerradas";
     case "evaluada":
       return "Mostrando las tareas evaluadas";
   }
@@ -114,6 +136,9 @@ export function filtroVacio(filtro: FiltroEstado): string {
       return "No hay borradores";
     case "abierta":
       return "No hay tareas abiertas";
+    // PROVISIONAL (fila 255)
+    case "cerrada":
+      return "No hay tareas cerradas";
     case "evaluada":
       return "No hay tareas evaluadas";
   }
@@ -121,12 +146,12 @@ export function filtroVacio(filtro: FiltroEstado): string {
 
 const ORDEN_ESTADO: Record<EstadoTareaProfe, number> = {
   abierta: 0,
-  evaluada: 1,
+  cerrada: 1,
   borrador: 2,
 };
 
 /**
- * Orden del lienzo: abiertas (la que vence antes primero), evaluadas (la más reciente primero) y
+ * Orden del lienzo: abiertas (la que vence antes primero), cerradas (la más reciente primero) y
  * borradores al final.
  */
 export function ordenarTareas(tareas: readonly TareaProfe[]): TareaProfe[] {
@@ -137,7 +162,7 @@ export function ordenarTareas(tareas: readonly TareaProfe[]): TareaProfe[] {
     const vb = claveVencimiento(b.fecha, b.hora);
     if (!va || !vb) return va ? -1 : vb ? 1 : 0;
     // Mismo día: la de hora más temprana vence antes (D352)
-    const [x, y] = a.estado === "evaluada" ? [vb, va] : [va, vb];
+    const [x, y] = a.estado === "cerrada" ? [vb, va] : [va, vb];
     return x < y ? -1 : x > y ? 1 : 0;
   });
 }
@@ -174,14 +199,17 @@ export function avanceTexto(avance: AvanceTarea, tipo: TipoTareaProfe): string {
 }
 
 /**
- * Meta de la tarjeta: "8 preguntas · vence 30/10/2026 · 12 de 69 evaluadas". Las evaluadas no
- * llevan fecha (lienzo); un borrador sin fecha dice "sin fecha" y, si es grupal sin premio,
- * "premio por definir". Una cuya fecha y hora ya pasaron en `ahora` dice "venció" (D357;
- * PROVISIONAL, fila 89).
+ * Meta de la tarjeta: "8 preguntas · vence 30/10/2026 · 12 de 69 evaluadas". Las cerradas no
+ * llevan fecha (lienzo, las evaluadas de antes) y, con prórrogas vigentes, dicen cuántas (D452);
+ * un borrador sin fecha dice "sin fecha" y, si es grupal sin premio, "premio por definir". Una
+ * cuya fecha y hora ya pasaron en `ahora` dice "venció" (D357; PROVISIONAL, fila 89).
  */
 export function metaTarea(t: TareaProfe, ahora: number): string {
   const partes = [preguntasTexto(t.preguntas)];
-  if (t.estado !== "evaluada") {
+  if (t.estado === "cerrada" && t.prorrogas) {
+    partes.push(prorrogasTexto(t.prorrogas));
+  }
+  if (t.estado !== "cerrada") {
     if (t.fecha === null) partes.push("sin fecha");
     else
       partes.push(
@@ -195,6 +223,11 @@ export function metaTarea(t: TareaProfe, ahora: number): string {
     partes.push("premio por definir");
   }
   return partes.join(" · ");
+}
+
+/** «prórrogas abiertas: 2» en la meta de una cerrada (D452). PROVISIONAL (fila 256). */
+export function prorrogasTexto(n: number): string {
+  return `prórrogas abiertas: ${n}`;
 }
 
 /* Vista Lista (D313). PROVISIONAL (CONTENT_CHECKLIST fila 164) */
@@ -211,9 +244,14 @@ export function fechaTareaTexto(t: TareaProfe, ahora: number): string {
   return `${vencida(t.fecha, t.hora, ahora) ? "Venció" : "Vence"} ${texto}`;
 }
 
-/** Barra de evaluadas (máx. 320): solo en abiertas con avance de evaluación (lienzo). */
+/**
+ * Barra de evaluadas (máx. 320): en abiertas con avance de evaluación (lienzo) y en cerradas que
+ * aún tienen entregas por evaluar (al vencer se sigue evaluando, D451).
+ */
 export function barraEvaluadas(t: TareaProfe): number | null {
-  if (t.estado !== "abierta" || t.avance?.tipo !== "evaluadas") return null;
+  const enCurso =
+    t.estado === "abierta" || (t.estado === "cerrada" && t.porEvaluar > 0);
+  if (!enCurso || t.avance?.tipo !== "evaluadas") return null;
   return percent(t.avance.hechas, t.avance.total);
 }
 
@@ -654,6 +692,8 @@ export type ErrorTarea =
   | "sin-empate"
   /** Una sección elegida ya no está en el catálogo (D323). */
   | "seccion"
+  /** Otro profe la cambió mientras se reabría (D455): la vista está vieja. */
+  | "cambio"
   | "red";
 
 /** Copy de los errores. PLACEHOLDER de copy (CONTENT_CHECKLIST fila 131). */
@@ -675,6 +715,9 @@ export function mensajeErrorTarea(error: ErrorTarea): string {
       return "Ya no hay empate en esta sección: recarga la página.";
     case "seccion":
       return SECCION_NO_EXISTE;
+    // PROVISIONAL (fila 258)
+    case "cambio":
+      return "La tarea cambió mientras la reabrías: revisa cómo quedó e inténtalo otra vez.";
     case "red":
       return "No se pudo conectar. Revisa tu conexión e inténtalo otra vez.";
   }

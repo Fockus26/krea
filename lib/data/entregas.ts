@@ -99,16 +99,18 @@ export async function permisoSubida(
   uid: string,
   tareaId: string,
   preguntaId: string,
+  /** Instante de la subida: vencida sin prórroga, ya no (D451). */
+  ahora: number,
 ): Promise<
   { ok: true; permiso: PermisoEntrega } | { ok: false; error: ErrorEntrega }
 > {
   const c = await contexto(db, uid, tareaId, false);
   if (!c) return { ok: false, error: "no-existe" };
-  const p = permisoEntrega(c.usuario, c.tarea, tareaId, c.equipo);
+  const p = permisoEntrega(c.usuario, c.tarea, tareaId, c.equipo, ahora);
   // Grupal por partes (D417): el integrante sube la imagen de SU pregunta a la carpeta de la
   // entrega del equipo, mientras la entrega no salga y su parte no esté aceptada
   if (!p.ok && p.error === "no-capitan")
-    return permisoSubidaParte(db, c, tareaId, preguntaId, p);
+    return permisoSubidaParte(db, c, tareaId, preguntaId, p, ahora);
   if (!p.ok) return p;
   const pregunta = c.tarea?.preguntas.find((x) => x.id === preguntaId);
   if (pregunta?.formato !== "imagen") return { ok: false, error: "incompleta" };
@@ -127,10 +129,11 @@ async function permisoSubidaParte(
   tareaId: string,
   preguntaId: string,
   sinPermiso: { ok: false; error: ErrorEntrega },
+  ahora: number,
 ): Promise<
   { ok: true; permiso: PermisoEntrega } | { ok: false; error: ErrorEntrega }
 > {
-  const pp = permisoParte(c.usuario, c.tarea, tareaId, c.equipo);
+  const pp = permisoParte(c.usuario, c.tarea, tareaId, c.equipo, ahora);
   if (!pp.ok || pp.permiso.capitan) return sinPermiso;
   const pregunta = c.tarea?.preguntas.find((x) => x.id === preguntaId);
   if (pregunta?.formato !== "imagen") return { ok: false, error: "incompleta" };
@@ -176,7 +179,7 @@ export async function enviarEnTransaccion(
     if (op?.previa.tipo === "repetida") return { ok: true };
     if (op?.previa.tipo === "ajena") return { ok: false, error: "incompleta" };
     if (!c) return { ok: false, error: "no-existe" };
-    const p = permisoEntrega(c.usuario, c.tarea, tareaId, c.equipo);
+    const p = permisoEntrega(c.usuario, c.tarea, tareaId, c.equipo, ahora);
     if (!p.ok) return p;
     if (!c.tarea) return { ok: false, error: "no-existe" };
     const entregaId = p.permiso.entregaId;

@@ -5,7 +5,7 @@
 // Guardar, cerrar y decidir el premio no cambian puntos: solo una entrega evaluada aporta al
 // ranking (D007) y un premio no da puntos. Eliminar sí (se van sus notas): recalcula en la
 // misma transacción (D206, D242). Cada operación bloquea la fila de la tarea (`FOR UPDATE`).
-import { eq, sql } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { idNuevo } from "@/lib/data/ajustes";
 import {
   entregaDeFila,
@@ -23,12 +23,18 @@ import { escribirRanking, leerSeccion } from "@/lib/data/ranking";
 import { usuarioDeFila } from "@/lib/data/usuarios";
 import { type Db, enSerie, type Tx } from "@/lib/db";
 import { entregas, equipos, tareas, usuarios } from "@/lib/db/schema";
+import { cerradaParaTodos } from "@/lib/estado-tarea";
 import {
   type DecisionPremio,
   idDeDecision,
   type SeccionId,
 } from "@/lib/modelo";
 import { debeAvisar, type TareaPublicada } from "@/lib/push";
+import {
+  armarReabrir,
+  type ReabrirTarea,
+  titularesValidos,
+} from "@/lib/reabrir-tarea";
 import {
   armarPremio,
   armarTarea,
@@ -182,7 +188,10 @@ export async function eliminarTareaEnTransaccion(
   });
 }
 
-/** Cierra una tarea abierta (`evaluada`, D202): deja de recibir entregas (D196). */
+/**
+ * Cierra una tarea abierta (`evaluada`, D202): deja de recibir entregas (D196). Cierra para todos:
+ * también se van las prórrogas (D452).
+ */
 export async function cerrarTareaEnTransaccion(
   db: Db,
   id: string,
@@ -195,9 +204,54 @@ export async function cerrarTareaEnTransaccion(
     if (!puedeCerrar(t)) return { ok: false, error: "cerrada" };
     await tx
       .update(tareas)
-      .set({ estado: "evaluada", actualizadoEn: ahora })
+      .set({ estado: "evaluada", prorrogas: null, actualizadoEn: ahora })
       .where(eq(tareas.id, id));
     return { ok: true, id };
+  });
+}
+
+/**
+ * Reabre una tarea cerrada (D455, D456) en UNA transacción: bloquea la tarea, lee (para algunos)
+ * a quiénes se les puede dar prórroga y escribe lo que arma `armarReabrir`. Reabrir no cambia
+ * puntos (D007): no se recalcula el ranking.
+ */
+export async function reabrirTareaEnTransaccion(
+  db: Db,
+  envio: ReabrirTarea,
+  hoy: string,
+  ahora: number,
+): Promise<ResultadoTarea> {
+  return db.transaction(async (tx): Promise<ResultadoTarea> => {
+    const t = await tareaParaActualizar(tx, envio.id);
+    if (t === undefined) return { ok: false, error: "no-existe" };
+    if (t === null) return { ok: false, error: "invalida" };
+    let validos = new Set<string>();
+    if (envio.para === "algunos" && t.estado !== "borrador") {
+      const [usrs, eqs] = await enSerie([
+        tx
+          .select({
+            cedula: usuarios.cedula,
+            rol: usuarios.rol,
+            seccion: usuarios.seccion,
+          })
+          .from(usuarios)
+          .where(inArray(usuarios.seccion, t.secciones)),
+        tx
+          .select({ id: equipos.id, seccion: equipos.seccion })
+          .from(equipos)
+          .where(inArray(equipos.seccion, t.secciones)),
+      ]);
+      validos = titularesValidos(t, usrs, eqs);
+    }
+    const r = armarReabrir({ previa: t, envio, validos, hoy, ahora });
+    if (!r.ok) return r;
+    if (r.cambios) {
+      await tx
+        .update(tareas)
+        .set({ ...r.cambios, actualizadoEn: ahora })
+        .where(eq(tareas.id, envio.id));
+    }
+    return { ok: true, id: envio.id };
   });
 }
 
@@ -217,9 +271,10 @@ export async function decidirPremioEnTransaccion(
     const t = await tareaParaActualizar(tx, tareaId);
     if (t === undefined) return { ok: false, error: "no-existe" };
     if (t === null) return { ok: false, error: "invalida" };
+    // El premio se decide con la tarea cerrada para todos (D453): vencida sin prórrogas o a mano
     if (
       !t.premio ||
-      t.estado !== "evaluada" ||
+      !cerradaParaTodos(t, ahora) ||
       !t.secciones.includes(seccion)
     ) {
       return { ok: false, error: "sin-empate" };
@@ -238,6 +293,7 @@ export async function decidirPremioEnTransaccion(
       validas(eqs.map(equipoDeFila)),
       validas(ents.map(entregaDeFila)).map(({ id: _, ...e }) => e),
       validas(usrs.map(usuarioDeFila)),
+      ahora,
     );
     if (actual.tipo !== "empate") return { ok: false, error: "sin-empate" };
     const id = idDeDecision(decision);
@@ -274,7 +330,8 @@ export async function guardarPremioEnTransaccion(
     const t = await tareaParaActualizar(tx, tareaId);
     if (t === undefined) return { ok: false, error: "no-existe" };
     if (t === null) return { ok: false, error: "invalida" };
-    const r = armarPremio(t, premio, foto);
+    const r = armarPremio(t, premio, foto, ahora);
+
     if (!r.ok) return r;
     await tx
       .update(tareas)

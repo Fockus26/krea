@@ -20,6 +20,7 @@ import type {
   Apariencia,
   DecisionesPremio,
   Evaluacion,
+  Prorrogas,
   RankingSeccion,
   Respuesta,
 } from "@/lib/modelo";
@@ -193,6 +194,11 @@ export const tareas = pgTable("tareas", {
   autorId: text("autor_id"),
   actualizadoEn: ms("actualizado_en").notNull(),
   decisionesPremio: jsonb("decisiones_premio").$type<DecisionesPremio>(),
+  /**
+   * Reabierta para algunos (D452): `{ [titularId]: { fecha, hora } }`, cédula en individual y
+   * equipo en grupal; `null` = sin prórrogas.
+   */
+  prorrogas: jsonb("prorrogas").$type<Prorrogas>(),
 });
 
 /**

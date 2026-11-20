@@ -42,9 +42,11 @@ export default async function TareasProfePage() {
   const secciones = seccionesDe(catalogo);
   const resumen = resumenEntregas(entregas);
   const perdidas = perdidasPorTarea(entregas);
+  // Después de los datos: el estado efectivo de cada tarea en este instante (D451)
+  const ahora = Date.now();
   const vista = ordenarTareas(
     tareas.map((t) =>
-      tareaProfeDe(t, resumen.get(t.id), c, perdidas.get(t.id)),
+      tareaProfeDe(t, resumen.get(t.id), c, perdidas.get(t.id), ahora),
     ),
   );
   const eyebrow = eyebrowTareas(
@@ -67,7 +69,7 @@ export default async function TareasProfePage() {
       />
       <TeacherTaskList
         tareas={vista}
-        ahora={Date.now()}
+        ahora={ahora}
         eliminar={eliminarTarea}
         eliminarVarias={eliminarTareas}
       />

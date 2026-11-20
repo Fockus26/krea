@@ -53,7 +53,7 @@ export async function accionParteEnTransaccion(
   return db.transaction(async (tx): Promise<ResultadoParteTx> => {
     const c = await contexto(tx, uid, tareaId, true);
     if (!c) return { ok: false, error: "no-existe" };
-    const p = permisoParte(c.usuario, c.tarea, tareaId, c.equipo);
+    const p = permisoParte(c.usuario, c.tarea, tareaId, c.equipo, ahora);
     if (!p.ok) return p;
     const pregunta = c.tarea?.preguntas.find((x) => x.id === preguntaId);
     if (!c.tarea || !pregunta) return { ok: false, error: "no-existe" };

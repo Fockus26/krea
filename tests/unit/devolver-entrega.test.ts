@@ -44,6 +44,10 @@ const entregada: Entrega = {
   evaluacion: null,
 };
 
+/** Sin fecha no vence (D451): el estado guardado manda. */
+const ABIERTA = { estado: "abierta" as const, fechaEntrega: null };
+const AHORA = Date.UTC(2026, 10, 20, 15);
+
 describe("puedeDevolver (D411)", () => {
   test("evaluada y tarea abierta", () => {
     expect(puedeDevolver(evaluada, { estado: "abierta" })).toBe(true);
@@ -57,18 +61,45 @@ describe("puedeDevolver (D411)", () => {
 
 describe("comprobarDevolver", () => {
   test("la nota que el profe veía y la tarea abierta: nada que objetar", () => {
-    expect(comprobarDevolver(evaluada, { estado: "abierta" }, 500)).toBeNull();
+    expect(comprobarDevolver(evaluada, ABIERTA, 500, AHORA)).toBeNull();
   });
   test("sin nota → no-evaluada; otra nota → cambio; cerrada → tarea-cerrada", () => {
-    expect(comprobarDevolver(entregada, { estado: "abierta" }, 500)).toBe(
+    expect(comprobarDevolver(entregada, ABIERTA, 500, AHORA)).toBe(
       "no-evaluada",
     );
-    expect(comprobarDevolver(evaluada, { estado: "abierta" }, 499)).toBe(
-      "cambio",
-    );
-    expect(comprobarDevolver(evaluada, { estado: "evaluada" }, 500)).toBe(
+    expect(comprobarDevolver(evaluada, ABIERTA, 499, AHORA)).toBe("cambio");
+    expect(
+      comprobarDevolver(
+        evaluada,
+        { ...ABIERTA, estado: "evaluada" },
+        500,
+        AHORA,
+      ),
+    ).toBe("tarea-cerrada");
+  });
+});
+
+describe("devolver tras vencer (D451, D452)", () => {
+  const vencida = {
+    estado: "abierta" as const,
+    fechaEntrega: "2026-11-19",
+    horaEntrega: null,
+  };
+  test("vencida → tarea-cerrada; con prórroga de su titular, sí", () => {
+    expect(comprobarDevolver(evaluada, vencida, 500, AHORA)).toBe(
       "tarea-cerrada",
     );
+    expect(puedeDevolver(evaluada, vencida, AHORA)).toBe(false);
+    const conProrroga = {
+      ...vencida,
+      prorrogas: {
+        [evaluada.titularId]: { fecha: "2026-11-22", hora: null },
+      },
+    };
+    expect(comprobarDevolver(evaluada, conProrroga, 500, AHORA)).toBeNull();
+    expect(puedeDevolver(evaluada, conProrroga, AHORA)).toBe(true);
+    // Sin instante (llamadores que aún no lo pasan): el estado guardado
+    expect(puedeDevolver(evaluada, vencida)).toBe(true);
   });
 });
 

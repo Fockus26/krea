@@ -25,6 +25,7 @@ export const idealProfe = cache(
 export const idealAlumno = cache(
   async (tareaId: string): Promise<IdealDelAlumno | null> => {
     const { seccion } = await alumnoActual();
-    return idealDelAlumno(db(), seccion, tareaId);
+    // Después de la sesión (nunca en el prerender): vencida sin prórrogas = cerrada (D453)
+    return idealDelAlumno(db(), seccion, tareaId, Date.now());
   },
 );

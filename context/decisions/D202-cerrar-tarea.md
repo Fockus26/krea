@@ -1,4 +1,4 @@
-# D202 · Data · Cerrar una tarea = `abierta` → `evaluada`, con confirmación, sin reabrir · Implemented
+# D202 · Data · Cerrar una tarea = `abierta` → `evaluada`, con confirmación, sin reabrir · Implemented · Superseded in part by D455
 
 **Decision:** «Cerrar tarea» (secondary con Lock en la columna del constructor ≥ 1024 y en el flujo < 1024, solo en una abierta) abre un diálogo «¿Cerrar la tarea?» y llama a `cerrarTarea(id)`: transacción que pasa `estado` a `evaluada`. Desde ahí no recibe entregas (D196: el estudiante la ve «cerrada»), la lista muestra «Ver notas», el premio se resuelve (D012) y las entregas que llegaron se siguen evaluando (W7). No se recalcula el ranking: cerrar no cambia notas (una entrega sin evaluar sigue Pendiente, D003). El modelo no cambia: los tres estados de `ESTADOS_TAREA` siguen igual.
 **Why:** W5 dejó «cerrar = sacar de `abierta`»; `evaluada` es el estado que el lienzo da a una tarea terminada. Un diálogo porque no se deshace.

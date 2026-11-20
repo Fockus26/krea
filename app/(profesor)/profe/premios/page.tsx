@@ -37,13 +37,8 @@ export default async function PremiosPage() {
     ...equipos.map((e) => [e.id, e.nombre]),
     ...alumnos.map((a) => [a.cedula, nombreCompleto(a)]),
   ]);
-  const tarjetas = tarjetasPremios(
-    tareas,
-    equipos,
-    entregas,
-    alumnos,
-    Date.now(),
-  );
+  const ahora = Date.now();
+  const tarjetas = tarjetasPremios(tareas, equipos, entregas, alumnos, ahora);
   const fotos = await urlsFirmadas(
     tarjetas.flatMap((t) => (t.premio && t.premioFoto ? [t.premioFoto] : [])),
   );
@@ -65,7 +60,7 @@ export default async function PremiosPage() {
                 {CREAR_PREMIO_LABEL}
               </Button>
             }
-            tareas={tareasParaPremio(tareas)}
+            tareas={tareasParaPremio(tareas, ahora)}
             fotoDisponible={fotoDisponible}
             guardar={guardarPremio}
           />

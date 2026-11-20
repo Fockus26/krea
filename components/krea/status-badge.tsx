@@ -1,4 +1,4 @@
-import { Check, Clock, Crown, Pencil, X } from "lucide-react";
+import { Check, Clock, Crown, Lock, Pencil, X } from "lucide-react";
 import type * as React from "react";
 import { Badge, type BadgeVariant } from "@/components/ui/badge";
 
@@ -10,6 +10,9 @@ export const STATUS_BADGES = {
   // Tarea
   borrador: { variant: "neutral", icon: Pencil, label: "Borrador" },
   abierta: { variant: "ok", icon: Clock, label: "Abierta" },
+  // Vencida o cerrada a mano (D451). PROVISIONAL (CONTENT_CHECKLIST fila 255)
+  cerrada: { variant: "neutral", icon: Lock, label: "Cerrada" },
+  // Todas sus entregas con nota (D454): va junto al de abierta o cerrada
   evaluada: { variant: "acc", icon: Check, label: "Evaluada" },
   // Entrega
   entregada: { variant: "ok", icon: Check, label: "Entregada" },
@@ -22,7 +25,12 @@ export const STATUS_BADGES = {
 
 export type StatusKey = keyof typeof STATUS_BADGES;
 
-export const TASK_STATUSES = ["borrador", "abierta", "evaluada"] as const;
+export const TASK_STATUSES = [
+  "borrador",
+  "abierta",
+  "cerrada",
+  "evaluada",
+] as const;
 export const SUBMISSION_STATUSES = [
   "entregada",
   "por-entregar",

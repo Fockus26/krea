@@ -187,15 +187,15 @@ describe("reparto (D417)", () => {
   });
 
   test("imagen: el asignado sube a la carpeta del equipo; re-entregar con otra deja la vieja sin uso", async () => {
-    expect(await permisoSubida(db(), ANA, TAREA, "p2")).toEqual({
+    expect(await permisoSubida(db(), ANA, TAREA, "p2", AHORA)).toEqual({
       ok: false,
       error: "no-capitan",
     });
     await asignar(CAPITAN, "p2", ANA);
-    const p = await permisoSubida(db(), ANA, TAREA, "p2");
+    const p = await permisoSubida(db(), ANA, TAREA, "p2", AHORA);
     expect(p.ok && p.permiso.entregaId).toBe(ENTREGA);
     // Otra pregunta, no
-    expect((await permisoSubida(db(), ANA, TAREA, "p1")).ok).toBe(false);
+    expect((await permisoSubida(db(), ANA, TAREA, "p1", AHORA)).ok).toBe(false);
     const vieja = await imagen(UUID_1);
     expect(
       await accion(ANA, "p2", {
@@ -238,7 +238,7 @@ describe("reparto (D417)", () => {
       ok: false,
       error: "enviada",
     });
-    expect((await permisoSubida(db(), ANA, TAREA, "p2")).ok).toBe(false);
+    expect((await permisoSubida(db(), ANA, TAREA, "p2", AHORA)).ok).toBe(false);
     // Si el profe elimina la entrega (X1), el reparto vuelve tal cual
     await docs.borrarDoc(db(), "entregas", ENTREGA);
     expect(await accion(CAPITAN, "p1", { tipo: "aceptar" })).toEqual({

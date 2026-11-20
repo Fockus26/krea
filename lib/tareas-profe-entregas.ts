@@ -17,6 +17,7 @@ import type {
   Entrega,
   Equipo,
   EstadoTareaId,
+  Prorrogas,
   SeccionId,
   Usuario,
 } from "@/lib/modelo";
@@ -75,6 +76,15 @@ export type FilaEntregaTarea = {
   idealHref: string | null;
 };
 
+/** La tarea de las filas: sin `estado`, ninguna fila ofrece «Devolver» (D411). */
+type TareaFilas = {
+  id: string;
+  estado?: EstadoTareaId;
+  fechaEntrega?: string | null;
+  horaEntrega?: string | null;
+  prorrogas?: Prorrogas | null;
+};
+
 const comparaNombre = new Intl.Collator("es", { sensitivity: "base" });
 
 const nombreCompleto = (u: Pick<Usuario, "nombres" | "apellidos">) =>
@@ -109,7 +119,8 @@ function filaDeEntrega(
   e: ConId<Entrega>,
   usuarios: ReadonlyMap<string, Usuario>,
   equipos: ReadonlyMap<string, Pick<Equipo, "nombre">>,
-  tarea: { id: string; estado?: EstadoTareaId },
+  tarea: TareaFilas,
+  ahora: number | undefined,
 ): FilaEntregaTarea {
   const evaluada = e.estado === "evaluada";
   const grupal = e.tipo === "grupal";
@@ -143,7 +154,7 @@ function filaDeEntrega(
     accion: evaluada ? "corregir" : "evaluar",
     accionHref: rutaEntrega(e.id),
     // Sin el estado de la tarea no se ofrece: devolver en una cerrada no tiene arreglo (D411)
-    puedeDevolver: puedeDevolver(e, tarea),
+    puedeDevolver: puedeDevolver(e, tarea, ahora),
     enviadaEn: e.enviadaEn,
     evaluadaEn: e.evaluacion?.evaluadaEn ?? null,
     idealHref: esElegible(e, tarea.id)
@@ -159,16 +170,15 @@ function filaDeEntrega(
  * (grupal). Un borrador no cuenta como entrega. Por sección y por nombre.
  */
 export function filasEntregasTarea(datos: {
-  tarea: {
-    id: string;
+  tarea: TareaFilas & {
     tipo: "individual" | "grupal";
     secciones: readonly SeccionId[];
-    /** Sin él, ninguna fila ofrece «Devolver» (D411). */
-    estado?: EstadoTareaId;
   };
   entregas: ReadonlyArray<ConId<Entrega>>;
   usuarios: readonly Usuario[];
   equipos: ReadonlyArray<ConId<Equipo>>;
+  /** Instante de la petición: «Devolver» solo si sigue abierta para ese titular (D451, D452). */
+  ahora?: number;
 }): FilaEntregaTarea[] {
   const { tarea } = datos;
   const usuarios = new Map(datos.usuarios.map((u) => [u.cedula, u]));
@@ -176,7 +186,9 @@ export function filasEntregasTarea(datos: {
   const enviadas = datos.entregas.filter(
     (e) => e.tareaId === tarea.id && e.estado !== "borrador",
   );
-  const filas = enviadas.map((e) => filaDeEntrega(e, usuarios, equipos, tarea));
+  const filas = enviadas.map((e) =>
+    filaDeEntrega(e, usuarios, equipos, tarea, datos.ahora),
+  );
   const entregaron = new Set(enviadas.map((e) => e.titularId));
 
   const sinEntregar = (

@@ -86,7 +86,13 @@ const INDIVIDUAL = tarea("competencia", { tipo: "individual", premio: null });
 
 describe("permisoEntrega (D012, D196)", () => {
   test("individual: cualquiera de la sección; titular = su cédula", () => {
-    const r = permisoEntrega(SIN_EQUIPO, INDIVIDUAL, INDIVIDUAL.id, null);
+    const r = permisoEntrega(
+      SIN_EQUIPO,
+      INDIVIDUAL,
+      INDIVIDUAL.id,
+      null,
+      AHORA,
+    );
     expect(r).toEqual({
       ok: true,
       permiso: {
@@ -98,13 +104,15 @@ describe("permisoEntrega (D012, D196)", () => {
   });
 
   test("grupal: solo el capitán; titular = el equipo", () => {
-    const r = permisoEntrega(CAPITAN, GRUPAL, GRUPAL.id, EQUIPO);
+    const r = permisoEntrega(CAPITAN, GRUPAL, GRUPAL.id, EQUIPO, AHORA);
     expect(r.ok && r.permiso.titularId).toBe("5a-g2");
-    expect(permisoEntrega(INTEGRANTE, GRUPAL, GRUPAL.id, EQUIPO)).toEqual({
+    expect(
+      permisoEntrega(INTEGRANTE, GRUPAL, GRUPAL.id, EQUIPO, AHORA),
+    ).toEqual({
       ok: false,
       error: "no-capitan",
     });
-    expect(permisoEntrega(SIN_EQUIPO, GRUPAL, GRUPAL.id, null)).toEqual({
+    expect(permisoEntrega(SIN_EQUIPO, GRUPAL, GRUPAL.id, null, AHORA)).toEqual({
       ok: false,
       error: "sin-equipo",
     });
@@ -112,31 +120,82 @@ describe("permisoEntrega (D012, D196)", () => {
 
   test("el equipo tiene que ser el suyo y de su sección", () => {
     const otro = { ...EQUIPO, id: "5a-g3" };
-    expect(permisoEntrega(CAPITAN, GRUPAL, GRUPAL.id, otro).ok).toBe(false);
-    const otraSeccion = { ...EQUIPO, seccion: "5C" as const };
-    expect(permisoEntrega(CAPITAN, GRUPAL, GRUPAL.id, otraSeccion).ok).toBe(
+    expect(permisoEntrega(CAPITAN, GRUPAL, GRUPAL.id, otro, AHORA).ok).toBe(
       false,
     );
+    const otraSeccion = { ...EQUIPO, seccion: "5C" as const };
+    expect(
+      permisoEntrega(CAPITAN, GRUPAL, GRUPAL.id, otraSeccion, AHORA).ok,
+    ).toBe(false);
   });
 
   test("otra sección, borrador o inexistente → no-existe; evaluada → cerrada", () => {
     const deC = usuario("30000001", { seccion: "5C" });
-    expect(permisoEntrega(deC, INDIVIDUAL, "x", null)).toEqual({
+    expect(permisoEntrega(deC, INDIVIDUAL, "x", null, AHORA)).toEqual({
       ok: false,
       error: "no-existe",
     });
     expect(
-      permisoEntrega(CAPITAN, { ...INDIVIDUAL, estado: "borrador" }, "x", null),
+      permisoEntrega(
+        CAPITAN,
+        { ...INDIVIDUAL, estado: "borrador" },
+        "x",
+        null,
+        AHORA,
+      ),
     ).toEqual({ ok: false, error: "no-existe" });
-    expect(permisoEntrega(CAPITAN, null, "x", null).ok).toBe(false);
+    expect(permisoEntrega(CAPITAN, null, "x", null, AHORA).ok).toBe(false);
     expect(
-      permisoEntrega(CAPITAN, { ...INDIVIDUAL, estado: "evaluada" }, "x", null),
+      permisoEntrega(
+        CAPITAN,
+        { ...INDIVIDUAL, estado: "evaluada" },
+        "x",
+        null,
+        AHORA,
+      ),
     ).toEqual({ ok: false, error: "cerrada" });
+  });
+
+  test("vencida → cerrada; con prórroga de su titular, abierta (D451, D452)", () => {
+    // El 07/11 a las 23:59 en Caracas vence (sin hora)
+    const despues = Date.UTC(2026, 10, 8, 12);
+    expect(permisoEntrega(SIN_EQUIPO, INDIVIDUAL, "x", null, despues)).toEqual({
+      ok: false,
+      error: "cerrada",
+    });
+    const conProrroga = {
+      ...INDIVIDUAL,
+      prorrogas: {
+        [SIN_EQUIPO.cedula]: { fecha: "2026-11-09", hora: "10:00" },
+      },
+    };
+    expect(permisoEntrega(SIN_EQUIPO, conProrroga, "x", null, despues).ok).toBe(
+      true,
+    );
+    // La prórroga es de otro titular: para este sigue cerrada
+    expect(permisoEntrega(CAPITAN, conProrroga, "x", null, despues)).toEqual({
+      ok: false,
+      error: "cerrada",
+    });
+    // Grupal: la prórroga es del equipo; el capitán la usa
+    const grupal = {
+      ...GRUPAL,
+      prorrogas: { [EQUIPO.id]: { fecha: "2026-11-09", hora: null } },
+    };
+    expect(permisoEntrega(CAPITAN, grupal, GRUPAL.id, EQUIPO, despues).ok).toBe(
+      true,
+    );
+    expect(permisoEntrega(CAPITAN, GRUPAL, GRUPAL.id, EQUIPO, despues)).toEqual(
+      {
+        ok: false,
+        error: "cerrada",
+      },
+    );
   });
 
   test("un profesor nunca entrega", () => {
     const profe = usuario("10000000", { rol: "profesor", seccion: null });
-    expect(permisoEntrega(profe, INDIVIDUAL, "x", null).ok).toBe(false);
+    expect(permisoEntrega(profe, INDIVIDUAL, "x", null, AHORA).ok).toBe(false);
   });
 
   test("yaEnviada: solo un borrador deja volver a enviar", () => {
@@ -249,7 +308,7 @@ describe("respuestas y entrega armada", () => {
   });
 
   test("grupal: integrantes del equipo (con el capitán), valida con zEntrega", async () => {
-    const p = permisoEntrega(CAPITAN, GRUPAL, GRUPAL.id, EQUIPO);
+    const p = permisoEntrega(CAPITAN, GRUPAL, GRUPAL.id, EQUIPO, AHORA);
     if (!p.ok) throw new Error(p.error);
     const carpeta = await carpetaEntrega(p.permiso.entregaId);
     const r = armarEntrega({
@@ -301,7 +360,7 @@ describe("respuestas y entrega armada", () => {
       "t__5a-g2",
     );
     expect([...excluidos]).toEqual([INTEGRANTE.cedula]);
-    const p = permisoEntrega(CAPITAN, GRUPAL, GRUPAL.id, EQUIPO);
+    const p = permisoEntrega(CAPITAN, GRUPAL, GRUPAL.id, EQUIPO, AHORA);
     if (!p.ok) throw new Error(p.error);
     const carpeta = await carpetaEntrega(p.permiso.entregaId);
     const r = armarEntrega({
@@ -328,7 +387,7 @@ describe("respuestas y entrega armada", () => {
       ...INDIVIDUAL,
       preguntas: INDIVIDUAL.preguntas.filter((q) => q.formato === "texto"),
     };
-    const p = permisoEntrega(SIN_EQUIPO, t, t.id, null);
+    const p = permisoEntrega(SIN_EQUIPO, t, t.id, null, AHORA);
     if (!p.ok) throw new Error(p.error);
     const base = {
       tareaId: t.id,

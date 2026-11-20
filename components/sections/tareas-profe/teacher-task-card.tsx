@@ -73,6 +73,8 @@ export function TeacherTaskCard({
         {/* Alto de un botón `sm` (36 · 44 < lg): los chips quedan centrados con las acciones */}
         <div className="flex min-h-9 flex-wrap items-center gap-2 max-lg:min-h-11">
           <StatusBadge status={tarea.estado} />
+          {/* Todas sus entregas con nota (D454): el filtro «Evaluadas» la muestra por esto */}
+          {tarea.evaluadaToda ? <StatusBadge status="evaluada" /> : null}
           <Badge>
             {tarea.tipo === "grupal" ? (
               <Users aria-hidden="true" />
@@ -83,7 +85,7 @@ export function TeacherTaskCard({
           </Badge>
           {tarea.premio ? (
             <Badge variant="prize" className={chipLargo}>
-              {tarea.estado === "evaluada" ? (
+              {tarea.estado === "cerrada" ? (
                 <Trophy aria-hidden="true" />
               ) : (
                 <Gift aria-hidden="true" />
@@ -114,7 +116,8 @@ export function TeacherTaskCard({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        {tarea.estado === "abierta" && tarea.porEvaluar > 0 ? (
+        {/* También cerrada: al vencer quedan entregas por evaluar (D451) */}
+        {tarea.estado !== "borrador" && tarea.porEvaluar > 0 ? (
           <Button asChild variant="secondary" size="sm">
             <Link
               href={rutaEvaluarTarea(tarea.id)}

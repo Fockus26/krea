@@ -27,7 +27,10 @@ const usuario = (cedula: string, equipoId: string | null = null) =>
 const tarea = (
   tipo: "individual" | "grupal",
   estado: "abierta" | "evaluada" = "abierta",
-) => ({ tipo, estado, secciones: ["5A" as const] });
+) => ({ tipo, estado, secciones: ["5A" as const], fechaEntrega: null });
+
+/** Sin fecha la tarea no vence: el instante no cuenta (D451 se prueba en estado-tarea). */
+const AHORA = Date.UTC(2026, 10, 20, 15);
 
 const equipo = { id: EQUIPO, seccion: "5A" as const, capitanId: CAPITAN };
 const preguntas = [{ id: "p1" }, { id: "p2" }];
@@ -76,15 +79,23 @@ describe("puedeEditar (D395)", () => {
         "t1",
         null,
         propia(ALUMNO),
+        AHORA,
       ),
     ).toBe(true);
   });
   test("evaluada o tarea cerrada: no", () => {
     expect(
-      puedeEditar(usuario(ALUMNO), tarea("individual"), "t1", null, {
-        ...propia(ALUMNO),
-        estado: "evaluada",
-      }),
+      puedeEditar(
+        usuario(ALUMNO),
+        tarea("individual"),
+        "t1",
+        null,
+        {
+          ...propia(ALUMNO),
+          estado: "evaluada",
+        },
+        AHORA,
+      ),
     ).toBe(false);
     expect(
       puedeEditar(
@@ -93,10 +104,18 @@ describe("puedeEditar (D395)", () => {
         "t1",
         null,
         propia(ALUMNO),
+        AHORA,
       ),
     ).toBe(false);
     expect(
-      puedeEditar(usuario(ALUMNO), tarea("individual"), "t1", null, null),
+      puedeEditar(
+        usuario(ALUMNO),
+        tarea("individual"),
+        "t1",
+        null,
+        null,
+        AHORA,
+      ),
     ).toBe(false);
   });
   test("grupal: el capitán sí; un integrante no (D012, D248)", () => {
@@ -107,6 +126,7 @@ describe("puedeEditar (D395)", () => {
         "t1",
         equipo,
         propia(EQUIPO),
+        AHORA,
       ),
     ).toBe(true);
     expect(
@@ -116,6 +136,7 @@ describe("puedeEditar (D395)", () => {
         "t1",
         equipo,
         propia(EQUIPO),
+        AHORA,
       ),
     ).toBe(false);
   });
@@ -127,6 +148,7 @@ describe("puedeEditar (D395)", () => {
         "t1",
         equipo,
         propia("otro-equipo"),
+        AHORA,
       ),
     ).toBe(false);
   });

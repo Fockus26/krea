@@ -6,6 +6,7 @@ import {
   type ErrorEntrega,
   type PermisoEntrega,
   permisoEntrega,
+  type TareaPermiso,
   zIdPregunta,
   zIdTarea,
 } from "@/lib/entregas";
@@ -17,7 +18,6 @@ import {
   type Parte,
   type Respuesta,
   rutasImagen,
-  type Tarea,
   type Usuario,
   zCedula,
   zRespuesta,
@@ -70,18 +70,20 @@ export type PermisoParte = PermisoEntrega & {
 };
 
 /**
- * ¿Puede este alumno tocar el reparto de esta tarea? Solo grupales abiertas de su sección y con
- * su equipo actual (D221: manda el equipo de hoy). Lo mismo que `permisoEntrega`, pero el
- * integrante que no es capitán también pasa (con `capitan: false`).
+ * ¿Puede este alumno tocar el reparto de esta tarea? Solo grupales abiertas para su equipo en
+ * `ahora` (D451, D452), de su sección y con su equipo actual (D221: manda el equipo de hoy). Lo
+ * mismo que `permisoEntrega`, pero el integrante que no es capitán también pasa (`capitan: false`).
  */
 export function permisoParte(
   usuario: Pick<Usuario, "cedula" | "rol" | "seccion" | "equipoId">,
-  tarea: Pick<Tarea, "tipo" | "estado" | "secciones"> | null,
+  tarea: TareaPermiso | null,
   tareaId: string,
   equipo: ConId<Pick<Equipo, "seccion" | "capitanId">> | null,
+  ahora: number,
 ): { ok: true; permiso: PermisoParte } | { ok: false; error: ErrorEntrega } {
   if (tarea?.tipo === "individual") return { ok: false, error: "no-existe" };
-  const p = permisoEntrega(usuario, tarea, tareaId, equipo);
+  const p = permisoEntrega(usuario, tarea, tareaId, equipo, ahora);
+
   if (p.ok) {
     return {
       ok: true,

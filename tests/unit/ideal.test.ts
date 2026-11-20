@@ -28,7 +28,12 @@ const tarea = (estado: "borrador" | "abierta" | "evaluada" = "abierta") => ({
   estado,
   preguntas: PREGUNTAS,
   secciones: ["5A"],
+  fechaEntrega: "2026-11-20",
+  horaEntrega: "15:30",
 });
+/** 15:29 y 15:30 del 20/11 en Caracas (UTC−4): antes y al vencer (D451). */
+const ANTES = Date.UTC(2026, 10, 20, 19, 29);
+const VENCIDA = Date.UTC(2026, 10, 20, 19, 30);
 
 const evaluacion = (puntaje: number): Evaluacion => ({
   puntos: { p1: Math.min(puntaje, 12), p2: Math.max(puntaje - 12, 0) },
@@ -177,12 +182,24 @@ describe("vigencia (D434)", () => {
 
 describe("quién la ve (D433)", () => {
   test("solo con la tarea cerrada y de su sección", () => {
-    expect(alumnoPuedeVer(tarea("evaluada"), "5A")).toBe(true);
-    expect(alumnoPuedeVer(tarea("abierta"), "5A")).toBe(false);
-    expect(alumnoPuedeVer(tarea("borrador"), "5A")).toBe(false);
-    expect(alumnoPuedeVer(tarea("evaluada"), "5C")).toBe(false);
-    expect(alumnoPuedeVer(tarea("evaluada"), null)).toBe(false);
-    expect(alumnoPuedeVer(null, "5A")).toBe(false);
+    expect(alumnoPuedeVer(tarea("evaluada"), "5A", ANTES)).toBe(true);
+    expect(alumnoPuedeVer(tarea("abierta"), "5A", ANTES)).toBe(false);
+    expect(alumnoPuedeVer(tarea("borrador"), "5A", VENCIDA)).toBe(false);
+    expect(alumnoPuedeVer(tarea("evaluada"), "5C", ANTES)).toBe(false);
+    expect(alumnoPuedeVer(tarea("evaluada"), null, ANTES)).toBe(false);
+    expect(alumnoPuedeVer(null, "5A", ANTES)).toBe(false);
+  });
+
+  test("vencida también, salvo que alguien tenga prórroga vigente (D453)", () => {
+    expect(alumnoPuedeVer(tarea("abierta"), "5A", VENCIDA)).toBe(true);
+    const conProrroga = {
+      ...tarea("abierta"),
+      prorrogas: { "39711001": { fecha: "2026-11-22", hora: null } },
+    };
+    expect(alumnoPuedeVer(conProrroga, "5A", VENCIDA)).toBe(false);
+    expect(alumnoPuedeVer(conProrroga, "5A", Date.UTC(2026, 10, 23, 12))).toBe(
+      true,
+    );
   });
 });
 

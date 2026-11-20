@@ -204,15 +204,23 @@ describe("guardar, reemplazar y quitar (Postgres)", () => {
   });
 });
 
+/** Antes de que venza la tarea (20/11, sin hora): sigue abierta (D451). */
+const ANTES = Date.UTC(2026, 10, 19, 15);
+
 describe("lectura del alumno (D433, D434)", () => {
   test("con la tarea abierta, nada", async () => {
     await guardarIdealEnTransaccion(db(), PROFE, deEntrega(T, E1), 400);
-    expect(await idealDelAlumno(db(), "5A", T)).toBeNull();
+    expect(await idealDelAlumno(db(), "5A", T, ANTES)).toBeNull();
+    // Vencida, se cierra sola (D451): ya la ve (D453)
+    const vencida = Date.UTC(2026, 10, 21, 12);
+    expect(
+      (await idealDelAlumno(db(), "5A", T, vencida))?.ideal.entregaId,
+    ).toBe(E1);
   });
 
   test("con la tarea cerrada, la ve con el nombre y avatar del autor", async () => {
     await ponerTarea(db(), T, tarea("individual", "evaluada"));
-    const d = await idealDelAlumno(db(), "5A", T);
+    const d = await idealDelAlumno(db(), "5A", T, ANTES);
     expect(d?.ideal.entregaId).toBe(E1);
     expect(d?.autor).toEqual({
       tipo: "alumno",
@@ -223,8 +231,8 @@ describe("lectura del alumno (D433, D434)", () => {
   });
 
   test("de otra sección (o sin sección), nada", async () => {
-    expect(await idealDelAlumno(db(), "5C", T)).toBeNull();
-    expect(await idealDelAlumno(db(), null, T)).toBeNull();
+    expect(await idealDelAlumno(db(), "5C", T, ANTES)).toBeNull();
+    expect(await idealDelAlumno(db(), null, T, ANTES)).toBeNull();
   });
 
   test("si la entrega ya no tiene 20 / 20 o se eliminó, nada", async () => {
@@ -233,13 +241,13 @@ describe("lectura del alumno (D433, D434)", () => {
       E1,
       evaluada(T, "individual", A1, [A1], evaluacion(12, 7.5)),
     );
-    expect(await idealDelAlumno(db(), "5A", T)).toBeNull();
+    expect(await idealDelAlumno(db(), "5A", T, ANTES)).toBeNull();
     // Devuelta (sin nota)
     await ponerEntrega(db(), E1, evaluada(T, "individual", A1, [A1], null));
-    expect(await idealDelAlumno(db(), "5A", T)).toBeNull();
+    expect(await idealDelAlumno(db(), "5A", T, ANTES)).toBeNull();
     // Eliminada: la fila de la ideal queda, pero no se muestra
     await base.execute(`DELETE FROM entregas WHERE id = '${E1}'`);
-    expect(await idealDelAlumno(db(), "5A", T)).toBeNull();
+    expect(await idealDelAlumno(db(), "5A", T, ANTES)).toBeNull();
     expect((await leerIdeal(db(), T))?.entregaId).toBe(E1);
   });
 
@@ -247,7 +255,7 @@ describe("lectura del alumno (D433, D434)", () => {
     expect(
       await guardarIdealEnTransaccion(db(), PROFE, deEntrega(TG, EG), 500),
     ).toEqual({ ok: true });
-    const d = await idealDelAlumno(db(), "5A", TG);
+    const d = await idealDelAlumno(db(), "5A", TG, ANTES);
     expect(d?.autor).toEqual({
       tipo: "equipo",
       nombre: equipo.nombre,

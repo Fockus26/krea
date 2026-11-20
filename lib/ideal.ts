@@ -10,6 +10,7 @@
 // (D434): una ideal cuya entrega se eliminó, se devolvió o bajó de 20 deja de existir para el
 // alumno y el profe ve el aviso.
 import { z } from "zod";
+import { cerradaParaTodos, type TareaConVencimiento } from "@/lib/estado-tarea";
 import { zIdDocumento } from "@/lib/evaluar-datos";
 import { NOTA_MAX } from "@/lib/grades";
 import {
@@ -179,15 +180,17 @@ export function vigencia(
 }
 
 /**
- * ¿La ve este alumno? (D433) Tarea publicada y ya no abierta, de su sección. La vigencia se
- * comprueba aparte: sin ideal vigente tampoco hay nada que ver.
+ * ¿La ve este alumno? (D433) Tarea publicada, de su sección y cerrada para todos en `ahora`
+ * (D453): vencida sin prórrogas vigentes o cerrada a mano. La vigencia se comprueba aparte: sin
+ * ideal vigente tampoco hay nada que ver.
  */
 export function alumnoPuedeVer(
-  tarea: Pick<TareaDoc, "estado" | "secciones"> | null,
+  tarea: (TareaConVencimiento & Pick<TareaDoc, "secciones">) | null,
   seccion: SeccionId | null,
+  ahora: number,
 ): boolean {
   if (!tarea || seccion === null) return false;
-  return tarea.estado === "evaluada" && tarea.secciones.includes(seccion);
+  return cerradaParaTodos(tarea, ahora) && tarea.secciones.includes(seccion);
 }
 
 /* ---------- Autor ---------- */

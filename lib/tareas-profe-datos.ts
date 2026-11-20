@@ -5,6 +5,12 @@
 import { z } from "zod";
 import { notasPremioIndividual } from "@/lib/equipo";
 import {
+  cerradaParaTodosEn,
+  estadoEfectivo,
+  estadoEn,
+  prorrogasVigentes,
+} from "@/lib/estado-tarea";
+import {
   comparaFecha,
   diaDeInstante,
   diasEntre,
@@ -18,6 +24,7 @@ import {
   type DecisionPremio,
   type Entrega,
   type Equipo,
+  type Prorrogas,
   rutasImagen,
   type SeccionId,
   sumaValores as sumaModelo,
@@ -278,7 +285,11 @@ export function armarTarea(a: Armar): Armada {
 function armarSinFoto(a: Armar): Armada {
   const { entrada, previa, accion } = a;
   if (!idsUnicos(entrada.preguntas)) return { ok: false, error: "invalida" };
-  if (previa && (previa.importada || previa.estado === "evaluada")) {
+  // Cerrada a mano o vencida (D451): no se edita; la salida es reabrirla (D455)
+  if (
+    previa &&
+    (previa.importada || estadoEfectivo(previa, a.ahora) === "cerrada")
+  ) {
     return { ok: false, error: "cerrada" };
   }
   const autorId = previa ? previa.autorId : a.autorId;
@@ -431,29 +442,38 @@ export function totalTitulares(
 }
 
 /**
- * Tarjeta de la lista. Avance: con alguna evaluada (o cerrada), «n de N evaluadas»; si no,
- * «n de N entregaron». Un borrador no lleva avance.
+ * Tarjeta de la lista. Estado efectivo en `ahora` (D451): una abierta vencida llega cerrada, con
+ * cuántas prórrogas siguen vigentes (D452). Avance: con alguna evaluada (o cerrada), «n de N
+ * evaluadas»; si no, «n de N entregaron». Un borrador no lleva avance. `evaluadaToda`: alguna
+ * entrega y ninguna sin nota (D454; `total` cuenta también a quien no entregó, así que no sirve).
+ * Sin `ahora` (vista previa), el estado guardado.
  */
 export function tareaProfeDe(
   t: ConId<TareaDoc>,
   resumen: ResumenEntregas | undefined,
   conteos: Conteos,
   perdida: PerdidaEliminar = SIN_PERDIDA,
+  ahora?: number,
 ): TareaProfe {
   const r = resumen ?? SIN_ENTREGAS;
   const total = totalTitulares(t, conteos, r);
+  const estado = estadoEn(t, ahora);
   let avance: AvanceTarea | null = null;
-  if (t.estado !== "borrador") {
+  if (estado !== "borrador") {
     avance =
-      r.evaluadas > 0 || t.estado === "evaluada"
+      r.evaluadas > 0 || estado === "cerrada"
         ? { tipo: "evaluadas", hechas: r.evaluadas, total }
         : { tipo: "entregas", hechas: r.entregadas + r.evaluadas, total };
   }
+  const prorrogas =
+    estado === "cerrada" && ahora !== undefined
+      ? prorrogasVigentes(t, ahora).length
+      : 0;
   return {
     id: t.id,
     titulo: t.titulo,
     tipo: t.tipo,
-    estado: t.estado,
+    estado,
     fecha: t.fechaEntrega,
     hora: t.horaEntrega ?? null,
     secciones: listaSecciones(t.secciones),
@@ -462,6 +482,10 @@ export function tareaProfeDe(
     suma: sumaModelo(t.preguntas.map((p) => ({ valor: p.valor ?? 0 }))),
     avance,
     porEvaluar: r.entregadas,
+    ...(estado !== "borrador" && r.evaluadas > 0 && r.entregadas === 0
+      ? { evaluadaToda: true }
+      : {}),
+    ...(prorrogas > 0 ? { prorrogas } : {}),
     perdida,
   };
 }
@@ -565,12 +589,17 @@ export function datosBorradorDe(t: TareaDoc): DatosBorrador {
   };
 }
 
+/**
+ * Modo del constructor (D200). Cerrada a mano o vencida en `ahora` (D451): solo lectura, la salida
+ * es «Reabrir tarea» (D455). Sin `ahora`, el estado guardado.
+ */
 export function modoConstructor(
   t: TareaDoc,
   conEntregas: boolean,
+  ahora?: number,
 ): ModoConstructor {
   if (t.estado === "borrador") return "borrador";
-  if (t.estado === "evaluada" || t.importada) return "cerrada";
+  if (estadoEn(t, ahora) === "cerrada" || t.importada) return "cerrada";
   return conEntregas ? "con-entregas" : "publicada";
 }
 
@@ -595,6 +624,7 @@ export function estadoPremioSeccion(
     id: string;
     horaEntrega?: string | null | undefined;
     decisionesPremio?: DecisionesPremio | undefined;
+    prorrogas?: Prorrogas | null | undefined;
   },
   seccion: SeccionId,
   equipos: ReadonlyArray<ConId<Pick<Equipo, "seccion">>>,
@@ -631,15 +661,15 @@ export function estadoPremioSeccion(
     0,
     ...deSeccion.map((e) => e.evaluacion?.evaluadaEn ?? 0),
   );
-  const fecha =
-    t.estado === "evaluada" && ultima > 0
-      ? diaDeInstante(ultima)
-      : t.fechaEntrega;
+  // El premio se resuelve al cerrar para todos (D453): con prórrogas vigentes sigue en juego
+  const cerrada = cerradaParaTodosEn(t, ahora);
+  const fecha = cerrada && ultima > 0 ? diaDeInstante(ultima) : t.fechaEntrega;
   const estado = estadoPremio(
     {
       hora: t.horaEntrega ?? null,
       ...(ahora !== undefined ? { ahora } : {}),
-      estado: t.estado,
+      estado:
+        t.estado === "borrador" ? "borrador" : cerrada ? "evaluada" : "abierta",
       premio: t.premio ?? undefined,
       fecha,
       avance: { entregaron, total: notas.length },
@@ -661,17 +691,21 @@ export function decisionEncaja(
     : decision.tipo === "darAlumno";
 }
 
-const ORDEN_PREMIO: Record<TareaDoc["estado"], number> = {
-  evaluada: 0,
-  abierta: 1,
-  borrador: 2,
+type TareaPremio = Pick<TareaDoc, "estado" | "importada" | "fechaEntrega"> & {
+  horaEntrega?: string | null | undefined;
+  prorrogas?: Prorrogas | null | undefined;
 };
 
-/** ¿Se puede poner o cambiar el premio? Ni cerrada ni importada del Excel (D200, D266). */
-export function premioEditable(
-  t: Pick<TareaDoc, "estado" | "importada">,
-): boolean {
-  return t.estado !== "evaluada" && !t.importada;
+/** Cerrada para todos primero, después abiertas (también con prórrogas) y borradores (D453). */
+const ordenPremio = (t: TareaPremio, ahora: number | undefined) =>
+  t.estado === "borrador" ? 2 : cerradaParaTodosEn(t, ahora) ? 0 : 1;
+
+/**
+ * ¿Se puede poner o cambiar el premio? Ni cerrada para todos (D453) ni importada del Excel (D200,
+ * D266). Sin `ahora`, cerrada a mano.
+ */
+export function premioEditable(t: TareaPremio, ahora?: number): boolean {
+  return !cerradaParaTodosEn(t, ahora) && !t.importada;
 }
 
 /**
@@ -692,7 +726,7 @@ export function tarjetasPremios(
     .filter((t) => !t.importada && (t.tipo === "grupal" || t.premio !== null))
     .sort(
       (a, b) =>
-        ORDEN_PREMIO[a.estado] - ORDEN_PREMIO[b.estado] ||
+        ordenPremio(a, ahora) - ordenPremio(b, ahora) ||
         comparaFecha(
           b.fechaEntrega ?? "0001-01-01",
           a.fechaEntrega ?? "0001-01-01",
@@ -705,10 +739,10 @@ export function tarjetasPremios(
       tipoTarea: t.tipo,
       premio: t.premio,
       premioFoto: t.premioFoto ?? null,
-      editable: premioEditable(t),
+      editable: premioEditable(t, ahora),
     };
     if (t.estado === "borrador" || !t.premio) {
-      if (t.estado === "evaluada") return [];
+      if (cerradaParaTodosEn(t, ahora)) return [];
       return [
         {
           ...comun,
@@ -744,12 +778,14 @@ export type TareaParaPremio = {
 
 export function tareasParaPremio(
   tareas: ReadonlyArray<ConId<TareaDoc>>,
+  /** Instante de la petición: una cerrada para todos ya no se elige (D453). */
+  ahora?: number,
 ): TareaParaPremio[] {
   return tareas
-    .filter((t) => t.premio === null && premioEditable(t))
+    .filter((t) => t.premio === null && premioEditable(t, ahora))
     .sort(
       (a, b) =>
-        ORDEN_PREMIO[a.estado] - ORDEN_PREMIO[b.estado] ||
+        ordenPremio(a, ahora) - ordenPremio(b, ahora) ||
         comparaFecha(
           a.fechaEntrega ?? "9999-12-31",
           b.fechaEntrega ?? "9999-12-31",
@@ -791,8 +827,11 @@ export function armarPremio(
   previa: TareaDoc,
   premio: string,
   foto: CambioFoto,
+  /** Instante del guardado: cerrada para todos ya no se cambia (D453). */
+  ahora?: number,
 ): PremioArmado {
-  if (!premioEditable(previa)) return { ok: false, error: "cerrada" };
+  if (!premioEditable(previa, ahora)) return { ok: false, error: "cerrada" };
+
   const texto = zTextoPremio.safeParse(premio);
   if (!texto.success) return { ok: false, error: "invalida" };
   const vieja = previa.premioFoto ?? null;

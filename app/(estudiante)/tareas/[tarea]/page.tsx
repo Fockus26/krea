@@ -34,6 +34,7 @@ import {
 import { idealAlumno } from "@/lib/datos/ideal";
 import { urlsFirmadas } from "@/lib/datos/imagenes";
 import { inicialEdicion, puedeEditar } from "@/lib/entregas";
+import { cerradaParaTodos } from "@/lib/estado-tarea";
 import { rutaIdealAlumno } from "@/lib/ideal";
 import { imagenesConAlt, respuestaFirmada } from "@/lib/question";
 import { TAREA_GRUPAL_SEED } from "@/lib/seed-firestore";
@@ -77,7 +78,9 @@ export default async function TareaPage({ params }: Props) {
   const id = (await params).tarea;
   const datos = await datosAlumno();
   const companeros = datos.equipo ? await integrantesDe(datos.equipo.id) : [];
-  const d = entregaVista(datos, id, companeros, Date.now());
+  // Después de los datos de la sesión: abierta o cerrada para él en este instante (D451)
+  const ahora = Date.now();
+  const d = entregaVista(datos, id, companeros, ahora);
   if (d.estado === "no-existe") notFound();
 
   // Grupal abierta sin enviar: el reparto del equipo (D422)
@@ -104,10 +107,11 @@ export default async function TareaPage({ params }: Props) {
   ]);
   const reparto = repartoVista({ ...entradaReparto, urls });
 
-  // Entrega ideal (D433): solo con la tarea cerrada; `idealAlumno` vuelve a comprobar sección y vigencia
+  // Entrega ideal (D433): con la tarea cerrada para todos (D453); `idealAlumno` vuelve a
+  // comprobar sección, cierre y vigencia
   const tareaDoc = datos.tareas.find((t) => t.id === id);
   const hayIdeal =
-    tareaDoc !== undefined && tareaDoc.estado !== "abierta"
+    tareaDoc !== undefined && cerradaParaTodos(tareaDoc, ahora)
       ? (await idealAlumno(id)) !== null
       : false;
 
@@ -142,6 +146,7 @@ export default async function TareaPage({ params }: Props) {
             id,
             datos.equipo,
             datos.entregas.find((e) => e.tareaId === id) ?? null,
+            ahora,
           )}
           formulario={{
             tareaId: id,

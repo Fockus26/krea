@@ -13,6 +13,7 @@ import {
   eliminarTareaEnTransaccion,
   guardarPremioEnTransaccion,
   guardarTareaEnTransaccion,
+  reabrirTareaEnTransaccion,
 } from "@/lib/data/tareas";
 import { catalogoSecciones } from "@/lib/datos/secciones";
 import { baseDeDatos, type Db } from "@/lib/db";
@@ -21,6 +22,7 @@ import { borrarEnLote, type ResultadoLote, zIdsLote } from "@/lib/lote";
 import { zQuien } from "@/lib/offline/operacion";
 import type { ResultadoPremio } from "@/lib/premios";
 import { programarAvisoTarea } from "@/lib/push-envio";
+import { zReabrirTarea } from "@/lib/reabrir-tarea";
 import { seccionesEnCatalogo } from "@/lib/secciones";
 import type { ErrorTarea } from "@/lib/tareas-profe";
 import {
@@ -112,6 +114,33 @@ export async function cerrarTarea(id: unknown): Promise<ResultadoTarea> {
     return r;
   } catch (e) {
     registrar("cerrarTarea", e);
+    return { ok: false, error: "red" };
+  }
+}
+
+/**
+ * Reabre una tarea cerrada (D455, D456): para todos (fecha y hora nuevas) o para algunos alumnos
+ * o equipos (prórrogas). El reintento del mismo pedido no falla; si otro profe la cambió, `cambio`.
+ */
+export async function reabrirTarea(entrada: unknown): Promise<ResultadoTarea> {
+  await exigirSesion("profesor");
+  const db = baseDeDatos();
+  if (!db) return { ok: false, error: "red" };
+  const envio = zReabrirTarea.safeParse(entrada);
+  if (!envio.success) return { ok: false, error: "invalida" };
+  const ahora = Date.now();
+  try {
+    const r = await reabrirTareaEnTransaccion(
+      db,
+      envio.data,
+      diaDeInstante(ahora),
+      ahora,
+    );
+    // También con `cambio`: la vista vieja se pone al día
+    if (r.ok || r.error === "cambio") refresh();
+    return r;
+  } catch (e) {
+    registrar("reabrirTarea", e);
     return { ok: false, error: "red" };
   }
 }

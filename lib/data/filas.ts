@@ -76,7 +76,7 @@ export function tareaDeFila(f: FilaTarea): ConId<TareaDoc> | null {
     zTareaDoc,
     "tareas",
     id,
-    sinNull(resto, ["decisionesPremio"]),
+    sinNull(resto, ["decisionesPremio", "prorrogas"]),
   );
   return t ? { id, ...t } : null;
 }
@@ -98,6 +98,11 @@ export function filaDeTarea(id: string, t: TareaDoc): FilaTarea {
     actualizadoEn: t.actualizadoEn,
     decisionesPremio:
       "decisionesPremio" in t && t.decisionesPremio ? t.decisionesPremio : null,
+    // Sin prórrogas se guarda `null`, no `{}` (D452)
+    prorrogas:
+      "prorrogas" in t && t.prorrogas && Object.keys(t.prorrogas).length > 0
+        ? t.prorrogas
+        : null,
   };
 }
 

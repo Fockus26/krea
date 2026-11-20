@@ -12,11 +12,13 @@ describe("STATUS_BADGES (HANDOFF §2.4)", () => {
     expect(TASK_STATUSES.map((s) => STATUS_BADGES[s].label)).toEqual([
       "Borrador",
       "Abierta",
+      "Cerrada",
       "Evaluada",
     ]);
     expect(TASK_STATUSES.map((s) => STATUS_BADGES[s].variant)).toEqual([
       "neutral",
       "ok",
+      "neutral",
       "acc",
     ]);
   });

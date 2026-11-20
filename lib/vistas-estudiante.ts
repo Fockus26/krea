@@ -18,6 +18,7 @@ import type { PreguntaEntrega } from "@/components/sections/tareas/task-answer-f
 import { type DicebearEstilo, esEstiloDicebear } from "@/lib/dicebear";
 import { faltanRespuestas, inicialEdicion, yaEnviada } from "@/lib/entregas";
 import { enJuegoTexto, ganadoresPremio, premioGanadoTexto } from "@/lib/equipo";
+import { estadoEn, vencimientoDe } from "@/lib/estado-tarea";
 import {
   claveVencimiento,
   comparaFecha,
@@ -605,19 +606,47 @@ export type InicioVista = {
   equipo: ResumenEquipo | null;
 };
 
-/** Tareas abiertas sin enviar (sin entrega o en borrador), por fecha de entrega. */
+/** Titular del alumno en la tarea: su cédula o su equipo de hoy (D221), el id de la prórroga (D452). */
+const titularDe = (
+  d: Pick<DatosAlumno, "usuario" | "equipo">,
+  t: Pick<Tarea, "tipo">,
+): string | null =>
+  t.tipo === "individual" ? d.usuario.cedula : (d.equipo?.id ?? null);
+
+/** ¿Abierta para este alumno en `ahora`? Vencida sin prórroga suya = cerrada (D451, D452). */
+const abiertaPara = (
+  d: Pick<DatosAlumno, "usuario" | "equipo">,
+  t: Tarea,
+  ahora: number | undefined,
+) => estadoEn(t, ahora, titularDe(d, t)) === "abierta";
+
+/** Su fecha y hora de entrega: las de su prórroga si la tiene (D452). */
+const vencimientoPara = (
+  d: Pick<DatosAlumno, "usuario" | "equipo">,
+  t: Tarea,
+) => vencimientoDe(t, titularDe(d, t));
+
+/**
+ * Tareas abiertas para el alumno en `ahora` (D451: una vencida ya no, salvo prórroga suya) sin
+ * enviar (sin entrega o en borrador), por su fecha de entrega. Sin `ahora`, el estado guardado.
+ */
 export function tareasAbiertas(
-  d: Pick<DatosAlumno, "tareas" | "entregas">,
+  d: Pick<DatosAlumno, "usuario" | "equipo" | "tareas" | "entregas">,
+  ahora?: number,
 ): Array<ConId<Tarea>> {
+  const clave = (t: Tarea) => {
+    const v = vencimientoPara(d, t);
+    return claveVencimiento(v.fecha, v.hora) ?? "9999";
+  };
   return d.tareas
-    .filter((t) => t.estado === "abierta")
+    .filter((t) => abiertaPara(d, t, ahora))
     .filter((t) => {
-      return !enviada(entregaDe(t.id, d.entregas), t);
+      return !enviada(entregaDe(t.id, d.entregas), t, true);
     })
     .sort((a, b) => {
       // La que vence antes primero; el mismo día, por hora (sin hora = al final del día, D352)
-      const va = claveVencimiento(a.fechaEntrega, a.horaEntrega) ?? "9999";
-      const vb = claveVencimiento(b.fechaEntrega, b.horaEntrega) ?? "9999";
+      const va = clave(a);
+      const vb = clave(b);
       return va < vb ? -1 : va > vb ? 1 : 0;
     });
 }
@@ -628,25 +657,26 @@ export function filasPorEntregar(
   ahora?: number,
 ): FilaPendiente[] {
   const capitan = d.equipo?.capitanId === d.usuario.cedula;
-  return tareasAbiertas(d).map((t) => ({
-    id: t.id,
-    href: `/tareas/${t.id}`,
-    titulo: t.titulo,
-    tipo: t.tipo,
-    vence: t.fechaEntrega
-      ? formatFechaHora(t.fechaEntrega, t.horaEntrega)
-      : "sin fecha",
-    vencida:
-      ahora !== undefined &&
-      t.fechaEntrega !== null &&
-      vencida(t.fechaEntrega, t.horaEntrega, ahora),
-    premio: t.premio ?? undefined,
-    entregasTu: t.tipo === "grupal" && capitan,
-    avance:
-      entregaDe(t.id, d.entregas)?.estado === "borrador"
-        ? "borrador"
-        : "sin-empezar",
-  }));
+  return tareasAbiertas(d, ahora).map((t) => {
+    const v = vencimientoPara(d, t);
+    return {
+      id: t.id,
+      href: `/tareas/${t.id}`,
+      titulo: t.titulo,
+      tipo: t.tipo,
+      vence: v.fecha ? formatFechaHora(v.fecha, v.hora) : "sin fecha",
+      vencida:
+        ahora !== undefined &&
+        v.fecha !== null &&
+        vencida(v.fecha, v.hora, ahora),
+      premio: t.premio ?? undefined,
+      entregasTu: t.tipo === "grupal" && capitan,
+      avance:
+        entregaDe(t.id, d.entregas)?.estado === "borrador"
+          ? "borrador"
+          : "sin-empezar",
+    };
+  });
 }
 
 /** Integrantes actuales de un equipo con sus puntos del ranking. */
@@ -681,7 +711,7 @@ export function inicioVista(
 ): InicioVista {
   const u = d.usuario;
   const notas = notasDelAlumno(d);
-  const abiertas = tareasAbiertas(d);
+  const abiertas = tareasAbiertas(d, ahora);
   const fila = puestoAlumno(d.ranking, u.cedula);
   const capitan = d.equipo?.capitanId === u.cedula;
 
@@ -717,11 +747,10 @@ export function inicioVista(
       eyebrow: `Sección ${u.seccion ?? ""} · Escuela Creativa`,
       titulo: `¡Hola, ${primerNombre(u.nombres)}!`,
       linea: lineaPendientes(
-        abiertas.flatMap((t) =>
-          t.fechaEntrega
-            ? [{ fecha: t.fechaEntrega, hora: t.horaEntrega ?? null }]
-            : [],
-        ),
+        abiertas.flatMap((t) => {
+          const v = vencimientoPara(d, t);
+          return v.fecha ? [{ fecha: v.fecha, hora: v.hora }] : [];
+        }),
         ahora,
       ),
     },
@@ -893,13 +922,14 @@ export function perfilVista(u: Usuario, equipo: ConId<Equipo> | null) {
 
 /**
  * Entregada o evaluada: ya no se puede cambiar. Salvo la que tiene nota y le faltan las respuestas
- * (tarea 1, `faltanRespuestas`): mientras la tarea siga abierta, cuenta como «por entregar».
+ * (tarea 1, `faltanRespuestas`): mientras la tarea siga abierta para él (`abierta`, D451), cuenta
+ * como «por entregar».
  */
 const enviada = (
   e: Pick<Entrega, "estado" | "respuestas"> | null,
-  t: Pick<Tarea, "estado" | "preguntas">,
-) =>
-  yaEnviada(e) && !(t.estado === "abierta" && faltanRespuestas(e, t.preguntas));
+  t: Pick<Tarea, "preguntas">,
+  abierta: boolean,
+) => yaEnviada(e) && !(abierta && faltanRespuestas(e, t.preguntas));
 
 /**
  * /tareas: «Por entregar» (las filas de Inicio) y «Entregadas» (sus entregas enviadas, la más
@@ -912,7 +942,7 @@ export function tareasVista(
 ): { pendientes: FilaPendiente[]; entregadas: FilaEntregada[] } {
   const filas = d.tareas.flatMap((t) => {
     const e = entregaDe(t.id, d.entregas);
-    if (!e || !enviada(e, t)) return [];
+    if (!e || !enviada(e, t, abiertaPara(d, t, ahora))) return [];
     const evaluada = e.evaluacion?.evaluadaEn ?? null;
     const instante = e.enviadaEn ?? evaluada;
     return [
@@ -1010,13 +1040,14 @@ export function entregaVista(
   const t = d.tareas.find((x) => x.id === tareaId);
   if (!t) return { estado: "no-existe" };
   const u = d.usuario;
+  // Con prórroga, su fecha nueva (D452); abierta o cerrada para él en `ahora` (D451)
+  const v = vencimientoPara(d, t);
+  const abierta = abiertaPara(d, t, ahora);
   const cabecera: CabeceraEntrega = {
     tipo: t.tipo,
     eyebrow: eyebrowTarea(t.tipo, d.equipo?.nombre),
     titulo: t.titulo,
-    vence: t.fechaEntrega
-      ? venceTexto(t.fechaEntrega, t.horaEntrega, ahora)
-      : SIN_FECHA_ENTREGA,
+    vence: v.fecha ? venceTexto(v.fecha, v.hora, ahora) : SIN_FECHA_ENTREGA,
     puntos: puntosPreguntasTexto(t.preguntas.map((p) => p.valor)),
     premio: t.premio,
     premioFoto: t.premio ? (t.premioFoto ?? null) : null,
@@ -1032,7 +1063,7 @@ export function entregaVista(
   };
 
   const e = entregaDe(t.id, d.entregas);
-  if (e && enviada(e, t)) {
+  if (e && enviada(e, t, abierta)) {
     const envio =
       e.enviadaPor === u.cedula
         ? u
@@ -1058,7 +1089,7 @@ export function entregaVista(
     };
   }
 
-  if (t.estado !== "abierta") return { ...cabecera, estado: "cerrada" };
+  if (!abierta) return { ...cabecera, estado: "cerrada" };
   if (t.tipo === "individual") {
     return { ...cabecera, estado: "responder", autor: primerNombre(u.nombres) };
   }
