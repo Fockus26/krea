@@ -228,6 +228,7 @@ export function ReabrirTarea({
             <DialogDescription>{REABRIR_DESCRIPCION}</DialogDescription>
           </DialogHeader>
           <form
+            method="post"
             className="flex min-w-0 flex-col gap-4"
             noValidate
             onSubmit={(e) => {
