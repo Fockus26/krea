@@ -109,7 +109,7 @@ describe("guardarContactoCon (D378)", () => {
 });
 
 describe("contactosDeProfes (D380)", () => {
-  test("los profes de su sección y los de todas, con algún dato; solo esas columnas", async () => {
+  test("todos los profes de su sección y los de todas, con o sin dato; solo esas columnas (D459)", async () => {
     await guardarContactoCon(
       db(),
       PROFE_TODAS,
@@ -118,7 +118,7 @@ describe("contactosDeProfes (D380)", () => {
     );
     await guardarContactoCon(db(), PROFE_C, contacto("04165556677", ""), AHORA);
     const filas = await contactosDeProfes(db(), "5A");
-    expect(filas.map((f) => f.nombres).sort()).toEqual(["Ana", "Beto"]);
+    expect(filas.map((f) => f.nombres).sort()).toEqual(["Ana", "Beto", "Dora"]);
     for (const f of filas)
       expect(Object.keys(f).sort()).toEqual([
         "apellidos",
@@ -135,13 +135,15 @@ describe("contactosDeProfes (D380)", () => {
     expect(tarjetas.map((t) => t.nombre)).toEqual([
       "Ana Contacto",
       "Beto Contacto",
+      "Dora Contacto",
     ]);
+    expect(tarjetas.map((t) => t.sinContacto)).toEqual([false, false, true]);
     expect(JSON.stringify(tarjetas)).not.toContain("privado-ana");
     expect(JSON.stringify(tarjetas)).not.toContain(PROFE_TODAS);
-    // 5C ve a Carla (y a Ana, que ve todas), no a Beto
+    // 5C ve a Carla (y a Ana y Dora, que ven todas), no a Beto
     expect(
       (await contactosDeProfes(db(), "5C")).map((f) => f.nombres).sort(),
-    ).toEqual(["Ana", "Carla"]);
+    ).toEqual(["Ana", "Carla", "Dora"]);
   }, 30_000);
 
   test("con semilla opaca el alumno ve el avatar del profe (D389)", async () => {

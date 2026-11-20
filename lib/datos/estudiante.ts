@@ -52,7 +52,7 @@ export const alumnoActual = cache(
   },
 );
 
-/** «Tus profesores» (D380): los de su sección o de todas que cargaron algún contacto. */
+/** «Tus profesores» (D380): todos los de su sección o de todas, con o sin contacto (D459). */
 export const profesDelAlumno = cache(async (): Promise<TarjetaProfe[]> => {
   const { seccion } = await alumnoActual();
   return tarjetasProfes(await contactosDeProfes(db(), seccion));

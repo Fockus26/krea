@@ -181,14 +181,21 @@ describe("tarjetasProfes", () => {
     expect(raro?.avatar?.estilo).toBe(estiloDe("estilo-que-ya-no-existe"));
   });
 
-  test("solo los profes con algún dato válido, por nombre corto", () => {
+  test("todos los profes: con contacto primero, luego por nombre corto; sin contacto marcados (D459)", () => {
     const t = tarjetasProfes([
       fila("Yolanda María", "Pérez Gil", null, "yolanda@gmail.com"),
       fila("Carlos", "Ruiz", null, null),
       fila("Ana", "Díaz", "584241112233", null),
       fila("Beto", "Luna", "basura", "no-es-correo"),
     ]);
-    expect(t.map((x) => x.nombre)).toEqual(["Ana Díaz", "Yolanda Pérez"]);
+    expect(t.map((x) => x.nombre)).toEqual([
+      "Ana Díaz",
+      "Yolanda Pérez",
+      "Beto Luna",
+      "Carlos Ruiz",
+    ]);
+    expect(t.map((x) => x.sinContacto)).toEqual([false, false, true, true]);
+    expect(JSON.stringify(t)).not.toContain("cedula");
     expect(t[0]?.whatsapp).toEqual({
       href: "https://wa.me/584241112233",
       texto: "0424-111 22 33",
@@ -199,11 +206,14 @@ describe("tarjetasProfes", () => {
       href: "mailto:yolanda@gmail.com",
       texto: "yolanda@gmail.com",
     });
-    expect(new Set(t.map((x) => x.clave)).size).toBe(2);
+    expect(new Set(t.map((x) => x.clave)).size).toBe(4);
   });
 
-  test("sin profes con contacto: lista vacía (la tarjeta no se muestra)", () => {
+  test("sin profes: lista vacía (la tarjeta no se muestra); un profe sin contacto sí sale", () => {
     expect(tarjetasProfes([])).toEqual([]);
-    expect(tarjetasProfes([fila("Carlos", "Ruiz", null, null)])).toEqual([]);
+    const [t] = tarjetasProfes([fila("Carlos", "Ruiz", null, null)]);
+    expect(t?.sinContacto).toBe(true);
+    expect(t?.whatsapp).toBeNull();
+    expect(t?.correo).toBeNull();
   });
 });

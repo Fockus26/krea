@@ -160,7 +160,7 @@ export default async function TareaPage({ params }: Props) {
             hora={d.hora}
             evaluada={d.evaluada}
             notaHref={d.notaHref}
-            inicioHref="/"
+            volverHref="/tareas"
             accion={<BotonEditarEntrega />}
           />
           {d.respuestas.some((r) => r !== null) ? (
