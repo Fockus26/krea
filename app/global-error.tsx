@@ -8,6 +8,7 @@ import {
 } from "@/components/estados/pantallas";
 import { useEnLinea } from "@/components/krea/use-en-linea";
 import { codigoError, digestDe } from "@/lib/estados";
+import { recargarSiEsDeploy } from "@/lib/recarga-deploy";
 import { THEME_SCRIPT } from "@/lib/site";
 import "./globals.css";
 
@@ -40,6 +41,8 @@ export default function GlobalError({
 
   useEffect(() => {
     console.error(error);
+    // Build desfasado tras un deploy: UNA recarga completa (D438)
+    recargarSiEsDeploy(error);
   }, [error]);
 
   return (
