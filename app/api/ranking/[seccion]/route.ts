@@ -14,23 +14,32 @@ export async function GET(
   ctx: RouteContext<"/api/ranking/[seccion]">,
 ) {
   const { seccion } = await ctx.params;
-  const acceso = accesoRanking(await sesionDeHeaders(req.headers), seccion);
-  if (acceso !== "ok")
-    return Response.json(
-      { error: acceso },
-      { status: ESTADO_HTTP[acceso], headers: sinCache },
-    );
-  const db = baseDeDatos();
-  if (!db)
+  try {
+    const acceso = accesoRanking(await sesionDeHeaders(req.headers), seccion);
+    if (acceso !== "ok")
+      return Response.json(
+        { error: acceso },
+        { status: ESTADO_HTTP[acceso], headers: sinCache },
+      );
+    const db = baseDeDatos();
+    if (!db)
+      return Response.json(
+        { error: "red" },
+        { status: 503, headers: sinCache },
+      );
+    const r = await leerRanking(db, seccion);
+    if (!r)
+      return Response.json(
+        { error: "sin-ranking" },
+        { status: 404, headers: sinCache },
+      );
+    const desde = Number(req.nextUrl.searchParams.get("desde"));
+    if (desde === r.actualizadoEn)
+      return new Response(null, { status: 204, headers: sinCache });
+    return Response.json(r, { headers: sinCache });
+  } catch (e) {
+    // Base caída, sin permiso o tiempo agotado: el sondeo lo cuenta como un fallo pasajero (D437)
+    console.error("[api/ranking]", e instanceof Error ? e.message : e);
     return Response.json({ error: "red" }, { status: 503, headers: sinCache });
-  const r = await leerRanking(db, seccion);
-  if (!r)
-    return Response.json(
-      { error: "sin-ranking" },
-      { status: 404, headers: sinCache },
-    );
-  const desde = Number(req.nextUrl.searchParams.get("desde"));
-  if (desde === r.actualizadoEn)
-    return new Response(null, { status: 204, headers: sinCache });
-  return Response.json(r, { headers: sinCache });
+  }
 }

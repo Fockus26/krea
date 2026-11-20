@@ -8,11 +8,14 @@ import { initials } from "@/lib/identity";
 
 // PROVISIONAL (CONTENT_CHECKLIST fila 196): no están en el lienzo
 const TITULO = "Tus profesores";
+// PROVISIONAL (CONTENT_CHECKLIST fila 264)
+const SIN_CONTACTO = "Sin datos de contacto";
 const SUBTITULO = "Escríbeles si tienes dudas sobre una tarea o tu nota.";
 
 /**
- * «Tus profesores» del Perfil del alumno (D380): cada profe que cargó algún contacto, con enlaces
- * a WhatsApp (pestaña nueva, avisado) y al correo. Sin profes con contacto no se muestra. El
+ * «Tus profesores» del Perfil del alumno (D380): todos los profes de su sección, con enlaces
+ * a WhatsApp (pestaña nueva, avisado) y al correo si cargaron contacto (D459); si no, la línea
+ * «Sin datos de contacto» y sin botones. Sin profes no se muestra. El
  * avatar es el suyo (D389); si su semilla aún lleva la cédula, la lectura lo quita y van iniciales.
  */
 export function TusProfesores({ profes }: { profes: readonly TarjetaProfe[] }) {
@@ -44,6 +47,9 @@ export function TusProfesores({ profes }: { profes: readonly TarjetaProfe[] }) {
               )}
               <div className="min-w-0">
                 <p className="text-body-strong text-text">{p.nombre}</p>
+                {p.sinContacto ? (
+                  <p className="text-small text-text-2">{SIN_CONTACTO}</p>
+                ) : null}
                 {p.whatsapp ? (
                   <p className="text-small break-words text-text-2">
                     {p.whatsapp.texto}
@@ -56,37 +62,39 @@ export function TusProfesores({ profes }: { profes: readonly TarjetaProfe[] }) {
                 ) : null}
               </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {p.whatsapp ? (
-                <a
-                  href={p.whatsapp.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={`WhatsApp de ${p.nombre} (se abre en otra pestaña)`}
-                  className={buttonVariants({
-                    variant: "secondary",
-                    size: "sm",
-                  })}
-                >
-                  <MessageCircle aria-hidden="true" />
-                  WhatsApp
-                  <ExternalLink aria-hidden="true" />
-                </a>
-              ) : null}
-              {p.correo ? (
-                <a
-                  href={p.correo.href}
-                  aria-label={`Correo a ${p.nombre}`}
-                  className={buttonVariants({
-                    variant: "secondary",
-                    size: "sm",
-                  })}
-                >
-                  <Mail aria-hidden="true" />
-                  Correo
-                </a>
-              ) : null}
-            </div>
+            {p.sinContacto ? null : (
+              <div className="flex flex-wrap gap-2">
+                {p.whatsapp ? (
+                  <a
+                    href={p.whatsapp.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`WhatsApp de ${p.nombre} (se abre en otra pestaña)`}
+                    className={buttonVariants({
+                      variant: "secondary",
+                      size: "sm",
+                    })}
+                  >
+                    <MessageCircle aria-hidden="true" />
+                    WhatsApp
+                    <ExternalLink aria-hidden="true" />
+                  </a>
+                ) : null}
+                {p.correo ? (
+                  <a
+                    href={p.correo.href}
+                    aria-label={`Correo a ${p.nombre}`}
+                    className={buttonVariants({
+                      variant: "secondary",
+                      size: "sm",
+                    })}
+                  >
+                    <Mail aria-hidden="true" />
+                    Correo
+                  </a>
+                ) : null}
+              </div>
+            )}
           </li>
         ))}
       </ul>

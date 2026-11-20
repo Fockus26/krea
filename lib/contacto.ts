@@ -163,11 +163,14 @@ export type TarjetaProfe = {
   avatar: { estilo: DicebearEstilo; seed: string } | null;
   whatsapp: { href: string; texto: string } | null;
   correo: { href: string; texto: string } | null;
+  /** Sin teléfono ni correo válidos: la tarjeta lo dice y no lleva botones. */
+  sinContacto: boolean;
 };
 
 /**
- * Profes con al menos un dato de contacto válido, por nombre. Un teléfono o correo guardado que ya
- * no valida (cargado a mano en la base) no se muestra; si no queda ninguno, el profe no sale.
+ * Todos los profes de la sección, primero los que tienen algún dato de contacto válido y luego por
+ * nombre. Un teléfono o correo guardado que ya no valida (cargado a mano en la base) no se muestra;
+ * si no queda ninguno, el profe sale igual con `sinContacto` (D459).
  */
 export function tarjetasProfes(
   filas: readonly FilaContactoProfe[],
@@ -179,7 +182,6 @@ export function tarjetasProfes(
       f.emailContacto && z.email().safeParse(f.emailContacto).success
         ? f.emailContacto
         : null;
-    if (!tel && !correo) continue;
     tarjetas.push({
       nombre: nombreCorto(f),
       avatar: f.avatar
@@ -189,9 +191,14 @@ export function tarjetasProfes(
         ? { href: enlaceWhatsApp(tel), texto: telefonoTexto(tel) }
         : null,
       correo: correo ? { href: enlaceCorreo(correo), texto: correo } : null,
+      sinContacto: !tel && !correo,
     });
   }
   return tarjetas
-    .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"))
+    .sort(
+      (a, b) =>
+        Number(a.sinContacto) - Number(b.sinContacto) ||
+        a.nombre.localeCompare(b.nombre, "es"),
+    )
     .map((t, i) => ({ ...t, clave: `${i}-${t.nombre}` }));
 }

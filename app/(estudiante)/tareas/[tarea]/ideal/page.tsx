@@ -10,7 +10,7 @@ import {
 import { Card } from "@/components/ui/card";
 import tareaSeed from "@/data/seed/tarea-identidad-marca.json";
 import { verificarSesion } from "@/lib/dal";
-import { idealAlumno } from "@/lib/datos/ideal";
+import { idealAlumnoPagina } from "@/lib/datos/ideal";
 import { urlsFirmadas } from "@/lib/datos/imagenes";
 import {
   AUTOR_PROFE_TEXTO,
@@ -34,18 +34,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { tarea } = await params;
   const s = await verificarSesion();
   if (s?.rol !== "estudiante") return { title: IDEAL_TITULO };
-  const d = await idealAlumno(tarea);
+  const d = await idealAlumnoPagina(tarea);
   return { title: d ? `${IDEAL_TITULO} · ${d.tarea.titulo}` : IDEAL_TITULO };
 }
 
 // Entrega ideal de una tarea (tanda 11-14 Z2, D430–D435). La autorización es del servidor
-// (`idealAlumno`): tarea de su sección, ya cerrada, con una ideal vigente; si no, 404. Arriba el
+// (`idealAlumnoPagina`): tarea de su sección, ya cerrada, con una ideal vigente; si no, 404. Arriba el
 // porqué general y el autor (avatar y nombre, el equipo, o los profes); por pregunta, enunciado,
 // respuesta y su porqué. Nunca la nota, la base, el puntaje ni los comentarios del autor (D433).
 // Las imágenes se firman aquí, después de autorizar y solo las que se pintan (D195).
 export default async function IdealAlumnoPage({ params }: Props) {
   const id = (await params).tarea;
-  const d = await idealAlumno(id);
+  const d = await idealAlumnoPagina(id);
   if (!d) notFound();
   const v = vistaIdeal({
     tarea: d.tarea,

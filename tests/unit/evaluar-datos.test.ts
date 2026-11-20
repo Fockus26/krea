@@ -173,6 +173,70 @@ describe("armarEvaluacion", () => {
   });
 });
 
+describe("comentario general y 300 caracteres (D445, D446)", () => {
+  const con = (extra: Record<string, unknown>) =>
+    zGuardarEvaluacion.safeParse({
+      entregaId: "e1",
+      puntos: { p1: 12, p2: 8 },
+      comentarios: {},
+      version: null,
+      ...extra,
+    });
+  const armar = (extra: Record<string, unknown>) => {
+    const p = con(extra);
+    if (!p.success) throw new Error("no valida");
+    return armarEvaluacion({
+      entrega: ent({ id: "e1" }),
+      tarea,
+      envio: p.data,
+      basesVigentes: { "30000001": 15 },
+      autorId: "30262232",
+      ahora: 5,
+    });
+  };
+
+  test("se guarda recortado; vacío o solo espacios = ausente", () => {
+    const r = armar({ comentarioGeneral: "  ¡Buen trabajo! 🎉\nSigue así  " });
+    expect(r.ok && r.evaluacion.comentarioGeneral).toBe(
+      "¡Buen trabajo! 🎉\nSigue así",
+    );
+    for (const vacio of ["", "   \n "]) {
+      const v = armar({ comentarioGeneral: vacio });
+      expect(v.ok && "comentarioGeneral" in v.evaluacion).toBe(false);
+    }
+  });
+
+  test("un formulario viejo sin el campo sigue guardando, sin comentario general", () => {
+    const r = armar({});
+    expect(r.ok).toBe(true);
+    expect(r.ok && "comentarioGeneral" in r.evaluacion).toBe(false);
+  });
+
+  test("más de 300 no valida: general y por pregunta", () => {
+    expect(con({ comentarioGeneral: "a".repeat(300) }).success).toBe(true);
+    expect(con({ comentarioGeneral: "a".repeat(301) }).success).toBe(false);
+    // zod 4 cuenta puntos de código (un emoji, 1) y el campo unidades UTF-16 (un emoji, 2): lo que
+    // el campo deja escribir (150 emojis = 300 unidades) siempre pasa en el servidor (D446)
+    expect(con({ comentarioGeneral: "👏".repeat(150) }).success).toBe(true);
+    expect(con({ comentarioGeneral: "👏".repeat(301) }).success).toBe(false);
+    expect(con({ comentarios: { p1: "a".repeat(300) } }).success).toBe(true);
+    expect(con({ comentarios: { p1: "a".repeat(301) } }).success).toBe(false);
+  });
+
+  test("lo guardado se sigue leyendo aunque pase de 300 (datos de antes)", () => {
+    expect(
+      zEvaluacion.safeParse({
+        puntos: null,
+        comentarios: { p1: "a".repeat(900) },
+        puntaje: 10,
+        evaluadaPor: null,
+        evaluadaEn: 1,
+        comentarioGeneral: "b".repeat(900),
+      }).success,
+    ).toBe(true);
+  });
+});
+
 describe("deshacer (D205)", () => {
   const ev = (puntaje: number, en: number) => ({
     puntos: null,
@@ -260,6 +324,7 @@ describe("cola y vista", () => {
       enviadaEn: expect.any(Number),
       puntajes: [null, null],
       comentarios: ["", ""],
+      comentarioGeneral: "",
       noParticiparon: [],
       bases: { "30000001": 15 },
     });
@@ -282,6 +347,7 @@ describe("cola y vista", () => {
         puntaje: 18,
         evaluadaPor: null,
         evaluadaEn: 1,
+        comentarioGeneral: "Muy buen trabajo 👏",
       },
     });
     const v = vistaEvaluar({ entrega: evaluada, tarea, cola, mapas });
@@ -293,6 +359,7 @@ describe("cola y vista", () => {
       enviadaEn: expect.any(Number),
       puntajes: [10, 8],
       comentarios: ["", "Buen color"],
+      comentarioGeneral: "Muy buen trabajo 👏",
       noParticiparon: [],
       bases: { "30000001": 15 },
     });

@@ -29,6 +29,8 @@ type Comun = {
   /** Texto de cada opción; por defecto, el código («5A»). Alumnos: «5A · 35». */
   texto?: (seccion: string) => string;
   disabled?: boolean;
+  /** Segmentado de ancho completo que reparte sus opciones (`ToggleGroup block`, D444). */
+  block?: boolean;
   className?: string;
 };
 
@@ -54,6 +56,7 @@ export function SelectorSeccion(
     todas,
     texto = (s: string) => s,
     disabled,
+    block,
     className,
   } = props;
   const router = useRouter();
@@ -91,6 +94,7 @@ export function SelectorSeccion(
         value={valor}
         onValueChange={elegir}
         disabled={disabled}
+        block={block}
         className={className}
       >
         {opciones.map((o) => (

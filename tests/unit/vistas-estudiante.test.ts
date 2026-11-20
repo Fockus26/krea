@@ -267,6 +267,59 @@ describe("detalleNota", () => {
     expect(d.final).toBe(12.8);
   });
 
+  test("comentario general y quién evaluó (D445, D447): solo el nombre corto, nunca la cédula", () => {
+    const PROFE = "30262232";
+    const entrega = (
+      evaluadaPor: string | null,
+      comentarioGeneral?: string,
+    ): ConId<Entrega> => ({
+      id: "presentacion__5a-g2",
+      tareaId: "presentacion",
+      tipo: "grupal",
+      titularId: "5a-g2",
+      seccion: "5A",
+      integrantes: [YEILIN],
+      estado: "evaluada",
+      respuestas: {},
+      enviadaPor: YEILIN,
+      enviadaEn: AHORA,
+      evaluacion: {
+        puntos: { p1: 17 },
+        comentarios: {},
+        puntaje: 17,
+        evaluadaPor,
+        evaluadaEn: AHORA,
+        ...(comentarioGeneral === undefined ? {} : { comentarioGeneral }),
+      },
+    });
+    const profes = new Map([
+      [PROFE, { nombres: "Ana María", apellidos: "Pérez Gil" }],
+    ]);
+    const ver = (e: ConId<Entrega>, p = profes) => {
+      const d = detalleNota(
+        datosDe(YEILIN, { tareas: [abierta], entregas: [e] }),
+        "presentacion",
+        p,
+      );
+      if (d.estado !== "ok") throw new Error(d.estado);
+      return d;
+    };
+
+    const d = ver(entrega(PROFE, "  ¡Gran equipo! 🎉\nSigan así  "));
+    expect(d.eyebrow).toBe("Grupal · evaluada el 06/11/2026 por Ana Pérez");
+    expect(d.comentarioGeneral).toBe("¡Gran equipo! 🎉\nSigan así");
+    expect(JSON.stringify(d)).not.toContain(PROFE);
+
+    // Sin evaluador conocido (Excel, seed) o que ya no existe: como antes, sin «por»
+    expect(ver(entrega(null)).eyebrow).toBe("Grupal · evaluada el 06/11/2026");
+    expect(ver(entrega(PROFE), new Map()).eyebrow).toBe(
+      "Grupal · evaluada el 06/11/2026",
+    );
+    // Sin comentario general (o solo espacios): ausente
+    expect("comentarioGeneral" in ver(entrega(PROFE))).toBe(false);
+    expect("comentarioGeneral" in ver(entrega(PROFE, "   "))).toBe(false);
+  });
+
   test("nota importada sin desglose → ok sin preguntas", () => {
     const d = detalleNota(datosDe(YEILIN), "logo-y-paleta");
     if (d.estado !== "ok") throw new Error(d.estado);

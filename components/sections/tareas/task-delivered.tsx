@@ -6,9 +6,9 @@ import { Card } from "@/components/ui/card";
 
 /**
  * Tarea entregada (HANDOFF §3): tarjeta con borde interior 2 px `--success` (también en oscuro,
- * donde la tarjeta ya no tiene sombra), cuadro 56 `--success` con Check en `--surface`, h2 "¡Tarea entregada!", quién y cuándo, y "Volver al inicio".
+ * donde la tarjeta ya no tiene sombra), cuadro 56 `--success` con Check en `--surface`, h2 "¡Tarea entregada!", quién y cuándo, y "Volver a tareas".
  * Las respuestas en solo lectura van debajo (las pinta la página). `accion`: «Editar entrega»
- * (D395), antes de «Volver al inicio».
+ * (D395), antes de «Volver a tareas».
  */
 export function TaskDelivered({
   quien,
@@ -16,7 +16,7 @@ export function TaskDelivered({
   hora,
   evaluada = false,
   notaHref,
-  inicioHref,
+  volverHref,
   accion,
 }: {
   /** Quién la envió; `null` si la nota vino del Excel sin ese registro. */
@@ -29,7 +29,8 @@ export function TaskDelivered({
   evaluada?: boolean;
   /** Detalle de la nota (D248): con él, evaluada ofrece «Ver mi nota» en vez de mandar a Mis notas. */
   notaHref?: string | null;
-  inicioHref: string;
+  /** Destino de «Volver a tareas» (D140: tras entregar se vuelve a la lista de tareas). */
+  volverHref: string;
   accion?: ReactNode;
 }) {
   return (
@@ -71,7 +72,8 @@ export function TaskDelivered({
         ) : null}
         {accion}
         <Button asChild variant="secondary">
-          <Link href={inicioHref}>Volver al inicio</Link>
+          {/* PROVISIONAL (fila 263) */}
+          <Link href={volverHref}>Volver a tareas</Link>
         </Button>
       </div>
     </Card>

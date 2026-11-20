@@ -1,17 +1,23 @@
 import { describe, expect, test } from "bun:test";
 import {
+  colaEvaluadas,
   colaFiltradaCon,
   colaPorEvaluar,
+  estadoDe,
+  eyebrowCola,
   filtrarCola,
   filtrosDeParams,
   hayFiltros,
+  listaSegunEstado,
   mapasEvaluar,
   opcionesFiltros,
+  pideLaPrimera,
   queryFiltros,
   RUTA_EVALUAR,
   resumenFiltros,
   rutaCola,
   rutaEntrega,
+  rutaPrimera,
   vistaEvaluar,
 } from "@/lib/evaluar-datos";
 import type { Entrega, Tarea, Usuario } from "@/lib/modelo";
@@ -260,5 +266,125 @@ describe("resumen y opciones", () => {
     const o = opcionesFiltros(cola, { tarea: "t9" }, mapas);
     expect(o.tareas.map((t) => t.valor)).toEqual(["t1", "t2", "t9"]);
     expect(o.alumnos.map((a) => a.valor)).toEqual(["30000002", "30000001"]);
+  });
+});
+
+describe("estado de la cola (D439)", () => {
+  const ev = (evaluadaEn: number) => ({
+    puntos: { p1: 18 },
+    comentarios: {},
+    puntaje: 18,
+    evaluadaPor: "30262232",
+    evaluadaEn,
+  });
+  const entregas = [
+    ...cola,
+    ent({ id: "v1", estado: "evaluada", evaluacion: ev(500) }),
+    ent({
+      id: "v2",
+      estado: "evaluada",
+      seccion: "5C",
+      evaluacion: ev(900),
+    }),
+    ent({ id: "b1", estado: "borrador" }),
+  ];
+  const evaluadas = colaEvaluadas(entregas);
+  const mapas = mapasEvaluar({
+    usuarios: [usuario("30000001", "Yeilin"), usuario("30000002", "Marta")],
+    equipos: [],
+    tareas: [tarea("t1", "Identidad"), tarea("t2", "Logo")],
+  });
+
+  test("por defecto «Por evaluar»: no va en la URL; los inválidos se ignoran", () => {
+    expect(filtrosDeParams({})).toEqual({});
+    expect(filtrosDeParams({ estado: "por-evaluar" })).toEqual({});
+    expect(filtrosDeParams({ estado: "otra" })).toEqual({});
+    expect(filtrosDeParams({ estado: ["todas", "evaluadas"] })).toEqual({
+      estado: "todas",
+    });
+    expect(estadoDe({})).toBe("por-evaluar");
+    expect(estadoDe({ estado: "evaluadas" })).toBe("evaluadas");
+  });
+
+  test("query, hayFiltros y resumen lo incluyen; va primero", () => {
+    const f = { estado: "evaluadas", tipo: "grupal" } as const;
+    expect(queryFiltros(f)).toBe("?estado=evaluadas&tipo=grupal");
+    expect(hayFiltros({ estado: "todas" })).toBe(true);
+    expect(resumenFiltros(f, mapas)).toBe("Evaluadas · Grupales");
+    expect(resumenFiltros({ estado: "todas" }, mapas)).toBe(
+      "Todas las entregas",
+    );
+    expect(
+      filtrosDeParams(
+        Object.fromEntries(new URLSearchParams(queryFiltros(f)).entries()),
+      ),
+    ).toEqual(f);
+  });
+
+  test("evaluadas: la más reciente primero; todas: por evaluar y luego evaluadas", () => {
+    expect(ids(evaluadas)).toEqual(["v2", "v1"]);
+    expect(ids(listaSegunEstado("por-evaluar", cola, evaluadas))).toEqual([
+      "i1",
+      "g1",
+      "i2",
+    ]);
+    expect(ids(listaSegunEstado("evaluadas", cola, evaluadas))).toEqual([
+      "v2",
+      "v1",
+    ]);
+    expect(ids(listaSegunEstado("todas", cola, evaluadas))).toEqual([
+      "i1",
+      "g1",
+      "i2",
+      "v2",
+      "v1",
+    ]);
+    // los filtros sirven igual sobre las evaluadas
+    expect(ids(filtrarCola(evaluadas, { seccion: "5C" }))).toEqual(["v2"]);
+  });
+
+  test("«Aplicar» de Cambiar: la cola con `ir=primera`", () => {
+    expect(rutaPrimera()).toBe(`${RUTA_EVALUAR}?ir=primera`);
+    expect(rutaPrimera({ estado: "evaluadas", seccion: "5A" })).toBe(
+      `${RUTA_EVALUAR}?estado=evaluadas&seccion=5A&ir=primera`,
+    );
+    expect(pideLaPrimera({ ir: "primera" })).toBe(true);
+    expect(pideLaPrimera({ ir: "otra" })).toBe(false);
+    expect(pideLaPrimera({})).toBe(false);
+    // `ir` no es un filtro
+    expect(filtrosDeParams({ ir: "primera" })).toEqual({});
+  });
+
+  test("en la entrega, Anterior/Saltar/Guardar siguen las evaluadas (D440)", () => {
+    const filtros = { estado: "evaluadas" } as const;
+    const v = vistaEvaluar({
+      entrega: evaluadas[0] as (typeof evaluadas)[number],
+      tarea: tarea("t1", "Identidad"),
+      cola: colaFiltradaCon(evaluadas, filtros, "v2"),
+      mapas,
+      filtros,
+    });
+    expect(v.eyebrow).toBe("Evaluadas · entrega 1 de 2");
+    expect(v.anteriorHref).toBeNull();
+    expect(v.saltarHref).toBe(`${RUTA_EVALUAR}/v1?estado=evaluadas`);
+    expect(v.guardarHref).toBe(`${RUTA_EVALUAR}/v1?estado=evaluadas`);
+    expect(v.colaHref).toBe(`${RUTA_EVALUAR}?estado=evaluadas`);
+    expect(v.filtroTexto).toBe("Evaluadas");
+    const ultima = vistaEvaluar({
+      entrega: evaluadas[1] as (typeof evaluadas)[number],
+      tarea: tarea("t1", "Identidad"),
+      cola: evaluadas,
+      mapas,
+      filtros,
+    });
+    expect(ultima.anteriorHref).toBe(`${RUTA_EVALUAR}/v2?estado=evaluadas`);
+    expect(ultima.guardarHref).toBe(`${RUTA_EVALUAR}?estado=evaluadas`);
+  });
+
+  test("eyebrow según el estado", () => {
+    expect(eyebrowCola("por-evaluar", 0, 3)).toBe(
+      "Por evaluar · entrega 1 de 3",
+    );
+    expect(eyebrowCola("todas", 2, 16)).toBe("Todas · entrega 3 de 16");
   });
 });

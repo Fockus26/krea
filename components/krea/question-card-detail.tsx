@@ -1,4 +1,4 @@
-import { Sparkles } from "lucide-react";
+import { ComentarioProfe } from "@/components/krea/comentario-profe";
 import { QuestionBar } from "@/components/krea/question-bar";
 import { QuestionHeader } from "@/components/krea/question-header";
 import { Card } from "@/components/ui/card";
@@ -58,7 +58,7 @@ export function QuestionCardDetail({
         <div className="flex flex-col gap-1.5">
           <p className="text-eyebrow text-text-2">Tu respuesta</p>
           {respuesta.tipo === "texto" ? (
-            <p className="rounded-nav bg-surface-2 px-3.5 py-3 text-callout text-text">
+            <p className="rounded-nav bg-surface-2 px-3.5 py-3 text-callout text-text whitespace-pre-wrap break-words">
               {respuesta.texto}
             </p>
           ) : respuesta.tipo === "imagen" ? (
@@ -84,16 +84,7 @@ export function QuestionCardDetail({
           )}
         </div>
         {comentario ? (
-          <div className="icono-linea flex gap-2.5 rounded-nav bg-accent-soft px-3.5 py-3 text-callout text-text">
-            <Sparkles
-              aria-hidden="true"
-              className="size-5 shrink-0 text-accent-ink"
-            />
-            <div className="min-w-0 flex-1">
-              <p className="text-small-b">Comentario de tu profe</p>
-              <p>{comentario}</p>
-            </div>
-          </div>
+          <ComentarioProfe titulo="Comentario de tu profe" texto={comentario} />
         ) : null}
       </Card>
     </li>

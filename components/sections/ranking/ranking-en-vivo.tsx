@@ -19,7 +19,7 @@ import {
   type Tu,
 } from "@/lib/ranking-en-vivo";
 import type { Movimiento, Vista } from "@/lib/ranking-vista";
-import { SONDEO_MS, useSondeo } from "@/lib/sondeo";
+import { estaCortado, fallosTras, SONDEO_MS, useSondeo } from "@/lib/sondeo";
 import { Ranking } from "./ranking";
 
 /** Cada cuánto se refresca «hace N min» del feed. */
@@ -28,7 +28,7 @@ const RELOJ_MS = 30_000;
 /**
  * Ranking en vivo (D011, D190, D327): pinta primero lo que leyó el servidor y pregunta cada
  * SONDEO_MS a /api/ranking/{seccion} (con la cookie de la sesión) si cambió. 401 = la sesión se
- * cerró o se revocó (D171); otro fallo = sin red. Los chips de puesto son lo que cambió desde que
+ * cerró o se revocó (D171); FALLOS_PARA_CORTADO fallos seguidos = sin red (D437). Los chips de puesto son lo que cambió desde que
  * se abrió la página; el feed (≥ 1024) y `RankAnnouncer` (< 1024, D096) salen de la diferencia
  * entre instantáneas.
  */
@@ -93,6 +93,12 @@ export function RankingEnVivo({
   }, [items]);
 
   const version = useRef(inicial.actualizadoEn);
+  // Fallos seguidos: el aviso sale al tercero (≈ 15 s), no por uno suelto (D437)
+  const fallos = useRef(0);
+  const anotar = (ok: boolean) => {
+    fallos.current = fallosTras(fallos.current, ok);
+    setCortado(estaCortado(fallos.current));
+  };
   useSondeo(
     async (senal) => {
       try {
@@ -105,17 +111,17 @@ export function RankingEnVivo({
           return;
         }
         if (res.status === 204) {
-          setCortado(false);
+          anotar(true);
           return;
         }
         if (!res.ok) throw new Error(String(res.status));
         const r = zRankingSeccion.safeParse(await res.json());
         if (!r.success) return;
         version.current = r.data.actualizadoEn;
-        setCortado(false);
+        anotar(true);
         setRanking(r.data);
       } catch {
-        if (!senal.aborted) setCortado(true);
+        if (!senal.aborted) anotar(false);
       }
     },
     SONDEO_MS,

@@ -90,7 +90,7 @@ function CardList({ className, ...props }: React.ComponentProps<"ul">) {
 
 /**
  * Fila de la lista. Con `asChild` el hijo (un `<a>`/`Link`) es la fila interactiva:
- * hover `--surface-2`, radio 12 y anillo de foco (§2.8). El separador es del `<li>`,
+ * hover `--surface-2` con aire (`px-3 -mx-2`: el texto no se mueve), radio 12 y anillo de foco (§2.8). El separador es del `<li>`,
  * así el hover no lo tapa.
  */
 function CardListItem({
@@ -112,8 +112,9 @@ function CardListItem({
       <Row
         className={cn(
           "flex min-h-16 items-center gap-3 px-1 py-3 text-text",
+          // El fondo del hover respira: padding y margen negativo iguales, el texto sigue alineado
           asChild &&
-            "rounded-nav no-underline transition-colors duration-fast ease-krea hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
+            "-mx-2 rounded-nav px-3 no-underline transition-colors duration-fast ease-krea hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
           className,
         )}
       >

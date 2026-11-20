@@ -139,6 +139,25 @@ export function avisoPresenciaEntrega(texto: string): string {
     : "";
 }
 
+/** El aviso de Evaluar sale como toast (D450): el doble de los 4 s normales, para leerlo entero. */
+export const AVISO_PRESENCIA_MS = 8_000;
+
+/**
+ * Profes que acaban de llegar a la entrega: los de `actuales` que no estaban en `vistos` (sin
+ * repetir, en orden de llegada). Uno por llegada (D450): quien ya avisó no vuelve a avisar en cada
+ * sondeo, y si se van todos no hay nada que avisar.
+ */
+export function llegadasPresencia<T extends Pick<EntradaPresencia, "profeId">>(
+  vistos: ReadonlySet<string>,
+  actuales: readonly T[],
+): T[] {
+  const nuevos = new Map<string, T>();
+  for (const e of actuales)
+    if (!vistos.has(e.profeId) && !nuevos.has(e.profeId))
+      nuevos.set(e.profeId, e);
+  return [...nuevos.values()];
+}
+
 /** Cómo se ve el profe en la presencia: primer nombre + primer apellido («Ana Pérez»). */
 export function nombrePresencia(
   u: { nombres: string; apellidos: string } | null,
