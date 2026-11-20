@@ -50,7 +50,7 @@ export const idealAlumno = cache(
     const { seccion } = await alumnoActual();
     return opcional(
       "ideal (alumno)",
-      () => idealDelAlumno(db(), seccion, tareaId),
+      () => idealDelAlumno(db(), seccion, tareaId, Date.now()),
       null,
     );
   },
