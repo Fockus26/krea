@@ -1,4 +1,5 @@
 import { useId } from "react";
+import { ComentarioCampo } from "@/components/krea/comentario-campo";
 import { ImageViewer } from "@/components/krea/image-viewer";
 import type {
   AnswerImage,
@@ -7,7 +8,6 @@ import type {
 import { QuestionHeader } from "@/components/krea/question-header";
 import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
-import { Textarea } from "@/components/ui/textarea";
 import { COMMENT_MAX_LENGTH } from "@/lib/question";
 
 type QuestionCardReviewProps = {
@@ -92,7 +92,7 @@ export function QuestionCardReview({
           titleId={headingId}
         />
         {respuesta.tipo === "texto" ? (
-          <p className="rounded-nav bg-surface-2 px-3.5 py-3 text-callout text-text">
+          <p className="rounded-nav bg-surface-2 px-3.5 py-3 text-callout text-text whitespace-pre-wrap break-words">
             {respuesta.texto}
           </p>
         ) : respuesta.tipo === "imagen" ? (
@@ -118,12 +118,11 @@ export function QuestionCardReview({
           }
           help={comentarioAyuda}
         >
-          <Textarea
-            compact
-            counter
-            maxLength={COMMENT_MAX_LENGTH}
+          <ComentarioCampo
             value={comentario}
-            onChange={(event) => onComentarioChange(event.currentTarget.value)}
+            onChange={onComentarioChange}
+            maxLength={COMMENT_MAX_LENGTH}
+            emojiEtiqueta={`Emoji en el comentario de la pregunta ${numero}`}
           />
         </Field>
       </Card>

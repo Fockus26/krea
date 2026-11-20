@@ -1,7 +1,7 @@
 // Fila de `usuarios` ↔ `Usuario` de `lib/modelo` (D327). Las marcas que en Firestore estaban
 // ausentes cuando eran falsas (`admin`, `debeCambiarPassword`, `apariencia`) se devuelven igual:
 // ausentes, para que los esquemas y las vistas no cambien.
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import type { Tx } from "@/lib/db";
 import { usuarios } from "@/lib/db/schema";
 import { type Usuario, zUsuario } from "@/lib/modelo";
@@ -74,6 +74,37 @@ export async function leerUsuarioParaActualizar(
     .for("update")
     .limit(1);
   return f ? usuarioDeFila(f) : null;
+}
+
+/**
+ * Nombres y apellidos de los profesores con esas cédulas (cédula → nombre), para que el alumno vea
+ * quién lo evaluó (D447). Solo esas dos columnas: la cédula es la clave y no sale del servidor
+ * (D380, D388). Una cédula que no es de un profesor no aparece.
+ */
+export async function nombresDeProfes(
+  db: Tx,
+  cedulas: readonly string[],
+): Promise<Map<string, { nombres: string; apellidos: string }>> {
+  if (cedulas.length === 0) return new Map();
+  const filas = await db
+    .select({
+      cedula: usuarios.cedula,
+      nombres: usuarios.nombres,
+      apellidos: usuarios.apellidos,
+    })
+    .from(usuarios)
+    .where(
+      and(
+        inArray(usuarios.cedula, [...new Set(cedulas)]),
+        eq(usuarios.rol, "profesor"),
+      ),
+    );
+  return new Map(
+    filas.map((f) => [
+      f.cedula,
+      { nombres: f.nombres, apellidos: f.apellidos },
+    ]),
+  );
 }
 
 export async function leerUsuarios(

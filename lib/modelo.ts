@@ -421,6 +421,13 @@ export const zEvaluacion = z.object({
    * la traen: quien lee cae a la base vigente del alumno (`baseDeIntegrante`).
    */
   bases: z.record(zCedula, zBase).optional(),
+  /**
+   * Comentario general de la entrega (además del de cada pregunta; en grupal, uno para el
+   * equipo; D445). Opcional, como `bases`: se escribe solo si tiene texto y las evaluaciones de
+   * antes no lo traen. 1000 como `comentarios`: aquí se lee lo guardado, el tope de 300 lo pone
+   * `zGuardarEvaluacion`.
+   */
+  comentarioGeneral: z.string().trim().max(1000).optional(),
 });
 export type Evaluacion = z.infer<typeof zEvaluacion>;
 

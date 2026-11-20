@@ -1,6 +1,7 @@
 import { ClipboardList } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { ComentarioProfe } from "@/components/krea/comentario-profe";
 import { EmptyState } from "@/components/krea/empty-state";
 import { GradeSummary } from "@/components/sections/notas/grade-summary";
 import { QuestionList } from "@/components/sections/notas/question-list";
@@ -9,7 +10,7 @@ import { PageHeader } from "@/components/sections/shared/page-header";
 import { Card } from "@/components/ui/card";
 import tareaSeed from "@/data/seed/tarea-identidad-marca.json";
 import { verificarSesion } from "@/lib/dal";
-import { datosAlumno } from "@/lib/datos/estudiante";
+import { datosAlumno, evaluadoresDeTarea } from "@/lib/datos/estudiante";
 import { urlsFirmadas } from "@/lib/datos/imagenes";
 import { imagenesConAlt, respuestaFirmada } from "@/lib/question";
 import { TAREA_GRUPAL_SEED } from "@/lib/seed-firestore";
@@ -35,7 +36,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 // (o borrador) es 404; sin evaluar todavía, el aviso en vez de inventar el detalle.
 export default async function DetalleNotaPage({ params }: Props) {
   const id = (await params).tarea;
-  const d = detalleNota(await datosAlumno(), id);
+  // Quién evaluó (D447): el servidor resuelve su nombre; la cédula no llega a la vista
+  const [datos, profes] = await Promise.all([
+    datosAlumno(),
+    evaluadoresDeTarea(id),
+  ]);
+  const d = detalleNota(datos, id, profes);
   if (d.estado === "no-existe") notFound();
 
   if (d.estado === "sin-detalle") {
@@ -82,6 +88,13 @@ export default async function DetalleNotaPage({ params }: Props) {
         final={d.final}
         noParticipo={d.noParticipo}
       />
+      {d.comentarioGeneral ? (
+        // PROVISIONAL (CONTENT_CHECKLIST fila 250): rótulo del comentario general (D445)
+        <ComentarioProfe
+          titulo="Comentario de tu profe"
+          texto={d.comentarioGeneral}
+        />
+      ) : null}
       {preguntas.length > 0 ? (
         <QuestionList preguntas={preguntas} />
       ) : (

@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { validateCedula } from "@/lib/cedula";
+import { COMMENT_MAX_LENGTH } from "@/lib/question";
 import { Familia, Muestra } from "./familia";
 
 // Textos de ejemplo PROVISIONALES (CONTENT_CHECKLIST 26–28): ayudas, errores de demostración,
@@ -238,7 +239,8 @@ export function Formularios() {
           <Field label="Compacto (tarjeta de evaluación)">
             <Textarea
               compact
-              maxLength={280}
+              autoGrow
+              maxLength={COMMENT_MAX_LENGTH}
               counter
               placeholder="Comentario para el estudiante"
             />

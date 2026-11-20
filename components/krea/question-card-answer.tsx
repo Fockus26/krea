@@ -89,6 +89,7 @@ export function QuestionCardAnswer(props: QuestionCardAnswerProps) {
           <Textarea
             aria-labelledby={titleId}
             counter
+            autoGrow
             maxLength={ANSWER_MAX_LENGTH}
             placeholder="Escribe tu respuesta aquí"
             value={props.value}

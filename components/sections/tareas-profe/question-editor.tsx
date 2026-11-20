@@ -115,6 +115,7 @@ export function QuestionEditor({
         <Textarea
           id={ids.enunciado}
           compact
+          autoGrow
           rows={2}
           aria-labelledby={ids.titulo}
           readOnly={bloqueada}

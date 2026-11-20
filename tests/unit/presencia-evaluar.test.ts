@@ -2,6 +2,7 @@
 // y el texto del aviso. Lo de «Editar alumno» lo prueba tests/unit/presencia.test.ts.
 import { describe, expect, test } from "bun:test";
 import {
+  AVISO_PRESENCIA_MS,
   avisoPresenciaEntrega,
   claveDePedido,
   claveEntrega,
@@ -9,6 +10,7 @@ import {
   editoresVigentes,
   entregaDeClave,
   esClaveEntrega,
+  llegadasPresencia,
   presenciaEvaluarTexto,
   presenciaTexto,
   zIdEntrega,
@@ -93,6 +95,30 @@ describe("texto del aviso en Evaluar (D410)", () => {
     expect(presenciaTexto([n("Ana Pérez"), n("Luis Díaz"), n("Eva Gil")])).toBe(
       "Ana Pérez y 2 más están editando",
     );
+  });
+
+  test("toast por llegada (D450): solo los que no estaban, sin repetir", () => {
+    const e = (profeId: string): EntradaPresencia => ({
+      profeId,
+      nombre: profeId,
+      desde: 0,
+      latido: 1_000,
+    });
+    // Primer sondeo de quien llega: ve al que ya estaba
+    expect(
+      llegadasPresencia(new Set(), [e("ana")]).map((x) => x.profeId),
+    ).toEqual(["ana"]);
+    // Siguiente sondeo con los mismos: nada nuevo, ningún toast
+    expect(llegadasPresencia(new Set(["ana"]), [e("ana")])).toEqual([]);
+    // Llega otro: solo él
+    expect(
+      llegadasPresencia(new Set(["ana"]), [e("ana"), e("luis"), e("luis")]).map(
+        (x) => x.profeId,
+      ),
+    ).toEqual(["luis"]);
+    // Se van todos: sin toast
+    expect(llegadasPresencia(new Set(["ana", "luis"]), [])).toEqual([]);
+    expect(AVISO_PRESENCIA_MS).toBeGreaterThan(4_000);
   });
 
   test("otra pestaña mía no es «otro profe»", () => {

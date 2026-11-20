@@ -8,9 +8,13 @@ import { formatNota, gradeColor, NOTA_MAX } from "@/lib/grades";
 /** Variante de la tarjeta: define el texto del valor de la cabecera (§2.16). */
 export type QuestionVariant = "detalle" | "responder" | "evaluar";
 
-/** Máximos de caracteres de los campos de texto (contadores "/ 600" y "/ 280"). */
+/**
+ * Máximos de caracteres de los campos de texto (contadores "/ 600" y "/ 300"). El campo y su
+ * contador cuentan unidades UTF-16 (`maxLength`, `String.length`: un emoji cuenta 2); zod 4, en el
+ * servidor, puntos de código (un emoji, 1), así que lo que el campo deja escribir siempre pasa (D446).
+ */
 export const ANSWER_MAX_LENGTH = 600;
-export const COMMENT_MAX_LENGTH = 280;
+export const COMMENT_MAX_LENGTH = 300;
 
 /**
  * Texto del valor a la derecha de la cabecera: "3,5 / 4" en detalle, "vale 4" al evaluar,

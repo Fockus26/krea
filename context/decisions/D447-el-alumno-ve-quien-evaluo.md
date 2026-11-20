@@ -1,0 +1,5 @@
+# D447 · Data · El alumno ve qué profe evaluó: nombre corto en el eyebrow del Detalle de nota, nunca la cédula · Implemented
+
+**Decision:** pedido de César (2026-11-20). `evaluacion.evaluadaPor` (cédula) se resuelve en el servidor: `evaluadoresDeTarea(tareaId)` (`lib/datos/estudiante.ts`) toma los `evaluadaPor` de sus entregas de esa tarea y `nombresDeProfes(db, cédulas)` (`lib/data/usuarios.ts`) lee solo `cedula, nombres, apellidos` de usuarios con `rol = 'profesor'`. `detalleNota(d, tareaId, profes)` arma «Grupal · evaluada el 06/11/2026 por Ana Pérez» (`nombreCorto`); la cédula no sale del servidor (D380, D388). Sin evaluador conocido (Excel, seed, cuenta borrada), el eyebrow queda como antes.
+**Why:** la cédula de un profe nunca va al cliente; la consulta aparte solo corre en el Detalle de nota, no en cada carga de `datosAlumno` (Inicio, Notas).
+**Discarded alternative:** añadir los nombres de evaluadores a `DatosAlumno` (una consulta más en todas las pantallas del alumno y un mapa con cédulas de profes en el objeto que alimenta vistas); mostrar el avatar del profe (la semilla vieja puede llevar la cédula, D388).
