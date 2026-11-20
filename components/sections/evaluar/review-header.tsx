@@ -37,6 +37,7 @@ export function ReviewHeader({
   saltarHref,
   filtroTexto,
   colaHref,
+  cambiar,
 }: {
   eyebrow: string;
   titulo: string;
