@@ -13,6 +13,7 @@ import {
   deshacerEvaluacionEnTransaccion,
   evaluarEnTransaccion,
 } from "@/lib/data/evaluar";
+import { nombresDeProfes } from "@/lib/data/usuarios";
 import type { Db } from "@/lib/db";
 import { notaFinal } from "@/lib/grades";
 import {
@@ -588,5 +589,103 @@ describe("el alumno edita mientras el profe evalúa (D397)", () => {
       AHORA + 50,
     );
     expect(r.ok).toBe(true);
+  });
+});
+
+describe("comentario general (D445) y quién evaluó (D447)", () => {
+  const T_GEN = "w7-general";
+  const EGEN = idEntrega(T_GEN, A2);
+
+  test("guardar, corregir y deshacer conservan el comentario general", async () => {
+    await ponerTarea(
+      db(),
+      T_GEN,
+      tarea("individual", [
+        { id: "p1", enunciado: "Uno", formato: "texto", valor: 20 },
+      ]),
+    );
+    await ponerEntrega(db(), EGEN, entregada(T_GEN, "individual", A2, [A2]));
+
+    const primera = await evaluarEnTransaccion(
+      db(),
+      PROFE,
+      {
+        entregaId: EGEN,
+        puntos: { p1: 18 },
+        comentarios: {},
+        comentarioGeneral: "  ¡Excelente! 🎉 ",
+        version: null,
+      },
+      AHORA + 100,
+    );
+    expect(primera.ok).toBe(true);
+    expect((await entrega(EGEN)).evaluacion?.comentarioGeneral).toBe(
+      "¡Excelente! 🎉",
+    );
+
+    // Corregir con otro texto: el anterior queda en `evaluacionAnterior`
+    const corregida = await evaluarEnTransaccion(
+      db(),
+      PROFE_2,
+      {
+        entregaId: EGEN,
+        puntos: { p1: 16 },
+        comentarios: {},
+        comentarioGeneral: "Revisa la paleta",
+        version: AHORA + 100,
+      },
+      AHORA + 110,
+    );
+    expect(corregida.ok).toBe(true);
+    const c = await entrega(EGEN);
+    expect(c.evaluacion?.comentarioGeneral).toBe("Revisa la paleta");
+    expect(c.evaluacionAnterior?.comentarioGeneral).toBe("¡Excelente! 🎉");
+
+    // Deshacer devuelve el de antes (va dentro del jsonb, D205)
+    expect(
+      (
+        await deshacerEvaluacionEnTransaccion(
+          db(),
+          PROFE_2,
+          EGEN,
+          AHORA + 110,
+          AHORA + 111,
+        )
+      ).ok,
+    ).toBe(true);
+    expect((await entrega(EGEN)).evaluacion?.comentarioGeneral).toBe(
+      "¡Excelente! 🎉",
+    );
+
+    // Corregir sin el campo (formulario viejo): queda sin comentario general
+    const vieja = await evaluarEnTransaccion(
+      db(),
+      PROFE,
+      {
+        entregaId: EGEN,
+        puntos: { p1: 17 },
+        comentarios: {},
+        version: AHORA + 100,
+      },
+      AHORA + 120,
+    );
+    expect(vieja.ok).toBe(true);
+    expect((await entrega(EGEN)).evaluacion?.comentarioGeneral).toBeUndefined();
+  });
+
+  test("nombresDeProfes: solo profesores, solo nombres y apellidos", async () => {
+    await ponerUsuario(db(), {
+      ...alumno(PROFE, 20),
+      rol: "profesor",
+      nombres: "Ana María",
+      apellidos: "Pérez Gil",
+      seccion: null,
+      equipoId: null,
+    });
+    const m = await nombresDeProfes(db(), [PROFE, PROFE, A1, "30999999"]);
+    expect([...m.entries()]).toEqual([
+      [PROFE, { nombres: "Ana María", apellidos: "Pérez Gil" }],
+    ]);
+    expect(await nombresDeProfes(db(), [])).toEqual(new Map());
   });
 });

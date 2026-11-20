@@ -32,7 +32,7 @@ import {
   zInstante,
   zPuntaje,
 } from "@/lib/modelo";
-import { imagenesConAlt } from "@/lib/question";
+import { COMMENT_MAX_LENGTH, imagenesConAlt } from "@/lib/question";
 import { estiloDe, nombreCorto } from "@/lib/vistas-estudiante";
 
 type ConId<T> = { id: string } & T;
@@ -115,8 +115,13 @@ export const zGuardarEvaluacion = z.object({
   entregaId: zIdDocumento,
   /** Puntos por pregunta (id → puntos), pasos de 0,5 (D004); el máximo de cada una lo mira el servidor. */
   puntos: z.record(zIdPregunta, zPuntaje),
-  /** Comentario por pregunta (id → texto); vacío = sin comentario. */
-  comentarios: z.record(zIdPregunta, z.string().trim().max(1000)),
+  /** Comentario por pregunta (id → texto); vacío = sin comentario. Hasta 300 (D446). */
+  comentarios: z.record(zIdPregunta, z.string().trim().max(COMMENT_MAX_LENGTH)),
+  /**
+   * Comentario general de la entrega (D445); vacío = sin comentario. Opcional para que un
+   * formulario viejo siga guardando (sin el campo = sin comentario general).
+   */
+  comentarioGeneral: z.string().trim().max(COMMENT_MAX_LENGTH).optional(),
   /**
    * `evaluadaEn` de la evaluación con la que se abrió el formulario (`null` = estaba Pendiente).
    * Si ya no es la vigente, otro la cambió mientras tanto y no se pisa (`cambio`; QA versión 1,
@@ -249,6 +254,7 @@ export function armarEvaluacion({
   if (!marcados) return { ok: false, error: "invalida" };
   const bases = basesDeEvaluacion(entrega, envio.bases ?? {}, basesVigentes);
   if (!bases) return { ok: false, error: "invalida" };
+  const general = envio.comentarioGeneral?.trim() ?? "";
   return {
     ok: true,
     evaluacion: {
@@ -260,6 +266,8 @@ export function armarEvaluacion({
       // Solo si hay alguno: así una evaluación sin marcas queda igual que las de antes (D364)
       ...(marcados.length > 0 ? { noParticiparon: marcados } : {}),
       bases,
+      // Solo con texto: sin él queda igual que las evaluaciones de antes (D445)
+      ...(general ? { comentarioGeneral: general } : {}),
     },
   };
 }
@@ -611,6 +619,8 @@ export type VistaEvaluar = {
     enviadaEn: number | null;
     puntajes: (number | null)[];
     comentarios: string[];
+    /** Comentario general de la evaluación vigente (D445); `""` si no tiene. */
+    comentarioGeneral: string;
     /**
      * Cédulas marcadas «No participó» en la evaluación vigente (al reevaluar vienen marcadas).
      * Sin evaluación, las de `entrega.sinParte` (D420): premarcadas, el profe las puede desmarcar.
@@ -765,6 +775,7 @@ export function vistaEvaluar({
       enviadaEn: entrega.enviadaEn,
       puntajes: preguntas.map((p) => ev?.puntos?.[p.id] ?? null),
       comentarios: preguntas.map((p) => ev?.comentarios[p.id] ?? ""),
+      comentarioGeneral: ev?.comentarioGeneral ?? "",
       // Con evaluación manda lo que el profe guardó; sin ella, el premarcado del reparto (D420)
       noParticiparon:
         entrega.tipo !== "grupal"

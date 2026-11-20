@@ -448,6 +448,8 @@ export type DetalleVista =
       noParticipo: boolean;
       /** Quién respondió, para el `alt` de las imágenes: su primer nombre o «tu equipo». */
       autor: string;
+      /** Comentario general del profe (D445); ausente si no dejó. */
+      comentarioGeneral?: string;
       /** Vacío si la nota vino del Excel sin desglose. */
       /** `imagenPaths`: rutas de la respuesta en imagen (una o varias, D373), sin firmar. */
       preguntas: Array<PreguntaDetalle & { imagenPaths?: string[] }>;
@@ -455,11 +457,17 @@ export type DetalleVista =
 
 /**
  * Detalle de una nota: `no-existe` (no es una tarea visible para él → 404), `sin-detalle`
- * (todavía no está evaluada) u `ok`.
+ * (todavía no está evaluada) u `ok`. `profes`: cédula → nombre de quien evaluó (D447,
+ * `evaluadoresDeTarea`); el eyebrow lleva solo su nombre corto, nunca la cédula (D380, D388).
+ * Sin evaluador conocido (Excel, seed, una cuenta que ya no existe), el eyebrow va sin «por».
  */
 export function detalleNota(
   d: Pick<DatosAlumno, "usuario" | "tareas" | "entregas">,
   tareaId: string,
+  profes: ReadonlyMap<
+    string,
+    Pick<Usuario, "nombres" | "apellidos">
+  > = new Map(),
 ): DetalleVista {
   const tarea = d.tareas.find((t) => t.id === tareaId);
   if (!tarea) return { estado: "no-existe" };
@@ -473,10 +481,15 @@ export function detalleNota(
   }
   const tipo = tarea.tipo === "grupal" ? "Grupal" : "Individual";
   const puntos = ev.puntos;
+  const profe = ev.evaluadaPor ? profes.get(ev.evaluadaPor) : undefined;
+  // PROVISIONAL (CONTENT_CHECKLIST fila 251): «… por Ana Pérez»
+  const por = profe ? ` por ${nombreCorto(profe)}` : "";
+  const general = ev.comentarioGeneral?.trim();
   return {
     estado: "ok",
     tipo: tarea.tipo,
-    eyebrow: `${tipo} · evaluada el ${formatFecha(diaDeInstante(ev.evaluadaEn))}`,
+    eyebrow: `${tipo} · evaluada el ${formatFecha(diaDeInstante(ev.evaluadaEn))}${por}`,
+    ...(general ? { comentarioGeneral: general } : {}),
     titulo: tarea.titulo,
     puntaje: ev.puntaje,
     base: baseDeIntegrante(entrega, d.usuario.cedula, d.usuario.base),

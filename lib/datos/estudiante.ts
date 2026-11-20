@@ -18,7 +18,11 @@ import {
 } from "@/lib/data/filas";
 import { leerPartes } from "@/lib/data/partes";
 import { leerRanking } from "@/lib/data/ranking";
-import { leerUsuario, usuarioDeFila } from "@/lib/data/usuarios";
+import {
+  leerUsuario,
+  nombresDeProfes,
+  usuarioDeFila,
+} from "@/lib/data/usuarios";
 import { db } from "@/lib/datos/comun";
 import { urlsFirmadas } from "@/lib/datos/imagenes";
 import { ajustes, entregas, equipos, tareas, usuarios } from "@/lib/db/schema";
@@ -133,6 +137,22 @@ export const datosAlumno = cache(async (): Promise<DatosAlumno> => {
     ajustes: susAjustes,
     ranking,
   };
+});
+
+/**
+ * Nombre de quien evaluó sus entregas de esa tarea (cédula → nombres y apellidos, D447), para el
+ * detalle de la nota. Solo el servidor ve la clave: `detalleNota` devuelve el nombre corto.
+ */
+export const evaluadoresDeTarea = cache(async (tareaId: string) => {
+  const { entregas: suyas } = await datosAlumno();
+  return nombresDeProfes(
+    db(),
+    suyas.flatMap((e) =>
+      e.tareaId === tareaId && e.evaluacion?.evaluadaPor
+        ? [e.evaluacion.evaluadaPor]
+        : [],
+    ),
+  );
 });
 
 /** Entregas grupales de la sección (Mi equipo: notas del equipo y ganadores de premios). */
