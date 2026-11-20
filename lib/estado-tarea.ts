@@ -20,7 +20,7 @@ export type TareaConVencimiento = Pick<TareaDoc, "estado" | "fechaEntrega"> & {
 
 /** La prórroga del titular, vigente o no; `null` si no tiene. */
 export function prorrogaDe(
-  t: Pick<TareaConVencimiento, "prorrogas">,
+  t: Pick<TareaConVencimiento, "estado" | "prorrogas">,
   titularId: string | null | undefined,
 ): Prorroga | null {
   if (!titularId || !t.prorrogas) return null;
@@ -84,7 +84,7 @@ export function cerradaParaTodosEn(
 
 /** Titulares con una prórroga sin vencer en `ahora` (D452). */
 export function prorrogasVigentes(
-  t: Pick<TareaConVencimiento, "prorrogas">,
+  t: Pick<TareaConVencimiento, "estado" | "prorrogas">,
   ahora: number,
 ): string[] {
   if (!t.prorrogas) return [];
@@ -110,7 +110,10 @@ export function cerradaParaTodos(
  * suya); si no, las de la tarea. Para «Vence» / «Venció» y el orden de «Por entregar».
  */
 export function vencimientoDe(
-  t: Pick<TareaConVencimiento, "fechaEntrega" | "horaEntrega" | "prorrogas">,
+  t: Pick<
+    TareaConVencimiento,
+    "estado" | "fechaEntrega" | "horaEntrega" | "prorrogas"
+  >,
   titularId?: string | null,
 ): { fecha: string | null; hora: string | null } {
   const p = prorrogaDe(t, titularId);

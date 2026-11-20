@@ -261,8 +261,8 @@ describe("servidor: armarTarea con hora (D354)", () => {
     expect(r.ok).toBe(true);
   });
 
-  test("con entregas: conserva la fecha y hora guardadas aunque ya pasaron", () => {
-    const previa: Tarea = zTarea.parse({
+  test("con entregas: conserva la hora guardada; vencida ya no se edita (D451)", () => {
+    const vencida: Tarea = zTarea.parse({
       titulo: "Plan de redes",
       tipo: "individual",
       secciones: ["5A"],
@@ -275,16 +275,38 @@ describe("servidor: armarTarea con hora (D354)", () => {
       autorId: PROFE,
       actualizadoEn: 1,
     });
+    // 08:00 ya pasó a las 11:00: cerrada, la salida es reabrirla (D455)
+    expect(
+      armar({
+        accion: "guardar",
+        previa: vencida,
+        conEntregas: true,
+        entrada: entrada({ titulo: "Plan v2", hora: "16:00" }),
+      }),
+    ).toEqual({ ok: false, error: "cerrada" });
+    const previa: Tarea = zTarea.parse({
+      titulo: "Plan de redes",
+      tipo: "individual",
+      secciones: ["5A"],
+      estado: "abierta",
+      fechaEntrega: HOY,
+      horaEntrega: "12:00",
+      premio: null,
+      preguntas: [{ id: "q1", enunciado: "Uno", formato: "texto", valor: 20 }],
+      importada: false,
+      autorId: PROFE,
+      actualizadoEn: 1,
+    });
     const igual = armar({
       accion: "guardar",
       previa,
       conEntregas: true,
-      entrada: entrada({ titulo: "Plan v2", hora: "08:00" }),
+      entrada: entrada({ titulo: "Plan v2", hora: "12:00" }),
     });
     if (!igual.ok) throw new Error(igual.error);
     expect(igual.tarea).toMatchObject({
       titulo: "Plan v2",
-      horaEntrega: "08:00",
+      horaEntrega: "12:00",
     });
     expect(
       armar({

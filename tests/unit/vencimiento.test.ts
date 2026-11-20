@@ -206,11 +206,13 @@ describe("textos con «vence» / «venció»", () => {
     entregas: [],
   };
 
-  test("«Por entregar» del alumno: venció por hora, no por día", () => {
+  test("«Por entregar» del alumno: la vencida por hora se cierra y sale (D451, D458)", () => {
     const filas = filasPorEntregar(datos, caracas(5, 12, 0));
-    expect(filas.map((f) => [f.id, f.vencida])).toEqual([
-      ["manana", true],
-      ["noche", false],
+    expect(filas.map((f) => [f.id, f.vencida])).toEqual([["noche", false]]);
+    // Antes de las 8:00 sigue, con su hora
+    expect(filasPorEntregar(datos, caracas(5, 7, 0)).map((f) => f.id)).toEqual([
+      "manana",
+      "noche",
     ]);
     // Sin instante (vista previa) nada sale vencido
     expect(filasPorEntregar(datos).every((f) => !f.vencida)).toBe(true);
