@@ -25,7 +25,32 @@ async function profe(req: Request) {
   return accesoPresencia(s) === "ok" ? s : null;
 }
 
+/** Base caída, sin permiso o tiempo agotado: 503 sin caché; el sondeo lo trata como pasajero (D437). */
+function fallo(e: unknown): Response {
+  console.error("[api/presencia]", e instanceof Error ? e.message : e);
+  return Response.json(
+    { error: "red" },
+    { status: 503, headers: { "Cache-Control": "no-store" } },
+  );
+}
+
 export async function GET(req: Request) {
+  try {
+    return await leer(req);
+  } catch (e) {
+    return fallo(e);
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    return await escribir(req);
+  } catch (e) {
+    return fallo(e);
+  }
+}
+
+async function leer(req: Request) {
   const s = await profe(req);
   if (!s) return Response.json({ error: "sin-sesion" }, { status: 401 });
   const db = baseDeDatos();
@@ -46,7 +71,7 @@ export async function GET(req: Request) {
   );
 }
 
-export async function POST(req: Request) {
+async function escribir(req: Request) {
   const s = await profe(req);
   if (!s) return Response.json({ error: "sin-sesion" }, { status: 401 });
   const db = baseDeDatos();

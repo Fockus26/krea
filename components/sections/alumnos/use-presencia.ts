@@ -3,7 +3,7 @@
 // SONDEO_MS a /api/presencia (una sola consulta para todas las filas) y el diálogo abierto marca SU
 // entrada con un latido. Si la ruta falla (sin sesión, sin red), la presencia se apaga en
 // silencio: guardar sigue igual.
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   type EntradaPresencia,
   editoresVigentes,
@@ -12,7 +12,7 @@ import {
   RELOJ_PRESENCIA_MS,
   zEntradaPresencia,
 } from "@/lib/presencia";
-import { SONDEO_MS, useSondeo } from "@/lib/sondeo";
+import { estaCortado, fallosTras, SONDEO_MS, useSondeo } from "@/lib/sondeo";
 
 const RUTA = "/api/presencia";
 
@@ -36,6 +36,7 @@ export function usePresenciaAlumnos(yo?: YoPresencia): Presencia | null {
   // Reloj del SERVIDOR (lo trae cada respuesta) más lo que pasó desde entonces aquí
   const [base, setBase] = useState({ servidor: 0, local: 0 });
   const [, setTic] = useState(0);
+  const fallos = useRef(0);
 
   useSondeo(
     async (senal) => {
@@ -50,11 +51,15 @@ export function usePresenciaAlumnos(yo?: YoPresencia): Presencia | null {
           const e = zEntradaPresencia.safeParse(d.entrada);
           return e.success ? [{ alumnoId: d.alumnoId, entrada: e.data }] : [];
         });
+        fallos.current = fallosTras(fallos.current, true);
         setEntradas(porAlumno(docs));
         setBase({ servidor: cuerpo.ahora, local: Date.now() });
       } catch {
-        // Sin permiso o sin red: nadie a la vista, en silencio
-        if (!senal.aborted) setEntradas(new Map());
+        // Sin permiso o sin red: nadie a la vista, en silencio. Un fallo suelto no la apaga (D437):
+        // lo que había caduca solo con el reloj (`editoresVigentes`)
+        if (senal.aborted) return;
+        fallos.current = fallosTras(fallos.current, false);
+        if (estaCortado(fallos.current)) setEntradas(new Map());
       }
     },
     SONDEO_MS,
@@ -152,6 +157,7 @@ export function usePresenciaEntrega(
   const [entradas, setEntradas] = useState<EntradaPresencia[]>(NADIE);
   const [base, setBase] = useState({ servidor: 0, local: 0 });
   const [tic, setTic] = useState(0);
+  const fallos = useRef(0);
 
   useLatido(uid, "entrega", entregaId);
 
@@ -167,6 +173,7 @@ export function usePresenciaEntrega(
           ahora: number;
           entradas: unknown[];
         };
+        fallos.current = fallosTras(fallos.current, true);
         setEntradas(
           cuerpo.entradas.flatMap((d) => {
             const e = zEntradaPresencia.safeParse(d);
@@ -175,7 +182,10 @@ export function usePresenciaEntrega(
         );
         setBase({ servidor: cuerpo.ahora, local: Date.now() });
       } catch {
-        if (!senal.aborted) setEntradas(NADIE);
+        // Un fallo suelto no apaga el aviso (D437); lo que había caduca solo con el reloj
+        if (senal.aborted) return;
+        fallos.current = fallosTras(fallos.current, false);
+        if (estaCortado(fallos.current)) setEntradas(NADIE);
       }
     },
     SONDEO_MS,

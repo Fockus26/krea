@@ -8,6 +8,7 @@ import {
 } from "@/components/estados/pantallas";
 import { useEnLinea } from "@/components/krea/use-en-linea";
 import { codigoError, digestDe } from "@/lib/estados";
+import { recargarSiEsDeploy } from "@/lib/recarga-deploy";
 
 /**
  * Error de cualquier página (HANDOFF §5b). En la raíz: reemplaza al shell, sin barras. Elige por
@@ -28,6 +29,8 @@ export default function ErrorPagina({
   useEffect(() => {
     // Hasta la fase 07 no hay servicio de registro: queda en la consola del navegador
     console.error(error);
+    // Build desfasado tras un deploy (chunk o Server Action que ya no existen): UNA recarga (D438)
+    recargarSiEsDeploy(error);
   }, [error]);
 
   if (!enLinea)
