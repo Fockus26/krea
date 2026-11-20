@@ -113,7 +113,7 @@ const PROFE: Readonly<
     },
   },
   "logo-y-paleta": {
-    estado: "evaluada",
+    estado: "cerrada",
     avance: {
       tipo: "evaluadas",
       hechas: EQUIPOS.length,
@@ -137,13 +137,19 @@ function tareaProfe(t: DemoTarea): TareaProfe {
     id: t.id,
     titulo: t.titulo,
     tipo: t.tipo,
-    estado: p?.estado ?? t.estado,
+    // La del alumno es `evaluada` (cerrada para el profe, D451) o `abierta`
+    estado: p?.estado ?? (t.estado === "evaluada" ? "cerrada" : t.estado),
     fecha: t.fecha,
     premio: t.tipo === "grupal" ? (t.premio ?? null) : null,
     preguntas: p?.preguntas ?? t.preguntas.length,
     suma: sumaValores(t.preguntas),
     avance: p?.avance ?? null,
     porEvaluar: COLA.filter((e) => e.tarea.id === t.id).length,
+    ...(p?.avance.tipo === "evaluadas" &&
+    p.avance.hechas > 0 &&
+    p.avance.hechas === p.avance.total
+      ? { evaluadaToda: true }
+      : {}),
   };
 }
 

@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { EmptyState } from "@/components/krea/empty-state";
 import { BackLink } from "@/components/sections/shared/back-link";
 import { PageHeader } from "@/components/sections/shared/page-header";
+import { ReabrirTarea } from "@/components/sections/tareas-profe/reabrir-tarea";
 import { TaskBuilder } from "@/components/sections/tareas-profe/task-builder";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -13,15 +14,20 @@ import {
   cerrarTarea,
   eliminarTarea,
   guardarTarea,
+  reabrirTarea,
 } from "@/lib/acciones/tareas";
 import { verificarSesion } from "@/lib/dal";
 import {
   entregasDeTarea,
+  equiposTodos,
   tareaProfe,
   tieneEntregas,
+  usuariosTodos,
 } from "@/lib/datos/profesor";
 import { catalogoSecciones } from "@/lib/datos/secciones";
+import { estadoEfectivo } from "@/lib/estado-tarea";
 import { diaDeInstante } from "@/lib/fecha";
+import { titularesReabrir } from "@/lib/reabrir-tarea";
 import { seccionesDe } from "@/lib/secciones";
 import { TAREA_GRUPAL_SEED } from "@/lib/seed-firestore";
 import { RUTA_TAREAS, rutaEntregasTarea } from "@/lib/tareas-profe";
@@ -56,9 +62,11 @@ const ACCIONES = {
 const DESCRIPCION =
   "Las preguntas tienen que sumar exactamente 20 puntos para publicar.";
 
-// Constructor de una tarea de Firestore (HANDOFF §3; W6). El modo sale del estado y de si ya hay
-// entregas (D200). Una nota importada del Excel sin preguntas: aviso vacío en vez de inventarlas
-// (D136, D152). Sin barra inferior; «Guardar borrador» en la topbar móvil (D130).
+// Constructor de una tarea de Firestore (HANDOFF §3; W6). El modo sale del estado efectivo en este
+// instante (D451: vencida = cerrada) y de si ya hay entregas (D200). Cerrada (no importada):
+// «Reabrir tarea» junto a «Ver notas» (D455). Una nota importada del Excel sin preguntas: aviso
+// vacío en vez de inventarlas (D136, D152). Sin barra inferior; «Guardar borrador» en la topbar
+// móvil (D130).
 export default async function TareaProfePage({ params }: Props) {
   const { id } = await params;
   const t = await tareaProfe(id);
@@ -68,8 +76,18 @@ export default async function TareaProfePage({ params }: Props) {
     entregasDeTarea(id),
     catalogoSecciones(),
   ]);
-  const modo = modoConstructor(t, conEntregas);
+  // Después de los datos (nunca en el prerender, `cacheComponents`)
+  const ahora = Date.now();
+  const hoy = diaDeInstante(ahora);
+  const modo = modoConstructor(t, conEntregas, ahora);
   const sinPreguntas = t.preguntas.length === 0;
+  const reabrible =
+    t.estado !== "borrador" &&
+    !t.importada &&
+    estadoEfectivo(t, ahora) === "cerrada";
+  const [usuarios, equipos] = reabrible
+    ? await Promise.all([usuariosTodos(), equiposTodos()])
+    : [[], []];
 
   return (
     <>
@@ -82,14 +100,32 @@ export default async function TareaProfePage({ params }: Props) {
           }
           actions={
             t.estado === "borrador" ? undefined : (
-              <Button asChild variant="secondary" size="sm">
-                <Link
-                  href={rutaEntregasTarea(id)}
-                  aria-label={`Ver notas de ${t.titulo}`}
-                >
-                  Ver notas
-                </Link>
-              </Button>
+              <>
+                {reabrible ? (
+                  <ReabrirTarea
+                    tareaId={id}
+                    tipo={t.tipo}
+                    actualizadoEn={t.actualizadoEn}
+                    hoy={hoy}
+                    titulares={titularesReabrir({
+                      tarea: t,
+                      usuarios,
+                      equipos,
+                      entregas,
+                      ahora,
+                    })}
+                    reabrir={reabrirTarea}
+                  />
+                ) : null}
+                <Button asChild variant="secondary" size="sm">
+                  <Link
+                    href={rutaEntregasTarea(id)}
+                    aria-label={`Ver notas de ${t.titulo}`}
+                  >
+                    Ver notas
+                  </Link>
+                </Button>
+              </>
             )
           }
         />
@@ -107,7 +143,7 @@ export default async function TareaProfePage({ params }: Props) {
         <TaskBuilder
           inicial={datosBorradorDe(t)}
           secciones={seccionesDe(catalogo)}
-          hoy={diaDeInstante(Date.now())}
+          hoy={hoy}
           listaHref={RUTA_TAREAS}
           guardarEnTopbar
           tareaId={id}

@@ -55,11 +55,14 @@ const aplicar = (
   });
 
 describe("permisoParte", () => {
-  const tarea: Pick<Tarea, "tipo" | "estado" | "secciones"> = {
+  const tarea: Pick<Tarea, "tipo" | "estado" | "secciones" | "fechaEntrega"> = {
     tipo: "grupal",
     estado: "abierta",
     secciones: ["5A"],
+    fechaEntrega: "2026-11-20",
   };
+  // Antes de vencer: abierta (D451); vencida, cerrada como cerrada a mano
+  const AHORA = Date.UTC(2026, 10, 19, 15);
   const equipo = { id: "eq", seccion: "5A", capitanId: CAP } as const;
   const u = (cedula: string) => ({
     cedula,
@@ -69,23 +72,50 @@ describe("permisoParte", () => {
   });
 
   test("capitán e integrante pasan; individual y otro equipo, no", () => {
-    expect(permisoParte(u(CAP), tarea, "t1", equipo)).toMatchObject({
+    expect(permisoParte(u(CAP), tarea, "t1", equipo, AHORA)).toMatchObject({
       ok: true,
       permiso: { entregaId: "t1__eq", equipoId: "eq", capitan: true },
     });
-    expect(permisoParte(u(ANA), tarea, "t1", equipo)).toMatchObject({
+    expect(permisoParte(u(ANA), tarea, "t1", equipo, AHORA)).toMatchObject({
       ok: true,
       permiso: { entregaId: "t1__eq", capitan: false },
     });
     expect(
-      permisoParte(u(ANA), { ...tarea, tipo: "individual" }, "t1", equipo),
+      permisoParte(
+        u(ANA),
+        { ...tarea, tipo: "individual" },
+        "t1",
+        equipo,
+        AHORA,
+      ),
     ).toEqual({ ok: false, error: "no-existe" });
     expect(
-      permisoParte({ ...u(ANA), equipoId: "otro" }, tarea, "t1", equipo),
+      permisoParte({ ...u(ANA), equipoId: "otro" }, tarea, "t1", equipo, AHORA),
     ).toEqual({ ok: false, error: "sin-equipo" });
     expect(
-      permisoParte(u(ANA), { ...tarea, estado: "evaluada" }, "t1", equipo),
+      permisoParte(
+        u(ANA),
+        { ...tarea, estado: "evaluada" },
+        "t1",
+        equipo,
+        AHORA,
+      ),
     ).toEqual({ ok: false, error: "cerrada" });
+  });
+
+  test("vencida, cerrada para el reparto; con prórroga del equipo, abierta (D451, D452)", () => {
+    const despues = Date.UTC(2026, 10, 21, 15);
+    expect(permisoParte(u(ANA), tarea, "t1", equipo, despues)).toEqual({
+      ok: false,
+      error: "cerrada",
+    });
+    const conProrroga = {
+      ...tarea,
+      prorrogas: { eq: { fecha: "2026-11-23", hora: null } },
+    };
+    expect(
+      permisoParte(u(ANA), conProrroga, "t1", equipo, despues),
+    ).toMatchObject({ ok: true, permiso: { capitan: false } });
   });
 });
 

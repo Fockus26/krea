@@ -97,19 +97,21 @@ export type IdealDelAlumno = {
 };
 
 /**
- * La ideal que ve un alumno de `seccion` (D433, D434): tarea publicada de su sección y ya no
- * abierta, ideal guardada y vigente. Cualquier otra cosa → `null` (la página responde 404). La
+ * La ideal que ve un alumno de `seccion` (D433, D434): tarea publicada de su sección y cerrada
+ * para todos (D453), ideal guardada y vigente. Cualquier otra cosa → `null` (la página responde 404). La
  * sección sale del perfil del alumno de la sesión, nunca del cliente.
  */
 export async function idealDelAlumno(
   db: Tx,
   seccion: SeccionId | null,
   tareaId: string,
+  /** Instante de la petición: la ideal sale con la tarea cerrada para todos (D453). */
+  ahora: number,
 ): Promise<IdealDelAlumno | null> {
   const [ft] = await db.select().from(tareas).where(eq(tareas.id, tareaId));
   const tarea = ft ? tareaDeFila(ft) : null;
   if (!tarea || tarea.estado === "borrador") return null;
-  if (!alumnoPuedeVer(tarea, seccion)) return null;
+  if (!alumnoPuedeVer(tarea, seccion, ahora)) return null;
   const ideal = await leerIdeal(db, tareaId);
   if (!ideal) return null;
   const entrega = ideal.entregaId

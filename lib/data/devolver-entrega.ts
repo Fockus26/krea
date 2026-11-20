@@ -77,7 +77,7 @@ export async function devolverEnTransaccion(
     if (!ft) return { ok: false, error: "no-existe" };
     const t = tareaDeFila(ft);
     if (!t) return { ok: false, error: "invalida" };
-    const error = comprobarDevolver(entrega, t, envio.evaluadaEn);
+    const error = comprobarDevolver(entrega, t, envio.evaluadaEn, ahora);
     if (error) return { ok: false, error };
 
     const id = envio.entregaId;

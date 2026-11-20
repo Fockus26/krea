@@ -120,7 +120,11 @@ export function TeacherTaskTable({
               {t.secciones ?? <Sin texto="Sin secciones" />}
             </TableCell>
             <TableCell>
-              <StatusBadge status={t.estado} />
+              <div className="flex flex-wrap gap-2">
+                <StatusBadge status={t.estado} />
+                {/* Todas sus entregas con nota (D454) */}
+                {t.evaluadaToda ? <StatusBadge status="evaluada" /> : null}
+              </div>
             </TableCell>
             <TableCell className="nums whitespace-nowrap text-body text-text-2">
               {fechaTareaTexto(t, ahora)}

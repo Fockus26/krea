@@ -7,6 +7,7 @@
 // cerrada ya no se puede reenviar, así que devolverla dejaría la entrega sin nota y sin arreglo.
 // Eliminar borra la fila entera (para duplicados), en cualquier estado de la tarea (D413).
 import { z } from "zod";
+import { estadoEn, type TareaConVencimiento } from "@/lib/estado-tarea";
 import { zIdDocumento } from "@/lib/evaluar-datos";
 import { type Entrega, type TareaDoc, zInstante } from "@/lib/modelo";
 
@@ -67,13 +68,35 @@ export function errorDevolverTexto(e: ErrorDevolverEntrega): string {
 
 /* ---------- Reglas ---------- */
 
-/** ¿Se ofrece «Devolver»? La entrega tiene nota y la tarea sigue abierta (D411). */
+/**
+ * ¿Se ofrece «Devolver»? La entrega tiene nota y la tarea sigue abierta para su titular (D411):
+ * con `ahora`, el estado efectivo (vencida sin prórroga = cerrada, D451); sin `ahora` (llamadores
+ * que aún no lo pasan), el estado guardado, y el servidor vuelve a comprobarlo.
+ */
 export function puedeDevolver(
-  entrega: Pick<Entrega, "estado">,
+  entrega: Pick<Entrega, "estado"> & { titularId?: string },
   /** Sin la tarea o sin su estado, no se ofrece. */
-  tarea: { estado?: TareaDoc["estado"] } | null | undefined,
+  tarea:
+    | ({ estado?: TareaDoc["estado"] } & Partial<
+        Omit<TareaConVencimiento, "estado">
+      >)
+    | null
+    | undefined,
+  ahora?: number,
 ): boolean {
-  return entrega.estado === "evaluada" && tarea?.estado === "abierta";
+  if (entrega.estado !== "evaluada" || !tarea?.estado) return false;
+  return (
+    estadoEn(
+      {
+        estado: tarea.estado,
+        fechaEntrega: tarea.fechaEntrega ?? null,
+        horaEntrega: tarea.horaEntrega,
+        prorrogas: tarea.prorrogas,
+      },
+      ahora,
+      entrega.titularId,
+    ) === "abierta"
+  );
 }
 
 /**
@@ -81,14 +104,17 @@ export function puedeDevolver(
  * sin nota → `no-evaluada`; otra nota → `cambio`; tarea cerrada → `tarea-cerrada`.
  */
 export function comprobarDevolver(
-  entrega: Pick<Entrega, "estado" | "evaluacion">,
-  tarea: Pick<TareaDoc, "estado">,
+  entrega: Pick<Entrega, "estado" | "evaluacion" | "titularId">,
+  tarea: TareaConVencimiento,
   evaluadaEn: number,
+  /** Instante de la petición: vencida sin prórroga del titular = cerrada (D451). */
+  ahora: number,
 ): ErrorDevolverEntrega | null {
   if (entrega.estado !== "evaluada" || !entrega.evaluacion)
     return "no-evaluada";
   if (entrega.evaluacion.evaluadaEn !== evaluadaEn) return "cambio";
-  if (tarea.estado !== "abierta") return "tarea-cerrada";
+  if (estadoEn(tarea, ahora, entrega.titularId) !== "abierta")
+    return "tarea-cerrada";
   return null;
 }
 

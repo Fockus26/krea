@@ -1,4 +1,4 @@
-# D411 · Data · «Devolver al alumno» solo en tareas abiertas · Implemented
+# D411 · Data · «Devolver al alumno» solo en tareas abiertas · Implemented · Superseded in part by D451
 
 **Decision:** el profe puede devolver una entrega **evaluada** solo mientras su tarea está `abierta` (`puedeDevolver`, `comprobarDevolver` en `lib/devolver-entrega.ts`). Con la tarea cerrada la acción no aparece: en la lista de entregas de la tarea, una línea bajo el conteo lo explica («"Devolver" solo está mientras la tarea sigue abierta: esta ya se cerró.»); en Evaluar, la misma línea bajo los botones si la entrega tiene nota. El servidor lo vuelve a comprobar dentro de la transacción y responde `tarea-cerrada`. Sin migración ni columna nueva. Sin el estado de la tarea (`filasEntregasTarea` sin `tarea.estado`) no se ofrece.
 **Why:** decidido por César (2026-11-14). En una tarea cerrada el alumno ya no puede reenviar (D196), así que devolverla dejaría la entrega sin nota y sin forma de arreglarla. No hay «reabrir tarea».

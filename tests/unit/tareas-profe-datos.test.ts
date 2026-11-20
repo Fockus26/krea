@@ -64,7 +64,8 @@ const publicada = (o: Partial<Tarea> = {}): Tarea =>
     tipo: "grupal",
     secciones: ["5A"],
     estado: "abierta",
-    fechaEntrega: "2026-11-01",
+    // Sin vencer en AHORA: vencida estaría cerrada (D451)
+    fechaEntrega: "2026-11-07",
     premio: "Almuerzo",
     preguntas: [
       { id: "p1", enunciado: "Uno", formato: "texto", valor: 10 },
@@ -358,11 +359,14 @@ describe("armarTarea: publicada (D200)", () => {
     expect(bajar.tarea.preguntas).toEqual(conDos.preguntas);
   });
 
-  test("con entregas: la fecha vencida se puede conservar, no poner otra pasada", () => {
-    const previa = publicada({ fechaEntrega: "2026-11-01" });
-    const base = { accion: "guardar" as const, previa, conEntregas: true };
+  test("con entregas: no se pone una fecha pasada; vencida ya no se edita (D451)", () => {
+    const base = {
+      accion: "guardar" as const,
+      previa: publicada(),
+      conEntregas: true,
+    };
     expect(
-      armar({ ...base, entrada: entrada({ fecha: "2026-11-01" }) }).ok,
+      armar({ ...base, entrada: entrada({ fecha: "2026-11-07" }) }).ok,
     ).toBe(true);
     expect(
       armar({ ...base, entrada: entrada({ fecha: "2026-11-02" }) }),
@@ -370,6 +374,15 @@ describe("armarTarea: publicada (D200)", () => {
       ok: false,
       error: "fecha-pasada",
     });
+    // Vencida: cerrada aunque se quiera conservar su fecha (reabrir es la salida, D455)
+    const vencida = publicada({ fechaEntrega: "2026-11-01" });
+    expect(
+      armar({
+        ...base,
+        previa: vencida,
+        entrada: entrada({ fecha: "2026-11-01" }),
+      }),
+    ).toEqual({ ok: false, error: "cerrada" });
   });
 
   test("cerrada o importada: no se cambia", () => {
@@ -464,7 +477,7 @@ describe("constructor con ids guardados", () => {
     const t = publicada({ secciones: ["5A", "5C"] });
     const d = datosBorradorDe(t);
     expect(d).toMatchObject({
-      fecha: "01/11/2026",
+      fecha: "07/11/2026",
       secciones: ["5A", "5C"],
       premio: "Almuerzo",
     });

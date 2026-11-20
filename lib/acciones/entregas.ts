@@ -92,7 +92,13 @@ async function subir(
   }
 
   try {
-    const p = await permisoSubida(db, uid, tareaId.data, preguntaId.data);
+    const p = await permisoSubida(
+      db,
+      uid,
+      tareaId.data,
+      preguntaId.data,
+      Date.now(),
+    );
     if (!p.ok) return p;
 
     const bytes = new Uint8Array(await imagen.arrayBuffer());

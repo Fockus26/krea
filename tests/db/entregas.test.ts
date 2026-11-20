@@ -139,7 +139,7 @@ describe("enviarEnTransaccion (Postgres)", () => {
     expect(await enviarEnTransaccion(db(), SOLO, envio, AHORA + 1)).toEqual({
       ok: true,
     });
-    const p = await permisoSubida(db(), SOLO, "w5-ind", "p1");
+    const p = await permisoSubida(db(), SOLO, "w5-ind", "p1", AHORA);
     expect(p.ok).toBe(true);
   });
 
@@ -152,13 +152,15 @@ describe("enviarEnTransaccion (Postgres)", () => {
       ok: false,
       error: "no-capitan",
     });
-    expect(await permisoSubida(db(), INTEGRANTE, "w5-gru", "p1")).toEqual({
+    expect(
+      await permisoSubida(db(), INTEGRANTE, "w5-gru", "p1", AHORA),
+    ).toEqual({
       ok: false,
       error: "no-capitan",
     });
-    const p = await permisoSubida(db(), CAPITAN, "w5-gru", "p1");
+    const p = await permisoSubida(db(), CAPITAN, "w5-gru", "p1", AHORA);
     expect(p.ok && p.permiso.titularId).toBe(EQUIPO);
-    expect(await permisoSubida(db(), CAPITAN, "w5-gru", "p2")).toEqual({
+    expect(await permisoSubida(db(), CAPITAN, "w5-gru", "p2", AHORA)).toEqual({
       ok: false,
       error: "incompleta",
     });
@@ -308,7 +310,7 @@ describe("editar la entrega (D395–D397)", () => {
       ok: false,
       error: "ya-evaluada",
     });
-    expect(await permisoSubida(db(), SOLO, T, "p1")).toEqual({
+    expect(await permisoSubida(db(), SOLO, T, "p1", AHORA)).toEqual({
       ok: false,
       error: "ya-evaluada",
     });

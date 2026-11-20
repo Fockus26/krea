@@ -3,6 +3,7 @@
 // lo usan las Server Actions (`lib/acciones/entregas.ts`) y las pruebas.
 import { z } from "zod";
 import type { ResultadoExiste } from "@/lib/almacen/s3";
+import { estadoEfectivo, type TareaConVencimiento } from "@/lib/estado-tarea";
 import {
   type Entrega,
   type Equipo,
@@ -60,15 +61,21 @@ export type PermisoEntrega = {
   entregaId: string;
 };
 
+/** Lo que hace falta de la tarea para el permiso: tipo, secciones y su vencimiento (D451). */
+export type TareaPermiso = Pick<Tarea, "tipo" | "secciones"> &
+  TareaConVencimiento;
+
 /**
  * ¿Puede este alumno responder y enviar esta tarea? Individual: cualquiera de la sección.
- * Grupal: solo el capitán de su equipo actual (D012). Solo mientras la tarea esté abierta (D196).
+ * Grupal: solo el capitán de su equipo actual (D012). Solo mientras la tarea esté abierta para su
+ * titular en `ahora` (D196, D451): vencida, cerrada a mano o sin prórroga suya vigente → `cerrada`.
  */
 export function permisoEntrega(
   usuario: Pick<Usuario, "cedula" | "rol" | "seccion" | "equipoId">,
-  tarea: Pick<Tarea, "tipo" | "estado" | "secciones"> | null,
+  tarea: TareaPermiso | null,
   tareaId: string,
   equipo: ConId<Pick<Equipo, "seccion" | "capitanId">> | null,
+  ahora: number,
 ): { ok: true; permiso: PermisoEntrega } | { ok: false; error: ErrorEntrega } {
   if (
     !tarea ||
@@ -79,7 +86,13 @@ export function permisoEntrega(
   ) {
     return { ok: false, error: "no-existe" };
   }
-  if (tarea.estado !== "abierta") return { ok: false, error: "cerrada" };
+  // El titular: la cédula o el equipo de hoy (D221), el mismo id de la prórroga (D452)
+  const titular =
+    tarea.tipo === "individual"
+      ? usuario.cedula
+      : (equipo?.id ?? usuario.equipoId);
+  if (estadoEfectivo(tarea, ahora, titular) !== "abierta")
+    return { ok: false, error: "cerrada" };
   if (tarea.tipo === "individual") {
     return {
       ok: true,
@@ -164,13 +177,15 @@ export function modoEnvio(
  */
 export function puedeEditar(
   usuario: Pick<Usuario, "cedula" | "rol" | "seccion" | "equipoId">,
-  tarea: Pick<Tarea, "tipo" | "estado" | "secciones"> | null,
+  tarea: TareaPermiso | null,
   tareaId: string,
   equipo: ConId<Pick<Equipo, "seccion" | "capitanId">> | null,
   entrega: { id: string; estado: Entrega["estado"] } | null,
+  ahora: number,
 ): boolean {
   if (!entrega || entrega.estado !== "entregada") return false;
-  const p = permisoEntrega(usuario, tarea, tareaId, equipo);
+  const p = permisoEntrega(usuario, tarea, tareaId, equipo, ahora);
+
   return p.ok && p.permiso.entregaId === entrega.id;
 }
 

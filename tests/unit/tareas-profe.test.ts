@@ -16,10 +16,12 @@ import {
   esFiltroEstado,
   evaluarLabel,
   eyebrowTareas,
+  FILTROS_ESTADO,
   fechaCampo,
   fechaIso,
   filtrarTareas,
   filtroFrase,
+  filtroVacio,
   MAX_PREGUNTAS,
   mascaraFecha,
   mensajeErrorTarea,
@@ -95,7 +97,7 @@ describe("lista", () => {
     expect(
       metaTarea(
         tarea({
-          estado: "evaluada",
+          estado: "cerrada",
           tipo: "grupal",
           preguntas: 4,
           avance: { tipo: "evaluadas", hechas: 12, total: 12 },
@@ -103,6 +105,18 @@ describe("lista", () => {
         AHORA_DEMO,
       ),
     ).toBe("4 preguntas · 12 de 12 equipos evaluados");
+    // Cerrada con prórrogas vigentes: cuántas (D452)
+    expect(
+      metaTarea(
+        tarea({
+          estado: "cerrada",
+          preguntas: 4,
+          prorrogas: 2,
+          avance: { tipo: "evaluadas", hechas: 3, total: 30 },
+        }),
+        AHORA_DEMO,
+      ),
+    ).toBe("4 preguntas · prórrogas abiertas: 2 · 3 de 30 evaluadas");
   });
 
   test("avance", () => {
@@ -122,10 +136,13 @@ describe("lista", () => {
     );
   });
 
-  test("barra de evaluadas solo en abiertas", () => {
+  test("barra de evaluadas en abiertas y en cerradas con entregas por evaluar", () => {
     const avance = { tipo: "evaluadas", hechas: 12, total: 69 } as const;
     expect(barraEvaluadas(tarea({ avance }))).toBeCloseTo(17.39, 1);
-    expect(barraEvaluadas(tarea({ estado: "evaluada", avance }))).toBeNull();
+    expect(barraEvaluadas(tarea({ estado: "cerrada", avance }))).toBeNull();
+    expect(
+      barraEvaluadas(tarea({ estado: "cerrada", avance, porEvaluar: 3 })),
+    ).toBeCloseTo(17.39, 1);
     expect(
       barraEvaluadas(
         tarea({ avance: { tipo: "entregas", hechas: 3, total: 12 } }),
@@ -133,25 +150,42 @@ describe("lista", () => {
     ).toBeNull();
   });
 
-  test("filtro y frase", () => {
+  test("los 5 filtros (D454): Evaluadas es derivado y una tarea sale en dos", () => {
     const ts = [
       tarea({ id: "a" }),
       tarea({ id: "b", estado: "borrador" }),
-      tarea({ id: "c", estado: "evaluada" }),
+      tarea({ id: "c", estado: "cerrada" }),
+      tarea({ id: "ce", estado: "cerrada", evaluadaToda: true }),
+      tarea({ id: "ae", evaluadaToda: true }),
     ];
-    expect(filtrarTareas(ts, "todas")).toHaveLength(3);
-    expect(filtrarTareas(ts, "borrador").map((t) => t.id)).toEqual(["b"]);
+    const ids = (f: Parameters<typeof filtrarTareas>[1]) =>
+      filtrarTareas(ts, f).map((t) => t.id);
+    expect(FILTROS_ESTADO.map(([, texto]) => texto)).toEqual([
+      "Todas",
+      "Borradores",
+      "Abiertas",
+      "Cerradas",
+      "Evaluadas",
+    ]);
+    expect(ids("todas")).toHaveLength(5);
+    expect(ids("borrador")).toEqual(["b"]);
+    expect(ids("abierta")).toEqual(["a", "ae"]);
+    expect(ids("cerrada")).toEqual(["c", "ce"]);
+    expect(ids("evaluada")).toEqual(["ce", "ae"]);
     expect(filtroFrase("abierta")).toBe("Mostrando las tareas abiertas");
+    expect(filtroFrase("cerrada")).toBe("Mostrando las tareas cerradas");
+    expect(filtroVacio("cerrada")).toBe("No hay tareas cerradas");
     expect(esFiltroEstado("evaluada")).toBe(true);
+    expect(esFiltroEstado("cerrada")).toBe(true);
     expect(esFiltroEstado("x")).toBe(false);
   });
 
-  test("orden: abiertas por fecha, evaluadas recientes, borradores al final", () => {
+  test("orden: abiertas por fecha, cerradas recientes, borradores al final", () => {
     const ts = ordenarTareas([
       tarea({ id: "b", estado: "borrador", fecha: null }),
-      tarea({ id: "e1", estado: "evaluada", fecha: "2026-10-01" }),
+      tarea({ id: "e1", estado: "cerrada", fecha: "2026-10-01" }),
       tarea({ id: "a2", fecha: "2026-11-07" }),
-      tarea({ id: "e2", estado: "evaluada", fecha: "2026-10-17" }),
+      tarea({ id: "e2", estado: "cerrada", fecha: "2026-10-17" }),
       tarea({ id: "a1", fecha: "2026-11-03" }),
     ]);
     expect(ts.map((t) => t.id)).toEqual(["a1", "a2", "e2", "e1", "b"]);

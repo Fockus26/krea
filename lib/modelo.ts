@@ -278,6 +278,25 @@ export const zClaveFotoPremio = z
 export const zDecisionesPremio = z.record(zSeccion, zDecisionPremio);
 export type DecisionesPremio = z.infer<typeof zDecisionesPremio>;
 
+/** Titular de una entrega: cédula (individual) o id del equipo (grupal); `idEntrega` lo une a la tarea. */
+export const zTitularId = z
+  .string()
+  .regex(/^[A-Za-z0-9_-]{1,120}$/, "Titular inválido");
+
+/**
+ * Prórroga de un titular al reabrir para algunos (D452): su propia fecha y hora de entrega, con
+ * las reglas de `fechaEntrega` / `horaEntrega` (`null` = al final del día).
+ */
+export const zProrroga = z.object({
+  fecha: zDia,
+  hora: zHora.nullable(),
+});
+export type Prorroga = z.infer<typeof zProrroga>;
+
+/** Prórrogas por titular (D452). Ausente = ninguna. */
+export const zProrrogas = z.record(zTitularId, zProrroga);
+export type Prorrogas = z.infer<typeof zProrrogas>;
+
 /** Sin premio no hay foto del premio (D265). */
 const fotoConPremio = (
   t: { premio: string | null; premioFoto?: string | null | undefined },
@@ -315,6 +334,8 @@ export const zTarea = z
     actualizadoEn: zInstante,
     /** Empates de premio ya decididos (ausente: ninguno). */
     decisionesPremio: zDecisionesPremio.optional(),
+    /** Prórrogas de quienes la tienen reabierta (D452); ausente = ninguna. */
+    prorrogas: zProrrogas.optional(),
   })
   .superRefine((t, ctx) => {
     fotoConPremio(t, ctx);

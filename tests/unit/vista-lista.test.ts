@@ -117,7 +117,7 @@ describe("columna Fecha de la Lista (D313)", () => {
   test("vence / venció / fecha / sin fecha", () => {
     expect(fechaTareaTexto(t({}), mediodia(7))).toBe("Vence 10/11/2026");
     expect(fechaTareaTexto(t({}), mediodia(11))).toBe("Venció 10/11/2026");
-    expect(fechaTareaTexto(t({ estado: "evaluada" }), mediodia(11))).toBe(
+    expect(fechaTareaTexto(t({ estado: "cerrada" }), mediodia(11))).toBe(
       "10/11/2026",
     );
     expect(
