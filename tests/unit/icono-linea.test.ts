@@ -34,7 +34,8 @@ describe("icono-linea (D304)", () => {
     "components/estados/offline-banner.tsx",
     "components/estados/pantallas.tsx",
     "components/krea/question-card-answer.tsx",
-    "components/krea/question-card-detail.tsx",
+    // El comentario del profe (antes dentro de question-card-detail, D445)
+    "components/krea/comentario-profe.tsx",
     "components/sections/inicio/pending-tasks.tsx",
     "components/sections/tareas/delivered-tasks.tsx",
     "components/sections/tareas/task-header.tsx",
