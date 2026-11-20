@@ -4,13 +4,17 @@ import { Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { ErrorGuardarNota } from "@/components/estados/errores";
+import { ComentarioCampo } from "@/components/krea/comentario-campo";
 import { LiveTotal } from "@/components/krea/live-total";
 import type { QuestionAnswer } from "@/components/krea/question-card-detail";
 import { QuestionCardReview } from "@/components/krea/question-card-review";
 import { ScorePicker } from "@/components/krea/score-picker";
 import { ActionBar } from "@/components/sections/shared/action-bar";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Field } from "@/components/ui/field";
 import { toast } from "@/components/ui/sonner";
+import { comentariosParaCopiar } from "@/lib/comentarios";
 import {
   activaTexto,
   baseChipTexto,
@@ -35,6 +39,7 @@ import {
   type ResultadoEvaluar,
 } from "@/lib/evaluar-datos";
 import type { EstadoAnalisisIA } from "@/lib/ia-texto";
+import { COMMENT_MAX_LENGTH } from "@/lib/question";
 import { AnalisisIA, type AnalizarIA } from "./analisis-ia";
 import { ReviewBase, usePublicarBaseChip } from "./review-base";
 import { ReviewIndex } from "./review-index";
@@ -54,6 +59,8 @@ type Estado = {
   noParticiparon: string[];
   /** Base de cada integrante en esta tarea (cédula → base, D403). */
   bases: Record<string, number>;
+  /** Comentario general de la entrega (D445; en grupal, uno para el equipo). */
+  comentarioGeneral: string;
 };
 
 /** Server Actions de Evaluar (W7); sin ellas (vista previa de /secciones) nada se guarda. */
@@ -122,6 +129,8 @@ export function ReviewForm({
      * (galería vieja) no hay control de base y Guardar no manda bases.
      */
     bases?: Readonly<Record<string, number>>;
+    /** Comentario general de la evaluación vigente (D445); sin él, vacío. */
+    comentarioGeneral?: string;
   };
   /**
    * `evaluadaEn` de la evaluación vigente al abrir (`null` = Pendiente). Va con Guardar: si otro
@@ -161,6 +170,7 @@ export function ReviewForm({
         comentarios: [...inicial.comentarios],
         noParticiparon: [...(inicial.noParticiparon ?? [])],
         bases: { ...inicial.bases },
+        comentarioGeneral: inicial.comentarioGeneral ?? "",
       }
     );
   });
@@ -171,7 +181,9 @@ export function ReviewForm({
   const motivoId = React.useId();
   const motivoMovilId = React.useId();
 
-  const { puntajes, comentarios, noParticiparon, bases } = estado;
+  const { puntajes, comentarios, noParticiparon, bases, comentarioGeneral } =
+    estado;
+  const generalId = React.useId();
   const conIntegrantes = tipo === "grupal" && integrantes.length > 0;
   // Individual: la cédula del titular es la única clave de `inicial.bases`
   const cedulaIndividual =
@@ -193,6 +205,11 @@ export function ReviewForm({
     tipo === "grupal"
       ? "El equipo lo verá debajo de su respuesta."
       : "El estudiante lo verá debajo de su respuesta.";
+  // PROVISIONAL (CONTENT_CHECKLIST fila 249): ayuda del comentario general (D445)
+  const ayudaGeneral =
+    tipo === "grupal"
+      ? "El equipo lo verá arriba de sus preguntas."
+      : "El estudiante lo verá arriba de sus preguntas.";
 
   React.useEffect(() => {
     if (!enfocarAlMontar) return;
@@ -211,6 +228,7 @@ export function ReviewForm({
       comentarios,
       noParticiparon,
       bases: basesFinales,
+      comentarioGeneral,
     };
     let evaluadaEn: number | null = null;
     if (acciones) {
@@ -225,6 +243,7 @@ export function ReviewForm({
             preguntas.map((p, i) => [p.id, comentarios[i] ?? ""]),
           ),
           version,
+          comentarioGeneral,
           ...(conIntegrantes ? { noParticiparon } : {}),
           ...(inicial.bases ? { bases: basesFinales } : {}),
           ...(inicial.enviadaEn !== undefined
@@ -301,6 +320,8 @@ export function ReviewForm({
     }));
   const setBase = (cedula: string, v: number) =>
     setEstado((s) => ({ ...s, bases: { ...s.bases, [cedula]: v } }));
+  const setComentarioGeneral = (v: string) =>
+    setEstado((s) => ({ ...s, comentarioGeneral: v }));
 
   return (
     <div data-slot="review-form" className="page-stack">
@@ -378,6 +399,27 @@ export function ReviewForm({
               );
             })}
           </ol>
+          {/* Comentario general (D445): tras las preguntas; en grupal, uno para el equipo */}
+          <Card>
+            <Field
+              controlId={generalId}
+              label={
+                <>
+                  {/* PROVISIONAL (CONTENT_CHECKLIST fila 249) */}
+                  Comentario general{" "}
+                  <span className="font-normal text-text-2">(opcional)</span>
+                </>
+              }
+              help={ayudaGeneral}
+            >
+              <ComentarioCampo
+                value={comentarioGeneral}
+                onChange={setComentarioGeneral}
+                maxLength={COMMENT_MAX_LENGTH}
+                emojiEtiqueta="Emoji en el comentario general"
+              />
+            </Field>
+          </Card>
           {cedulaIndividual !== undefined && baseIndividual !== undefined ? (
             <ReviewBase
               value={baseIndividual}
@@ -433,13 +475,11 @@ export function ReviewForm({
           equipo={titular ?? "esta entrega"}
           onReintentar={() => void guardar()}
           onCopiar={() => {
-            const texto = preguntas
-              .map((_p, i) => {
-                const c = comentarios[i]?.trim();
-                return c ? `Pregunta ${i + 1}: ${c}` : null;
-              })
-              .filter(Boolean)
-              .join("\n");
+            // También el general, al final (D445)
+            const texto = comentariosParaCopiar(
+              preguntas.map((_p, i) => comentarios[i]),
+              comentarioGeneral,
+            );
             navigator.clipboard.writeText(texto).then(
               () => toast("Comentarios copiados"),
               () => toast.error("No se pudo copiar. Cópialos a mano."),

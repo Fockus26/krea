@@ -90,7 +90,8 @@ function ScorePicker({
       <div
         ref={rootRef}
         onKeyDown={onKeyDown}
-        className={cn("flex min-w-0 flex-col gap-1", className)}
+        // Entre el campo y los atajos, 12 (D449): con 4 los atajos ghost parecían pegados al campo
+        className={cn("flex min-w-0 flex-col gap-3", className)}
       >
         {/* El stepper admite `null` y `aria-labelledby` (D103): campo vacío y "Sin puntuar"
             en su `aria-valuetext`, nombrado por el enunciado como el radiogroup */}

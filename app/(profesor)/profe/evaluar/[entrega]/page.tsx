@@ -1,6 +1,7 @@
 import { ClipboardList } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { ComentarioProfe } from "@/components/krea/comentario-profe";
 import { EmptyState } from "@/components/krea/empty-state";
 import {
   type QuestionAnswer,
@@ -198,6 +199,13 @@ export default async function EvaluarEntregaPage({
                 v.inicial.noParticiparon,
               )}
             </p>
+          ) : null}
+          {v.inicial.comentarioGeneral ? (
+            // PROVISIONAL (CONTENT_CHECKLIST fila 250): comentario general de la entrega (D445)
+            <ComentarioProfe
+              titulo="Comentario general"
+              texto={v.inicial.comentarioGeneral}
+            />
           ) : null}
           <ol className="m-0 flex list-none flex-col gap-4 p-0">
             {preguntas.map((p, i) => (
