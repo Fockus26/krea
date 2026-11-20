@@ -6,6 +6,7 @@ import { and, eq, isNotNull } from "drizzle-orm";
 import { cache } from "react";
 import type { Contacto } from "@/lib/contacto";
 import { exigirSesion } from "@/lib/dal";
+import { leerEvaluadas, leerVersionCola } from "@/lib/data/cola-evaluar";
 import { leerContacto } from "@/lib/data/contacto";
 import {
   ajusteDeFila,
@@ -144,6 +145,20 @@ export const colaEvaluar = cache(async (): Promise<Array<ConId<Entrega>>> => {
     .from(entregas)
     .where(eq(entregas.estado, "entregada"));
   return colaPorEvaluar(validas(filas.map(entregaDeFila)));
+});
+
+/** Evaluadas, la evaluada más recientemente primero (D439): «Evaluadas» y «Todas» de la cola. */
+export const evaluadasProfe = cache(
+  async (): Promise<Array<ConId<Entrega>>> => {
+    await exigirSesion("profesor");
+    return leerEvaluadas(db());
+  },
+);
+
+/** Huella de la cola al pintar (D441): el sondeo de la página arranca desde ella. */
+export const versionColaProfe = cache(async (): Promise<string> => {
+  await exigirSesion("profesor");
+  return (await leerVersionCola(db())).version;
 });
 
 export const entregaProfe = cache(
