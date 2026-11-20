@@ -64,7 +64,7 @@ una red social ruidosa.
 - Styling: Tailwind CSS — only one, never both
 - Package manager: **bun**
 - Documentation: **Context7** before using any library's API
-- Database / ORM: **Postgres en el VPS** con Drizzle (D327): `krea` producción, `krea_preview` Preview, `krea_dev` desarrollo; migraciones en `drizzle/` (kit `tech/vps-postgres.md`). Ranking y presencia «en vivo» por sondeo cada 5 s
+- Database / ORM: **Postgres en el VPS** con Drizzle (D327): `krea` producción, `krea_preview` Preview, `krea_dev` desarrollo; migraciones en `drizzle/` (kit `tech/vps-postgres.md`), aplicadas **con el rol de la app** (`bun run db:migrate` con su `DIRECT_URL`); si van por `psql` como `postgres`, correr justo después `scripts/sql/2026-11-20-duenos-tablas.sql` en esa base, o las tablas nuevas quedan de `postgres` y la app no las lee (D436). Ranking y presencia «en vivo» por sondeo cada 5 s
 - Authentication: **Better Auth** en la app (D327; cédula → email interno + email real para recuperación, D008). Sin registro público: las cuentas las crea el profe
 - Payments: N/A
 - Email: API de Brevo desde la app (restablecer contraseña, D185, D327). Sin otros correos en v1 (D009).

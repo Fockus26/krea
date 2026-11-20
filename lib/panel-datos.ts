@@ -11,7 +11,7 @@ import {
   tituloTarea,
 } from "@/lib/evaluar-datos";
 import { diaDeInstante, formatFecha, isoLocalDeInstante } from "@/lib/fecha";
-import { NOTA_APROBATORIA } from "@/lib/grades";
+import { NOTA_APROBATORIA, NOTA_MAX, notaFinal } from "@/lib/grades";
 import type { Ajuste, Entrega, SeccionId, Usuario } from "@/lib/modelo";
 import { entregaMetaTexto } from "@/lib/panel";
 import { motivoTexto, nombreDestino } from "@/lib/puntos";
@@ -73,6 +73,20 @@ export function filaEvaluar(e: ConId<Entrega>, m: MapasEvaluar): FilaEvaluar {
     },
     meta: entregaMetaTexto({ tarea, tipo: "individual", fecha }),
   };
+}
+
+/**
+ * Nota de una fila evaluada de la cola (D439): la del alumno con su base en esa entrega (D403) o,
+ * en grupal, la del equipo (base 20, D177). `null` = Pendiente (D003).
+ */
+export function notaFilaEvaluar(
+  e: ConId<Entrega>,
+  m: MapasEvaluar,
+): number | null {
+  if (e.estado !== "evaluada" || !e.evaluacion) return null;
+  if (e.tipo === "grupal") return notaFinal(e.evaluacion.puntaje, NOTA_MAX);
+  const u = m.usuarios.get(e.titularId);
+  return notaDeIntegrante(e, u?.base ?? NOTA_MAX, e.titularId);
 }
 
 function filaAjuste(a: ConId<Ajuste>, m: MapasEvaluar): FilaAjuste {

@@ -40,8 +40,13 @@ type ConId<T> = { id: string } & T;
 /** Ruta de la cola de Evaluar (D148). */
 export const RUTA_EVALUAR = "/profe/evaluar";
 
-/** Filtros de la cola de Evaluar, en la URL (D384): los cuatro son opcionales. */
+/** Qué entregas muestra la cola (D439): por evaluar (por defecto), evaluadas o todas. */
+export type EstadoCola = "por-evaluar" | "evaluadas" | "todas";
+
+/** Filtros de la cola de Evaluar, en la URL (D384): todos son opcionales. */
 export type FiltrosEvaluar = {
+  /** Sin `estado` = «Por evaluar»: los enlaces de antes siguen igual (D439). */
+  estado?: Exclude<EstadoCola, "por-evaluar">;
   tipo?: "individual" | "grupal";
   /** Código de sección («5A»). */
   seccion?: string;
@@ -51,6 +56,7 @@ export type FiltrosEvaluar = {
   alumno?: string;
 };
 
+const zFiltroEstado = z.enum(["por-evaluar", "evaluadas", "todas"]);
 const zFiltroTipo = z.enum(["individual", "grupal"]);
 const zFiltroSeccion = z.string().regex(/^[A-Za-z0-9._-]{1,12}$/);
 
@@ -66,6 +72,8 @@ export function filtrosDeParams(
     return Array.isArray(v) ? v[0] : v;
   };
   const f: FiltrosEvaluar = {};
+  const estado = zFiltroEstado.safeParse(uno("estado"));
+  if (estado.success && estado.data !== "por-evaluar") f.estado = estado.data;
   const tipo = zFiltroTipo.safeParse(uno("tipo"));
   if (tipo.success) f.tipo = tipo.data;
   const seccion = zFiltroSeccion.safeParse(uno("seccion"));
@@ -78,12 +86,18 @@ export function filtrosDeParams(
 }
 
 export function hayFiltros(f: FiltrosEvaluar): boolean {
-  return Boolean(f.tipo || f.seccion || f.tarea || f.alumno);
+  return Boolean(f.estado || f.tipo || f.seccion || f.tarea || f.alumno);
 }
 
-/** `?tipo=grupal&seccion=5A…` (orden fijo); vacío si no hay filtros. */
+/** El estado de la cola, con el valor por defecto. */
+export function estadoDe(f: FiltrosEvaluar): EstadoCola {
+  return f.estado ?? "por-evaluar";
+}
+
+/** `?estado=evaluadas&tipo=grupal&seccion=5A…` (orden fijo); vacío si no hay filtros. */
 export function queryFiltros(f: FiltrosEvaluar): string {
   const q = new URLSearchParams();
+  if (f.estado) q.set("estado", f.estado);
   if (f.tipo) q.set("tipo", f.tipo);
   if (f.seccion) q.set("seccion", f.seccion);
   if (f.tarea) q.set("tarea", f.tarea);
@@ -100,6 +114,26 @@ export function rutaCola(filtros: FiltrosEvaluar = {}): string {
 /** Una entrega; con `filtros`, conserva la cola filtrada. Sin `?ver`: se evalúa o corrige. */
 export function rutaEntrega(id: string, filtros: FiltrosEvaluar = {}): string {
   return `${RUTA_EVALUAR}/${id}${queryFiltros(filtros)}`;
+}
+
+/** Parámetro de la cola que la abre en la primera entrega que cumple los filtros (D442). */
+export const PARAM_PRIMERA = "ir";
+const VALOR_PRIMERA = "primera";
+
+/**
+ * «Aplicar» de «Cambiar» (D442): la cola con esos filtros y `ir=primera`. La página salta a la
+ * primera entrega; si la cola filtrada queda vacía, se queda en la cola con su vacío.
+ */
+export function rutaPrimera(filtros: FiltrosEvaluar = {}): string {
+  const q = queryFiltros(filtros);
+  return `${RUTA_EVALUAR}${q ? `${q}&` : "?"}${PARAM_PRIMERA}=${VALOR_PRIMERA}`;
+}
+
+export function pideLaPrimera(
+  raw: Readonly<Record<string, string | string[] | undefined>>,
+): boolean {
+  const v = raw[PARAM_PRIMERA];
+  return (Array.isArray(v) ? v[0] : v) === VALOR_PRIMERA;
 }
 
 /* ---------- Entrada de las Server Actions ---------- */
@@ -391,6 +425,33 @@ export function colaPorEvaluar<T extends ConId<Entrega>>(
     );
 }
 
+/** Evaluadas, la evaluada más recientemente primero (desempate por id, D439). */
+export function colaEvaluadas<T extends ConId<Entrega>>(
+  entregas: readonly T[],
+): T[] {
+  return entregas
+    .filter((e) => e.estado === "evaluada")
+    .sort(
+      (a, b) =>
+        (b.evaluacion?.evaluadaEn ?? 0) - (a.evaluacion?.evaluadaEn ?? 0) ||
+        (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
+    );
+}
+
+/**
+ * La lista que recorre la cola según su estado (D439): «Todas» = las por evaluar (más antigua
+ * primero) y después las evaluadas (más reciente primero).
+ */
+export function listaSegunEstado<T extends ConId<Entrega>>(
+  estado: EstadoCola,
+  porEvaluar: readonly T[],
+  evaluadas: readonly T[],
+): T[] {
+  if (estado === "evaluadas") return [...evaluadas];
+  if (estado === "todas") return [...porEvaluar, ...evaluadas];
+  return [...porEvaluar];
+}
+
 /** ¿La entrega cumple todos los filtros activos? */
 function cumpleFiltros(e: Entrega, f: FiltrosEvaluar): boolean {
   return (
@@ -513,12 +574,26 @@ export const FILTRO_TIPO_TEXTO = {
   grupal: "Grupales",
 } as const;
 
-/** «Grupales · 5A · Identidad de marca · Yeilin Duarte»; `null` sin filtros. */
+/** PROVISIONAL (CONTENT_CHECKLIST fila 243): opciones del filtro de estado (D439). */
+export const FILTRO_ESTADO_TEXTO: Record<EstadoCola, string> = {
+  "por-evaluar": "Por evaluar",
+  evaluadas: "Evaluadas",
+  todas: "Todas",
+};
+
+/** «Evaluadas · Grupales · 5A · Identidad de marca · Yeilin Duarte»; `null` sin filtros. */
 export function resumenFiltros(
   f: FiltrosEvaluar,
   m: MapasEvaluar,
 ): string | null {
   const partes: string[] = [];
+  // «Todas» a secas se confunde con el «Todas» de Tipo
+  if (f.estado)
+    partes.push(
+      f.estado === "todas"
+        ? "Todas las entregas"
+        : FILTRO_ESTADO_TEXTO.evaluadas,
+    );
   if (f.tipo) partes.push(FILTRO_TIPO_TEXTO[f.tipo]);
   if (f.seccion) partes.push(f.seccion);
   if (f.tarea) partes.push(m.tareas.get(f.tarea)?.titulo ?? TAREA_DESCONOCIDA);
@@ -541,6 +616,20 @@ export function siguienteDe(
 
 /** Eyebrow de una entrega ya evaluada que se abre para corregir. PROVISIONAL (fila 133). */
 export const EYEBROW_REEVALUAR = "Ya evaluada · puedes corregir la nota";
+
+/**
+ * Eyebrow de una entrega de la cola según el estado que se recorre (D440): «Por evaluar ·
+ * entrega 1 de 7», «Evaluadas · entrega 2 de 9», «Todas · entrega 3 de 16». PROVISIONAL
+ * (CONTENT_CHECKLIST fila 244).
+ */
+export function eyebrowCola(
+  estado: EstadoCola,
+  indice: number,
+  total: number,
+): string {
+  if (estado === "por-evaluar") return eyebrowEvaluar(indice, total);
+  return `${FILTRO_ESTADO_TEXTO[estado]} · entrega ${indice + 1} de ${total}`;
+}
 /** PROVISIONAL (fila 133): respuesta que no está en la entrega. */
 export const SIN_RESPUESTA = "Sin respuesta.";
 /** PROVISIONAL (fila 133): imagen que no se pudo firmar (B2 no disponible). */
@@ -743,7 +832,12 @@ export function vistaEvaluar({
     tipo: entrega.tipo,
     titulo,
     identidad,
-    eyebrow: enCola ? eyebrowEvaluar(indice, cola.length) : EYEBROW_REEVALUAR,
+    eyebrow: enCola
+      ? eyebrowCola(estadoDe(filtros), indice, cola.length)
+      : entrega.estado === "evaluada"
+        ? EYEBROW_REEVALUAR
+        : // por evaluar, abierta desde la lista de evaluadas (otro deshizo su nota)
+          FILTRO_ESTADO_TEXTO["por-evaluar"],
     linea,
     chips: {
       tipo: entrega.tipo,

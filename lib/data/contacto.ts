@@ -1,7 +1,7 @@
 // Contacto opcional del profesor en Postgres (D378, D380, D389): lo guarda el propio profe y lo
 // leen sus alumnos. La lectura del alumno trae solo nombres, apellidos, teléfono, correo de contacto
 // y el avatar si su semilla ya no lleva la cédula: nunca la cédula ni el email de recuperación.
-import { and, eq, isNotNull, isNull, or } from "drizzle-orm";
+import { and, eq, isNull, or } from "drizzle-orm";
 import {
   avatarVisibleProfe,
   type Contacto,
@@ -53,8 +53,8 @@ export async function guardarContactoCon(
 }
 
 /**
- * Los profes de un alumno con algún dato de contacto: los que ven todas las secciones
- * (`seccion: null`, D323) y los de la suya (D380). La cédula se lee solo para decidir si el avatar
+ * Todos los profes de un alumno, con o sin contacto: los que ven todas las secciones
+ * (`seccion: null`, D323) y los de la suya (D380, D459). La cédula se lee solo para decidir si el avatar
  * se puede mostrar (D388) y no sale de aquí.
  */
 export async function contactosDeProfes(
@@ -75,7 +75,6 @@ export async function contactosDeProfes(
       and(
         eq(usuarios.rol, "profesor"),
         or(isNull(usuarios.seccion), eq(usuarios.seccion, seccion)),
-        or(isNotNull(usuarios.telefono), isNotNull(usuarios.emailContacto)),
       ),
     );
   return filas.map(({ cedula, avatar, ...f }) => ({

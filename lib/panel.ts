@@ -121,6 +121,15 @@ export function evaluarAriaLabel(nombre: string): string {
   return `Evaluar a ${nombre}`;
 }
 
+/** Fila evaluada de la cola (D439): «Corregir» y «Ver», con el mismo nombre que D401. */
+export const CORREGIR_TEXTO = "Corregir";
+export function corregirAriaLabel(nombre: string): string {
+  return `Corregir la entrega de ${nombre}`;
+}
+export function verAriaLabel(nombre: string): string {
+  return `Ver la entrega de ${nombre}`;
+}
+
 const MENOS = "−"; // signo menos tipográfico, no guion
 
 export type ChipAjuste = {

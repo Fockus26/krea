@@ -10,7 +10,7 @@ import {
 import tareaSeed from "@/data/seed/tarea-identidad-marca.json";
 import { guardarIdeal } from "@/lib/acciones/ideales";
 import { verificarSesion } from "@/lib/dal";
-import { idealProfe } from "@/lib/datos/ideal";
+import { idealProfePagina } from "@/lib/datos/ideal";
 import { urlsFirmadas } from "@/lib/datos/imagenes";
 import {
   entregaProfe,
@@ -54,7 +54,7 @@ export default async function IdealTareaPage({ params, searchParams }: Props) {
   const [{ id }, q] = await Promise.all([params, searchParams]);
   const t = await tareaProfe(id);
   if (!t || t.estado === "borrador") notFound();
-  const ideal = await idealProfe(id);
+  const ideal = await idealProfePagina(id);
   const volverHref = rutaEntregasTarea(id);
 
   const deProfe = uno(q.forma) === "profe";

@@ -8,6 +8,8 @@ import {
   QuestionCardDetail,
 } from "@/components/krea/question-card-detail";
 import { AccionesEntrega } from "@/components/sections/evaluar/acciones-entrega";
+import { CambiarFiltros } from "@/components/sections/evaluar/cambiar-filtros";
+import { EntregaEnVivo } from "@/components/sections/evaluar/entrega-en-vivo";
 import { PresenciaEvaluar } from "@/components/sections/evaluar/presencia-evaluar";
 import { ReviewForm } from "@/components/sections/evaluar/review-form";
 import { ReviewHeader } from "@/components/sections/evaluar/review-header";
@@ -25,16 +27,21 @@ import { urlsFirmadas } from "@/lib/datos/imagenes";
 import {
   colaEvaluar,
   entregaProfe,
+  evaluadasProfe,
   mapasProfe,
   profesorActual,
 } from "@/lib/datos/profesor";
+import { catalogoSecciones } from "@/lib/datos/secciones";
 import { puedeDevolver } from "@/lib/devolver-entrega";
 import {
   basesIntegrantesTexto,
   colaFiltradaCon,
+  estadoDe,
   filtrosDeParams,
   IMAGEN_NO_DISPONIBLE,
+  listaSegunEstado,
   nombreTitular,
+  opcionesFiltros,
   rutaEntrega,
   vistaEvaluar,
 } from "@/lib/evaluar-datos";
@@ -42,6 +49,7 @@ import { formatNota } from "@/lib/grades";
 import { idEntrega } from "@/lib/modelo";
 import { nombrePresencia } from "@/lib/presencia";
 import { respuestaFirmada } from "@/lib/question";
+import { seccionesDe } from "@/lib/secciones";
 
 type Props = PageProps<"/profe/evaluar/[entrega]">;
 
@@ -84,24 +92,36 @@ export default async function EvaluarEntregaPage({
   // `?ver`: desde la ficha del alumno (Editar alumno) se abre solo para ver, sin corregir
   const query = await searchParams;
   const soloVer = query.ver !== undefined;
-  // Filtros de la cola (D384): Anterior, Saltar y Guardar siguen la cola filtrada (D385)
+  // Filtros de la cola (D384): Anterior, Saltar y Guardar siguen la cola filtrada (D385), y con
+  // `estado` la lista de evaluadas o de todas (D440). Las dos listas alimentan también las
+  // opciones del diálogo «Cambiar» (D442)
   const filtros = filtrosDeParams(query);
-  const [entrega, cola, mapas, profe] = await Promise.all([
+  const [entrega, cola, evaluadas, mapas, profe, catalogo] = await Promise.all([
     entregaProfe(id),
     colaEvaluar(),
+    evaluadasProfe(),
     mapasProfe(),
     profesorActual(),
+    catalogoSecciones(),
   ]);
   const tarea = entrega ? mapas.tareas.get(entrega.tareaId) : undefined;
   // Un borrador del alumno todavía no es una entrega (D196)
   if (!entrega || !tarea || entrega.estado === "borrador") notFound();
+  const lista = listaSegunEstado(estadoDe(filtros), cola, evaluadas);
   const v = vistaEvaluar({
     entrega,
     tarea,
-    cola: colaFiltradaCon(cola, filtros, entrega.id),
+    cola: colaFiltradaCon(lista, filtros, entrega.id),
     mapas,
     filtros,
   });
+  const opcionesCambiar = {
+    "por-evaluar": opcionesFiltros(cola, filtros, mapas),
+    evaluadas: opcionesFiltros(evaluadas, filtros, mapas),
+    todas: opcionesFiltros([...cola, ...evaluadas], filtros, mapas),
+  };
+  // La versión con la que se abre el formulario (D224): el aviso en vivo la compara (D443)
+  const abiertaCon = entrega.evaluacion?.evaluadaEn ?? null;
 
   const urls = await urlsFirmadas(
     v.preguntas.flatMap((p) =>
@@ -145,7 +165,25 @@ export default async function EvaluarEntregaPage({
         saltarHref={soloVer ? null : v.saltarHref}
         filtroTexto={soloVer ? null : v.filtroTexto}
         colaHref={v.colaHref}
+        cambiar={
+          soloVer ? undefined : (
+            <CambiarFiltros
+              filtros={filtros}
+              secciones={seccionesDe(catalogo)}
+              opciones={opcionesCambiar}
+            />
+          )
+        }
       />
+      {/* Avisa si otro profe la evalúa mientras está abierta, sin refrescar sola (D443) */}
+      {soloVer || preguntas.length === 0 ? null : (
+        <EntregaEnVivo
+          key={`${v.entregaId}@${abiertaCon ?? 0}`}
+          entregaId={v.entregaId}
+          abiertaCon={abiertaCon}
+          colaHref={v.colaHref}
+        />
+      )}
       {/* Devolver al alumno y Eliminar entrega (D411–D415), también en «Solo ver» */}
       <AccionesEntrega
         variante="botones"
@@ -224,7 +262,9 @@ export default async function EvaluarEntregaPage({
         </section>
       ) : (
         <ReviewForm
-          key={v.entregaId}
+          // Con la versión en la clave: si otro la evaluó y se pide de nuevo («Ver la evaluación»,
+          // D443), el formulario se monta con su nota y su `version`, y no pisa lo del otro
+          key={`${v.entregaId}@${abiertaCon ?? 0}`}
           entregaId={v.entregaId}
           tituloId={TITULO_ID}
           tipo={v.tipo}

@@ -70,7 +70,7 @@ export default async function EntregaVista({
               quien={d.entregada.quien}
               fecha={d.entregada.fecha}
               hora={d.entregada.hora}
-              inicioHref="/secciones/inicio"
+              volverHref="/secciones/tareas"
             />
             <section
               aria-labelledby="respuestas"

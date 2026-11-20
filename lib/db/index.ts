@@ -25,12 +25,32 @@ export type Tx =
 
 let db: Db | null = null;
 
+/**
+ * Tiempos del pool para serverless frente a PgBouncer en el VPS (D437). Sin ellos, una conexión que
+ * no llega o una consulta colgada esperan hasta que Vercel corta la función y sale la pantalla de
+ * error sin explicación:
+ * - `connectionTimeoutMillis`: abrir la conexión (TLS + PgBouncer) o esperar un hueco del pool.
+ * - `idleTimeoutMillis`: suelta pronto las ociosas; una instancia congelada entre requests vuelve
+ *   con sockets que el VPS ya cerró.
+ * - `query_timeout`: tope por consulta medido en el CLIENTE. No es `statement_timeout`: ese viaja
+ *   como parámetro de arranque y PgBouncer en modo transacción rechaza los que no conoce
+ *   (`unsupported startup parameter`). El del servidor se fija en el rol (`ALTER ROLE … SET
+ *   statement_timeout`), que sí sobrevive al pooler: acción manual en el PR.
+ */
+export const OPCIONES_POOL = {
+  max: 5,
+  connectionTimeoutMillis: 5_000,
+  idleTimeoutMillis: 10_000,
+  query_timeout: 15_000,
+  keepAlive: true,
+} as const;
+
 /** `null` sin `DATABASE_URL`: el llamador responde «no disponible», no inventa una conexión. */
 export function baseDeDatos(): Db | null {
   if (db) return db;
   const url = process.env.DATABASE_URL;
   if (!url) return null;
-  const pool = new Pool({ connectionString: url, max: 5 });
+  const pool = new Pool({ connectionString: url, ...OPCIONES_POOL });
   // Sin esto, una conexión ociosa que el servidor corta tumba el proceso (world-flags).
   pool.on("error", (e) => console.error("[db] pool", e.message));
   db = drizzle(pool, { schema }) as unknown as Db;
