@@ -824,7 +824,10 @@ export function vistaEvaluar({
     identidad,
     eyebrow: enCola
       ? eyebrowCola(estadoDe(filtros), indice, cola.length)
-      : EYEBROW_REEVALUAR,
+      : entrega.estado === "evaluada"
+        ? EYEBROW_REEVALUAR
+        : // por evaluar, abierta desde la lista de evaluadas (otro deshizo su nota)
+          FILTRO_ESTADO_TEXTO["por-evaluar"],
     linea,
     chips: {
       tipo: entrega.tipo,

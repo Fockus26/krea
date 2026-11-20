@@ -6,6 +6,7 @@ import { BottomNav } from "@/components/layout/bottom-nav";
 import { SideNav } from "@/components/layout/side-nav";
 import { TopBar } from "@/components/layout/top-bar";
 import { TopBarAccionDestino } from "@/components/layout/top-bar-accion";
+import { usePorEvaluarEnVivo } from "@/components/sections/evaluar/use-version-evaluar";
 import { anchoDe, mainClass, type Rol } from "@/lib/layout";
 import { type TitulosTopbar, topbarDe } from "@/lib/topbar";
 
@@ -20,7 +21,19 @@ import { type TitulosTopbar, topbarDe } from "@/lib/topbar";
 export function RouteSideNav(
   props: Omit<ComponentProps<typeof SideNav>, "pathname">,
 ) {
-  return <SideNav {...props} pathname={usePathname()} />;
+  // El contador de Evaluar en vivo (D441); /componentes usa `SideNav` y no sondea
+  const evaluarCount = usePorEvaluarEnVivo(
+    props.rol === "profesor" ? props.evaluarCount : null,
+  );
+  return (
+    <SideNav
+      {...props}
+      evaluarCount={
+        props.rol === "profesor" ? evaluarCount : props.evaluarCount
+      }
+      pathname={usePathname()}
+    />
+  );
 }
 
 type TopBarRutaProps = Omit<

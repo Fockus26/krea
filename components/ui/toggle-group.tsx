@@ -92,9 +92,10 @@ function ToggleGroup({
         className={cn(
           "group/toggle-group relative isolate gap-1 rounded-md bg-surface-2 p-1",
           // `@container` (container-type: inline-size) solo en block: en un grupo de ancho propio colapsaría al padding
+          // Los dos envuelven si no cabe (texto grande, D-A1; celdas estrechas, D444)
           block
-            ? "@container flex w-full"
-            : "inline-flex w-fit max-w-full flex-wrap", // envuelve si no cabe (texto grande, D-A1)
+            ? "@container flex w-full flex-wrap"
+            : "inline-flex w-fit max-w-full flex-wrap",
           className,
         )}
       >
@@ -140,8 +141,10 @@ function ToggleGroupItem({
         "disabled:cursor-not-allowed disabled:text-text-dis disabled:hover:text-text-dis",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
         "[&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0",
-        // seg-block
-        "group-data-[block]/toggle-group:min-w-0 group-data-[block]/toggle-group:flex-1 group-data-[block]/toggle-group:px-2",
+        // seg-block: reparte el ancho, pero ninguna opción baja de su texto (sin `min-w-0`, que
+        // con `whitespace-nowrap` montaba las palabras de una celda estrecha, D444): si no caben,
+        // la fila envuelve
+        "group-data-[block]/toggle-group:flex-1 group-data-[block]/toggle-group:px-2",
         "group-data-[block]/toggle-group:@max-seg:[&_svg]:hidden",
         className,
       )}

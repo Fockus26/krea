@@ -1,6 +1,7 @@
 import { ArrowRight, ClipboardCheck } from "lucide-react";
 import Link from "next/link";
 import { EmptyState } from "@/components/krea/empty-state";
+import { GradePill } from "@/components/krea/grade-pill";
 import { TeamLogo } from "@/components/krea/team-logo";
 import { UserAvatar } from "@/components/krea/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -14,10 +15,14 @@ import {
 import type { DicebearEstilo } from "@/lib/dicebear";
 import type { SeccionId } from "@/lib/modelo";
 import {
+  CORREGIR_TEXTO,
+  corregirAriaLabel,
   ENTREGAS_VISIBLES,
   evaluarAriaLabel,
+  verAriaLabel,
   verTodasTexto,
 } from "@/lib/panel";
+import { cn } from "@/lib/utils";
 
 export type FilaEvaluar = {
   id: string;
@@ -86,16 +91,24 @@ export function PendingReviews({
   );
 }
 
-/** `query`: los filtros de la cola (`?tipo=grupal…`), para que Anterior/Saltar los sigan (D385). */
+/**
+ * `query`: los filtros de la cola (`?tipo=grupal…`), para que Anterior/Saltar los sigan (D385).
+ * `evaluada` (cola con «Evaluadas» o «Todas», D439): la nota en la meta (`GradePill`, D004) y
+ * «Ver» (`?ver`) + «Corregir» en vez de «Evaluar» (D401). El Panel no la pasa: «Evaluar».
+ */
 export function PorEvaluarFila({
   fila: f,
   query = "",
+  evaluada,
 }: {
   fila: FilaEvaluar;
   query?: string;
+  evaluada?: { nota: number | null };
 }) {
+  const href = `${HREF_COLA}/${f.id}${query}`;
   return (
-    <CardListItem>
+    // Con dos acciones la fila envuelve: el texto guarda 160 px y los botones bajan (320 px)
+    <CardListItem className={evaluada ? "flex-wrap" : undefined}>
       {f.visual.tipo === "equipo" ? (
         <TeamLogo teamId={f.visual.teamId} tema={f.visual.tema} size={40} />
       ) : (
@@ -106,18 +119,45 @@ export function PorEvaluarFila({
           size={40}
         />
       )}
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+      <div
+        className={cn(
+          "flex min-w-0 flex-1 flex-col gap-0.5",
+          evaluada && "min-w-[min(--spacing(40),100%)]",
+        )}
+      >
         <h3 className="text-h4 break-words text-text">{f.nombre}</h3>
-        <p className="text-small break-words text-text-2">{f.meta}</p>
+        {evaluada ? (
+          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-small text-text-2">
+            <GradePill nota={evaluada.nota} size="sm" />
+            <span className="min-w-0 break-words">{f.meta}</span>
+          </p>
+        ) : (
+          <p className="text-small break-words text-text-2">{f.meta}</p>
+        )}
       </div>
-      <Button asChild variant="secondary" size="sm">
-        <Link
-          href={`${HREF_COLA}/${f.id}${query}`}
-          aria-label={evaluarAriaLabel(f.nombreCorto)}
-        >
-          Evaluar
-        </Link>
-      </Button>
+      {evaluada ? (
+        <span className="ml-auto flex flex-wrap justify-end gap-1">
+          <Button asChild variant="ghost" size="sm">
+            <Link
+              href={`${HREF_COLA}/${f.id}?ver`}
+              aria-label={verAriaLabel(f.nombreCorto)}
+            >
+              Ver
+            </Link>
+          </Button>
+          <Button asChild variant="secondary" size="sm">
+            <Link href={href} aria-label={corregirAriaLabel(f.nombreCorto)}>
+              {CORREGIR_TEXTO}
+            </Link>
+          </Button>
+        </span>
+      ) : (
+        <Button asChild variant="secondary" size="sm">
+          <Link href={href} aria-label={evaluarAriaLabel(f.nombreCorto)}>
+            Evaluar
+          </Link>
+        </Button>
+      )}
     </CardListItem>
   );
 }

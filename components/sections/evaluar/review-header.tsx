@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, Gift, User, Users } from "lucide-react";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { TeamLogo } from "@/components/krea/team-logo";
 import { UserAvatar } from "@/components/krea/user-avatar";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +10,9 @@ import { BaseChip } from "./review-base";
 
 /** Móvil: cada botón reparte el ancho y mide 44 px de alto; ≥ lg, el `sm` de siempre. */
 const NAV_BTN = "max-lg:min-h-11 max-lg:flex-1";
+
+/** PROVISIONAL (CONTENT_CHECKLIST fila 247): la línea del filtro sin filtros (D442). */
+const SIN_FILTROS = "Por evaluar, sin filtros";
 
 export type ReviewIdentity =
   | { tipo: "equipo"; teamId: string; tema: string }
@@ -57,6 +61,8 @@ export function ReviewHeader({
   filtroTexto?: string | null;
   /** La cola filtrable con esos mismos filtros. */
   colaHref?: string;
+  /** El botón «Cambiar» que abre los filtros (D442); sin él, enlace a la cola. */
+  cambiar?: ReactNode;
 }) {
   const TipoIcon = chips.tipo === "grupal" ? Users : User;
   return (
@@ -95,7 +101,19 @@ export function ReviewHeader({
             </Button>
           )}
         </nav>
-        {filtroTexto && colaHref ? (
+        {cambiar ? (
+          // «Cambiar» abre los filtros aquí mismo (D442): la línea sale también sin filtros
+          <div className="flex w-full flex-wrap items-center gap-x-2 text-small text-text-2">
+            {/* PROVISIONAL (CONTENT_CHECKLIST filas 197 y 247) */}
+            <span>
+              Filtro:{" "}
+              <span className="text-body-strong">
+                {filtroTexto ?? SIN_FILTROS}
+              </span>
+            </span>
+            {cambiar}
+          </div>
+        ) : filtroTexto && colaHref ? (
           <p className="flex w-full flex-wrap items-center gap-x-2 text-small text-text-2">
             {/* PROVISIONAL (CONTENT_CHECKLIST fila 197) */}
             <span>

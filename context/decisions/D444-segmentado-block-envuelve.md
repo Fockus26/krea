@@ -1,0 +1,5 @@
+# D444 · Components · `ToggleGroup block` envuelve en vez de encoger bajo el texto; filtros de Evaluar de dos en dos · Implemented
+
+**Decision:** en `ToggleGroup` con `block` la raíz es `flex w-full flex-wrap` y cada opción `flex-1` sin `min-w-0`: reparte el ancho, ninguna baja del ancho de su texto (`whitespace-nowrap`) y, si no caben, la fila envuelve (como el segmentado sin `block`, D-A1). `SelectorSeccion` gana `block` (lo pasa a su `ToggleGroup`). La rejilla de `ColaFiltros` pasa de `sm:grid-cols-2 lg:grid-cols-4` a «Entregas» a lo ancho y Tipo · Sección / Tarea · Alumno de dos en dos desde `md`; en el diálogo, una columna.
+**Why:** César: en algunas pantallas el de Tipo pegaba las palabras (celda de ¼ con `min-w-0` + `nowrap`: «Individuales» se montaba sobre «Grupales») y el de Sección no repartía su ancho (segmentado sin `block`, `w-fit`). La causa estaba en el primitivo: se arregla para todos los `block` (regla 11).
+**Discarded alternative:** `truncate` en las opciones — esconde texto de un control; reducir el padding — no alcanza con texto grande.
