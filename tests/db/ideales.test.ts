@@ -6,6 +6,7 @@ import {
   idealDelAlumno,
   leerIdeal,
   quitarIdeal,
+  quitarIdealEnTransaccion,
 } from "@/lib/data/ideales";
 import type { Db } from "@/lib/db";
 import {
@@ -281,6 +282,35 @@ describe("versión del formulario (D532)", () => {
       await guardarIdealEnTransaccion(db(), PROFE, delProfe(), 1007),
     ).toEqual({ ok: true });
     await quitarIdeal(db(), T);
+  });
+
+  test("quitar con la versión (D551): la vieja recibe `cambio` y no borra; la de ahora quita", async () => {
+    await guardarIdealEnTransaccion(db(), PROFE, delProfe(), 2000);
+    // Otro profe la reemplazó después de que este abrió la lista
+    await guardarIdealEnTransaccion(db(), PROFE, delProfe(2000), 2001);
+    expect(await quitarIdealEnTransaccion(db(), T, 2000)).toEqual({
+      ok: false,
+      error: "cambio",
+      version: 2001,
+    });
+    expect((await leerIdeal(db(), T))?.actualizadoEn).toBe(2001);
+    expect(await quitarIdealEnTransaccion(db(), T, 2001)).toEqual({ ok: true });
+    expect(await leerIdeal(db(), T)).toBeNull();
+  });
+
+  test("quitar: si otro ya la quitó, `cambio` con 0; sin versión quita sin comprobar", async () => {
+    expect(await quitarIdealEnTransaccion(db(), T, 2001)).toEqual({
+      ok: false,
+      error: "cambio",
+      version: VERSION_IDEAL_SIN_FILA,
+    });
+    // Sin ideal y con la versión 0 que vio: éxito (nada que quitar)
+    expect(
+      await quitarIdealEnTransaccion(db(), T, VERSION_IDEAL_SIN_FILA),
+    ).toEqual({ ok: true });
+    await guardarIdealEnTransaccion(db(), PROFE, delProfe(), 2002);
+    expect(await quitarIdealEnTransaccion(db(), T)).toEqual({ ok: true });
+    expect(await leerIdeal(db(), T)).toBeNull();
   });
 });
 
