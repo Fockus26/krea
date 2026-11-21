@@ -30,7 +30,7 @@ describe("nombre accesible de filas abribles (D506, WCAG 2.5.3)", () => {
       "components/krea/podium.tsx",
     ]) {
       const fuente = leer(f);
-      expect(fuente).not.toMatch(/<(Link|button)[^>]*aria-label/s);
+      expect(fuente).not.toMatch(/<(Link|button)[^>]*aria-label/);
     }
   });
 });
