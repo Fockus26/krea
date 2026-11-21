@@ -59,7 +59,10 @@ export function PrizeCardTeacher({
   nombres,
   onDecidir,
   onEditar,
+  liRef,
 }: {
+  /** Al `<li>`: es lo que el FLIP del tablero traslada (`useFlip().registrar(id)`). */
+  liRef?: (el: HTMLLIElement | null) => void;
   tarjeta: TarjetaPremio;
   /** Nombre completo de cada equipo (grupales) y de cada alumno (individuales) por id. */
   nombres: Readonly<Record<string, string>>;
@@ -76,7 +79,7 @@ export function PrizeCardTeacher({
   const titular = tarjeta.premio ?? "Premio por definir";
 
   return (
-    <li className="flex">
+    <li ref={liRef} className="flex">
       <Card
         className={cn(
           "flex h-full w-full flex-col gap-4",

@@ -3,6 +3,7 @@
 import { Users } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { EmptyState } from "@/components/krea/empty-state";
+import { useFlip } from "@/components/krea/use-flip";
 import { TeamCard } from "@/components/sections/equipos-profe/team-card";
 import {
   type AccionesGestionEquipos,
@@ -125,6 +126,12 @@ export function TeamsBoard({
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [foco, setFoco] = useState<{ id: string; n: number } | null>(null);
   const urls = useRef<Record<string, string>>({});
+  // Crear o eliminar un equipo, o que una tarjeta crezca, mueve las demás por la cuadrícula (X e Y)
+  const { registrar: registrarTarjeta } = useFlip<HTMLLIElement>({
+    duracion: "--d-normal",
+    entrada: true,
+    salida: true,
+  });
 
   // Libera las vistas previas del logo al desmontar
   useEffect(() => {
@@ -365,7 +372,11 @@ export function TeamsBoard({
               const e = estado.equipos[eq.id];
               if (!e) return null;
               return (
-                <li key={eq.id} className="min-w-0">
+                <li
+                  key={eq.id}
+                  ref={registrarTarjeta(eq.id)}
+                  className="min-w-0"
+                >
                   <TeamCard
                     equipo={eq}
                     tituloId={tituloDe(eq.id)}

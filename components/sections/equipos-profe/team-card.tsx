@@ -97,13 +97,16 @@ export function TeamCard({
   const accion = logoSrc ? "Cambiar" : "Subir logo";
   const Icono = logoSrc ? Pencil : Upload;
   // Cambiar el capitán reordena (va primero) y mover a alguien aquí lo suma: viaje y entrada (D281)
-  const { registrar } = useFlip<HTMLLIElement>({
+  // `raiz`: si la tarjeta entera se mueve por la cuadrícula (la anima el tablero), sus integrantes no
+  // se animan además. `salida`: quien se va a otro equipo se despide con un fundido (D542)
+  const { registrar, raiz } = useFlip<HTMLLIElement, HTMLDivElement>({
     duracion: "--d-normal",
     entrada: true,
+    salida: true,
   });
 
   return (
-    <Card className="flex h-full flex-col gap-4">
+    <Card ref={raiz} className="flex h-full flex-col gap-4">
       {/* Si la columna del nombre no llega a 8rem (texto grande, D226), baja debajo del logo */}
       <div className="flex flex-wrap items-start gap-4">
         {/* biome-ignore lint/a11y/noStaticElementInteractions: solo recibe el arrastre; la acción accesible es el botón */}

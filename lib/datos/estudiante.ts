@@ -8,7 +8,11 @@ import { cache } from "react";
 import { type TarjetaProfe, tarjetasProfes } from "@/lib/contacto";
 import { exigirSesion } from "@/lib/dal";
 import { contactosDeProfes } from "@/lib/data/contacto";
-import { entregasDeIntegrante, leerEntrega } from "@/lib/data/entregas";
+import {
+  entregasDeIntegrante,
+  entregasGrupalesDeEquipo,
+  leerEntrega,
+} from "@/lib/data/entregas";
 import {
   ajusteDeFila,
   entregaDeFila,
@@ -141,11 +145,22 @@ export const datosAlumno = cache(async (): Promise<DatosAlumno> => {
         .then((filas) => validas(filas.map(ajusteDeFila))),
       rankingDeSeccion(seccion),
     ]);
+  // Las grupales que su equipo envió antes de que él entrara (D526): para «Por entregar» (D550)
+  const delEquipo = equipo
+    ? (
+        await opcional(
+          "grupales del equipo",
+          () => entregasGrupalesDeEquipo(db(), equipo.id),
+          [],
+        )
+      ).filter((e) => !susEntregas.some((s) => s.id === e.id))
+    : [];
   return {
     usuario,
     equipo,
     tareas: tareasSeccion,
     entregas: susEntregas,
+    delEquipo,
     ajustes: susAjustes,
     ranking,
   };

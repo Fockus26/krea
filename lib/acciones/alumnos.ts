@@ -8,6 +8,7 @@
 // Eliminar: cuenta, sesiones, datos y ranking en una transacción (D327).
 import { refresh } from "next/cache";
 import { almacenB2 } from "@/lib/almacen/b2";
+import { borrarImagenes } from "@/lib/almacen/borrar-imagenes";
 import {
   type ErrorBorrarAlumno,
   type ResultadoBorrarAlumno,
@@ -231,27 +232,6 @@ async function borrarUnAlumno(
     registrar("eliminarAlumno", e);
     return { ok: false, error: "red" };
   }
-  await borrarImagenes(imagenes).catch((e) =>
-    registrar("eliminarAlumno:imagenes", e),
-  );
+  await borrarImagenes(almacenB2(), imagenes, "eliminarAlumno");
   return { ok: true };
-}
-
-/** Las imágenes de sus respuestas: si B2 falla se registra y quedan huérfanas, sin dueño (D229). */
-async function borrarImagenes(claves: readonly string[]) {
-  if (claves.length === 0) return;
-  const almacen = almacenB2();
-  if (!almacen) {
-    console.error(
-      `[eliminarAlumno] almacén sin configurar: ${claves.length} imágenes sin borrar`,
-    );
-    return;
-  }
-  const r = await Promise.allSettled(claves.map((c) => almacen.borrar(c)));
-  const fallidas = r.filter((x) => x.status === "rejected" || !x.value.ok);
-  if (fallidas.length > 0) {
-    console.error(
-      `[eliminarAlumno] almacén: ${fallidas.length} de ${claves.length} imágenes sin borrar`,
-    );
-  }
 }

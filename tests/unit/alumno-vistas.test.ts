@@ -9,7 +9,9 @@ import {
   type ConId,
   ENTREGA_ANTES_DE_ENTRAR_PREGUNTA,
   entregaVista,
+  filasPorEntregar,
   premioIndividualGanado,
+  tareasVista,
 } from "@/lib/vistas-estudiante";
 
 const AHORA = Date.UTC(2026, 10, 5, 20, 12); // 4:12 p. m. en Caracas
@@ -155,6 +157,44 @@ describe("quién envió si ya no está en el equipo (D525)", () => {
       enviadaPorFuera: false,
       antesDeEntrar: false,
     });
+  });
+});
+
+describe("/tareas: la grupal enviada antes de que entrara sale de «Por entregar» (D550)", () => {
+  const antes = (extra: Partial<ConId<Entrega>> = {}) => ({
+    ...datos(TARDIO),
+    delEquipo: [entrega(extra)],
+  });
+
+  test("antes: seguía en «Por entregar»; ahora va a «Entregadas» con su fecha", () => {
+    const v = tareasVista(antes(), AHORA);
+    expect(v.pendientes).toEqual([]);
+    expect(v.entregadas).toMatchObject([
+      { id: GRUPAL.id, fecha: "entregada el 05/11/2026" },
+    ]);
+    expect(filasPorEntregar(antes(), AHORA)).toEqual([]);
+  });
+
+  test("la evaluada también; un borrador o la de otro equipo no cuentan", () => {
+    const ev = antes({ estado: "evaluada", evaluacion: evaluacion() });
+    expect(tareasVista(ev, AHORA).entregadas).toHaveLength(1);
+    expect(tareasVista(antes({ estado: "borrador" }), AHORA)).toMatchObject({
+      pendientes: [{ id: GRUPAL.id }],
+      entregadas: [],
+    });
+    expect(
+      tareasVista(antes({ titularId: "5a-g3" }), AHORA).pendientes,
+    ).toHaveLength(1);
+  });
+
+  test("sin `delEquipo` (o una individual) sigue como antes", () => {
+    expect(tareasVista(datos(TARDIO), AHORA).pendientes).toHaveLength(1);
+    const ind = tarea("ind", { tipo: "individual" });
+    const v = tareasVista(
+      { ...datos(TARDIO, [], ind), delEquipo: [entrega({ tareaId: "ind" })] },
+      AHORA,
+    );
+    expect(v.pendientes).toHaveLength(1);
   });
 });
 

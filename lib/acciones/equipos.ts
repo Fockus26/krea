@@ -6,6 +6,7 @@
 // (`equipos/{equipoId}/{uuid}.webp`), la ruta en el equipo y el ranking, y se borra el anterior.
 import { refresh } from "next/cache";
 import { almacenB2 } from "@/lib/almacen/b2";
+import { borrarImagenes } from "@/lib/almacen/borrar-imagenes";
 import { claveLogo, validarLogoSubido } from "@/lib/almacen/imagen";
 import { exigirSesion } from "@/lib/dal";
 import {
@@ -250,25 +251,6 @@ async function borrarUnEquipo(
       .catch(() => null);
     if (!b?.ok) console.error("[eliminarEquipo] no se borró el logo");
   }
-  await borrarImagenes(imagenes);
+  await borrarImagenes(almacenB2(), imagenes, "eliminarEquipo");
   return resultado;
-}
-
-/** Las imágenes de sus partes (D530): si B2 falla se registra y quedan huérfanas (D229). */
-async function borrarImagenes(claves: readonly string[]): Promise<void> {
-  if (claves.length === 0) return;
-  const almacen = almacenB2();
-  if (!almacen) {
-    console.error(
-      `[eliminarEquipo] almacén sin configurar: ${claves.length} imágenes sin borrar`,
-    );
-    return;
-  }
-  const r = await Promise.allSettled(claves.map((c) => almacen.borrar(c)));
-  const fallidas = r.filter((x) => x.status === "rejected" || !x.value.ok);
-  if (fallidas.length > 0) {
-    console.error(
-      `[eliminarEquipo] almacén: ${fallidas.length} de ${claves.length} imágenes sin borrar`,
-    );
-  }
 }

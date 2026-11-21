@@ -82,7 +82,11 @@ export const zGuardarIdeal = z.object({
 });
 export type GuardarIdeal = z.infer<typeof zGuardarIdeal>;
 
-export const zQuitarIdeal = z.object({ tareaId: zIdDocumento });
+export const zQuitarIdeal = z.object({
+  tareaId: zIdDocumento,
+  /** Versión de la ideal cuando se abrió la lista (D532, D551): si cambió, `cambio`. Sin ella, quita igual. */
+  version: zInstante.optional(),
+});
 export type QuitarIdeal = z.infer<typeof zQuitarIdeal>;
 
 /** La tarea aún no tiene ideal guardada: su versión vale 0 (D532). */
@@ -502,6 +506,11 @@ export const RESPUESTA_IMAGEN_AYUDA =
 export const GUARDAR_IDEAL_TEXTO = "Guardar entrega ideal";
 export const IDEAL_GUARDADA_TEXTO = "Entrega ideal guardada.";
 export const IDEAL_QUITADA_TEXTO = "Se quitó la entrega ideal.";
+
+/** «Quitar» con una lista vieja (D551): otro profe cambió o quitó la ideal. */
+// PROVISIONAL (fila 302)
+export const QUITAR_IDEAL_CAMBIO_TEXTO =
+  "Otro profe cambió la entrega ideal de esta tarea mientras tanto. No quitamos nada: la lista ya muestra lo de ahora. Si todavía quieres quitarla, vuelve a pulsar «Quitar».";
 
 /** Errores (fila 238). */
 export function errorIdealTexto(e: ErrorIdeal): string {

@@ -5,6 +5,7 @@
 // puntos (D007); eliminar sí, y recalcula el ranking en su transacción (D206, D242).
 import { refresh } from "next/cache";
 import { almacenB2 } from "@/lib/almacen/b2";
+import { borrarImagenes } from "@/lib/almacen/borrar-imagenes";
 import { claveFotoPremio, validarFotoPremio } from "@/lib/almacen/imagen";
 import { exigirSesion, sesionDeCola } from "@/lib/dal";
 import {
@@ -200,7 +201,7 @@ async function borrarUnaTarea(db: Db, id: string): Promise<ResultadoTarea> {
     registrar("eliminarTarea", e);
     return { ok: false, error: "red" };
   }
-  await borrarImagenes(imagenes);
+  await borrarImagenes(almacenB2(), imagenes, "eliminarTarea");
   return { ok: true, id };
 }
 
@@ -210,24 +211,6 @@ async function borrarFoto(clave: string, accion: string) {
   const b = almacen ? await almacen.borrar(clave).catch(() => null) : null;
   if (!b?.ok)
     console.error(`[${accion}] no se borró la foto anterior del premio`);
-}
-
-async function borrarImagenes(claves: readonly string[]) {
-  if (claves.length === 0) return;
-  const almacen = almacenB2();
-  if (!almacen) {
-    console.error(
-      `[eliminarTarea] almacén sin configurar: ${claves.length} imágenes sin borrar`,
-    );
-    return;
-  }
-  const r = await Promise.allSettled(claves.map((c) => almacen.borrar(c)));
-  const fallidas = r.filter((x) => x.status === "rejected" || !x.value.ok);
-  if (fallidas.length > 0) {
-    console.error(
-      `[eliminarTarea] almacén: ${fallidas.length} de ${claves.length} imágenes sin borrar`,
-    );
-  }
 }
 
 /** Decide el empate del premio de una sección: darlo a un equipo o compartirlo. */

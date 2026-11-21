@@ -29,6 +29,7 @@ import {
   estadoIdealTexto,
   estadoIdealTitulo,
   IDEAL_QUITADA_TEXTO,
+  QUITAR_IDEAL_CAMBIO_TEXTO,
   QUITAR_IDEAL_DESCRIPCION,
   QUITAR_IDEAL_TEXTO,
   QUITAR_IDEAL_TITULO,
@@ -42,11 +43,14 @@ export function EstadoIdeal({
   tareaId,
   estado,
   tareaAbierta,
+  version,
   quitar,
 }: {
   tareaId: string;
   estado: EstadoIdealProfe;
   tareaAbierta: boolean;
+  /** Versión de la ideal que ve esta lista (`VERSION_IDEAL_SIN_FILA` si no hay): D551. */
+  version: number;
   /** Server Action; sin ella (galería) solo se cierra con el toast. */
   quitar?: (e: QuitarIdeal) => Promise<ResultadoIdeal>;
 }) {
@@ -61,14 +65,18 @@ export function EstadoIdeal({
     setEnviando(true);
     setError(null);
     const r: ResultadoIdeal = quitar
-      ? await quitar({ tareaId }).catch(
+      ? await quitar({ tareaId, version }).catch(
           siNoEsDeploy<ResultadoIdeal>({ ok: false, error: "red" }),
         )
       : { ok: true };
     ocupado.current = false;
     setEnviando(false);
     if (!r.ok) {
-      setError(errorIdealTexto(r.error));
+      setError(
+        r.error === "cambio"
+          ? QUITAR_IDEAL_CAMBIO_TEXTO
+          : errorIdealTexto(r.error),
+      );
       return;
     }
     setAbierto(false);

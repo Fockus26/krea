@@ -5,6 +5,7 @@
 // imágenes de B2 DESPUÉS del commit (D396): si B2 falla, la entrega ya se borró y solo se registra.
 import { refresh } from "next/cache";
 import { almacenB2 } from "@/lib/almacen/b2";
+import { borrarImagenes } from "@/lib/almacen/borrar-imagenes";
 import { exigirSesion } from "@/lib/dal";
 import {
   devolverEnTransaccion,
@@ -63,27 +64,8 @@ export async function eliminarEntrega(
     registrar("eliminarEntrega", e);
     return { ok: false, error: "red" };
   }
-  await borrarImagenes(imagenes);
+  await borrarImagenes(almacenB2(), imagenes, "eliminarEntrega");
   // Sin `refresh()`: desde Evaluar, la página de esta entrega ya no existe (404) y el cliente
   // navega a la cola; desde la lista, el cliente refresca (components/sections/evaluar/acciones-entrega.tsx)
   return { ok: true, id };
-}
-
-/** Borra las imágenes de la entrega eliminada; un fallo solo se registra (quedan huérfanas). */
-async function borrarImagenes(claves: readonly string[]): Promise<void> {
-  if (claves.length === 0) return;
-  const almacen = almacenB2();
-  if (!almacen) {
-    console.error(
-      `[eliminarEntrega] almacén sin configurar: ${claves.length} imágenes sin borrar`,
-    );
-    return;
-  }
-  const r = await Promise.allSettled(claves.map((c) => almacen.borrar(c)));
-  const fallidas = r.filter((x) => x.status === "rejected" || !x.value.ok);
-  if (fallidas.length > 0) {
-    console.error(
-      `[eliminarEntrega] almacén: ${fallidas.length} de ${claves.length} imágenes sin borrar`,
-    );
-  }
 }

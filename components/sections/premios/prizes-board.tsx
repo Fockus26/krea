@@ -3,6 +3,7 @@
 import { Trophy } from "lucide-react";
 import { useState, useTransition } from "react";
 import { EmptyState } from "@/components/krea/empty-state";
+import { useFlip } from "@/components/krea/use-flip";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/components/ui/sonner";
 import {
@@ -74,6 +75,12 @@ export function PrizesBoard({
   }
   const [editando, setEditando] = useState<TarjetaPremio | null>(null);
   const [, startTransition] = useTransition();
+  // Agregar o quitar un premio recoloca las tarjetas de la cuadrícula (X e Y) y la quitada se despide
+  const { registrar } = useFlip<HTMLLIElement>({
+    duracion: "--d-normal",
+    entrada: true,
+    salida: true,
+  });
 
   function decidir(id: string, decision: DecisionEmpate) {
     const actual = lista.find((t) => t.id === id);
@@ -151,6 +158,7 @@ export function PrizesBoard({
         {lista.map((t) => (
           <PrizeCardTeacher
             key={t.id}
+            liRef={registrar(t.id)}
             tarjeta={t}
             nombres={nombres}
             onDecidir={decidir}
