@@ -1,10 +1,11 @@
 "use client";
-// Nueva contraseña conectada (fase 07, D188): guarda con el `oobCode` del enlace en una Server
-// Action (Identity Toolkit + revocación) y lleva a Ingresar con el aviso. Enlace vencido o ya
-// usado → «Este enlace ya venció».
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { restablecerPassword } from "@/lib/acciones/recuperar";
+// Nueva contraseña conectada (fase 07, D188): guarda con el `oobCode` del enlace en una Server
+// Action (Identity Toolkit + revocación) y lleva a Ingresar con el aviso. Enlace vencido o ya
+// usado → «Este enlace ya venció».
+import { relanzarSiEsDeploy } from "@/lib/recarga-deploy";
 import {
   AVISO_PASSWORD_NUEVA,
   ERROR_RESTABLECER,
@@ -45,7 +46,8 @@ export function Restablecer({
           return;
         }
         router.replace(`${RUTA_INGRESAR}?aviso=${AVISO_PASSWORD_NUEVA}`);
-      } catch {
+      } catch (e) {
+        relanzarSiEsDeploy(e);
         setError("red");
       }
     });

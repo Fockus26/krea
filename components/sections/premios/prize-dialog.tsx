@@ -3,11 +3,13 @@
 import { Gift } from "lucide-react";
 import { type ReactNode, useId, useRef, useState } from "react";
 import { ErrorEnPantalla } from "@/components/estados/errores";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
 import {
   ImageUpload,
   type ImageUploadFile,
   type ImageUploadStatus,
 } from "@/components/krea/image-upload";
+import { hayRed } from "@/components/krea/use-en-linea";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -40,6 +42,7 @@ import {
   SIN_ALMACEN_FOTO,
   SIN_TAREAS_PARA_PREMIO,
 } from "@/lib/premios";
+import { siNoEsDeploy } from "@/lib/recarga-deploy";
 import type { TareaParaPremio } from "@/lib/tareas-profe-datos";
 
 /** La Server Action `guardarPremio` (D266): FormData `tareaId`, `premio`, `foto`, `quitarFoto`. */
@@ -207,6 +210,7 @@ function PrizeForm({
 
   const enviar = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!hayRed()) return;
     if (enviando.current) return;
     const primero = errores.tarea
       ? ids.tarea
@@ -230,7 +234,7 @@ function PrizeForm({
     setGuardando(true);
     setErrorServidor(null);
     const r = await guardar(form).catch(
-      (): ResultadoPremio => ({ ok: false, error: "red" }),
+      siNoEsDeploy<ResultadoPremio>({ ok: false, error: "red" }),
     );
     enviando.current = false;
     setGuardando(false);
@@ -326,13 +330,13 @@ function PrizeForm({
             Cancelar
           </Button>
         </DialogClose>
-        <Button
+        <BotonEnLinea
           type="submit"
           loading={guardando}
           loadingLabel={TEXTOS.guardando}
         >
           {TEXTOS.guardar}
-        </Button>
+        </BotonEnLinea>
       </DialogFooter>
     </form>
   );

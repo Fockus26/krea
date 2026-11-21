@@ -1,11 +1,13 @@
 "use client";
+import { Pencil, Plus, Trash2 } from "lucide-react";
+import { type FormEvent, useId, useRef, useState } from "react";
+import { ErrorEnPantalla } from "@/components/estados/errores";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
 // Crear, editar y eliminar equipos (W12, D270, D307). Cada formulario corta el doble envío con una
 // ref y el botón queda ocupado (`loading`, D285); si el servidor no guarda, el diálogo sigue
 // abierto con lo escrito y el error (D171). «Eliminar» siempre se puede: el diálogo dice antes,
 // con números, qué pasa con sus integrantes, sus entregas grupales y sus ajustes.
-import { Pencil, Plus, Trash2 } from "lucide-react";
-import { type FormEvent, useId, useRef, useState } from "react";
-import { ErrorEnPantalla } from "@/components/estados/errores";
+import { hayRed } from "@/components/krea/use-en-linea";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -36,6 +38,7 @@ import {
 } from "@/lib/equipos-gestion";
 import type { ResultadoLote } from "@/lib/lote";
 import type { SeccionId } from "@/lib/modelo";
+import { siNoEsDeploy } from "@/lib/recarga-deploy";
 
 export type AccionesGestionEquipos = {
   crear: (entrada: CrearEquipo) => Promise<ResultadoGestionEquipo>;
@@ -177,6 +180,7 @@ function EquipoForm({
 
   async function alEnviar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!hayRed()) return;
     if (enviando.current) return;
     const primero = errores.nombre
       ? ids.nombre
@@ -192,7 +196,7 @@ function EquipoForm({
     setGuardando(true);
     setErrorServidor(null);
     const r = await enviar({ nombre: nombre.trim(), tema: tema.trim() }).catch(
-      () => RED,
+      siNoEsDeploy(RED),
     );
     enviando.current = false;
     setGuardando(false);
@@ -250,9 +254,13 @@ function EquipoForm({
             Cancelar
           </Button>
         </DialogClose>
-        <Button type="submit" loading={guardando} loadingLabel="Guardando…">
+        <BotonEnLinea
+          type="submit"
+          loading={guardando}
+          loadingLabel="Guardando…"
+        >
           {textoBoton}
-        </Button>
+        </BotonEnLinea>
       </DialogFooter>
     </form>
   );
@@ -282,7 +290,7 @@ export function EliminarEquipoDialog({
     enviando.current = true;
     setBorrando(true);
     setError(null);
-    const r = await eliminar(equipo.id).catch(() => RED);
+    const r = await eliminar(equipo.id).catch(siNoEsDeploy(RED));
     enviando.current = false;
     setBorrando(false);
     if (!r.ok && r.error !== "sesiones") {
@@ -326,7 +334,7 @@ export function EliminarEquipoDialog({
               Cancelar
             </Button>
           </DialogClose>
-          <Button
+          <BotonEnLinea
             type="button"
             variant="danger"
             loading={borrando}
@@ -335,7 +343,7 @@ export function EliminarEquipoDialog({
           >
             <Trash2 aria-hidden="true" />
             Eliminar
-          </Button>
+          </BotonEnLinea>
         </DialogFooter>
       </DialogContent>
     </Dialog>

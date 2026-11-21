@@ -1,12 +1,14 @@
 "use client";
+import { type FormEvent, useId, useRef, useState } from "react";
+import { toast } from "sonner";
+import { ErrorEnPantalla } from "@/components/estados/errores";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
 // Cuerpos del diálogo de Años y secciones (D318, D319): nuevo año, agregar sección, editar
 // (= cambiar el número o la letra, solo vacío) y eliminar (solo vacío). Con datos, el diálogo
 // explica por qué no con texto (`bloqueoTexto`) en vez de un botón deshabilitado mudo. Cada envío
 // corta el doble clic con una ref y el botón queda ocupado (`loading`, D285); si el servidor no
 // guarda, el diálogo sigue abierto con lo elegido y el error (D171).
-import { type FormEvent, useId, useRef, useState } from "react";
-import { toast } from "sonner";
-import { ErrorEnPantalla } from "@/components/estados/errores";
+import { hayRed } from "@/components/krea/use-en-linea";
 import { Button } from "@/components/ui/button";
 import {
   DialogClose,
@@ -24,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { siNoEsDeploy } from "@/lib/recarga-deploy";
 import {
   ANIO_MAX,
   ANIO_MIN,
@@ -197,7 +200,7 @@ function useEnvio() {
     setEnviando(true);
     setError(null);
     const r = await accion().catch(
-      (): ResultadoSecciones => ({ ok: false, error: "red" }),
+      siNoEsDeploy<ResultadoSecciones>({ ok: false, error: "red" }),
     );
     vuela.current = false;
     setEnviando(false);
@@ -276,9 +279,9 @@ function Pie({
   return (
     <DialogFooter>
       <Cancelar />
-      <Button type="submit" loading={enviando} loadingLabel="Guardando…">
+      <BotonEnLinea type="submit" loading={enviando} loadingLabel="Guardando…">
         {textoBoton}
-      </Button>
+      </BotonEnLinea>
     </DialogFooter>
   );
 }
@@ -314,6 +317,7 @@ function NuevoAnio({
 
   async function alEnviar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!hayRed()) return;
     if (!letras.ok) {
       setIntentado(true);
       document.getElementById(idLetras)?.focus();
@@ -403,6 +407,7 @@ function AgregarSeccion({
 
   async function alEnviar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!hayRed()) return;
     const codigo = codigoSeccion(anio.numero, letra);
     const ok = await enviar(
       () => crear({ numero: anio.numero, letra }),
@@ -465,6 +470,7 @@ function EditarAnio({
 
   async function alEnviar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!hayRed()) return;
     const a = Number(numero);
     if (a === anio.numero) {
       cerrar();
@@ -539,6 +545,7 @@ function EditarSeccion({
 
   async function alEnviar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!hayRed()) return;
     if (letra === seccion.letra) {
       cerrar();
       return;
@@ -621,7 +628,7 @@ function Eliminar({
       ) : null}
       <DialogFooter>
         <Cancelar />
-        <Button
+        <BotonEnLinea
           type="button"
           variant="danger"
           loading={enviando}
@@ -629,7 +636,7 @@ function Eliminar({
           onClick={confirmar}
         >
           Eliminar
-        </Button>
+        </BotonEnLinea>
       </DialogFooter>
     </>
   );

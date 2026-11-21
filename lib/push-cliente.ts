@@ -1,7 +1,9 @@
 // Lado del navegador del aviso de tarea nueva (D335, D339): saber si se puede, pedir el permiso,
 // suscribir ESTE navegador y quitarlo. Todo pasa por el service worker propio (D291), que solo se
 // registra en producción: en `next dev` el aviso no se puede activar.
+
 import { bytesDeClave } from "@/lib/push";
+import { siNoEsDeploy } from "@/lib/recarga-deploy";
 
 export type EstadoAviso =
   | "cargando"
@@ -84,7 +86,7 @@ export async function activarAviso(
       return "error";
     }
   }
-  if (await guardar(sub.toJSON()).catch(() => false)) return "activado";
+  if (await guardar(sub.toJSON()).catch(siNoEsDeploy(false))) return "activado";
   await sub.unsubscribe().catch(() => {});
   return "error";
 }
@@ -99,7 +101,7 @@ export async function desactivarAviso(
     const { endpoint } = sub;
     await sub.unsubscribe();
     // Si el servidor no se entera, la fila se borra sola con el 410 del próximo envío
-    await quitar(endpoint).catch(() => false);
+    await quitar(endpoint).catch(siNoEsDeploy(false));
     return true;
   } catch {
     return false;

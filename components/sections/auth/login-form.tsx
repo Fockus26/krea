@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { type FormEvent, type ReactNode, useState } from "react";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
 import { CedulaInput } from "@/components/krea/cedula-input";
 import { PasswordInput } from "@/components/krea/password-input";
+import { hayRed } from "@/components/krea/use-en-linea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { ERROR_INGRESO, type ErrorIngreso, PASSWORD_VACIA } from "@/lib/auth";
 import { validateCedula } from "@/lib/cedula";
@@ -40,6 +41,7 @@ export function LoginForm({
 
   function enviar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!hayRed()) return;
     setEnviado(true);
     if (validateCedula(cedula) || password === "") {
       focusPrimerInvalido(e.currentTarget);
@@ -96,7 +98,7 @@ export function LoginForm({
             <AlertDescription>{ERROR_INGRESO[error]}</AlertDescription>
           </Alert>
         ) : null}
-        <Button
+        <BotonEnLinea
           type="submit"
           size="lg"
           block
@@ -104,7 +106,7 @@ export function LoginForm({
           loadingLabel="Entrando…"
         >
           Entrar
-        </Button>
+        </BotonEnLinea>
       </form>
     </div>
   );

@@ -1,12 +1,13 @@
 "use client";
-// Estado de la entrega ideal en la lista de entregas de una tarea (tanda 11-14 Z2, D430–D435):
-// ninguna (con «Escribir la respuesta ideal»), vigente (de quién, «Editar» y «Quitar») o caducada
-// (la entrega elegida ya no tiene 20 / 20 o se eliminó: aviso y las mismas salidas). «Quitar» pide
-// confirmación; si falla, el diálogo sigue abierto con el error (D171).
 import { PencilLine, Star, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { ErrorEnPantalla } from "@/components/estados/errores";
+// Estado de la entrega ideal en la lista de entregas de una tarea (tanda 11-14 Z2, D430–D435):
+// ninguna (con «Escribir la respuesta ideal»), vigente (de quién, «Editar» y «Quitar») o caducada
+// (la entrega elegida ya no tiene 20 / 20 o se eliminó: aviso y las mismas salidas). «Quitar» pide
+// confirmación; si falla, el diálogo sigue abierto con el error (D171).
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
 import { Alert } from "@/components/ui/alert";
 import { BOTON_LARGO_SM, Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -36,6 +37,7 @@ import {
   type ResultadoIdeal,
   rutaIdealProfe,
 } from "@/lib/ideal";
+import { siNoEsDeploy } from "@/lib/recarga-deploy";
 
 export function EstadoIdeal({
   tareaId,
@@ -64,7 +66,7 @@ export function EstadoIdeal({
     setError(null);
     const r: ResultadoIdeal = quitar
       ? await quitar({ tareaId, version }).catch(
-          (): ResultadoIdeal => ({ ok: false, error: "red" }),
+          siNoEsDeploy<ResultadoIdeal>({ ok: false, error: "red" }),
         )
       : { ok: true };
     ocupado.current = false;
@@ -171,7 +173,7 @@ export function EstadoIdeal({
                 Cancelar
               </Button>
             </DialogClose>
-            <Button
+            <BotonEnLinea
               type="button"
               variant="danger"
               loading={enviando}
@@ -180,7 +182,7 @@ export function EstadoIdeal({
             >
               <Trash2 aria-hidden="true" />
               {QUITAR_IDEAL_TEXTO}
-            </Button>
+            </BotonEnLinea>
           </DialogFooter>
         </DialogContent>
       </Dialog>

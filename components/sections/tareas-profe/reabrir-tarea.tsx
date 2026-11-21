@@ -2,8 +2,10 @@
 
 import { CircleAlert, LockOpen } from "lucide-react";
 import * as React from "react";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
 import { DatePicker } from "@/components/krea/date-picker";
 import { TimePicker } from "@/components/krea/time-picker";
+import { hayRed } from "@/components/krea/use-en-linea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -39,6 +41,7 @@ import {
   validarReabrir,
   YA_ENTREGO,
 } from "@/lib/reabrir-tarea";
+import { relanzarSiEsDeploy } from "@/lib/recarga-deploy";
 import { fechaCampo, HORA_AYUDA, mensajeErrorTarea } from "@/lib/tareas-profe";
 import type { ResultadoTarea } from "@/lib/tareas-profe-datos";
 
@@ -167,7 +170,8 @@ export function ReabrirTarea({
       let r: ResultadoTarea;
       try {
         r = await reabrir(envio);
-      } catch {
+      } catch (fallo) {
+        relanzarSiEsDeploy(fallo);
         r = { ok: false, error: "red" };
       }
       if (r.ok) {
@@ -233,6 +237,7 @@ export function ReabrirTarea({
             noValidate
             onSubmit={(e) => {
               e.preventDefault();
+              if (!hayRed()) return;
               confirmar();
             }}
           >
@@ -386,14 +391,14 @@ export function ReabrirTarea({
                   Cancelar
                 </Button>
               </DialogClose>
-              <Button
+              <BotonEnLinea
                 type="submit"
                 loading={pendiente}
                 loadingLabel="Guardando…"
               >
                 <LockOpen aria-hidden="true" />
                 {botonConfirmarReabrir(para, quitaTodas)}
-              </Button>
+              </BotonEnLinea>
             </DialogFooter>
           </form>
         </DialogContent>

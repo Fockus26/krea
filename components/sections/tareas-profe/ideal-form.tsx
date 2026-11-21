@@ -1,14 +1,16 @@
 "use client";
+import { Save } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { type FormEvent, useRef, useState } from "react";
+import { ErrorEnPantalla } from "@/components/estados/errores";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
+import { QuestionHeader } from "@/components/krea/question-header";
 // Formulario de la entrega ideal (tanda 11-14 Z2, D430–D435). Dos formas: parte de la entrega de un
 // alumno o equipo con 20 / 20 (sus respuestas se leen, no se editan) o el profe escribe la
 // respuesta ideal de cada pregunta. En las dos: el porqué general (obligatorio) y uno opcional por
 // pregunta. Con la de un alumno, guardar pide confirmar que la sección verá su nombre y avatar
 // (D435). Si falla, el error queda a la vista y no se pierde lo escrito (D171).
-import { Save } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { type FormEvent, useRef, useState } from "react";
-import { ErrorEnPantalla } from "@/components/estados/errores";
-import { QuestionHeader } from "@/components/krea/question-header";
+import { hayRed } from "@/components/krea/use-en-linea";
 import {
   AutorFila,
   IdealRespuesta,
@@ -48,6 +50,7 @@ import {
   type ResultadoIdeal,
 } from "@/lib/ideal";
 import type { FormatoPreguntaId } from "@/lib/modelo";
+import { siNoEsDeploy } from "@/lib/recarga-deploy";
 
 export type PreguntaFormIdeal = {
   id: string;
@@ -128,7 +131,7 @@ export function IdealForm({
     setError(null);
     const r: ResultadoIdeal = guardar
       ? await guardar(entrada()).catch(
-          (): ResultadoIdeal => ({ ok: false, error: "red" }),
+          siNoEsDeploy<ResultadoIdeal>({ ok: false, error: "red" }),
         )
       : { ok: true };
     ocupado.current = false;
@@ -151,6 +154,7 @@ export function IdealForm({
 
   function alEnviar(ev: FormEvent) {
     ev.preventDefault();
+    if (!hayRed()) return;
     const sinNota = !nota.trim();
     const vacias =
       forma.tipo === "profe"
@@ -278,14 +282,14 @@ export function IdealForm({
         <ErrorEnPantalla titulo="No se guardó">{error}</ErrorEnPantalla>
       ) : null}
       <div className="flex flex-wrap gap-2">
-        <Button
+        <BotonEnLinea
           type="submit"
           loading={enviando && !confirmando}
           loadingLabel="Guardando…"
         >
           <Save aria-hidden="true" />
           {GUARDAR_IDEAL_TEXTO}
-        </Button>
+        </BotonEnLinea>
       </div>
 
       <Dialog
@@ -312,7 +316,7 @@ export function IdealForm({
                 Cancelar
               </Button>
             </DialogClose>
-            <Button
+            <BotonEnLinea
               type="button"
               loading={enviando}
               loadingLabel="Guardando…"
@@ -320,7 +324,7 @@ export function IdealForm({
             >
               <Save aria-hidden="true" />
               {GUARDAR_IDEAL_TEXTO}
-            </Button>
+            </BotonEnLinea>
           </DialogFooter>
         </DialogContent>
       </Dialog>

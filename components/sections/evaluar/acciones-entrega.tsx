@@ -1,14 +1,15 @@
 "use client";
-// «Devolver al alumno» y «Eliminar entrega» (tanda 11-14 X1, D411–D415). Dos formas del mismo
-// par de acciones: `menu` (la fila de la lista de entregas de una tarea: botón ícono «Más
-// acciones de …» con un menú) y `botones` (Evaluar entrega, bajo la cabecera). Las dos piden
-// confirmación en un diálogo que dice QUÉ SE PIERDE; si falla, el diálogo sigue abierto con el
-// error (D171). Sin `acciones` (galería) solo se cierra con el toast.
 import { EllipsisVertical, Star, Trash2, Undo2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { ErrorEnPantalla } from "@/components/estados/errores";
+// «Devolver al alumno» y «Eliminar entrega» (tanda 11-14 X1, D411–D415). Dos formas del mismo
+// par de acciones: `menu` (la fila de la lista de entregas de una tarea: botón ícono «Más
+// acciones de …» con un menú) y `botones` (Evaluar entrega, bajo la cabecera). Las dos piden
+// confirmación en un diálogo que dice QUÉ SE PIERDE; si falla, el diálogo sigue abierto con el
+// error (D171). Sin `acciones` (galería) solo se cierra con el toast.
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -46,6 +47,7 @@ import {
   type TitularAccion,
 } from "@/lib/devolver-entrega";
 import { MARCAR_IDEAL_TEXTO } from "@/lib/ideal";
+import { siNoEsDeploy } from "@/lib/recarga-deploy";
 
 export type AccionesDevolverEntrega = {
   devolver: (e: DevolverEntrega) => Promise<ResultadoDevolver>;
@@ -119,13 +121,14 @@ export function AccionesEntrega({
       : dialogo === "devolver" && evaluadaEn !== null
         ? await acciones
             .devolver({ entregaId, evaluadaEn })
-            .catch((): ResultadoDevolver => ({ ok: false, error: "red" }))
+            .catch(siNoEsDeploy<ResultadoDevolver>({ ok: false, error: "red" }))
         : dialogo === "eliminar"
-          ? await acciones
-              .eliminar({ entregaId, enviadaEn, evaluadaEn })
-              .catch(
-                (): ResultadoEliminarEntrega => ({ ok: false, error: "red" }),
-              )
+          ? await acciones.eliminar({ entregaId, enviadaEn, evaluadaEn }).catch(
+              siNoEsDeploy<ResultadoEliminarEntrega>({
+                ok: false,
+                error: "red",
+              }),
+            )
           : // «Devolver» sin nota a la vista: no hay qué devolver
             ({ ok: false, error: "no-evaluada" } as const);
     ocupado.current = false;
@@ -268,7 +271,7 @@ export function AccionesEntrega({
               </Button>
             </DialogClose>
             {dialogo === "devolver" ? (
-              <Button
+              <BotonEnLinea
                 type="button"
                 loading={enviando}
                 loadingLabel="Devolviendo…"
@@ -276,9 +279,9 @@ export function AccionesEntrega({
               >
                 <Undo2 aria-hidden="true" />
                 {textoDevolver}
-              </Button>
+              </BotonEnLinea>
             ) : (
-              <Button
+              <BotonEnLinea
                 type="button"
                 variant="danger"
                 loading={enviando}
@@ -287,7 +290,7 @@ export function AccionesEntrega({
               >
                 <Trash2 aria-hidden="true" />
                 {ELIMINAR_TEXTO_BOTON}
-              </Button>
+              </BotonEnLinea>
             )}
           </DialogFooter>
         </DialogContent>

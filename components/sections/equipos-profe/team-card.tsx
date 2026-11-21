@@ -2,13 +2,13 @@
 
 import { CircleAlert, Pencil, Upload } from "lucide-react";
 import { type ReactNode, useId, useRef, useState } from "react";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
 import { CaptainBadge } from "@/components/krea/status-badge";
 import { TeamLogo } from "@/components/krea/team-logo";
 import { useFlip } from "@/components/krea/use-flip";
 import { UserAvatar } from "@/components/krea/user-avatar";
 import { MemberMenu } from "@/components/sections/equipos-profe/member-menu";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import {
@@ -160,7 +160,7 @@ export function TeamCard({
               if (f) onLogo(f);
             }}
           />
-          <Button
+          <BotonEnLinea
             variant="ghost"
             size="sm"
             className="h-8 px-2"
@@ -176,7 +176,7 @@ export function TeamCard({
           >
             <Icono aria-hidden="true" className="size-4" />
             {accion}
-          </Button>
+          </BotonEnLinea>
           <output
             className={
               dragging

@@ -26,6 +26,7 @@ import {
   type FiltroHistorial,
   isoLocal,
 } from "@/lib/puntos";
+import { siNoEsDeploy } from "@/lib/recarga-deploy";
 import { AdjustmentForm } from "./adjustment-form";
 import { AdjustmentHistory } from "./adjustment-history";
 import { type AccionesMotivos, MotivosDialog } from "./motivos-dialog";
@@ -52,7 +53,7 @@ export type AccionesPuntos = {
   motivos: AccionesMotivosServidor;
 };
 
-const sinRed = (): ResultadoAjuste => ({ ok: false, error: "red" });
+const sinRed = siNoEsDeploy<ResultadoAjuste>({ ok: false, error: "red" });
 
 /**
  * Ajustes de puntos (HANDOFF §3; D118–D121): `g-home` 7/5 con el formulario y el historial; una

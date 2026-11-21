@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useId } from "react";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
 import { EmptyState } from "@/components/krea/empty-state";
 import { useFlip } from "@/components/krea/use-flip";
 import { Badge } from "@/components/ui/badge";
@@ -266,13 +267,13 @@ export function AdjustmentHistory({
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button
+                      <BotonEnLinea
                         variant="ghost"
                         icon
                         aria-label={opcionesAjusteLabel(f.nombre)}
                       >
                         <EllipsisVertical aria-hidden="true" />
-                      </Button>
+                      </BotonEnLinea>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem

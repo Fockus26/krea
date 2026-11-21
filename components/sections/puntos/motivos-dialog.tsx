@@ -1,12 +1,4 @@
 "use client";
-// «Editar opciones» de Ajustes de puntos (D375, D377): las opciones fijas de Motivo con su valor
-// propuesto, comunes a todos los profes. Un solo diálogo con tres vistas: la lista (cada opción
-// con Editar y Borrar, y «Nueva opción» debajo), editar una y confirmar el borrado. Cada envío
-// corta el doble clic con una ref y el botón queda ocupado (`loading`, D285); si no se guarda, el
-// diálogo sigue con lo escrito y el error (D171). Mientras el diálogo está abierto el resto de la
-// página queda oculto para los lectores de pantalla (también el Toaster): lo hecho se dice en una
-// región viva del propio diálogo, no en un toast.
-// PROVISIONAL (CONTENT_CHECKLIST fila 191): ningún texto de este diálogo está en el lienzo.
 import { ListChecks, Pencil, Plus, Trash2 } from "lucide-react";
 import {
   type FormEvent,
@@ -17,6 +9,16 @@ import {
   useState,
 } from "react";
 import { ErrorEnPantalla } from "@/components/estados/errores";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
+// «Editar opciones» de Ajustes de puntos (D375, D377): las opciones fijas de Motivo con su valor
+// propuesto, comunes a todos los profes. Un solo diálogo con tres vistas: la lista (cada opción
+// con Editar y Borrar, y «Nueva opción» debajo), editar una y confirmar el borrado. Cada envío
+// corta el doble clic con una ref y el botón queda ocupado (`loading`, D285); si no se guarda, el
+// diálogo sigue con lo escrito y el error (D171). Mientras el diálogo está abierto el resto de la
+// página queda oculto para los lectores de pantalla (también el Toaster): lo hecho se dice en una
+// región viva del propio diálogo, no en un toast.
+// PROVISIONAL (CONTENT_CHECKLIST fila 191): ningún texto de este diálogo está en el lienzo.
+import { hayRed } from "@/components/krea/use-en-linea";
 import { focusPrimerInvalido } from "@/components/sections/auth/focus-invalid";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -42,6 +44,7 @@ import {
   validarOpcion,
 } from "@/lib/motivos";
 import { chipMotivo } from "@/lib/puntos";
+import { siNoEsDeploy } from "@/lib/recarga-deploy";
 import { PuntosStepper } from "./puntos-stepper";
 
 export type AccionesMotivos = {
@@ -77,7 +80,7 @@ function useEnvio() {
     setEnviando(true);
     setError(null);
     const r = await accion().catch(
-      (): ResultadoMotivos => ({ ok: false, error: "red" }),
+      siNoEsDeploy<ResultadoMotivos>({ ok: false, error: "red" }),
     );
     vuela.current = false;
     setEnviando(false);
@@ -319,6 +322,7 @@ function FormOpcion({
 
   async function alEnviar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!hayRed()) return;
     const form = e.currentTarget;
     const err = validarOpcion(motivos, { etiqueta, valor }, excepto);
     if (err.etiqueta || err.valor || valor === null) {
@@ -405,13 +409,17 @@ function FormOpcion({
           <Button type="button" variant="secondary" onClick={onCancelar}>
             Cancelar
           </Button>
-          <Button type="submit" loading={enviando} loadingLabel="Guardando…">
+          <BotonEnLinea
+            type="submit"
+            loading={enviando}
+            loadingLabel="Guardando…"
+          >
             {icono}
             {textoBoton}
-          </Button>
+          </BotonEnLinea>
         </DialogFooter>
       ) : (
-        <Button
+        <BotonEnLinea
           type="submit"
           variant="secondary"
           className="self-start"
@@ -420,7 +428,7 @@ function FormOpcion({
         >
           {icono}
           {textoBoton}
-        </Button>
+        </BotonEnLinea>
       )}
     </form>
   );
@@ -535,7 +543,7 @@ function Borrar({
         >
           Cancelar
         </Button>
-        <Button
+        <BotonEnLinea
           type="button"
           variant="danger"
           loading={enviando}
@@ -543,7 +551,7 @@ function Borrar({
           onClick={confirmar}
         >
           Borrar
-        </Button>
+        </BotonEnLinea>
       </DialogFooter>
     </>
   );

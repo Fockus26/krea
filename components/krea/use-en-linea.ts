@@ -23,6 +23,14 @@ export function useEnLinea(): boolean {
   );
 }
 
+/**
+ * ¿Hay red ahora mismo? Para el `onSubmit` de un formulario cuyo botón es `BotonEnLinea`: Enter
+ * en un campo envía sin pasar por el botón deshabilitado (D539). Solo se llama en el cliente.
+ */
+export function hayRed(): boolean {
+  return typeof navigator === "undefined" || navigator.onLine;
+}
+
 const sinSuscripcion = () => () => {};
 
 /**

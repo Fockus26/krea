@@ -3,6 +3,7 @@
 import { Info, Lock, Mail } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
 import { Button } from "@/components/ui/button";
 import { REENVIO_SEGUNDOS, reenviarTexto } from "@/lib/auth";
 import { maskEmail } from "@/lib/mask";
@@ -84,7 +85,7 @@ export function RecoverSent({
         <Button asChild size="lg" block>
           <Link href={volverHref}>Volver a entrar</Link>
         </Button>
-        <Button
+        <BotonEnLinea
           variant="ghost"
           block
           disabled={restan > 0}
@@ -92,7 +93,7 @@ export function RecoverSent({
           className="nums"
         >
           {reenviarTexto(restan)}
-        </Button>
+        </BotonEnLinea>
       </div>
     </div>
   );

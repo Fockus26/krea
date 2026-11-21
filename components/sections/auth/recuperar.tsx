@@ -1,9 +1,10 @@
 "use client";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { pedirEnlace } from "@/lib/acciones/recuperar";
 // Recuperar conectado (fase 07, D186): pide el enlace a la Server Action y pasa a «Revisa tu
 // correo» en el sitio (la cédula queda en memoria para «Reenviar enlace»). La respuesta es la
 // misma exista o no la cuenta; solo un fallo de red se ve como error.
-import { useEffect, useRef, useState, useTransition } from "react";
-import { pedirEnlace } from "@/lib/acciones/recuperar";
+import { relanzarSiEsDeploy, siNoEsDeploy } from "@/lib/recarga-deploy";
 import { ERROR_PEDIR_ENLACE } from "@/lib/recuperar";
 import { RecoverForm } from "./recover-form";
 import { RecoverSent } from "./recover-sent";
@@ -25,7 +26,8 @@ export function Recuperar({ volverHref }: { volverHref: string }) {
       try {
         await pedirEnlace({ cedula });
         setEnviadoA(cedula);
-      } catch {
+      } catch (e) {
+        relanzarSiEsDeploy(e);
         setError(ERROR_PEDIR_ENLACE);
       }
     });
@@ -37,7 +39,7 @@ export function Recuperar({ volverHref }: { volverHref: string }) {
         <RecoverSent
           volverHref={volverHref}
           onReenviar={() => {
-            pedirEnlace({ cedula: enviadoA }).catch(() => {});
+            pedirEnlace({ cedula: enviadoA }).catch(siNoEsDeploy(undefined));
           }}
         />
       </div>

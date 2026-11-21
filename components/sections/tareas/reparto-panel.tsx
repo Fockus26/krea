@@ -2,6 +2,7 @@
 
 import { Check, Undo2 } from "lucide-react";
 import { useEffect, useId, useRef, useTransition } from "react";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
 import type { QuestionAnswer } from "@/components/krea/question-card-detail";
 import {
   EstadoParte,
@@ -11,7 +12,6 @@ import {
   type AccionTomar,
   TomarParte,
 } from "@/components/sections/tareas/tomar-parte";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   Select,
@@ -36,6 +36,7 @@ import {
   REPARTO_TITULO,
   repartoTomadaOpcion,
 } from "@/lib/partes";
+import { relanzarSiEsDeploy } from "@/lib/recarga-deploy";
 
 /** Server Actions del reparto (el capitán); sin ellas (galerías) los controles no hacen nada. */
 export type AccionesReparto = {
@@ -156,7 +157,8 @@ function FilaParte({
       let r: ResultadoParte;
       try {
         r = await accion();
-      } catch {
+      } catch (fallo) {
+        relanzarSiEsDeploy(fallo);
         r = { ok: false, error: "red" };
       }
       if (r.ok) {
@@ -245,7 +247,7 @@ function FilaParte({
       (fila.estado === "entregada" || fila.estado === "aceptada") ? (
         <div className="flex flex-wrap gap-2">
           {fila.estado === "entregada" ? (
-            <Button
+            <BotonEnLinea
               size="sm"
               disabled={pendiente}
               aria-describedby={preguntaId}
@@ -255,9 +257,9 @@ function FilaParte({
             >
               <Check aria-hidden="true" />
               {ACEPTAR_PARTE}
-            </Button>
+            </BotonEnLinea>
           ) : null}
-          <Button
+          <BotonEnLinea
             variant="secondary"
             size="sm"
             disabled={pendiente}
@@ -268,7 +270,7 @@ function FilaParte({
           >
             <Undo2 aria-hidden="true" />
             {DEVOLVER_PARTE}
-          </Button>
+          </BotonEnLinea>
         </div>
       ) : null}
     </li>

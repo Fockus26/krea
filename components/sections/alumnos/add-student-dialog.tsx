@@ -1,13 +1,15 @@
 "use client";
+import { UserPlus } from "lucide-react";
+import { type FormEvent, useId, useRef, useState } from "react";
+import { ErrorEnPantalla } from "@/components/estados/errores";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
+import { CedulaInput } from "@/components/krea/cedula-input";
 // «Agregar alumno» (W12, D267): cédula, nombres, apellidos, sección, equipo (opcional) y email de
 // recuperación (opcional). La cuenta nace con contraseña temporal (D232): al crearla, el diálogo se
 // cierra y la pantalla muestra la contraseña una sola vez y después abre su ficha. Doble envío:
 // una ref lo corta y el botón queda ocupado (`loading`, D285). Si el servidor no crea la cuenta, el
 // diálogo sigue abierto con lo escrito y el error (D171).
-import { UserPlus } from "lucide-react";
-import { type FormEvent, useId, useRef, useState } from "react";
-import { ErrorEnPantalla } from "@/components/estados/errores";
-import { CedulaInput } from "@/components/krea/cedula-input";
+import { hayRed } from "@/components/krea/use-en-linea";
 import { BOTON_LARGO, Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -41,6 +43,7 @@ import {
   validarAlumnoNuevo,
 } from "@/lib/alumnos-alta";
 import type { SeccionId } from "@/lib/modelo";
+import { siNoEsDeploy } from "@/lib/recarga-deploy";
 import { agruparPorAnio } from "@/lib/secciones";
 
 export type CrearAlumnoAccion = (
@@ -161,6 +164,7 @@ function AddForm({
 
   async function alEnviar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!hayRed()) return;
     if (enviando.current) return;
     const primero = errores.cedula
       ? ids.cedula
@@ -188,7 +192,7 @@ function AddForm({
       seccion,
       email: email.trim().toLowerCase(),
       equipoId: equipo === SIN_EQUIPO ? null : equipo,
-    }).catch((): ResultadoCrearAlumno => ({ ok: false, error: "red" }));
+    }).catch(siNoEsDeploy<ResultadoCrearAlumno>({ ok: false, error: "red" }));
     enviando.current = false;
     setGuardando(false);
     if (!r.ok) {
@@ -337,9 +341,9 @@ function AddForm({
             Cancelar
           </Button>
         </DialogClose>
-        <Button type="submit" loading={guardando} loadingLabel="Creando…">
+        <BotonEnLinea type="submit" loading={guardando} loadingLabel="Creando…">
           Crear alumno
-        </Button>
+        </BotonEnLinea>
       </DialogFooter>
     </form>
   );

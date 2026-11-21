@@ -1,13 +1,15 @@
 "use client";
-// Diálogos de la pantalla Profesores (D233): crear/editar, la contraseña temporal (se ve una sola
-// vez, D232) y la confirmación de eliminar. Cada formulario corta el doble envío con una ref y el
-// botón queda ocupado (`loading`, D285) mientras vuela; si el servidor no guarda, el diálogo sigue
-// abierto con lo escrito y el error (D171).
 import { Pencil, Trash2, UserPlus } from "lucide-react";
 import { type FormEvent, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ErrorEnPantalla } from "@/components/estados/errores";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
 import { CedulaInput } from "@/components/krea/cedula-input";
+// Diálogos de la pantalla Profesores (D233): crear/editar, la contraseña temporal (se ve una sola
+// vez, D232) y la confirmación de eliminar. Cada formulario corta el doble envío con una ref y el
+// botón queda ocupado (`loading`, D285) mientras vuela; si el servidor no guarda, el diálogo sigue
+// abierto con lo escrito y el error (D171).
+import { hayRed } from "@/components/krea/use-en-linea";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -38,6 +40,7 @@ import {
 } from "@/lib/cuentas-datos";
 import type { ResultadoLote } from "@/lib/lote";
 import { cedulaTexto, partirNombre } from "@/lib/perfil";
+import { siNoEsDeploy } from "@/lib/recarga-deploy";
 
 export type AccionesProfesores = {
   crear: (entrada: CrearProfesor) => Promise<ResultadoCrearProfesor>;
@@ -200,6 +203,7 @@ function ProfesorForm({
 
   async function alEnviar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!hayRed()) return;
     if (enviando.current) return;
     const primero = errores.cedula
       ? ids.cedula
@@ -223,7 +227,7 @@ function ProfesorForm({
       nombres: unirNombre(nombre1, nombre2),
       apellidos: unirNombre(apellido1, apellido2),
       email: email.trim().toLowerCase(),
-    }).catch((): ResultadoProfesor => ({ ok: false, error: "red" }));
+    }).catch(siNoEsDeploy<ResultadoProfesor>({ ok: false, error: "red" }));
     enviando.current = false;
     setGuardando(false);
     // `cambio` (D532): lo escrito se queda y el aviso dice lo que está guardado ahora
@@ -328,9 +332,13 @@ function ProfesorForm({
             Cancelar
           </Button>
         </DialogClose>
-        <Button type="submit" loading={guardando} loadingLabel="Guardando…">
+        <BotonEnLinea
+          type="submit"
+          loading={guardando}
+          loadingLabel="Guardando…"
+        >
           {textoBoton}
-        </Button>
+        </BotonEnLinea>
       </DialogFooter>
     </form>
   );
@@ -359,7 +367,7 @@ export function EliminarProfesorDialog({
     setBorrando(true);
     setError(null);
     const r = await eliminar(profesor.cedula).catch(
-      (): ResultadoProfesor => ({ ok: false, error: "red" }),
+      siNoEsDeploy<ResultadoProfesor>({ ok: false, error: "red" }),
     );
     enviando.current = false;
     setBorrando(false);
@@ -412,7 +420,7 @@ export function EliminarProfesorDialog({
               Cancelar
             </Button>
           </DialogClose>
-          <Button
+          <BotonEnLinea
             type="button"
             variant="danger"
             loading={borrando}
@@ -421,7 +429,7 @@ export function EliminarProfesorDialog({
           >
             <Trash2 aria-hidden="true" />
             Eliminar
-          </Button>
+          </BotonEnLinea>
         </DialogFooter>
       </DialogContent>
     </Dialog>

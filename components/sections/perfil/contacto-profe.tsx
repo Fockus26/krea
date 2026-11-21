@@ -1,12 +1,13 @@
 "use client";
-// «Contacto para tus alumnos» del Perfil del profesor (D378): celular venezolano (abre WhatsApp) y
-// correo, ambos opcionales; vacío = borrar. Valida con la misma función pura que el servidor
-// (`zContacto`) y guarda con `guardarContacto`. Mismo patrón que «Tus datos» (D071, D234).
 import { useRouter } from "next/navigation";
 import { type FormEvent, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ErrorEnPantalla } from "@/components/estados/errores";
-import { Button } from "@/components/ui/button";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
+// «Contacto para tus alumnos» del Perfil del profesor (D378): celular venezolano (abre WhatsApp) y
+// correo, ambos opcionales; vacío = borrar. Valida con la misma función pura que el servidor
+// (`zContacto`) y guarda con `guardarContacto`. Mismo patrón que «Tus datos» (D071, D234).
+import { hayRed } from "@/components/krea/use-en-linea";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,7 @@ import {
   erroresContacto,
   zContacto,
 } from "@/lib/contacto";
+import { siNoEsDeploy } from "@/lib/recarga-deploy";
 
 // PROVISIONAL (CONTENT_CHECKLIST fila 194): no están en el lienzo. Sin ayuda bajo el teléfono:
 // César la quitó (pedido 15, D390); el error de validación sí queda.
@@ -46,6 +48,7 @@ export function ContactoProfe({ inicial }: { inicial: ContactoEntrada }) {
 
   async function enviar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!hayRed()) return;
     if (enviando.current) return;
     const primero = errores.telefono
       ? ids.telefono
@@ -60,9 +63,9 @@ export function ContactoProfe({ inicial }: { inicial: ContactoEntrada }) {
     enviando.current = true;
     setGuardando(true);
     setErrorServidor(null);
-    const r = await guardarContacto({ telefono, email }).catch(() => ({
-      ok: false as const,
-    }));
+    const r = await guardarContacto({ telefono, email }).catch(
+      siNoEsDeploy({ ok: false as const }),
+    );
     enviando.current = false;
     setGuardando(false);
     if (!r.ok) {
@@ -131,9 +134,13 @@ export function ContactoProfe({ inicial }: { inicial: ContactoEntrada }) {
           </ErrorEnPantalla>
         ) : null}
         <div className="flex flex-wrap gap-3">
-          <Button type="submit" loading={guardando} loadingLabel="Guardando…">
+          <BotonEnLinea
+            type="submit"
+            loading={guardando}
+            loadingLabel="Guardando…"
+          >
             Guardar contacto
-          </Button>
+          </BotonEnLinea>
         </div>
       </form>
     </Card>
