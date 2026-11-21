@@ -162,7 +162,7 @@ export async function crearEquipo(
   }
 }
 
-/** Cambia el nombre y el tema de un equipo (D270). */
+/** Cambia el nombre y el tema de un equipo (D270); con la versión del diálogo, `cambio` (D532). */
 export async function editarEquipo(
   entrada: unknown,
 ): Promise<ResultadoGestionEquipo> {
@@ -173,7 +173,8 @@ export async function editarEquipo(
   if (!d.success) return { ok: false, error: "invalida" };
   try {
     const r = await editarEquipoEnTransaccion(db, d.data, Date.now());
-    if (r.ok) refresh();
+    // `cambio` (D532): el tablero también pasa a lo de ahora; el diálogo conserva lo escrito
+    if (r.ok || r.error === "cambio") refresh();
     return r;
   } catch (e) {
     registrar("editarEquipo", e);
@@ -227,7 +228,7 @@ export async function eliminarEquipos(
 
 /**
  * El borrado de uno, sin sesión ni `refresh()` (lo ponen `eliminarEquipo` y `eliminarEquipos`):
- * la transacción de D307 y, después del commit, su logo de B2 y los claims de sus integrantes.
+ * la transacción de D307 y, después del commit, su logo y las imágenes de sus partes en B2 (D530).
  * No lanza: cualquier fallo vuelve como error.
  */
 async function borrarUnEquipo(
@@ -241,7 +242,7 @@ async function borrarUnEquipo(
     registrar("eliminarEquipo", e);
     return { ok: false, error: "red" };
   }
-  const { resultado, logo } = tx;
+  const { resultado, logo, imagenes } = tx;
   if (!resultado.ok) return resultado;
   if (logo) {
     const b = await almacenB2()
@@ -249,5 +250,25 @@ async function borrarUnEquipo(
       .catch(() => null);
     if (!b?.ok) console.error("[eliminarEquipo] no se borró el logo");
   }
+  await borrarImagenes(imagenes);
   return resultado;
+}
+
+/** Las imágenes de sus partes (D530): si B2 falla se registra y quedan huérfanas (D229). */
+async function borrarImagenes(claves: readonly string[]): Promise<void> {
+  if (claves.length === 0) return;
+  const almacen = almacenB2();
+  if (!almacen) {
+    console.error(
+      `[eliminarEquipo] almacén sin configurar: ${claves.length} imágenes sin borrar`,
+    );
+    return;
+  }
+  const r = await Promise.allSettled(claves.map((c) => almacen.borrar(c)));
+  const fallidas = r.filter((x) => x.status === "rejected" || !x.value.ok);
+  if (fallidas.length > 0) {
+    console.error(
+      `[eliminarEquipo] almacén: ${fallidas.length} de ${claves.length} imágenes sin borrar`,
+    );
+  }
 }

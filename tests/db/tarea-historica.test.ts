@@ -13,7 +13,13 @@ import type { Db } from "@/lib/db";
 import { faltanRespuestas } from "@/lib/entregas";
 import { idEntrega, type Tarea, type Usuario } from "@/lib/modelo";
 import { baseNueva } from "./base";
-import { entrega, tarea as leerTarea, ponerUsuario, rankingDe } from "./docs";
+import {
+  entrega,
+  tarea as leerTarea,
+  ponerEntrega,
+  ponerUsuario,
+  rankingDe,
+} from "./docs";
 
 let base: Db;
 const db = () => base;
@@ -178,6 +184,37 @@ describe("ponerPuntajeFinalEnTransaccion", () => {
     const e = await entrega(db(), idEntrega(T, A2));
     expect(e?.evaluacion).toMatchObject({ puntos: null, puntaje: 12 });
     expect(e?.evaluacionAnterior?.puntaje).toBe(8.5);
+  });
+
+  test("cambiar el puntaje no borra los comentarios ni el comentario general (D533)", async () => {
+    const id = idEntrega(T, A2);
+    const e = await entrega(db(), id);
+    if (!e?.evaluacion) throw new Error("sin evaluación");
+    const { id: _, ...doc } = e;
+    await ponerEntrega(db(), id, {
+      ...doc,
+      evaluacion: {
+        ...e.evaluacion,
+        comentarios: { p1: "Buen trazo" },
+        comentarioGeneral: "Sigue así",
+      },
+    });
+    expect(
+      await ponerPuntajeFinalEnTransaccion(
+        db(),
+        PROFE,
+        { cedula: A2, puntaje: 13 },
+        AHORA + 4,
+        T,
+      ),
+    ).toEqual({ ok: true });
+    const despues = await entrega(db(), id);
+    expect(despues?.evaluacion).toMatchObject({
+      puntos: null,
+      puntaje: 13,
+      comentarios: { p1: "Buen trazo" },
+      comentarioGeneral: "Sigue así",
+    });
   });
 
   test("otra sección o alguien que no existe: no escribe", async () => {

@@ -23,6 +23,7 @@ import { toast } from "@/components/ui/sonner";
 import {
   type ConsecuenciasEliminar,
   type CrearEquipo,
+  cambioEquipoTexto,
   consecuenciasTexto,
   creadoEquipoTexto,
   type EditarEquipo,
@@ -31,6 +32,7 @@ import {
   type ResultadoGestionEquipo,
   TEMA_AYUDA,
   validarEquipo,
+  versionEquipo,
 } from "@/lib/equipos-gestion";
 import type { ResultadoLote } from "@/lib/lote";
 import type { SeccionId } from "@/lib/modelo";
@@ -105,8 +107,16 @@ export function EditarEquipoDialog({
   editar: AccionesGestionEquipos["editar"];
 }) {
   const [abierto, setAbierto] = useState(false);
+  // Lo que se vio al abrir (D532): si otro profe guarda en medio, `cambio` trae la versión nueva
+  const [version, setVersion] = useState(() => versionEquipo(equipo));
   return (
-    <Dialog open={abierto} onOpenChange={setAbierto}>
+    <Dialog
+      open={abierto}
+      onOpenChange={(v) => {
+        if (v) setVersion(versionEquipo(equipo));
+        setAbierto(v);
+      }}
+    >
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm">
           <Pencil aria-hidden="true" />
@@ -126,11 +136,11 @@ export function EditarEquipoDialog({
           inicial={equipo}
           textoBoton="Guardar cambios"
           enviar={async (datos) => {
-            const r = await editar({ ...datos, equipoId: equipo.id });
+            const r = await editar({ ...datos, equipoId: equipo.id, version });
             if (r.ok) {
               setAbierto(false);
               toast("Cambios guardados");
-            }
+            } else if (r.error === "cambio") setVersion(r.version);
             return r;
           }}
         />
@@ -187,7 +197,12 @@ function EquipoForm({
     enviando.current = false;
     setGuardando(false);
     if (!r.ok) {
-      setErrorServidor(errorGestionEquipoTexto(r.error, seccion));
+      // `cambio` (D532): lo escrito se queda y el aviso dice lo que está guardado ahora
+      setErrorServidor(
+        r.error === "cambio"
+          ? cambioEquipoTexto(r.actual)
+          : errorGestionEquipoTexto(r.error, seccion),
+      );
       if (r.error === "repetido") document.getElementById(ids.nombre)?.focus();
     }
   }

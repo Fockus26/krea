@@ -46,7 +46,7 @@ import {
   permisoParte,
   repartoCongelado,
   repartoParaEnviar,
-  sinParteDe,
+  sinParteAlEnviar,
 } from "@/lib/partes";
 
 export type ResultadoEnvio = { ok: true } | { ok: false; error: ErrorEnvio };
@@ -290,10 +290,16 @@ export async function enviarEnTransaccion(
     if (!armada.ok) return armada;
     // Nueva y grupal (D420): quien tenía pregunta y no entregó ninguna, entre los que reciben la
     // nota (un alumno que ya está en otra entrega no entra, D221). Al editar o completar se
-    // conserva el de la entrega, como los integrantes (D396).
+    // conserva el de la entrega, como los integrantes (D396). Solo con las partes vigentes (D534),
+    // como la vista y `repartoParaEnviar`.
     const sinParte =
       m.modo === "nueva"
-        ? sinParteDe(reparto, armada.entrega.integrantes, uid)
+        ? sinParteAlEnviar(reparto, {
+            integrantes: armada.entrega.integrantes,
+            miembros: integrantes,
+            capitanId: c.equipo?.capitanId ?? null,
+            enviadaPor: uid,
+          })
         : (existente?.sinParte ?? []);
     const conSinParte = sinParte.length > 0 ? { sinParte } : {};
     // Completar: mismas personas y misma nota (el ranking no cambia), solo las respuestas y el

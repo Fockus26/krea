@@ -18,6 +18,7 @@ import {
   repartoCapitan,
   repartoParaEnviar,
   rutaVersionPartes,
+  sinParteAlEnviar,
   sinParteDe,
 } from "@/lib/partes";
 import {
@@ -333,6 +334,48 @@ describe("sinParteDe (D420)", () => {
     expect(sinParteDe([p(CAP, "asignada")], MIEMBROS, CAP)).toEqual([]);
     // Fuera de los integrantes de la entrega, no cuenta
     expect(sinParteDe([p("39999999", "asignada")], MIEMBROS, CAP)).toEqual([]);
+  });
+});
+
+describe("sinParteAlEnviar: solo el reparto vigente (D534)", () => {
+  const p = (asignado: string, estado: Parte["estado"]) => ({
+    asignado,
+    estado,
+  });
+  const envio = (integrantes: readonly string[], miembros = MIEMBROS) => ({
+    integrantes,
+    miembros,
+    capitanId: CAP,
+    enviadaPor: CAP,
+  });
+
+  test("en los casos de hoy (integrantes = equipo actual) da lo mismo que `sinParteDe`", () => {
+    const casos = [
+      [],
+      [p(ADELA, "tomada")],
+      [p(ADELA, "tomada"), p(ADELA, "aceptada")],
+      [p(ADELA, "entregada"), p(ADELA, "asignada"), p(LUIS, "devuelta")],
+      [p(ADELA, "aceptada")],
+      [p(CAP, "asignada")],
+      [p("39999999", "asignada")],
+    ];
+    for (const partes of casos) {
+      expect(sinParteAlEnviar(partes, envio(MIEMBROS))).toEqual(
+        sinParteDe(partes, MIEMBROS, CAP),
+      );
+      // Luis ya está en otra entrega: no recibe esta nota (D221)
+      expect(sinParteAlEnviar(partes, envio([CAP, ADELA]))).toEqual(
+        sinParteDe(partes, [CAP, ADELA], CAP),
+      );
+    }
+  });
+
+  test("la parte de alguien que ya no es del equipo no lo marca, aunque siga en `integrantes`", () => {
+    const partes = [p(LUIS, "asignada"), p(ADELA, "asignada")];
+    // Luis se fue del equipo: su parte ya no es vigente (D421)
+    const sinLuis = [CAP, ADELA];
+    expect(sinParteDe(partes, MIEMBROS, CAP)).toEqual([ADELA, LUIS]);
+    expect(sinParteAlEnviar(partes, envio(MIEMBROS, sinLuis))).toEqual([ADELA]);
   });
 });
 

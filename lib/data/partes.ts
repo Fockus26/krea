@@ -197,14 +197,19 @@ export async function borrarPartesDeEntrega(
 }
 
 /**
- * Al eliminar un equipo: sus partes se van con él (D421). Sus imágenes sin enviar quedan en B2
- * (como las de una entrega cancelada, límite de D396): la acción de equipos solo borra el logo.
+ * Al eliminar un equipo: sus partes se van con él (D421). Devuelve las imágenes que tenían, para
+ * borrarlas de B2 tras el commit (D530). Una parte aceptada comparte la imagen con la respuesta
+ * del capitán y la entrega del equipo se queda (D307): quien llama descuenta las que sigue usando.
  */
 export async function borrarPartesDeEquipo(
   tx: Tx,
   equipoId: string,
-): Promise<void> {
-  await tx.delete(partes).where(eq(partes.equipoId, equipoId));
+): Promise<string[]> {
+  const filas = await tx
+    .delete(partes)
+    .where(eq(partes.equipoId, equipoId))
+    .returning({ respuesta: partes.respuesta });
+  return rutasDe(filas);
 }
 
 const rutasDe = (filas: ReadonlyArray<{ respuesta: Parte["respuesta"] }>) =>

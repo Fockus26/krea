@@ -6,9 +6,9 @@
 // Dos formas, nunca las dos (D430): la entrega de un alumno o equipo con puntaje 20 / 20 (D431) o
 // la respuesta que escribe el profe, un texto por pregunta (también en las de imagen: sin subir
 // archivos, D432). El porqué general es obligatorio; el de cada pregunta, opcional. Los alumnos de
-// las secciones de la tarea la ven solo con la tarea ya cerrada (D433). Sin borrado en cascada
-// (D434): una ideal cuya entrega se eliminó, se devolvió o bajó de 20 deja de existir para el
-// alumno y el profe ve el aviso.
+// las secciones de la tarea la ven solo con la tarea ya cerrada (D433). Una ideal cuya entrega se
+// devolvió o bajó de 20 deja de existir para el alumno y el profe ve el aviso (D434); eliminar la
+// entrega o la tarea la borra (D531).
 import { z } from "zod";
 import { cerradaParaTodos, type TareaConVencimiento } from "@/lib/estado-tarea";
 import { zIdDocumento } from "@/lib/evaluar-datos";
@@ -73,11 +73,25 @@ export const zGuardarIdeal = z.object({
   nota: z.string().max(NOTA_IDEAL_MAX),
   /** Vacías = sin nota en esa pregunta. */
   notas: z.record(zIdPregunta, z.string().max(NOTA_IDEAL_MAX)),
+  /**
+   * La versión que vio el formulario (D532): el `actualizadoEn` de la ideal guardada, o
+   * `VERSION_IDEAL_SIN_FILA` si no había. Si otro profe guardó o la quitó después, `cambio`. Sin
+   * ella (llamadas viejas) no se comprueba.
+   */
+  version: zInstante.optional(),
 });
 export type GuardarIdeal = z.infer<typeof zGuardarIdeal>;
 
 export const zQuitarIdeal = z.object({ tareaId: zIdDocumento });
 export type QuitarIdeal = z.infer<typeof zQuitarIdeal>;
+
+/** La tarea aún no tiene ideal guardada: su versión vale 0 (D532). */
+export const VERSION_IDEAL_SIN_FILA = 0;
+
+/** Versión que deja un guardado: el instante, o una más si el reloj no avanzó (como D509). */
+export function versionIdealNueva(anterior: number, ahora: number): number {
+  return ahora > anterior ? ahora : anterior + 1;
+}
 
 export type ErrorIdeal =
   | "invalida"
@@ -90,9 +104,15 @@ export type ErrorIdeal =
   | "incompleta"
   /** La entrega ya no tiene 20 / 20, se devolvió o se eliminó. */
   | "no-elegible"
+  /** Otro profe guardó (o quitó) la ideal desde que se abrió el formulario (D532). */
+  | "cambio"
   | "red";
 
-export type ResultadoIdeal = { ok: true } | { ok: false; error: ErrorIdeal };
+/** `cambio` trae la versión de ahora: con ella, el siguiente «Guardar» reemplaza (D532). */
+export type ResultadoIdeal =
+  | { ok: true }
+  | { ok: false; error: "cambio"; version: number }
+  | { ok: false; error: Exclude<ErrorIdeal, "cambio"> };
 
 /* ---------- Reglas ---------- */
 
@@ -133,7 +153,9 @@ export function validarIdeal(
     | null,
   autorId: string,
   ahora: number,
-): { ok: true; ideal: Ideal } | { ok: false; error: ErrorIdeal } {
+):
+  | { ok: true; ideal: Ideal }
+  | { ok: false; error: Exclude<ErrorIdeal, "cambio"> } {
   if (!tarea) return { ok: false, error: "no-existe" };
   if (tarea.estado === "borrador") return { ok: false, error: "borrador" };
   const nota = entrada.nota.trim();
@@ -494,6 +516,9 @@ export function errorIdealTexto(e: ErrorIdeal): string {
       return "Escribe la respuesta ideal de cada pregunta.";
     case "no-elegible":
       return "Esa entrega ya no tiene 20 / 20 (se corrigió, se devolvió o se eliminó). Elige otra o escribe tú la respuesta ideal.";
+    case "cambio":
+      // PROVISIONAL (fila 291, D532)
+      return "Otro profe cambió la entrega ideal de esta tarea mientras escribías. No guardamos nada: lo tuyo sigue aquí. Si vuelves a guardar, reemplazas la suya.";
     case "red":
       return "No se pudo guardar. Revisa tu conexión e inténtalo de nuevo.";
     default:

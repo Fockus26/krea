@@ -29,6 +29,7 @@ import {
   equipoNuevo,
   nombreRepetido,
   type ResultadoGestionEquipo,
+  versionEquipo,
 } from "@/lib/equipos-gestion";
 import { cambiarCapitan, moverAlumno } from "@/lib/equipos-profe";
 
@@ -202,7 +203,10 @@ export async function crearEquipoEnTransaccion(
   });
 }
 
-/** Cambia nombre y tema (el nombre entra en el ranking). */
+/**
+ * Cambia nombre y tema (el nombre entra en el ranking). Con `version` (D532), si otro profe guardó
+ * el nombre o el tema desde que se abrió el diálogo, no escribe y responde `cambio` con lo de ahora.
+ */
 export async function editarEquipoEnTransaccion(
   db: Db,
   d: EquipoAEditar,
@@ -212,6 +216,14 @@ export async function editarEquipoEnTransaccion(
     const e = await equipoParaActualizar(tx, d.equipoId);
     if (e === undefined) return { ok: false, error: "no-existe" };
     if (e === null) return { ok: false, error: "invalida" };
+    const version = versionEquipo(e);
+    if (d.version !== undefined && d.version !== version)
+      return {
+        ok: false,
+        error: "cambio",
+        actual: { nombre: e.nombre, tema: e.tema },
+        version,
+      };
     const datos = await leerSeccion(tx, e.seccion);
     if (nombreRepetido(d.nombre, datos.equipos, e.seccion, d.equipoId))
       return { ok: false, error: "repetido" };
@@ -239,24 +251,42 @@ type Eliminado = {
   logo: string | null;
   /** Integrantes que quedaron «Sin equipo». */
   afectados: string[];
+  /** Imágenes de sus partes que ya no usa nadie (D530): B2 las borra tras el commit. */
+  imagenes: string[];
 };
+
+/**
+ * Las rutas que ninguna de esas respuestas nombra. Se busca la ruta en el JSON de la fila (no solo
+ * en las respuestas que validan): ante la duda, la imagen se queda en B2.
+ */
+export function rutasSinUso(
+  rutas: readonly string[],
+  respuestas: ReadonlyArray<Record<string, unknown>>,
+): string[] {
+  const usadas = respuestas.map((r) => JSON.stringify(r));
+  return [...new Set(rutas)].filter(
+    (ruta) => !usadas.some((t) => t.includes(JSON.stringify(ruta))),
+  );
+}
 
 /**
  * Elimina un equipo con todo lo suyo en UNA transacción (D307–D309): sus integrantes pasan a «Sin
  * equipo» (`moverAlumno` a `null`, como al quitarlos del tablero), cada entrega grupal suya se
  * queda con su nota e `integrantes` y recibe `titularNombre`, sus ajustes de puntos se borran, y
- * el ranking se reescribe sin él. Devuelve la ruta del logo (B2 la borra tras el commit) y los
- * integrantes movidos. Postgres no tiene el límite de 500 escrituras: `demasiados` ya no sale.
+ * el ranking se reescribe sin él. Devuelve la ruta del logo y las imágenes de sus partes que ya
+ * no usa ninguna entrega (B2 las borra tras el commit, D530) y los integrantes movidos. Postgres
+ * no tiene el límite de 500 escrituras: `demasiados` ya no sale.
  */
 export async function eliminarEquipoEnTransaccion(
   db: Db,
   equipoId: string,
   ahora: number,
 ): Promise<Eliminado> {
-  const fallo = (error: ErrorGestionEquipo): Eliminado => ({
+  const fallo = (error: Exclude<ErrorGestionEquipo, "cambio">): Eliminado => ({
     resultado: { ok: false, error },
     logo: null,
     afectados: [],
+    imagenes: [],
   });
   return db.transaction(async (tx): Promise<Eliminado> => {
     const e = await equipoParaActualizar(tx, equipoId);
@@ -284,17 +314,23 @@ export async function eliminarEquipoEnTransaccion(
     cambios.equipos = cambios.equipos.filter((c) => c.id !== equipoId);
 
     await escribirCambios(tx, cambios, ahora);
-    await tx
+    const suyas = await tx
       .update(entregas)
       .set({ titularNombre: e.nombre })
       .where(
         and(eq(entregas.titularId, equipoId), ne(entregas.tipo, "individual")),
-      );
+      )
+      .returning({ respuestas: entregas.respuestas });
     const borrados = new Set(borrar.map((a) => a.id));
     if (borrados.size)
       await tx.delete(ajustes).where(inArray(ajustes.id, [...borrados]));
-    // El reparto de sus grupales sin enviar se va con él (D421)
-    await borrarPartesDeEquipo(tx, equipoId);
+    // El reparto de sus grupales se va con él (D421), y con él las imágenes que solo usaban sus
+    // partes (D530): las que entraron en una entrega suya (aceptadas) se quedan con ella
+    const dePartes = await borrarPartesDeEquipo(tx, equipoId);
+    const imagenes = rutasSinUso(
+      dePartes,
+      suyas.map((f) => f.respuestas),
+    );
     await tx.delete(equipos).where(eq(equipos.id, equipoId));
 
     const sinEl = conCambios(datos, cambios, ahora);
@@ -312,6 +348,7 @@ export async function eliminarEquipoEnTransaccion(
       resultado: { ok: true, id: equipoId },
       logo: e.logoPath,
       afectados: cambios.usuarios.map((u) => u.cedula),
+      imagenes,
     };
   });
 }

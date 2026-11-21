@@ -14,7 +14,10 @@ function registrar(accion: string, e: unknown) {
   console.error(`[${accion}]`, (e as { code?: string }).code ?? "error");
 }
 
-/** Guarda o reemplaza la ideal de la tarea (de una entrega con 20 / 20 o escrita por el profe). */
+/**
+ * Guarda o reemplaza la ideal de la tarea (de una entrega con 20 / 20 o escrita por el profe). Con
+ * la versión del formulario: si otro profe guardó o la quitó en medio, `cambio` (D532).
+ */
 export async function guardarIdeal(entrada: unknown): Promise<ResultadoIdeal> {
   const s = await exigirSesion("profesor");
   const db = baseDeDatos();
@@ -23,7 +26,8 @@ export async function guardarIdeal(entrada: unknown): Promise<ResultadoIdeal> {
   if (!d.success) return { ok: false, error: "invalida" };
   try {
     const r = await guardarIdealEnTransaccion(db, s.uid, d.data, Date.now());
-    if (r.ok) refresh();
+    // `cambio` (D532): la página pasa a lo de ahora; el formulario conserva lo escrito
+    if (r.ok || r.error === "cambio") refresh();
     return r;
   } catch (e) {
     registrar("guardarIdeal", e);

@@ -2,6 +2,7 @@
 // transacciones reales del Admin SDK que usan las Server Actions de Alumnos y Equipos. Datos
 // propios en 5A (cédulas 3975xxxx, equipos `w12-…`) para no cruzarse con las demás pruebas.
 import { beforeAll, describe, expect, test } from "bun:test";
+import { eq } from "drizzle-orm";
 import {
   eliminarAlumnoEnTransaccion,
   equipoValidoPara,
@@ -14,9 +15,11 @@ import {
   crearEquipoEnTransaccion,
   editarEquipoEnTransaccion,
   eliminarEquipoEnTransaccion,
+  rutasSinUso,
 } from "@/lib/data/equipos";
 import type { Db } from "@/lib/db";
-import { historialBase } from "@/lib/db/schema";
+import { historialBase, partes } from "@/lib/db/schema";
+import { versionEquipo } from "@/lib/equipos-gestion";
 import {
   type Ajuste,
   COL,
@@ -396,6 +399,56 @@ describe("equipos (D270, D307–D309)", () => {
     expect((await ranking()).equipos[creado]?.nombre).toBe("W12 Renombrado");
   });
 
+  test("con la versión del diálogo (D532): si otro profe guardó en medio, `cambio` y no escribe", async () => {
+    const abierto = versionEquipo({ nombre: "W12 Renombrado", tema: null });
+    // Otro profe le pone tema mientras el diálogo sigue abierto
+    expect(
+      await editarEquipoEnTransaccion(
+        db(),
+        {
+          equipoId: creado,
+          nombre: "W12 Renombrado",
+          tema: "Cerámica",
+          version: abierto,
+        },
+        AHORA,
+      ),
+    ).toEqual({ ok: true, id: creado });
+    const actual = { nombre: "W12 Renombrado", tema: "Cerámica" };
+    expect(
+      await editarEquipoEnTransaccion(
+        db(),
+        {
+          equipoId: creado,
+          nombre: "W12 Otro nombre",
+          tema: null,
+          version: abierto,
+        },
+        AHORA,
+      ),
+    ).toEqual({
+      ok: false,
+      error: "cambio",
+      actual,
+      version: versionEquipo(actual),
+    });
+    const e = zEquipo.parse((await docs.snap(db(), "equipos", creado)).data());
+    expect(e).toMatchObject(actual);
+    // Con la versión que trajo `cambio`, el segundo «Guardar» gana
+    expect(
+      await editarEquipoEnTransaccion(
+        db(),
+        {
+          equipoId: creado,
+          nombre: "W12 Renombrado",
+          tema: null,
+          version: versionEquipo(actual),
+        },
+        AHORA,
+      ),
+    ).toEqual({ ok: true, id: creado });
+  });
+
   test("con integrantes, entregas y ajustes también se elimina: se deshace todo (D307)", async () => {
     // Datos propios: 2 integrantes, 1 grupal evaluada, 1 ajuste del equipo y 1 de un alumno
     await docs.ponerDoc(db(), "usuarios", D1, alumno(D1, E_DISOLVER));
@@ -406,11 +459,37 @@ describe("equipos (D270, D307–D309)", () => {
       E_DISOLVER,
       equipo("W12 Disolver", D1),
     );
-    await docs.ponerDoc(db(), "entregas", idEntrega("w12-g2", E_DISOLVER), {
+    const G2 = idEntrega("w12-g2", E_DISOLVER);
+    const COMPARTIDA = "entregas/w12-g2/x/aceptada.jpg";
+    const SOLA = "entregas/w12-g2/x/devuelta.jpg";
+    await docs.ponerDoc(db(), "entregas", G2, {
       ...grupal("w12-g2", E_DISOLVER),
+      respuestas: {
+        p1: { texto: "Lo hicimos juntos" },
+        p2: { imagenPath: COMPARTIDA },
+      },
       integrantes: [D1, D2],
       enviadaPor: D1,
     });
+    // Su reparto (D421): la aceptada entró en la entrega; la devuelta solo la usa su parte
+    const parte = (preguntaId: string, estado: "aceptada" | "devuelta") => ({
+      entregaId: G2,
+      preguntaId,
+      tareaId: "w12-g2",
+      equipoId: E_DISOLVER,
+      asignado: D2,
+      estado,
+      actualizadoEn: 1,
+    });
+    await db()
+      .insert(partes)
+      .values([
+        {
+          ...parte("p2", "aceptada"),
+          respuesta: { imagenPath: COMPARTIDA },
+        },
+        { ...parte("p3", "devuelta"), respuesta: { imagenPath: SOLA } },
+      ]);
     await docs.ponerDoc(
       db(),
       "ajustes",
@@ -428,6 +507,12 @@ describe("equipos (D270, D307–D309)", () => {
     expect(r.resultado).toEqual({ ok: true, id: E_DISOLVER });
     expect(r.afectados.sort()).toEqual([D1, D2]);
     expect(await existe(COL.equipos, E_DISOLVER)).toBe(false);
+    // Sus partes se van y B2 borra solo la imagen que ya nadie usa (D530): la aceptada se queda
+    // con la entrega
+    expect(r.imagenes).toEqual([SOLA]);
+    expect(
+      await db().select().from(partes).where(eq(partes.equipoId, E_DISOLVER)),
+    ).toEqual([]);
 
     // Integrantes «Sin equipo»
     for (const c of [D1, D2]) {
@@ -487,11 +572,31 @@ describe("equipos (D270, D307–D309)", () => {
       resultado: { ok: true, id: creado },
       logo: null,
       afectados: [],
+      imagenes: [],
     });
     expect(await existe(COL.equipos, creado)).toBe(false);
     expect((await ranking()).equipos[creado]).toBeUndefined();
     expect(
       (await eliminarEquipoEnTransaccion(db(), creado, AHORA)).resultado,
     ).toEqual({ ok: false, error: "no-existe" });
+  });
+});
+
+describe("rutasSinUso (D530)", () => {
+  test("descuenta las que nombra alguna respuesta, también en una fila que no valida", () => {
+    expect(
+      rutasSinUso(
+        ["a/1.jpg", "a/2.jpg", "a/1.jpg", "a/3.jpg"],
+        [
+          { p1: { imagenPath: "a/1.jpg" } },
+          { p2: { imagenPaths: ["x", "a/3.jpg"] }, raro: 1 },
+        ],
+      ),
+    ).toEqual(["a/2.jpg"]);
+    // Un prefijo no cuenta como uso: la ruta tiene que estar completa
+    expect(
+      rutasSinUso(["a/1.jpg"], [{ p1: { imagenPath: "a/1.jpg.bak" } }]),
+    ).toEqual(["a/1.jpg"]);
+    expect(rutasSinUso([], [])).toEqual([]);
   });
 });

@@ -56,14 +56,20 @@ export async function ponerPuntajeFinalEnTransaccion(
     // Una fila que existe pero no valida no se pisa
     if (fe && !previa) return { ok: false, error: "invalida" };
 
+    // Solo cambia el puntaje (D533): los comentarios por pregunta y el general que el profe ya
+    // escribió se quedan
+    const anterior = previa?.evaluacion ?? null;
     const evaluacion: Evaluacion = {
       puntos: null,
-      comentarios: {},
+      comentarios: { ...(anterior?.comentarios ?? {}) },
       puntaje,
       evaluadaPor: autorId,
       evaluadaEn: ahora,
       // La base de esta tarea (D403): la que ya tenía la entrega; si no, la vigente del alumno
-      bases: { [cedula]: previa?.evaluacion?.bases?.[cedula] ?? u.base },
+      bases: { [cedula]: anterior?.bases?.[cedula] ?? u.base },
+      ...(anterior?.comentarioGeneral
+        ? { comentarioGeneral: anterior.comentarioGeneral }
+        : {}),
     };
     let nueva: Entrega;
     if (previa) {

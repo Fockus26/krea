@@ -151,6 +151,27 @@ export function sinParteDe(
   });
 }
 
+/**
+ * `sinParte` al enviar sobre el reparto VIGENTE (D534): solo cuentan las partes de quien sigue en
+ * el equipo (`miembros`) y no es el capitán, como en la vista (`repartoVista`) y en
+ * `repartoParaEnviar`. La parte de alguien que se fue no lo marca aunque siga en `integrantes`.
+ */
+export function sinParteAlEnviar(
+  partes: ReadonlyArray<Pick<Parte, "asignado" | "estado">>,
+  c: {
+    integrantes: readonly string[];
+    miembros: readonly string[];
+    capitanId: string | null;
+    enviadaPor: string;
+  },
+): string[] {
+  return sinParteDe(
+    partesVigentes(partes, c.miembros, c.capitanId),
+    c.integrantes,
+    c.enviadaPor,
+  );
+}
+
 /* ---------- Transiciones ---------- */
 
 export type ResultadoParte =

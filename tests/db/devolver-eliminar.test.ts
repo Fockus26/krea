@@ -13,6 +13,7 @@ import {
   evaluarEnTransaccion,
 } from "@/lib/data/evaluar";
 import type { Db } from "@/lib/db";
+import { analisisIa, ideales } from "@/lib/db/schema";
 import {
   type Entrega,
   type Equipo,
@@ -307,6 +308,37 @@ describe("eliminar entrega (Postgres)", () => {
   test("grupal evaluada: borra la fila, recalcula el ranking y devuelve las rutas de imagen", async () => {
     const evaluadaEn = await evaluar(EG, { p1: 20 });
     expect(await puntosEquipo()).toBeGreaterThan(0);
+    // Los experimentales que cuelgan de ella (D531): su % de IA y la ideal que la elige. Los de
+    // otra entrega (E1) y la ideal del profe de otra tarea se quedan
+    const analisis = (entregaId: string) => ({
+      entregaId,
+      preguntaId: "p1",
+      porcentaje: 30,
+      huella: "h",
+      modelo: "m",
+      autorId: PROFE,
+      analizadoEn: 1,
+    });
+    await db()
+      .insert(analisisIa)
+      .values([analisis(EG), analisis(E1)]);
+    const ideal = {
+      nota: "Porque sí",
+      notas: {},
+      autorId: PROFE,
+      actualizadoEn: 1,
+    };
+    await db()
+      .insert(ideales)
+      .values([
+        { ...ideal, tareaId: T_GRU, entregaId: EG, respuestas: null },
+        {
+          ...ideal,
+          tareaId: T_IND,
+          entregaId: null,
+          respuestas: { p1: "La del profe" },
+        },
+      ]);
     expect(
       await eliminarEntregaEnTransaccion(
         db(),
@@ -315,6 +347,12 @@ describe("eliminar entrega (Postgres)", () => {
       ),
     ).toEqual({ ok: true, id: EG, imagenes: IMAGENES });
     expect(await leerEntrega(db(), EG)).toBeNull();
+    expect(
+      await db().select({ entregaId: analisisIa.entregaId }).from(analisisIa),
+    ).toEqual([{ entregaId: E1 }]);
+    expect(
+      await db().select({ tareaId: ideales.tareaId }).from(ideales),
+    ).toEqual([{ tareaId: T_IND }]);
     expect(await puntosEquipo()).toBe(0);
     expect((await ranking()).actualizadoEn).toBe(AHORA + 8);
     // Ya no está: otro intento no encuentra nada

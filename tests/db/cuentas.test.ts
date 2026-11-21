@@ -5,7 +5,7 @@ import { beforeAll, describe, expect, test } from "bun:test";
 import { and, eq } from "drizzle-orm";
 import { FirebaseScrypt } from "firebase-scrypt";
 import { PREFIJO_HASH_FIREBASE, verificarHash } from "@/lib/better-auth";
-import { ErrorCuenta } from "@/lib/cuentas-datos";
+import { ErrorCuenta, versionProfesor } from "@/lib/cuentas-datos";
 import { editarAlumnoEnTransaccion } from "@/lib/data/alumnos";
 import {
   crearCuentaCon,
@@ -262,6 +262,62 @@ describe("admin y edición de profesores (D231, D233, D234)", () => {
         AHORA,
       ),
     ).toEqual({ ok: false, error: "no-profesor" });
+  });
+
+  test("editarProfesorEnTransaccion con versión (D532): si alguien guardó en medio, `cambio`", async () => {
+    const abierto = versionProfesor({
+      nombres: "Adela Juana",
+      apellidos: "Prueba Editada",
+      email: null,
+    });
+    // El mismo profe cambia su nombre en Perfil mientras el admin tiene el diálogo abierto
+    await guardarMisDatosCon(
+      db(),
+      NUEVO,
+      { nombres: "Adela", apellidos: "Prueba Editada" },
+      AHORA + 6,
+    );
+    const r = await editarProfesorEnTransaccion(
+      db(),
+      {
+        cedula: NUEVO,
+        nombres: "Adela Juana",
+        apellidos: "Prueba Admin",
+        email: "adela@ejemplo.com",
+        version: abierto,
+      },
+      AHORA + 7,
+    );
+    const actual = {
+      nombres: "Adela",
+      apellidos: "Prueba Editada",
+      email: null,
+    };
+    expect(r).toEqual({
+      ok: false,
+      error: "cambio",
+      actual,
+      version: versionProfesor(actual),
+    });
+    // No escribió nada
+    expect((await usuario(NUEVO)).apellidos).toBe("Prueba Editada");
+    expect(await docs.emailDe(db(), NUEVO)).toBeNull();
+
+    // Con la versión que trajo `cambio`, el segundo «Guardar» gana
+    expect(
+      await editarProfesorEnTransaccion(
+        db(),
+        {
+          cedula: NUEVO,
+          nombres: "Adela Juana",
+          apellidos: "Prueba Editada",
+          email: "",
+          version: versionProfesor(actual),
+        },
+        AHORA + 8,
+      ),
+    ).toEqual({ ok: true });
+    expect((await usuario(NUEVO)).nombres).toBe("Adela Juana");
   });
 
   test("guardarMisDatosCon: el profesor sí; el alumno no", async () => {

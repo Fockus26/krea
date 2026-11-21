@@ -23,10 +23,28 @@ export const zCrearEquipo = zDatosEquipo.extend({ seccion: zSeccion });
 export type CrearEquipo = z.input<typeof zCrearEquipo>;
 export type EquipoACrear = z.output<typeof zCrearEquipo>;
 
-/** «Editar equipo»: nombre y tema (la sección no cambia: sus integrantes son de ella). */
-export const zEditarEquipo = zDatosEquipo.extend({ equipoId: zIdDocumento });
+/**
+ * «Editar equipo»: nombre y tema (la sección no cambia: sus integrantes son de ella). `version` =
+ * la huella de lo que se vio al abrir el diálogo (`versionEquipo`, D532); sin ella no se compara.
+ */
+export const zEditarEquipo = zDatosEquipo.extend({
+  equipoId: zIdDocumento,
+  version: z.string().max(400).optional(),
+});
 export type EditarEquipo = z.input<typeof zEditarEquipo>;
 export type EquipoAEditar = z.output<typeof zEditarEquipo>;
+
+/**
+ * Versión de lo que edita «Editar equipo» (D532): la huella de su nombre y su tema. `equipos` no
+ * tiene marca de tiempo y el logo o el capitán no pisan nada de este formulario: comparar los
+ * campos editables no da falsos avisos (como D276).
+ */
+export function versionEquipo(e: { nombre: string; tema: string | null }) {
+  return JSON.stringify([e.nombre, e.tema ?? null]);
+}
+
+/** Lo que está guardado ahora, para el aviso de `cambio`. */
+export type EquipoVigente = { nombre: string; tema: string | null };
 
 /** Documento de un equipo nuevo: sin capitán ni logo hasta que tenga integrantes (D111). */
 export function equipoNuevo(d: EquipoACrear): Equipo {
@@ -119,11 +137,20 @@ export type ErrorGestionEquipo =
   | "sesiones"
   /** La sección ya no está en el catálogo (D323). */
   | "seccion"
+  /** Otro profe guardó el equipo desde que se abrió «Editar» (D532). */
+  | "cambio"
   | "red";
 
+/** `cambio` trae lo guardado ahora y su versión: con ella, el siguiente «Guardar» gana (D532). */
 export type ResultadoGestionEquipo =
   | { ok: true; id: string }
-  | { ok: false; error: ErrorGestionEquipo };
+  | {
+      ok: false;
+      error: "cambio";
+      actual: EquipoVigente;
+      version: string;
+    }
+  | { ok: false; error: Exclude<ErrorGestionEquipo, "cambio"> };
 
 /* Textos. PROVISIONAL (CONTENT_CHECKLIST fila 149): los diálogos no están en el lienzo */
 
@@ -208,11 +235,23 @@ export function errorGestionEquipoTexto(
       return "Tiene demasiados datos para eliminarlo de una vez. No cambiamos nada: avísale al administrador.";
     case "sesiones":
       return "Se eliminó, pero no pudimos cerrar la sesión de algunos integrantes. Muévelos otra vez a «Sin equipo» para reintentarlo.";
+    case "cambio":
+      return CAMBIO_EQUIPO_TEXTO;
     case "invalida":
       return "Revisa los datos: algo no se pudo guardar así.";
     case "red":
       return "Se perdió la conexión. No cambiamos nada: vuelve a intentarlo.";
   }
+}
+
+// PROVISIONAL (fila 292, D532): el aviso de «Editar equipo» y «Editar profesor»
+export const CAMBIO_EQUIPO_TEXTO =
+  "Otro profe cambió este equipo mientras editabas. No guardamos nada: lo tuyo sigue aquí. Revisa y vuelve a guardar.";
+
+/** El aviso con lo guardado ahora: «Ahora se llama «X» y su tema es «Y».» */
+export function cambioEquipoTexto(actual: EquipoVigente): string {
+  const tema = actual.tema ? `su tema es «${actual.tema}»` : "no tiene tema";
+  return `${CAMBIO_EQUIPO_TEXTO} Ahora se llama «${actual.nombre}» y ${tema}.`;
 }
 
 export const creadoEquipoTexto = (nombre: string) =>

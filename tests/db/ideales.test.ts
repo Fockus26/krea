@@ -8,7 +8,11 @@ import {
   quitarIdeal,
 } from "@/lib/data/ideales";
 import type { Db } from "@/lib/db";
-import type { GuardarIdeal } from "@/lib/ideal";
+import {
+  type GuardarIdeal,
+  VERSION_IDEAL_SIN_FILA,
+  versionIdealNueva,
+} from "@/lib/ideal";
 import {
   type Entrega,
   type Equipo,
@@ -200,6 +204,82 @@ describe("guardar, reemplazar y quitar (Postgres)", () => {
   test("quitar la borra; quitar otra vez no falla", async () => {
     await quitarIdeal(db(), T);
     expect(await leerIdeal(db(), T)).toBeNull();
+    await quitarIdeal(db(), T);
+  });
+});
+
+describe("versión del formulario (D532)", () => {
+  const delProfe = (version?: number): GuardarIdeal => ({
+    tareaId: T,
+    forma: { tipo: "profe", respuestas: { p1: "Mía 1", p2: "Mía 2" } },
+    nota: "La mía",
+    notas: {},
+    ...(version !== undefined ? { version } : {}),
+  });
+
+  test("sin ideal, la versión 0 guarda; otro que también vio 0 recibe `cambio`", async () => {
+    expect(
+      await guardarIdealEnTransaccion(
+        db(),
+        PROFE,
+        { ...deEntrega(T, E1), version: VERSION_IDEAL_SIN_FILA },
+        1000,
+      ),
+    ).toEqual({ ok: true });
+    expect(
+      await guardarIdealEnTransaccion(
+        db(),
+        PROFE,
+        delProfe(VERSION_IDEAL_SIN_FILA),
+        1001,
+      ),
+    ).toEqual({ ok: false, error: "cambio", version: 1000 });
+    // No escribió: sigue la primera
+    expect((await leerIdeal(db(), T))?.entregaId).toBe(E1);
+  });
+
+  test("con la versión de ahora guarda; la vieja recibe `cambio` y la nueva gana", async () => {
+    expect(
+      await guardarIdealEnTransaccion(db(), PROFE, delProfe(1000), 1002),
+    ).toEqual({ ok: true });
+    expect((await leerIdeal(db(), T))?.actualizadoEn).toBe(1002);
+    const viejo = await guardarIdealEnTransaccion(
+      db(),
+      PROFE,
+      { ...deEntrega(T, E1), version: 1000 },
+      1003,
+    );
+    expect(viejo).toEqual({ ok: false, error: "cambio", version: 1002 });
+    expect((await leerIdeal(db(), T))?.entregaId).toBeNull();
+    // Con la versión que trajo `cambio`, el segundo intento reemplaza
+    expect(
+      await guardarIdealEnTransaccion(
+        db(),
+        PROFE,
+        { ...deEntrega(T, E1), version: 1002 },
+        1004,
+      ),
+    ).toEqual({ ok: true });
+    expect((await leerIdeal(db(), T))?.entregaId).toBe(E1);
+  });
+
+  test("el reloj que no avanza igual sube la versión", async () => {
+    expect(
+      await guardarIdealEnTransaccion(db(), PROFE, delProfe(1004), 1004),
+    ).toEqual({ ok: true });
+    expect((await leerIdeal(db(), T))?.actualizadoEn).toBe(1005);
+    expect(versionIdealNueva(1005, 900)).toBe(1006);
+  });
+
+  test("si otro la quitó, `cambio` con la versión 0; sin versión, sin comprobar", async () => {
+    await quitarIdeal(db(), T);
+    expect(
+      await guardarIdealEnTransaccion(db(), PROFE, delProfe(1005), 1006),
+    ).toEqual({ ok: false, error: "cambio", version: 0 });
+    expect(await leerIdeal(db(), T)).toBeNull();
+    expect(
+      await guardarIdealEnTransaccion(db(), PROFE, delProfe(), 1007),
+    ).toEqual({ ok: true });
     await quitarIdeal(db(), T);
   });
 });
