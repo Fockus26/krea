@@ -56,18 +56,21 @@ const EXTRA = (process.env.EXTRA ?? "").split(",").filter(Boolean);
 const OMITIR =
   /^\/(api|salir|secciones|componentes|tokens|estados|correos|sin-conexion)(\/|$)/;
 
+// El limitador de intentos del login puede responder sin cookie: se reintenta con calma.
 async function cookie(cedula) {
-  const r = await fetch(`${BASE}/api/auth/sign-in/email`, {
-    method: "POST",
-    headers: { "content-type": "application/json", origin: BASE },
-    body: JSON.stringify({ email: `${cedula}@${DOMINIO}`, password: CLAVE }),
-  });
-  if (!r.ok) throw new Error(`login ${cedula}: ${r.status}`);
-  const c = r.headers
-    .getSetCookie()
-    .find((x) => x.startsWith("krea.session_token="));
-  if (!c) throw new Error("sin cookie de sesión");
-  return c.split(";")[0].slice("krea.session_token=".length);
+  for (let i = 0; i < 6; i++) {
+    const r = await fetch(`${BASE}/api/auth/sign-in/email`, {
+      method: "POST",
+      headers: { "content-type": "application/json", origin: BASE },
+      body: JSON.stringify({ email: `${cedula}@${DOMINIO}`, password: CLAVE }),
+    });
+    const c = r.headers
+      .getSetCookie()
+      .find((x) => x.startsWith("krea.session_token="));
+    if (c) return c.split(";")[0].slice("krea.session_token=".length);
+    await new Promise((ok) => setTimeout(ok, 15000));
+  }
+  throw new Error(`login ${cedula}: sin cookie de sesión`);
 }
 
 const medir = () => {
