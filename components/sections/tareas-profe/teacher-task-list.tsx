@@ -276,11 +276,11 @@ export function TeacherTaskList({
                   <Button
                     variant="danger"
                     onClick={confirmarEliminar}
-                    disabled={pendiente}
-                    aria-busy={pendiente || undefined}
+                    loading={pendiente}
+                    loadingLabel="Eliminando…"
                   >
                     <Trash2 aria-hidden="true" />
-                    {pendiente ? "Eliminando…" : ELIMINAR_TAREA_BOTON}
+                    {ELIMINAR_TAREA_BOTON}
                   </Button>
                 </DialogFooter>
               </>

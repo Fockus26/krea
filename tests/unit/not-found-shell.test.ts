@@ -23,6 +23,27 @@ describe("404 dentro del shell (D504)", () => {
   });
 });
 
+describe("un solo noindex en la 404 (D523)", () => {
+  test("los not-found no declaran robots: lo añade Next y el layout del grupo", () => {
+    for (const ruta of [
+      "app/not-found.tsx",
+      "app/(estudiante)/not-found.tsx",
+      "app/(profesor)/not-found.tsx",
+    ]) {
+      expect(leer(ruta)).not.toMatch(/robots/);
+    }
+  });
+
+  test("el noindex de las páginas con sesión sale del layout, una sola vez", () => {
+    for (const g of [
+      "(estudiante)/layout.tsx",
+      "(profesor)/profe/layout.tsx",
+    ]) {
+      expect(leer(`app/${g}`).match(/robots:/g)).toHaveLength(1);
+    }
+  });
+});
+
 describe("nombre accesible de filas abribles (D506, WCAG 2.5.3)", () => {
   test("el enlace y el botón del ranking no llevan aria-label", () => {
     for (const f of [

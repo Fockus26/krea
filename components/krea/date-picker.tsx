@@ -133,6 +133,7 @@ function DatePicker({
                   icon
                   aria-label="Elegir fecha"
                   aria-haspopup="dialog"
+                  aria-expanded={abierto}
                   aria-disabled={readOnly || undefined}
                   className="-mr-2"
                 >

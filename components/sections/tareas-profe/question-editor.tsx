@@ -145,7 +145,10 @@ export function QuestionEditor({
             aria-label={`Formato de la pregunta ${numero}`}
             disabled={bloqueada}
             value={pregunta.formato}
-            onValueChange={(v) => onCambio({ formato: v as FormatoPregunta })}
+            onValueChange={(v) => {
+              if (!v) return;
+              onCambio({ formato: v as FormatoPregunta });
+            }}
           >
             <ToggleGroupItem value="texto">
               <Type aria-hidden="true" />

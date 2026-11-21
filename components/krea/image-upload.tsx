@@ -110,7 +110,7 @@ function registrarZona(accept: (file: File) => void): () => void {
 }
 
 const ZONE =
-  "flex w-full cursor-pointer items-center gap-3 rounded-md border-2 border-dashed p-4 text-left text-text-2 transition-colors duration-fast ease-krea hover:bg-accent-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
+  "flex icono-linea text-small w-full cursor-pointer gap-3 rounded-md border-2 border-dashed p-4 text-left text-text-2 transition-colors duration-fast ease-krea hover:bg-accent-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
 
 /*
  * Subida de imagen — HANDOFF §2.17; medidas en design/canvas/krea.css:466 y Tarea.dc.html.
@@ -239,7 +239,7 @@ export function ImageUpload({
 
       {status === "subiendo" ? (
         <div className="flex flex-col gap-3 rounded-md border-2 border-dashed border-input p-4 text-text-2">
-          <div className="flex items-center gap-3">
+          <div className="flex icono-linea text-small gap-3">
             <ImageIcon aria-hidden="true" className="size-5 shrink-0" />
             <span className="text-small-b min-w-0 flex-1 truncate text-text">
               {file?.name}
