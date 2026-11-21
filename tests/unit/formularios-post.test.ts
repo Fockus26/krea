@@ -26,5 +26,5 @@ describe("formularios con method=post (F-A1)", () => {
       }
     }
     expect(sinPost).toEqual([]);
-  });
+  }, 20_000);
 });

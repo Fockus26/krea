@@ -1538,6 +1538,22 @@ body {
   overflow-wrap: break-word;
 }
 
+/* Tecla de atajo («Ctrl», «Enter»): chip pequeño con los tokens de superficie y divisor (D522) */
+kbd {
+  display: inline-block;
+  min-width: 1.5em;
+  padding: 0 0.375em;
+  border: 1px solid var(--divider);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.875em;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+}
+
 ::selection {
   background: var(--sel-bg);
   color: var(--sel-text);

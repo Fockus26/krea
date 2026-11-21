@@ -1,0 +1,5 @@
+# D522 · UI · Estilo global de `kbd`, «Eliminar» con `loading`, `aria-expanded` del selector de fecha e `icono-linea` en la subida de imagen · Implemented
+
+**Decision:** `kbd` es un chip global en `app/globals.css` (borde `--divider`, fondo `--surface-2`, texto `--text`, `--r-sm`, 0,875 em en negrita). Los dos «Eliminar tarea» (constructor y lista) usan `loading` + `loadingLabel` de `Button` (D285) en vez de `disabled` + `aria-busy` a mano: el botón conserva el foco y no cambia de ancho. El botón del `DatePicker` lleva `aria-expanded={abierto}` (en móvil el calendario es un `Sheet` y el `PopoverTrigger` no lo reflejaba). La zona de subida y la fila «subiendo» de `ImageUpload` usan `icono-linea` (D304) con `text-small` en el contenedor, sin `items-center`. `onValueChange` del formato de pregunta ignora el valor vacío.
+**Why:** cuatro desajustes con los componentes y reglas ya decididos (L13, L36, L39, L42, L61 del backlog).
+**Discarded alternative:** componente `components/ui/kbd.tsx` — hay un solo uso; un estilo de elemento basta y el componente se hace cuando haya un segundo. «Guardar borrador» sin `disabled` sigue siendo deliberado.

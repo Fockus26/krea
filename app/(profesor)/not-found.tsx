@@ -3,7 +3,6 @@ import { PantallaNotFound } from "@/components/estados/pantallas";
 
 export const metadata: Metadata = {
   title: "Página no encontrada",
-  robots: { index: false, follow: false },
 };
 
 /**

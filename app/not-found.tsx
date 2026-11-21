@@ -4,7 +4,6 @@ import { PantallaNotFoundConSesion } from "@/components/estados/pantallas";
 // Next ya añade `noindex` al 404; el título lo completa la plantilla del layout («· KREA»)
 export const metadata: Metadata = {
   title: "Página no encontrada",
-  robots: { index: false, follow: false },
 };
 
 /**
