@@ -50,7 +50,7 @@ describe("número de la píldora: blanco con sombra (D347), oscuro en 9–13 (D4
 
   test("la imagen OG pinta el número en blanco con la misma sombra (y oscuro en 9–13)", () => {
     expect(OG_COLORS.GRADE_INK).toBe("#FFFFFF");
-    expect(OG_COLORS.GRADE_INK_OSCURA).toBe(GRADE_INK_OSCURA.toUpperCase());
+    expect(OG_COLORS.GRADE_INK_OSCURA).toBe(GRADE_INK_OSCURA);
     const og = leer("app/opengraph-image.tsx");
     expect(og).toContain("GRADE_SOMBRA");
     expect(og).toContain("gradeNumeroOscuro(nota)");
