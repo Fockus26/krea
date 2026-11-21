@@ -323,6 +323,11 @@ export type DatosAlumno = {
   tareas: ReadonlyArray<ConId<Tarea>>;
   /** Entregas en las que figura como integrante (individuales y grupales). */
   entregas: ReadonlyArray<ConId<Entrega>>;
+  /**
+   * Grupales de su equipo actual en las que no figura (las envió antes de que entrara, D526):
+   * no son suyas, pero la tarea ya no está «por entregar» para él (D550).
+   */
+  delEquipo?: ReadonlyArray<ConId<Entrega>>;
   /** Sus ajustes de puntos (destino alumno). */
   ajustes: ReadonlyArray<Ajuste>;
   /** `ranking/{seccion}`; `null` si aún no existe. */
@@ -398,6 +403,20 @@ function entregaDe(
   entregas: ReadonlyArray<ConId<Entrega>>,
 ): ConId<Entrega> | null {
   return entregas.find((e) => e.tareaId === tareaId) ?? null;
+}
+
+/**
+ * La entrega que cuenta para las listas «Por entregar» y «Entregadas»: la suya o, en una grupal,
+ * la que su equipo envió antes de que entrara (D526, D550). Un borrador del equipo no cuenta.
+ */
+function entregaParaListas(
+  d: Pick<DatosAlumno, "equipo" | "entregas" | "delEquipo">,
+  t: Pick<ConId<Tarea>, "id" | "tipo">,
+): ConId<Entrega> | null {
+  const propia = entregaDe(t.id, d.entregas);
+  if (propia || t.tipo !== "grupal" || !d.equipo) return propia;
+  const e = entregaDe(t.id, d.delEquipo ?? []);
+  return e && e.titularId === d.equipo.id && yaEnviada(e) ? e : null;
 }
 
 /** Promedio de sus notas evaluadas (`null` si no tiene ninguna); el de la leyenda y el mensaje del día. */
@@ -748,7 +767,10 @@ const vencimientoPara = (
  * enviar (sin entrega o en borrador), por su fecha de entrega. Sin `ahora`, el estado guardado.
  */
 export function tareasAbiertas(
-  d: Pick<DatosAlumno, "usuario" | "equipo" | "tareas" | "entregas">,
+  d: Pick<
+    DatosAlumno,
+    "usuario" | "equipo" | "tareas" | "entregas" | "delEquipo"
+  >,
   ahora?: number,
 ): Array<ConId<Tarea>> {
   const clave = (t: Tarea) => {
@@ -758,7 +780,7 @@ export function tareasAbiertas(
   return d.tareas
     .filter((t) => abiertaPara(d, t, ahora))
     .filter((t) => {
-      return !enviada(entregaDe(t.id, d.entregas), t, true);
+      return !enviada(entregaParaListas(d, t), t, true);
     })
     .sort((a, b) => {
       // La que vence antes primero; el mismo día, por hora (sin hora = al final del día, D352)
@@ -770,7 +792,10 @@ export function tareasAbiertas(
 
 /** Filas «Por entregar» de Inicio y de /tareas. `ahora`: para «venció» por fecha y hora (D357). */
 export function filasPorEntregar(
-  d: Pick<DatosAlumno, "usuario" | "equipo" | "tareas" | "entregas">,
+  d: Pick<
+    DatosAlumno,
+    "usuario" | "equipo" | "tareas" | "entregas" | "delEquipo"
+  >,
   ahora?: number,
 ): FilaPendiente[] {
   const capitan = d.equipo?.capitanId === d.usuario.cedula;
@@ -1057,12 +1082,15 @@ const enviada = (
  * reciente primero). Una nota del Excel sin fecha de envío muestra la de evaluación (D197).
  */
 export function tareasVista(
-  d: Pick<DatosAlumno, "usuario" | "equipo" | "tareas" | "entregas">,
+  d: Pick<
+    DatosAlumno,
+    "usuario" | "equipo" | "tareas" | "entregas" | "delEquipo"
+  >,
   /** Para «venció» por fecha y hora en «Por entregar» (D357). */
   ahora?: number,
 ): { pendientes: FilaPendiente[]; entregadas: FilaEntregada[] } {
   const filas = d.tareas.flatMap((t) => {
-    const e = entregaDe(t.id, d.entregas);
+    const e = entregaParaListas(d, t);
     if (!e || !enviada(e, t, abiertaPara(d, t, ahora))) return [];
     const evaluada = e.evaluacion?.evaluadaEn ?? null;
     const instante = e.enviadaEn ?? evaluada;

@@ -123,6 +123,25 @@ export async function quitarIdeal(db: Tx, tareaId: string): Promise<void> {
 }
 
 /**
+ * Quita la ideal con la versión que vio el profe (D551, como D532): si otro la cambió o la quitó
+ * desde entonces, no se borra nada y vuelve `cambio` con la versión de ahora. Sin `version`, quita
+ * igual.
+ */
+export async function quitarIdealEnTransaccion(
+  db: Db,
+  tareaId: string,
+  version?: number,
+): Promise<ResultadoIdeal> {
+  return db.transaction(async (tx): Promise<ResultadoIdeal> => {
+    const actual = await versionGuardada(tx, tareaId);
+    if (version !== undefined && version !== actual)
+      return { ok: false, error: "cambio", version: actual };
+    await quitarIdeal(tx, tareaId);
+    return { ok: true };
+  });
+}
+
+/**
  * Al eliminar una entrega: la ideal que la elegía se va con ella (D531), en la misma transacción.
  * La del profe (sin `entregaId`) no se toca.
  */

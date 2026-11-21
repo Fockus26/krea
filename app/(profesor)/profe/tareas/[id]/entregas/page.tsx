@@ -22,7 +22,7 @@ import {
 } from "@/lib/datos/profesor";
 import { cerradaParaTodos, estadoEfectivo } from "@/lib/estado-tarea";
 import { diaDeInstante } from "@/lib/fecha";
-import { estadoIdealProfe } from "@/lib/ideal";
+import { estadoIdealProfe, VERSION_IDEAL_SIN_FILA } from "@/lib/ideal";
 import { titularesReabrir } from "@/lib/reabrir-tarea";
 import { TAREA_GRUPAL_SEED } from "@/lib/seed-firestore";
 import { rutaTarea } from "@/lib/tareas-profe";
@@ -120,6 +120,7 @@ export default async function EntregasTareaPage({
         tareaId={id}
         estado={estadoIdeal}
         tareaAbierta={!cerradaParaTodos(t, ahora)}
+        version={ideal?.actualizadoEn ?? VERSION_IDEAL_SIN_FILA}
         quitar={quitarIdealTarea}
       />
       <TaskSubmissions
