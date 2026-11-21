@@ -32,7 +32,7 @@ type GradePillProps = {
 /*
  * Píldora de nota — HANDOFF §2.3. Fondo `gradeColor(n)` (único valor dinámico, viene de la
  * función) y número blanco (`--grade-ink-on-dark`) con sombra suave `text-shadow-grade`
- * (D347, reemplaza la tinta por contraste de D236), salvo en 10–12, donde va en tinta oscura sin
+ * (D347, reemplaza la tinta por contraste de D236), salvo en 9–13, donde va en tinta oscura sin
  * sombra para llegar a AA (D498, `gradeNumeroClass`): nunca texto de color ni sin número (D004).
  * Pendiente se pinta aparte, sin color de escala y nunca como "0".
  */
