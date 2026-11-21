@@ -326,10 +326,7 @@ describe("aviso al capitán al entregar una parte (D535)", () => {
     });
     await db()
       .insert(partes)
-      .values([
-        fila("p1", ANA, "asignada"),
-        fila("p2", ANA, "entregada"),
-      ]);
+      .values([fila("p1", ANA, "asignada"), fila("p2", ANA, "entregada")]);
     await guardarSuscripcion(db(), CAP, sub("cap-movil"), AHORA);
     await guardarSuscripcion(db(), CAP, sub("cap-laptop"), AHORA);
     await guardarSuscripcion(db(), ANA, sub("ana"), AHORA);
@@ -414,4 +411,6 @@ describe("aviso al capitán al entregar una parte (D535)", () => {
       { uid: ANA, tareaId: TAREA, preguntaId: "p2" },
       enviar,
     );
-    expect(vacio).toEqual({ enviados: 0, vencido
+    expect(vacio).toEqual({ enviados: 0, vencidos: 0, fallidos: 0 });
+  });
+});

@@ -13,7 +13,6 @@ import { accionParteEnTransaccion } from "@/lib/data/partes";
 import { idPublico } from "@/lib/datos/id-publico";
 import { baseDeDatos } from "@/lib/db";
 import { comprobarImagenes } from "@/lib/entregas";
-import { programarAvisoParte } from "@/lib/push-envio";
 import {
   type AccionParte,
   type ErrorParte,
@@ -21,6 +20,7 @@ import {
   zDecidirParte,
   zEntregarParte,
 } from "@/lib/partes";
+import { programarAvisoParte } from "@/lib/push-envio";
 
 export type ResultadoParte = { ok: true } | { ok: false; error: ErrorParte };
 

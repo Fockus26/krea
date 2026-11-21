@@ -197,7 +197,10 @@ describe("aviso de parte entregada al capitán (D535)", () => {
   });
 
   test("título largo recortado; sin nombre, «Un integrante»", () => {
-    const largo = avisoParteEntregada({ ...base, tituloTarea: "a".repeat(200) });
+    const largo = avisoParteEntregada({
+      ...base,
+      tituloTarea: "a".repeat(200),
+    });
     expect(largo.cuerpo.length).toBeLessThan(110);
     expect(largo.cuerpo).toContain("…”");
     expect(
