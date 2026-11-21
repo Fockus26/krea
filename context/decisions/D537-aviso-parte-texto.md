@@ -1,0 +1,5 @@
+# D537 · Copy · Texto del aviso de parte entregada: nombre corto, número de pregunta y título recortado, nunca la cédula · Implemented
+
+**Decision:** título «Parte entregada»; cuerpo «Ana Paredes entregó la pregunta 2 de “Afiche”» (primer nombre + primer apellido, número = posición de la pregunta en la tarea desde 1, título de la tarea recortado a 60 caracteres con «…»); sin nombre cargado, «Un integrante». Enlace `/tareas/{id}` (el service worker ya lo limpia con `urlPropia`) y etiqueta `parte-{tarea}-{pregunta}`: reentregar la misma parte reemplaza la notificación en vez de apilarla. Filas 293 (título) y 294 (cuerpo) de CONTENT_CHECKLIST, provisionales; fila 295 = «Un integrante».
+**Why:** el payload viaja por el servicio de push de terceros y se ve en la pantalla bloqueada: ninguna cédula, nombres solo cortos (mismo criterio que D521 para presencia).
+**Discarded alternative:** nombrar la pregunta por su enunciado: puede ser largo y revelar el contenido de la tarea en pantalla bloqueada; el número basta para ubicarla.

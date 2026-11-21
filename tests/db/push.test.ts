@@ -4,6 +4,7 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 import {
+  avisarParteEntregada,
   avisarTareaPublicada,
   borrarSuscripcion,
   type Destino,
@@ -13,7 +14,7 @@ import {
 } from "@/lib/data/push";
 import { guardarTareaEnTransaccion } from "@/lib/data/tareas";
 import type { Db } from "@/lib/db";
-import { pushSuscripciones } from "@/lib/db/schema";
+import { partes, pushSuscripciones } from "@/lib/db/schema";
 import type { Usuario } from "@/lib/modelo";
 import type { AvisoPush, SuscripcionPush } from "@/lib/push";
 import type { EntradaTarea } from "@/lib/tareas-profe-datos";
@@ -268,5 +269,148 @@ describe("publicar avisa una vez (D336)", () => {
       AHORA,
     );
     expect(r).toEqual({ ok: false, error: "invalida" });
+  });
+});
+
+describe("aviso al capitán al entregar una parte (D535)", () => {
+  const CAP = "39100021";
+  const ANA = "39100022";
+  const SIN_PARTE = "39100023";
+  const EQUIPO = "s7-g1";
+  const TAREA = "s7-grupal";
+
+  const integrante = (cedula: string, equipoId: string | null): Usuario => ({
+    ...persona(cedula, "estudiante", "5A"),
+    nombres: "Ana María",
+    apellidos: "Paredes Aranda",
+    equipoId,
+  });
+
+  const fila = (preguntaId: string, asignado: string, estado: string) => ({
+    entregaId: `${TAREA}__${EQUIPO}`,
+    preguntaId,
+    tareaId: TAREA,
+    equipoId: EQUIPO,
+    asignado,
+    estado: estado as "entregada",
+    respuesta: null,
+    entregadaEn: null,
+    actualizadoEn: AHORA,
+  });
+
+  beforeAll(async () => {
+    await docs.ponerUsuario(db(), integrante(CAP, EQUIPO));
+    await docs.ponerUsuario(db(), integrante(ANA, EQUIPO));
+    await docs.ponerUsuario(db(), integrante(SIN_PARTE, null));
+    await docs.ponerDoc(db(), "equipos", EQUIPO, {
+      nombre: "G1",
+      seccion: "5A",
+      tema: null,
+      capitanId: CAP,
+      logoPath: null,
+    });
+    await docs.ponerDoc(db(), "tareas", TAREA, {
+      titulo: "Maqueta del puente",
+      tipo: "grupal",
+      secciones: ["5A"],
+      estado: "abierta",
+      fechaEntrega: "2026-11-30",
+      premio: null,
+      preguntas: [
+        { id: "p1", enunciado: "Uno", formato: "texto", valor: 10 },
+        { id: "p2", enunciado: "Dos", formato: "texto", valor: 10 },
+      ],
+      importada: false,
+      autorId: null,
+      actualizadoEn: 1,
+    });
+    await db()
+      .insert(partes)
+      .values([fila("p1", ANA, "asignada"), fila("p2", ANA, "entregada")]);
+    await guardarSuscripcion(db(), CAP, sub("cap-movil"), AHORA);
+    await guardarSuscripcion(db(), CAP, sub("cap-laptop"), AHORA);
+    await guardarSuscripcion(db(), ANA, sub("ana"), AHORA);
+  });
+
+  test("avisa solo a los navegadores del capitán, con nombre corto y sin cédula", async () => {
+    const { enviar, enviados } = doble();
+    const r = await avisarParteEntregada(
+      db(),
+      { uid: ANA, tareaId: TAREA, preguntaId: "p2" },
+      enviar,
+    );
+    expect(r).toEqual({ enviados: 2, vencidos: 0, fallidos: 0 });
+    expect(enviados.map((e) => e.destino.endpoint).sort()).toEqual([
+      sub("cap-laptop").endpoint,
+      sub("cap-movil").endpoint,
+    ]);
+    expect(enviados[0].aviso).toEqual({
+      titulo: "Parte entregada",
+      cuerpo: "Ana Paredes entregó la pregunta 2 de “Maqueta del puente”",
+      url: `/tareas/${TAREA}`,
+      etiqueta: `parte-${TAREA}-p2`,
+    });
+    expect(JSON.stringify(enviados[0].aviso)).not.toContain(ANA);
+  });
+
+  test("no avisa si la parte no está entregada (asignada, aceptada o devuelta)", async () => {
+    const { enviar, enviados } = doble();
+    expect(
+      await avisarParteEntregada(
+        db(),
+        { uid: ANA, tareaId: TAREA, preguntaId: "p1" },
+        enviar,
+      ),
+    ).toBeNull();
+    for (const estado of ["aceptada", "devuelta"] as const) {
+      await db()
+        .update(partes)
+        .set({ estado })
+        .where(eq(partes.preguntaId, "p2"));
+      expect(
+        await avisarParteEntregada(
+          db(),
+          { uid: ANA, tareaId: TAREA, preguntaId: "p2" },
+          enviar,
+        ),
+      ).toBeNull();
+    }
+    await db()
+      .update(partes)
+      .set({ estado: "entregada" })
+      .where(eq(partes.preguntaId, "p2"));
+    expect(enviados).toEqual([]);
+  });
+
+  test("no avisa a otro que no es el asignado, ni sin equipo, ni al capitán a sí mismo", async () => {
+    const { enviar, enviados } = doble();
+    for (const uid of [CAP, SIN_PARTE]) {
+      expect(
+        await avisarParteEntregada(
+          db(),
+          { uid, tareaId: TAREA, preguntaId: "p2" },
+          enviar,
+        ),
+      ).toBeNull();
+    }
+    expect(enviados).toEqual([]);
+  });
+
+  test("un capitán sin suscripciones no falla; las vencidas se borran", async () => {
+    const { enviar } = doble({ [sub("cap-movil").endpoint]: 410 });
+    const r = await avisarParteEntregada(
+      db(),
+      { uid: ANA, tareaId: TAREA, preguntaId: "p2" },
+      enviar,
+    );
+    expect(r).toEqual({ enviados: 1, vencidos: 1, fallidos: 0 });
+    expect(await endpoints(CAP)).toEqual([sub("cap-laptop").endpoint]);
+    await borrarSuscripcion(db(), CAP, sub("cap-laptop").endpoint);
+    const vacio = await avisarParteEntregada(
+      db(),
+      { uid: ANA, tareaId: TAREA, preguntaId: "p2" },
+      enviar,
+    );
+    expect(vacio).toEqual({ enviados: 0, vencidos: 0, fallidos: 0 });
   });
 });
