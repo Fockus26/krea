@@ -32,7 +32,8 @@ export const OG_COLORS = {
   SPLASH: "#00E5F5",
   INK: "#221D2B",
   MUTED: "#5E5869",
-  GRADE_INK: "#FFFFFF", // número de la píldora siempre blanco con sombra suave (D347)
+  GRADE_INK: "#FFFFFF", // número de la píldora blanco con sombra suave (D347)
+  GRADE_INK_OSCURA: "#111111", // en 10–12 el blanco no llega a AA: tinta oscura sin sombra (D498)
   PILL_HIGH: "#17A127",
   PILL_LOW: "#F5D400",
   PILL_MID: "#57C110",

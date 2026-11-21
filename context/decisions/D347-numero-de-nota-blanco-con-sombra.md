@@ -1,4 +1,4 @@
-# D347 · Colors · El número de la píldora de nota es siempre blanco con sombra suave · Implemented
+# D347 · Colors · El número de la píldora de nota es siempre blanco con sombra suave · Implemented (reemplazada en parte por D498: notas 10–12)
 
 **Decision:** en `GradePill`, el ejemplo de las reglas del ranking y la imagen OG, el número va siempre en `--grade-ink-on-dark` (#FFFFFF) con `text-shadow-grade` (`0 1px 2px rgb(0 0 0 / .55), 0 0 1px rgb(0 0 0 / .6)`; espejo `GRADE_SOMBRA` en `lib/grades.ts`). Los colores de `gradeColor` no cambian. Reemplaza a D236 en la píldora (la tinta por contraste, `gradeInk`, queda en el código pero ya no pinta el número).
 **Why:** pedido de César (2026-11-08): «el color del texto en la puntuación de las notas siempre en blanco». Se le mostraron las tres formas (blanco tal cual, con sombra suave, con contorno fino) y la escala oscurecida; eligió la sombra suave.

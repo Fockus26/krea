@@ -98,14 +98,38 @@ export function gradeInk(n: number): "oscura" | "clara" {
 }
 
 /**
- * Número de la píldora: siempre blanco con sombra suave (D347, elección de César; reemplaza la
- * tinta por contraste de D236 en la píldora). Literal para que Tailwind la vea.
+ * Número de la píldora: blanco con sombra suave (D347, elección de César; reemplaza la tinta por
+ * contraste de D236 en la píldora), salvo en las notas amarillas/limas (ver `gradeNumeroOscuro`).
+ * Literal para que Tailwind la vea.
  */
 export const GRADE_NUMERO_CLASS = "text-grade-ink-on-dark text-shadow-grade";
+
+/** Número en tinta oscura y sin sombra, para las notas donde el blanco no llega a 4,5:1 (D498). */
+export const GRADE_NUMERO_OSCURO_CLASS = "text-grade-ink";
 
 /** La misma sombra para lo que no lee CSS de Tailwind (imagen OG). Espejo de `--text-shadow-grade`. */
 export const GRADE_SOMBRA =
   "0 1px 2px rgba(0, 0, 0, 0.55), 0 0 1px rgba(0, 0, 0, 0.6)";
+
+/**
+ * Contraste del blanco sobre el fondo por debajo del cual el número pasa a tinta oscura (D498).
+ * Con 1,55 el rango es 10–12 (blanco: 1,30–1,52:1; la tinta oscura da más de 12:1); la nota 9,5 (1,58)
+ * y la 12,5 (1,65) siguen en blanco con sombra (D347).
+ */
+const UMBRAL_BLANCO_ILEGIBLE = 1.55;
+
+/**
+ * ¿El número de esta nota va en tinta oscura? Decide por el contraste medido del blanco sobre
+ * `gradeColor(n)`, no por una lista de notas (D498; reemplaza en parte a D347).
+ */
+export function gradeNumeroOscuro(n: number): boolean {
+  return contraste(GRADE_INK_CLARA, gradeColor(n)) < UMBRAL_BLANCO_ILEGIBLE;
+}
+
+/** Clases del número de la píldora de la nota `n` (D347 + D498). */
+export function gradeNumeroClass(n: number): string {
+  return gradeNumeroOscuro(n) ? GRADE_NUMERO_OSCURO_CLASS : GRADE_NUMERO_CLASS;
+}
 
 /** Clase de color del número según `gradeInk` (literales para que Tailwind las vea). */
 export const GRADE_INK_CLASS = {
