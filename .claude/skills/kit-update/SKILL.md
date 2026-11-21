@@ -93,8 +93,14 @@ migrations use them. Before migrating anything:
   the `status`): install from there, which does the `git pull --ff-only` first:
   `powershell -ExecutionPolicy Bypass -File "<clone>\install-kit.ps1" -Pull`
   (macOS/Linux: `bash "<clone>/install-kit.sh" --pull`).
-- If the clone is on another branch or has changes (César is editing the kit): do not touch
-  it. Tell him to go back to `main` in the kit or to run the installer when he is done.
+- If the clone is on another branch **already merged** and with no changes (`git -C
+  "<clone>" merge-base --is-ancestor HEAD origin/main` succeeds and the `status` shows
+  nothing else): it is a finished branch, not work in progress. `git -C "<clone>" switch
+  main` and install as above, saying so in one line. Why: world-flags' clone was left on a
+  merged feature branch and the skill stopped as if César were editing the kit (2026-11-06).
+- If the clone is on a branch not in `origin/main`, or has changes (César is editing the
+  kit): do not touch it. Tell him to go back to `main` in the kit or to run the installer
+  when he is done.
 
 Then stop: "Abre una sesión nueva en este proyecto y escribe `/kit-update` otra vez." Do
 not go on with the old skills loaded.
@@ -103,6 +109,31 @@ not go on with the old skills loaded.
 Say so and ask; touch nothing.
 
 **d) Project < published and skills up to date:** go on with step 3.
+
+**e) No kit in the project at all** (no `.kit-version`, no `context/`) **and it is a WordPress**
+(`wp-content/`, `wp-config.php`, `.wp-env.json` or a compose with a `wordpress` image): it is
+not an update, it is an adoption. Say so, and with César's yes follow "WordPress projects"
+below. Why: in InspecChile `/kit-update` found nothing and there was no path (2026-11-07).
+
+## WordPress projects
+
+A project whose `CLAUDE.md` names `wordpress` in `Tech refs`, or case e). The Next/bun pieces
+do not apply: never run `new-project.ps1` without `-Stack wordpress` on it (`-OnlyPieces`
+installed `@types/bun`, `test:related` and `qa:local`, which cannot run there).
+
+- **Adoption** (case e): branch `chore/kit-adopt`, `pwsh -File "<kit>/new-project.ps1" -Path .
+  -Stack wordpress -Client <slug>` (the slug of the site plugin if there is one, else ask), one
+  commit `chore(kit): adopta el kit <published>`, then the order of
+  `<kit>/reference/tech/wordpress-adopt.md` from step 1, one unit at a time (each its own
+  branch and PR per `git-flow`). The PR says which access and secrets César has to provide.
+- **Piece check** for WordPress, instead of the table's first two rows: the scripts `shots`,
+  `shots:publish`, `context:backup`, `context:restore`, `lint:php`, `site:pull`, `local:up`,
+  `local:down`, `local:wp` and their files; devDependencies `@playwright/test` and
+  `@axe-core/playwright`; `.gitignore` with `.site-pull/` and `*.sql`; `.env.example`; the
+  plugin's `acf-json/` if the site uses ACF; `.github/workflows/ci.yml` running `php-lint.sh`; a
+  deploy workflow. What is missing: `new-project.ps1 -Path . -Stack wordpress -OnlyPieces`.
+- Versions' steps that touch Next.js, Biome, Changesets, `qa:local` or `test:related` are
+  skipped in a WordPress project: they are not pending.
 
 ## 3. Read copy of the kit
 
@@ -152,9 +183,11 @@ happened: a project on 3.5.0 without `test:related` or `shots`, because it start
 |---|---|
 | `package.json` scripts: `test`, `test:related`, `shots`, `shots:publish`, `qa:local`, `context:backup`, `context:restore`, and their files in `scripts/` (plus `scripts/qa-roles.ts`, the project's part of `qa:local`: added if missing, **never replaced**) | `package.json` and `ls scripts/` |
 | devDependencies: `@types/bun`, `@playwright/test`, `@axe-core/playwright` (and `@changesets/cli` if versioned) | `package.json` |
-| `.gitignore` with `.pr-shots`, `.env*.local` (or `.env*`) and `.claude/worktrees/` | `git check-ignore -q <path>` |
+| `.gitignore` with `.pr-shots/` **and** `.pr-shots.json`, `.env*.local` (or `.env*`) and `.claude/worktrees/` | `git check-ignore -q <path>` (each one: before 3.20.0, `.pr-shots.json` alone hid the missing folder) |
 | **`.gitignore` does NOT ignore** `supabase/` (except `.temp/`, `.branches/`) or the fixed documents of `context/` (`PROJECT_CONTEXT`, `DESIGN_RULES`, `COLORS`, `DESIGN_TOKENS`, `TYPOGRAPHY`, `decisions/`) | `git check-ignore -v supabase/migrations context/PROJECT_CONTEXT.md context/decisions` |
-| `biome.json` (if any) excludes `.claude/worktrees` | `files.includes` / `files.ignore` |
+| `biome.json` (if any) excludes `.claude/worktrees` (Biome 2: as `!.claude/worktrees`, never `!**/.claude/worktrees`, which empties the lint inside a worktree) and `.claude/kit-reference`, and its `formatter.lineEnding` is not `auto`; `tsconfig.json` (if any) has both folders in `exclude` | `files.includes` / `files.ignore`; `exclude` |
+| `vitest.config.*` (if any) excludes `.claude/**` (`-OnlyPieces` only warns: add `exclude: [...configDefaults.exclude, '.claude/**']` to `test`) | `grep -n "\.claude" vitest.config.*` |
+| `.gitattributes` with a global rule that forces LF (`* text=auto eol=lf`), and no file in CRLF in the working copy | `grep -E '^\*\s.*eol=lf' .gitattributes`; `git ls-files --eol \| grep -c "w/crlf"` = 0 |
 | `CLAUDE.md` ≤ 8 KB (the template is ≤ 7 KB; the rest is the project's) | `wc -c CLAUDE.md` |
 | The kit's `reference/` next to the skills: `.claude/kit-reference/` in the project copy (and `~/.claude/kit-reference/` on the machine) | `ls .claude/kit-reference/TOKEN-ECONOMY.md` |
 | Kit copy for cloud sessions: `.claude/skills/<each kit skill>` and `.claude/agents/<each kit agent>`, equal to `<kit>`'s, not gitignored | `diff -rq "<kit>/.claude/skills/<name>" .claude/skills/<name>` per kit skill (and agents); `git check-ignore -q .claude/skills` |
@@ -195,6 +228,11 @@ the merge, as a manual action in the PR.
 Per `context/GIT_STATE.md`: `pr` mode → `chore/kit-<published>` from an updated
 `origin/main`; `local` mode → from the base.
 
+Before switching branches, `bun run context:backup` if the project has it. A version that
+moves a `context/` file from git to local (3.8.0) leaves it at the mercy of the next
+checkout: one to a commit where it was tracked overwrote `plans/pendientes.md` and the pull
+after it deleted the file (workout, recovered from `context-state`).
+
 ## 8. Apply each version, in order
 
 Follow its "Steps" in `<kit>/UPDATES.md` (and the prompts they cite, only the steps
@@ -208,6 +246,10 @@ version is done:
 If a version fails halfway, stop there: what was done stays in commits and `.kit-version`
 says how far it got.
 
+**A file several versions of the path replace whole** (`scripts/qa-local.ts` in 3.11.0 to
+3.15.0 and later): the kit only publishes its current copy, so replace it once, in the last
+version of the path that names it, and say so in the earlier ones' commits.
+
 With every version applied, **refresh the project's copy of the skills and agents** (cloud
 sessions load only that one): `powershell -ExecutionPolicy Bypass -File "<kit>\install-kit.ps1" -Project .`
 (macOS/Linux: `bash "<kit>/install-kit.sh" --project .`). It replaces only the kit's skills
@@ -216,9 +258,17 @@ and agents; the project's own stay. Its own commit:
 without the cloud hook, merge the kit's `reference/claude/settings.json` `SessionStart`
 into it (keep what it had).
 
-The project's `CLAUDE.md` stays at 8 KB or less (`wc -c CLAUDE.md`). If a step pushes it
-over, replace the old paragraph that the step supersedes instead of adding, and if it still
-does not fit, ask which project-specific part moves to `context/`.
+The project's `CLAUDE.md` stays at 8 KB or less, measured with LF (`git show HEAD:CLAUDE.md |
+wc -c` after committing; on Windows `wc -c` of the working copy counts the CRs). If a step
+pushes it over, replace the old paragraph that the step supersedes instead of adding, and if it
+still does not fit, ask which project-specific part moves to `context/`.
+
+**A step that replaces a line the project does not have** (it is older than the line, or
+trimmed it) and does not say what to do: add the new line if what it says is not in the file
+in other words, and skip it if it is. If adding it goes over 8 KB, propose in the single round
+which project line to shorten, never cut one silently. Say what you did in the PR. Why:
+3.15.0 step 5 and 3.16.0 step 2 gave no answer for that case; world-flags skipped one and cut
+its own rules for the other (2026-11-06).
 
 ## 9. Verification and closing
 

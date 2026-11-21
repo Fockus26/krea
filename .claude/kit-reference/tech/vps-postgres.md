@@ -20,8 +20,8 @@ of these, say so at kickoff.
 | Your machine, while no real user exists | `<project>` | `bun run vps:env <project>` → `.env.development.local` |
 | Your machine, once there are real users | `<project>_dev` | The same with the new name. From here on nobody develops over real data |
 | QA (`qa:local`, `wave-qa`, tests) | Postgres in Docker | Automatic. It aborts if a variable it does not override points at the VPS |
-| Vercel Preview | `<project>_preview` | `ssh kit-vps kit-db url <project>_preview \| vercel env add DATABASE_URL preview` |
-| Vercel Production | `<project>` | `ssh kit-vps kit-db url <project> \| vercel env add DATABASE_URL production` |
+| Vercel Preview | `<project>_preview` | `DATABASE_URL` from `kit-db url <project>_preview`, with the command in `VPS-POSTGRES.md` › Credentials |
+| Vercel Production | `<project>` | `DATABASE_URL` from `kit-db url <project>`, with the command in `VPS-POSTGRES.md` › Credentials |
 
 Why previews have their own database: with one URL for both, a PR's preview writes real data
 and may run with a schema that is not merged yet (world-flags). Why `.env.development.local`:
@@ -31,7 +31,9 @@ Project names on the VPS: lowercase, digits and `_` (`world_flags`, not `world-f
 
 ## Setting it up
 
-1. `ssh kit-vps kit-db create <project>` and the same for `<project>_preview`.
+1. `ssh kit-vps kit-db create <project> >/dev/null` and the same for `<project>_preview`.
+   `create` prints the URLs with the password: an agent that runs it without the redirect
+   leaves them in the transcript (world-flags). `vps:env` (step 2) writes them without showing them.
 2. Copy the kit's `reference/scripts/vps-env.ts` to `scripts/`, with `"vps:env": "bun
    scripts/vps-env.ts"`, `"db:generate": "drizzle-kit generate"` and `"db:migrate": "drizzle-kit
    migrate"` in `package.json`. Then `bun run vps:env <project>`.
@@ -58,7 +60,47 @@ Project names on the VPS: lowercase, digits and `_` (`world_flags`, not `world-f
 4. Better Auth with `drizzleAdapter(db, { provider: 'pg' })`, its tables with `bunx auth@latest
    generate`, and a migration. `qa-local.ts` expects its `user` table with an `email_verified`
    column and the sign-up route at `/api/auth/sign-up/email`. Emails:
-   `EMAIL-TEMPLATES.md` § Better Auth. Also the kit's auth rules (`backend-build` §2).
+   `EMAIL-TEMPLATES.md` § Better Auth. Also the kit's auth rules (`backend-build` §2), and the
+   two below.
+   - **Only the endpoints the app uses.** `toNextJsHandler(auth)` exposes all of them
+     (update-user, change-password, list-sessions…) even if the app only signs in and out
+     (KREA). An allowlist, not `disabledPaths`: an endpoint a Better Auth update adds stays
+     closed. `auth.api.*` calls from the server do not go through the route and still work.
+
+     ```ts
+     // app/api/auth/[...all]/route.ts
+     import { toNextJsHandler } from 'better-auth/next-js'
+     import { auth } from '@/lib/auth'
+
+     const ALLOWED = new Set(['/sign-in/email', '/sign-out', '/get-session']) // + what the app calls
+     const h = toNextJsHandler(auth)
+     const only = (fn: (r: Request) => Promise<Response>) => (r: Request) =>
+       ALLOWED.has(new URL(r.url).pathname.replace(/^\/api\/auth/, '')) ? fn(r) : new Response(null, { status: 404 })
+     export const GET = only(h.GET)
+     export const POST = only(h.POST)
+     ```
+   - **Rate limit by account, not only by IP.** Better Auth's is per `ip|path` and counts the
+     successful sign-ins too: behind a NAT (a whole classroom on one IP) the 11th student in 5
+     minutes was locked out (KREA). A loose limit per IP (`rateLimit.customRules:
+     { '/sign-in/email': { window: 300, max: 200 } }`) plus one per account that only counts
+     failures: in `hooks.after`, when `ctx.path === '/sign-in/email'` and `ctx.context.returned`
+     is an `APIError`, add one to a counter for `ctx.body.email` in a table of yours (a success
+     resets it); in `hooks.before`, with ≥ 5 failures in 15 min, `throw new APIError(
+     'TOO_MANY_REQUESTS')` (both from `better-auth/api`, each hook one `createAuthMiddleware`).
+   - **Better Auth's rate limiter does not see `auth.api.*`.** Its docs: server-side calls
+     "aren't affected by rate limiting", only requests that reach the handler. A sign-in or a
+     password reset called from a server action has no limit per IP at all (workout found it
+     in QA). Either the client calls them (`authClient.signIn.email`, through the route
+     above), or the server action counts by itself: the per-account counter of the previous
+     point, plus one per IP and one per email for the endpoints that send mail.
+   - **`session.cookieCache` keeps a revoked session alive** until its `maxAge` (documented):
+     after a password reset, the old session went on writing through the data API for 5
+     minutes (workout). The cache is for painting; every route or action that writes reads
+     the session with `auth.api.getSession({ headers, query: { disableCookieCache: true } })`.
+   - **Without PostgREST and RLS, nothing validates what the API receives.** Every route
+     that writes validates the shape of each `jsonb` it stores and caps texts and numbers
+     against their columns (Zod, the same schema as the form): an incomplete record saved as
+     it came took a screen down (workout).
 5. `vercel.json` with `"regions": ["fra1"]`: the VPS is in the EU, and Vercel's default region
    puts an ocean between each query and the database (world-flags).
 6. `drizzle/seed.sql` with the minimum to walk through the flows, no personal data. It only runs
@@ -87,6 +129,11 @@ direct, not through the pool:
 DIRECT_URL="$(ssh kit-vps kit-db url <database> --direct)" bun run db:migrate
 ```
 
+**Renumbering a migration** (two PRs took the same number): regenerating it with
+`db:generate` writes only what Drizzle derives from the schema, and the SQL added by hand —
+a backfill `UPDATE`, a data fix — is gone without a warning (kit-deploy). Copy the hand-written
+statements aside first and put them back in the regenerated file, then read its diff.
+
 The URL does not reach the screen that way; do not print it. In a cloud session there is no SSH to
 the VPS: migrations and `vps:env` wait for César's machine, and QA uses `--offline`.
 
@@ -105,3 +152,15 @@ Automatic from the moment the database exists: `kit-db backup --all` runs nightl
 database and uploads to the bucket the VPS has configured. **A project never needs the bucket's
 keys**, and they never go in its `.env*`. If the project stores its own files, that is another
 bucket and another key.
+
+- **Look before asking.** Whether the off-VPS copy is configured is on the server, not in an
+  old decision: `ssh kit-vps kit-db status` (its "Off-VPS" line). A session repeated the
+  pending "bucket for the copies" from a decision when the bucket had existed for days
+  (workout).
+- **A database created after 03:30 has no copy until the next night.** After creating one
+  that receives real data the same day (a migration's cutover): `ssh kit-vps kit-db backup
+  <project>`.
+- **Is the VPS's `kit-db` the kit's?** `ssh kit-vps kit-db version` prints the kit version it
+  came with. If it prints the usage instead, the copy is older than 3.25.0 and may lack
+  commands the guides name (`status` was missing once: workout); what it has is in `kit-db`
+  with no arguments, and updating it is `VPS-POSTGRES.md` step 5, César's action.

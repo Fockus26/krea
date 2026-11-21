@@ -69,7 +69,8 @@ Nothing from another slot's `.qa/`: it belongs to a previous unit and may be sta
    permission there, deliver it whole in your final report.
 4. **Decisions:** one file per decision, `context/decisions/D0NN-<topic>.md`, with the IDs
    of your range and the one-line header (format in `context/decisions/README.md`). It goes
-   in git. There is no index to edit.
+   in git. There is no index to edit. If an ID of your range already exists on `main` when
+   you merge it in (another session took it), use the next free one and say so in the report.
 5. **Changeset:** the bump your prompt says (patch/minor/major, or none). If there is one, a
    `.changeset/<desc-kebab>.md` written by hand (format in `git-flow` §2.1) with user-facing
    text in Spanish. Do not touch `version` or `CHANGELOG.md`: the version PR writes them.
@@ -98,7 +99,8 @@ Nothing from another slot's `.qa/`: it belongs to a previous unit and may be sta
    package. Redirects (guest → login): with `curl -sI`, instantly; Playwright can spend
    minutes compiling the route. **Playwright guards (reflow, a11y measurements) run against
    the production build** (`bun run build` + `bun run start -- --port <port>`, or
-   `qa:local -- --preview`), with `waitUntil: 'load'` and a wait for an element: against
+   `qa:local -- --preview`), from the first attempt and only if your prompt says "Local
+   build: yes" (rule 13), with `waitUntil: 'load'` and a wait for an element: against
    `next dev`, `networkidle` never arrives (HMR keeps a connection open) and even `load`
    hung on one route (melao). Before measuring, request the route once (`curl -s -o
    /dev/null`): the first cold compile fails the guard. **Git Bash rewrites paths:** an
@@ -118,24 +120,60 @@ Nothing from another slot's `.qa/`: it belongs to a previous unit and may be sta
    (melao: `tokens.test.ts` 8.8 s in the suite, 0.4 s alone). A test or sample that needs
    media (audio, image) without network uses a shared fixture in `tests/fixtures/`, never a
    generator written inside the component or the sample (melao).
-10. **Files:** created and changed with Write/Edit. No heredoc for long files (Git Bash
+   {{Tests on fixed-port services (Firebase emulators…): only in the unit with "Test
+   services: yes"; the rest verify with `gh pr checks` if CI runs them. How: the kit's
+   `reference/tech/<name>.md` (Firebase: § Emulators in parallel). | remove this line}}
+10. **Files:** created and changed with Write/Edit. A file you will edit, open it with Read
+    from the start: what you saw with `cat` does not count as read and the first Edit fails
+    (KREA ×4). No heredoc for long files (Git Bash
     breaks the ones with quotes and backticks), no `node -e` with quotes, backticks or `\d`
     (two patches broke that way: melao) — a script you need goes to `.qa/<name>.mjs` with
-    Write and runs with `node`; a short heredoc only quoted (`<<'EOF'`). No Python in text
-    mode (on Windows it converts to CRLF and Biome flags the whole file). If you touched a
-    file through the shell (`sed`, `biome --write`), read it before editing it.
+    Write and runs with `node`; a short heredoc only quoted (`<<'EOF'`). Adding to a file
+    is an Edit too, never `cat >>`. No `python -` fed by a heredoc for text with
+    backslashes or several lines: even quoted, `
+` reached Python as a line break, two
+    patches failed in silence and one broke a test's string (kit-deploy; workout ×4 patching
+    through the shell) — Edit, or a script in `.qa/`. Python only with
+    `newline=""` in `open()` (text mode without it converts to CRLF on Windows and Biome
+    flags the whole file); for mechanical renames across many files, `sed -i` is fine, always
+    over the explicit list of your unit's files, never a glob (`components/layout/*.tsx`
+    reached a file of another unit: KREA). If
+    you touched a file through the shell (`sed`, `biome --write`), read it before editing it
+    — so format (`bunx biome check --write <files>`) once when a stage closes, not after
+    every edit: each run invalidates the reads of every file it formats (KREA).
 11. **Waiting and searching:** `sleep` is blocked; anything that takes more than 2 min
-    (suite, build, typecheck) runs in the background and you wait for its notice. `grep`
-    always with scoped paths (`app/`, `lib/`, `components/`): at the root it walks
+    (suite, build, typecheck) runs in the background and you wait for its notice. Search
+    with `git grep -n <pattern> -- <paths>`: it only walks tracked files and answers in
+    seconds, while `grep -r` over several folders took > 2 min in a slot and `rg` timed out
+    (KREA). A plain `grep` always with scoped paths (`app/`, `lib/`): at the root it walks
     `node_modules` and `.next`.
 12. **Commit when each stage closes** (backend, UI, docs), not only at the end: an API cut
     (403/429) mid-unit does not take the work with it. Inside a long stage, a `wip: <what>`
     commit every ~20 min of work (the PR merge squashes them) and two lines appended to
     `.qa/progress.md` (done / next): two workers died mid-unit (watchdog at 600 s, a 403)
-    with no report and their work uncommitted in the slot (melao). When resuming:
-    `git status`, `.qa/progress.md`, and carry on; do not reread what you already wrote.
+    with no report and their work uncommitted in the slot (melao). Its first lines go in
+    when you finish reading, before writing any code: the key files and what you will do in
+    each — two cuts during the reading meant rereading the brief and every reference
+    (workout ×2). **Before launching the long checks** (suite, typecheck, a build): a `wip:`
+    commit and a push; three sessions were cut waiting for them with everything uncommitted
+    (workout ×3). When resuming: `git status` and `git log origin/main..HEAD` are the truth,
+    `.qa/progress.md` only orients; carry on, do not reread what you already wrote.
+    (`wt take` removes another unit's `progress.md` and `pr-body.md`: the ones there are
+    yours.)
 13. **Minimum verification before the PR:** typecheck, lint (no new errors in your code),
-    tests, build; if you touched UI, the `a11y` skill (axe light and dark, 320 px, keyboard).
+    tests; before each commit, `git diff --cached --stat`; if you touched UI, the `a11y`
+    skill (axe light and dark, 320 px, keyboard). **The build runs locally only if your
+    prompt says "Local build: yes"**; otherwise CI runs it (`git-flow` §2.1 gate 3) and you
+    read it with `gh pr checks`, also when you touched `next.config` or dependencies. With
+    four slots compiling at once `next build` took 6–25 min, hung twice and crashed in
+    PostCSS on Windows (`0xc0000142`) (workout ×5, kit-deploy ×2). With "no", what needs the
+    build (Playwright guards, rule 7) is measured on your dev server and named in the report
+    as "measured on dev, not on the build".
+    **`/security-review` from a slot** reads `git status` / `git diff` of the main folder,
+    which is empty, and reviews nothing (kit-deploy ×8): write your diff first (`git diff
+    origin/main...HEAD > .qa/review.diff`) and hand it that file.
+    Lint with `bun run lint` or `bunx biome`, never `npx biome`: it does not use the
+    project's config and reformatted files the other way (KREA).
     A tool a skill asks for that the project does not have (Lighthouse, a CLI): skip it and
     say "not run: not installed" in the report — a worker does not add dependencies (melao).
 14. **Screenshots:** if something visible changed, rewrite `.pr-shots.json` with your states
@@ -144,7 +182,10 @@ Nothing from another slot's `.qa/`: it belongs to a previous unit and may be sta
     `bun run shots:publish` in the background, as **two commands** (together they pass the
     tool's 120 s on Windows: melao), and without `MSYS_NO_PATHCONV=1`. A state that calls
     Auth or an API is simulated with the state's `route` (see `scripts/pr-screenshots.ts`),
-    never by patching `fetch` (it risks a call to the real project). The markdown is left in
+    never by patching `fetch` (it risks a call to the real project). A screen behind a
+    session: the `login` block of `.pr-shots.json`, with the `.env.test.local` accounts as
+    `${EMAIL_TEST}`, and only against `qa:local` (rule 8 stands for the real backend).
+    "Executable doesn't exist": `PW_CHANNEL=msedge bun run shots`. The markdown is left in
     `.pr-shots/README.md`: paste it into the PR. Do not open the images.
 15. **Unable to ask:** when data is missing, the conservative option + "Decision taken /
     alternative" in the PR. Do not block.
@@ -163,9 +204,14 @@ Nothing from another slot's `.qa/`: it belongs to a previous unit and may be sta
 17. **New copy = provisional:** flagged in the code + your reserved checklist row.
 18. **Closing:** Conventional commits (only your files) with the description in Spanish,
     push of your branch, `gh pr create --body-file .qa/pr-body.md` with the template (PR in
-    Spanish; the body written with Write, never inline: quotes and backticks break it). Leave the slot
+    Spanish; the body written with Write, never inline: quotes and backticks break it).
+    The Write and `gh pr create` go in **separate turns**, the second after seeing the
+    first succeed: sent together, the Write failed and the PR went out with another body
+    (workout ×3). Leave the slot
     clean: everything committed and pushed (empty `git status`), or the orchestrator cannot
     free it. **Never** `gh pr merge`, push to `main`, force-push or amend what was pushed.
+    To bring your branch up to date: `git merge origin/main` and a normal push, never a
+    rebase (it needs the force-push).
     Database: only the authorized additive changes; nothing destructive.
 19. **Final report** (the orchestrator reads it, be brief): PR URL, slot, changeset,
     verified / not verified, open decisions, manual actions, bugs seen in passing, and your
