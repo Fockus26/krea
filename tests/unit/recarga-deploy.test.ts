@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join } from "node:path";
 import {
   CLAVE_RECARGA,
   debeRecargar,
@@ -128,5 +130,48 @@ describe("catch de Server Actions (L57)", () => {
     };
     expect(recargarSiEsDeploy(deAccion)).toBe(false);
     expect(recargas).toBe(0);
+  });
+});
+
+/*
+ * Clase L57: ningún cliente convierte el fallo de una Server Action en «red» sin dejar pasar el
+ * error de deploy. Guarda estática sobre `components/` (no hay DOM para probar los formularios).
+ */
+function fuentes(dir: string): string[] {
+  return readdirSync(dir).flatMap((nombre) => {
+    const ruta = join(dir, nombre);
+    if (statSync(ruta).isDirectory()) return fuentes(ruta);
+    return /\.tsx?$/.test(ruta) ? [ruta] : [];
+  });
+}
+
+describe("catch de acciones en components/ (L57, D538)", () => {
+  const archivos = fuentes("components").map((ruta) => ({
+    ruta,
+    codigo: readFileSync(ruta, "utf8"),
+  }));
+
+  test("ningún `.catch(() => ({ ok: false … }))` ni `.catch(() => RED)` a pelo", () => {
+    const sueltos = archivos
+      .filter(({ codigo }) =>
+        /\.catch\(\s*\(\s*\)\s*(?::\s*[\w<>]+\s*)?=>\s*(?:\(\s*\{\s*ok:\s*false|RED\b)/.test(
+          codigo,
+        ),
+      )
+      .map((a) => a.ruta);
+    expect(sueltos).toEqual([]);
+  });
+
+  test('un `catch (x) { … r = { ok: false, error: "red" } }` relanza el de deploy', () => {
+    const sin: string[] = [];
+    for (const { ruta, codigo } of archivos) {
+      for (const m of codigo.matchAll(
+        /catch\s*(?:\((\w+)\))?\s*\{([^}]{0,200})\}/g,
+      )) {
+        if (!/error:\s*"red"|setError\("red"\)/.test(m[2] ?? "")) continue;
+        if (!/relanzarSiEsDeploy\(/.test(m[2] ?? "")) sin.push(ruta);
+      }
+    }
+    expect(sin).toEqual([]);
   });
 });
