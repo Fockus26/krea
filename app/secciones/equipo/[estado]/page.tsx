@@ -34,7 +34,7 @@ export function generateStaticParams() {
   return ESTADOS.map(([estado]) => ({ estado }));
 }
 
-// Ruta final (fase 05): /equipo. Datos: Yeilin Duarte y 5A-G2 del seed; sin equipo, Gabriel (5A).
+// Ruta final (fase 05): /equipo. Datos: Raquel Figueroa y 5A-G2 del seed; sin equipo, Hugo (5A).
 export default async function EquipoVista({
   params,
 }: PageProps<"/secciones/equipo/[estado]">) {

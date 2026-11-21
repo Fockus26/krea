@@ -22,8 +22,8 @@ let base: Db;
 const db = () => base;
 
 const AHORA = Date.UTC(2026, 10, 6, 15);
-const PROFE = "30262232";
-const ANA = "39110001";
+const PROFE = "45001237";
+const ADELA = "39110001";
 const LUIS = "39110002";
 const INDIVIDUAL = "w11-individual";
 const ABIERTA = "w11-abierta";
@@ -81,7 +81,7 @@ async function leer(id: string) {
 
 beforeAll(async () => {
   base = await baseNueva();
-  await docs.ponerDoc(db(), "usuarios", ANA, usuario(ANA));
+  await docs.ponerDoc(db(), "usuarios", ADELA, usuario(ADELA));
   await docs.ponerDoc(db(), "usuarios", LUIS, usuario(LUIS));
   await docs.ponerDoc(db(), "tareas", INDIVIDUAL, tarea({}));
   await docs.ponerDoc(
@@ -93,8 +93,8 @@ beforeAll(async () => {
   await docs.ponerDoc(
     db(),
     "entregas",
-    idEntrega(INDIVIDUAL, ANA),
-    evaluada(ANA, 18),
+    idEntrega(INDIVIDUAL, ADELA),
+    evaluada(ADELA, 18),
   );
   await docs.ponerDoc(
     db(),
@@ -111,7 +111,7 @@ describe("premio individual (Postgres)", () => {
         db(),
         INDIVIDUAL,
         "5C",
-        { tipo: "dar", equipoId: ANA },
+        { tipo: "dar", equipoId: ADELA },
         AHORA,
       ),
     ).toEqual({ ok: false, error: "invalida" });

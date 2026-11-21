@@ -20,8 +20,8 @@ import { enJuegoTexto, ganadorPremio, premioGanadoTexto } from "@/lib/equipo";
 import { equipoMetaTexto, puestoTexto } from "@/lib/inicio";
 import { fechaNotaTexto } from "@/lib/notas";
 
-/** Gabriel (5A) no tiene equipo en el seed: para el vacío. */
-export const CEDULA_SIN_EQUIPO = "33456636";
+/** Hugo (5A) no tiene equipo en el seed: para el vacío. */
+export const CEDULA_SIN_EQUIPO = "45019792";
 
 export type FilaNotaEquipo = FilaNota & { enJuego?: string };
 

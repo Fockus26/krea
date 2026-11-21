@@ -230,7 +230,7 @@ export function fallidosTitulo(
 }
 
 /**
- * Nombre de la casilla de una fila: «Seleccionar a Ana Pérez»; ante cosas, sin «a»
+ * Nombre de la casilla de una fila: «Seleccionar a Adela Pérez»; ante cosas, sin «a»
  * («Seleccionar «Fotosíntesis»», «Seleccionar el equipo Los Rayos»).
  */
 export const seleccionarLabel = (nombre: string, s: Sustantivo = ALUMNOS) =>

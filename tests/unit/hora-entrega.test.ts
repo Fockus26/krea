@@ -40,7 +40,7 @@ import { filasPorEntregar } from "@/lib/vistas-estudiante";
 const HOY = "2026-11-05";
 // 15:00 UTC = 11:00 en Caracas (UTC−4)
 const AHORA = Date.UTC(2026, 10, 5, 15);
-const PROFE = "30262232";
+const PROFE = "45001237";
 
 describe("formato de la hora (D355)", () => {
   test("12 h con «a. m.» / «p. m.»", () => {
@@ -413,7 +413,7 @@ describe("dónde se muestra y cómo ordena", () => {
       usuario: {
         cedula: "39000010",
         rol: "estudiante",
-        nombres: "Ana",
+        nombres: "Adela",
         apellidos: "Pérez",
         seccion: "5A",
         base: 15,

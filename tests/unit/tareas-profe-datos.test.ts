@@ -43,7 +43,7 @@ import {
 
 const HOY = "2026-11-05";
 const AHORA = Date.UTC(2026, 10, 5, 15);
-const PROFE = "30262232";
+const PROFE = "45001237";
 
 const entrada = (o: Partial<EntradaTarea> = {}): EntradaTarea => ({
   titulo: "Plan de redes",

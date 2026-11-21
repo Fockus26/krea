@@ -220,7 +220,7 @@ describe("textos (fila 159)", () => {
     expect(fallidosTitulo(0, 2, PROFESORES)).toBe(
       "No se eliminó a nadie. No se pudo eliminar a 2 profesores:",
     );
-    expect(seleccionarLabel("Ana Pérez")).toBe("Seleccionar a Ana Pérez");
+    expect(seleccionarLabel("Adela Pérez")).toBe("Seleccionar a Adela Pérez");
     expect(eliminadosTexto(3, ALUMNOS)).toBe("Eliminaste a 3 alumnos");
   });
 });
@@ -264,7 +264,7 @@ describe("resumen del lote de alumnos (D300)", () => {
         notas: 3,
         sinNota: 0,
         ajustes: 2,
-        capitania: { equipo: "Los Rayos", sucesor: "Ana Pérez" },
+        capitania: { equipo: "Los Rayos", sucesor: "Adela Pérez" },
       },
     ]);
     expect(r).toEqual({ notas: 5, sinNota: 1, ajustes: 2, capitanes: 1 });

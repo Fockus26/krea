@@ -2,8 +2,8 @@
 import type { FilaAlumno } from "@/lib/alumnos";
 import { ALUMNOS, equipoDe, puntosAlumno } from "@/lib/demo/seed";
 
-/** PLACEHOLDER (HANDOFF §8; fila 83): el seed trae base 20 para todos; el lienzo enseña a Jailyn Martínez con base 15. */
-const CEDULA_BASE_EJEMPLO = "37575127";
+/** PLACEHOLDER (HANDOFF §8; fila 83): el seed trae base 20 para todos; el lienzo enseña a Fernanda Miranda con base 15. */
+const CEDULA_BASE_EJEMPLO = "45087827";
 const BASE_EJEMPLO = 15;
 
 /** Los 69 alumnos del seed (5A y 5C) con la fila ya resuelta. */

@@ -74,27 +74,33 @@ describe("texto del aviso en Evaluar (D410)", () => {
   });
 
   test("uno, dos y tres o más", () => {
-    expect(presenciaEvaluarTexto([n("Ana Pérez")])).toBe(
-      "Ana Pérez está evaluando",
+    expect(presenciaEvaluarTexto([n("Adela Pérez")])).toBe(
+      "Adela Pérez está evaluando",
     );
-    expect(presenciaEvaluarTexto([n("Ana Pérez"), n("Luis Díaz")])).toBe(
-      "Ana Pérez y Luis Díaz están evaluando",
+    expect(presenciaEvaluarTexto([n("Adela Pérez"), n("Luis Farías")])).toBe(
+      "Adela Pérez y Luis Farías están evaluando",
     );
     expect(
-      presenciaEvaluarTexto([n("Ana Pérez"), n("Luis Díaz"), n("Eva Gil")]),
-    ).toBe("Ana Pérez y 2 más están evaluando");
+      presenciaEvaluarTexto([
+        n("Adela Pérez"),
+        n("Luis Farías"),
+        n("Eva Iglesias"),
+      ]),
+    ).toBe("Adela Pérez y 2 más están evaluando");
   });
 
   test("el aviso completo", () => {
-    expect(avisoPresenciaEntrega(presenciaEvaluarTexto([n("Ana Pérez")]))).toBe(
-      "Ana Pérez está evaluando esta entrega. Si guarda antes que tú, te avisaremos.",
+    expect(
+      avisoPresenciaEntrega(presenciaEvaluarTexto([n("Adela Pérez")])),
+    ).toBe(
+      "Adela Pérez está evaluando esta entrega. Si guarda antes que tú, te avisaremos.",
     );
   });
 
   test("el texto de Editar alumno no cambia", () => {
-    expect(presenciaTexto([n("Ana Pérez"), n("Luis Díaz"), n("Eva Gil")])).toBe(
-      "Ana Pérez y 2 más están editando",
-    );
+    expect(
+      presenciaTexto([n("Adela Pérez"), n("Luis Farías"), n("Eva Iglesias")]),
+    ).toBe("Adela Pérez y 2 más están editando");
   });
 
   test("toast por llegada (D450): solo los que no estaban, sin repetir", () => {
@@ -106,18 +112,20 @@ describe("texto del aviso en Evaluar (D410)", () => {
     });
     // Primer sondeo de quien llega: ve al que ya estaba
     expect(
-      llegadasPresencia(new Set(), [e("ana")]).map((x) => x.profeId),
-    ).toEqual(["ana"]);
+      llegadasPresencia(new Set(), [e("adela")]).map((x) => x.profeId),
+    ).toEqual(["adela"]);
     // Siguiente sondeo con los mismos: nada nuevo, ningún toast
-    expect(llegadasPresencia(new Set(["ana"]), [e("ana")])).toEqual([]);
+    expect(llegadasPresencia(new Set(["adela"]), [e("adela")])).toEqual([]);
     // Llega otro: solo él
     expect(
-      llegadasPresencia(new Set(["ana"]), [e("ana"), e("luis"), e("luis")]).map(
-        (x) => x.profeId,
-      ),
+      llegadasPresencia(new Set(["adela"]), [
+        e("adela"),
+        e("luis"),
+        e("luis"),
+      ]).map((x) => x.profeId),
     ).toEqual(["luis"]);
     // Se van todos: sin toast
-    expect(llegadasPresencia(new Set(["ana", "luis"]), [])).toEqual([]);
+    expect(llegadasPresencia(new Set(["adela", "luis"]), [])).toEqual([]);
     expect(AVISO_PRESENCIA_MS).toBeGreaterThan(4_000);
   });
 

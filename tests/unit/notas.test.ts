@@ -82,7 +82,7 @@ describe("resumen del detalle", () => {
 });
 
 describe("datos de ejemplo", () => {
-  test("Heymi Sierra: 18,5 con los puntajes del lienzo y 2 comentarios", () => {
+  test("Elsa Soto: 18,5 con los puntajes del lienzo y 2 comentarios", () => {
     const d = detalleDe(CEDULA_DETALLE);
     expect(d.puntaje).toBe(18.5);
     expect(d.final).toBe(18.5);
@@ -97,7 +97,7 @@ describe("datos de ejemplo", () => {
     expect(d.final).toBe(13.9);
     expect(d.preguntas[2]?.obtenido).toBe(3);
   });
-  test("raspado real: Angeles Mendez, 8", () => {
+  test("raspado real: Alejandra Montero, 8", () => {
     expect(detalleDe(CEDULA_RASPADO).final).toBe(8);
   });
   test("Mis notas: evaluadas primero, luego pendientes; pendiente nunca 0 (D003)", () => {

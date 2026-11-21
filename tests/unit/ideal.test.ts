@@ -39,7 +39,7 @@ const evaluacion = (puntaje: number): Evaluacion => ({
   puntos: { p1: Math.min(puntaje, 12), p2: Math.max(puntaje - 12, 0) },
   comentarios: { p1: "Comentario privado" },
   puntaje,
-  evaluadaPor: "30262232",
+  evaluadaPor: "45001237",
   evaluadaEn: 1,
 });
 
@@ -92,7 +92,7 @@ describe("una sola forma (D430)", () => {
     tareaId: T,
     nota: "x",
     notas: {},
-    autorId: "30262232",
+    autorId: "45001237",
     actualizadoEn: 1,
   };
   test("entrega o respuestas, nunca las dos ni ninguna", () => {
@@ -115,7 +115,7 @@ describe("una sola forma (D430)", () => {
 
 describe("validarIdeal", () => {
   test("de una entrega de 20: limpia las notas por pregunta", () => {
-    const r = validarIdeal(deEntrega(), tarea(), entrega(20), "30262232", 5);
+    const r = validarIdeal(deEntrega(), tarea(), entrega(20), "45001237", 5);
     expect(r).toEqual({
       ok: true,
       ideal: {
@@ -124,7 +124,7 @@ describe("validarIdeal", () => {
         respuestas: null,
         nota: "Porque sí",
         notas: { p1: "Clara" },
-        autorId: "30262232",
+        autorId: "45001237",
         actualizadoEn: 5,
       },
     });
@@ -208,7 +208,7 @@ describe("autor y estado del profe", () => {
     [
       "39711001",
       {
-        nombres: "Ana  María",
+        nombres: "Adela  Juana",
         apellidos: "Pérez",
         avatar: { estilo: "adventurer-neutral", semilla: "s" },
       },
@@ -222,7 +222,7 @@ describe("autor y estado del profe", () => {
   test("alumno, equipo o profes", () => {
     expect(autorDe(idealE, entrega(20), usuarios, equipos)).toEqual({
       tipo: "alumno",
-      nombre: "Ana María Pérez",
+      nombre: "Adela Juana Pérez",
       avatar: { estilo: "adventurer-neutral", semilla: "s" },
     });
     expect(
@@ -244,7 +244,7 @@ describe("autor y estado del profe", () => {
     });
     expect(estadoIdealProfe(idealE, entrega(20), usuarios, equipos)).toEqual({
       tipo: "vigente",
-      deQuien: "de Ana María Pérez",
+      deQuien: "de Adela Juana Pérez",
       entregaId: idealE.entregaId,
     });
     const caducada = estadoIdealProfe(idealE, null, usuarios, equipos);
@@ -255,7 +255,7 @@ describe("autor y estado del profe", () => {
         estadoIdealProfe(idealE, entrega(18), usuarios, equipos),
         true,
       ),
-    ).toContain("de Ana María Pérez");
+    ).toContain("de Adela Juana Pérez");
   });
 });
 
@@ -266,7 +266,7 @@ describe("vista del alumno", () => {
     respuestas: null,
     nota: "General",
     notas: { p2: "Buen encuadre" },
-    autorId: "30262232",
+    autorId: "45001237",
     actualizadoEn: 1,
   };
 

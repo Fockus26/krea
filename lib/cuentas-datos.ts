@@ -217,7 +217,7 @@ export const nombreProfesor = (
   p: Pick<FilaProfesor, "nombres" | "apellidos">,
 ) => `${p.nombres} ${p.apellidos}`;
 
-/** «C.I. 30.262.232 · ana@gmail.com», o «… · Sin email de recuperación». */
+/** «C.I. 45.001.237 · adela@gmail.com», o «… · Sin email de recuperación». */
 export function detalleProfesor(
   p: Pick<FilaProfesor, "cedula" | "email">,
 ): string {

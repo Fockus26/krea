@@ -1,7 +1,7 @@
 // Cola "Por evaluar" de la vista previa de Evaluar entrega (D066, D069; brief de la ola 3,
 // "Formas compartidas"): 7 entregas, 4 individuales y 3 grupales. Las dos primeras son las del
-// lienzo (5A-G2 Repostería · "Logo y paleta del emprendimiento" de Yeilin Duarte, y Jorge
-// Quintero · "Identidad de marca"); las demás salen del seed (alumnos y equipos reales) con
+// lienzo (5A-G2 Repostería · "Logo y paleta del emprendimiento" de Raquel Figueroa, y Mateo
+// Paredes · "Identidad de marca"); las demás salen del seed (alumnos y equipos reales) con
 // tareas de lib/demo/tareas.ts. REAL: nombres, equipos, secciones, capitanes, bases y las
 // preguntas de "Identidad de marca". PLACEHOLDER (HANDOFF §8; CONTENT_CHECKLIST fila 80):
 // fechas y horas de entrega, las respuestas de los alumnos, los puntajes y el comentario
@@ -182,8 +182,8 @@ export const COLA: readonly DemoEntrega[] = [
     tipo: "grupal",
     destino: { tipo: "equipo", id: "5a-g2" },
     tarea: LOGO_Y_PALETA,
-    entregadaPor: "33272397",
-    // El lienzo y el brief dicen "(capitana)" para Yeilin (D075: solo con el dato a mano)
+    entregadaPor: "45009896",
+    // El lienzo y el brief dicen "(capitana)" para Raquel (D075: solo con el dato a mano)
     femenino: true,
     fecha: "2026-10-25",
     hora: "16:12",
@@ -208,27 +208,27 @@ export const COLA: readonly DemoEntrega[] = [
     ),
   },
   {
-    id: "32828381-identidad-de-marca",
+    id: "45003711-identidad-de-marca",
     tipo: "individual",
-    destino: { tipo: "alumno", cedula: "32828381" },
+    destino: { tipo: "alumno", cedula: "45003711" },
     tarea: { id: TAREA_IDENTIDAD.id, titulo: TAREA_IDENTIDAD.titulo },
     fecha: "2026-10-25",
     hora: "15:05",
     preguntas: identidad([
       "Corte Fino",
       "Porque en el barrio no hay una barbería para jóvenes con precios de estudiante.",
-      "Cortes de cabello, perfilado de barba y diseños con navaja.",
+      "Esquivel de cabello, perfilado de barba y diseños con navaja.",
       "Muchachos de 14 a 20 años que quieren verse bien sin gastar mucho.",
       "Fresca, confiable y con estilo urbano.",
-      "Que hay que esperar mucho y los cortes de moda salen caros.",
+      "Que hay que esperar mucho y los esquivel de moda salen caros.",
       "Atendemos con cita por WhatsApp y te mandamos foto del corte antes de empezar.",
       "Puntualidad, limpieza y buen trato.",
     ]),
   },
   {
-    id: "33214862-competencia",
+    id: "45006185-competencia",
     tipo: "individual",
-    destino: { tipo: "alumno", cedula: "33214862" },
+    destino: { tipo: "alumno", cedula: "45006185" },
     tarea: { id: COMPETENCIA.id, titulo: COMPETENCIA.titulo },
     fecha: "2026-10-25",
     hora: "11:20",
@@ -238,7 +238,7 @@ export const COLA: readonly DemoEntrega[] = [
       valor: p.valor,
       respuesta:
         p.formato === "imagen"
-          ? imagen(answerImageAlt("Branger Saray", i + 1))
+          ? imagen(answerImageAlt("Benjamín Sandoval", i + 1))
           : texto(
               [
                 "Sweet Day, Dulce Antojo y La Casa del Ponqué.",
@@ -256,7 +256,7 @@ export const COLA: readonly DemoEntrega[] = [
       titulo: PRESENTACION.titulo,
       premio: PRESENTACION.premio,
     },
-    entregadaPor: "36902901",
+    entregadaPor: "45086590",
     fecha: "2026-10-24",
     hora: "18:30",
     preguntas: PRESENTACION.preguntas.map((p, i) => ({
@@ -274,9 +274,9 @@ export const COLA: readonly DemoEntrega[] = [
     })),
   },
   {
-    id: "33368217-identidad-de-marca",
+    id: "45014844-identidad-de-marca",
     tipo: "individual",
-    destino: { tipo: "alumno", cedula: "33368217" },
+    destino: { tipo: "alumno", cedula: "45014844" },
     tarea: { id: TAREA_IDENTIDAD.id, titulo: TAREA_IDENTIDAD.titulo },
     fecha: "2026-10-24",
     hora: "10:45",
@@ -296,7 +296,7 @@ export const COLA: readonly DemoEntrega[] = [
     tipo: "grupal",
     destino: { tipo: "equipo", id: "5a-g3" },
     tarea: LOGO_Y_PALETA,
-    entregadaPor: "34126088",
+    entregadaPor: "45058139",
     fecha: "2026-10-23",
     hora: "17:00",
     preguntas: logoYPaleta("5A-G3 Ropa", {
@@ -309,9 +309,9 @@ export const COLA: readonly DemoEntrega[] = [
     }),
   },
   {
-    id: "33368124-plan-de-ventas",
+    id: "45013607-plan-de-ventas",
     tipo: "individual",
-    destino: { tipo: "alumno", cedula: "33368124" },
+    destino: { tipo: "alumno", cedula: "45013607" },
     tarea: PLAN_DE_VENTAS,
     fecha: "2026-10-23",
     hora: "9:15",
@@ -320,7 +320,7 @@ export const COLA: readonly DemoEntrega[] = [
       enunciado,
       valor,
       respuesta: enunciado.startsWith("Sube")
-        ? imagen(answerImageAlt("Carlos Díaz", i + 1))
+        ? imagen(answerImageAlt("Darío Farías", i + 1))
         : texto("Respuesta de ejemplo del alumno."),
       puntaje: PLAN_RESPUESTAS[i] ?? null,
     })),

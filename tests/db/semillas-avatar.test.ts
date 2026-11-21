@@ -30,7 +30,7 @@ const persona = (
 ): Usuario => ({
   cedula,
   rol,
-  nombres: "Ana",
+  nombres: "Adela",
   apellidos: "Semilla",
   seccion: rol === "estudiante" ? "5A" : null,
   equipoId: null,
@@ -40,7 +40,7 @@ const persona = (
 });
 
 const fila = (semilla?: string): RankingSeccion["alumnos"][string] => ({
-  nombres: "Ana",
+  nombres: "Adela",
   apellidos: "Semilla",
   equipoId: null,
   estilo: "fun-emoji",

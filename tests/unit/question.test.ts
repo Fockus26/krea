@@ -73,12 +73,12 @@ describe("barWidth", () => {
 
 describe("textos accesibles", () => {
   test("alt de la respuesta en imagen", () => {
-    expect(answerImageAlt("María", 3)).toBe(
-      "Respuesta de María a la pregunta 3",
+    expect(answerImageAlt("Juana", 3)).toBe(
+      "Respuesta de Juana a la pregunta 3",
     );
   });
 
   test("aviso de capitán (D012)", () => {
-    expect(lockedMessage("Jorge")).toBe("Solo Jorge puede responder.");
+    expect(lockedMessage("Mateo")).toBe("Solo Mateo puede responder.");
   });
 });

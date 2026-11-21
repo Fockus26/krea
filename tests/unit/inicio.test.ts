@@ -58,13 +58,13 @@ describe("textos cortos", () => {
     expect(equipoMetaTexto(null, 1)).toBe("1 integrante");
   });
   test("capitán: tú o el nombre; género por prop", () => {
-    expect(capitanTexto("Yeilin Duarte", true, true)).toEqual({
+    expect(capitanTexto("Raquel Figueroa", true, true)).toEqual({
       etiqueta: "Capitana:",
       quien: "tú",
     });
-    expect(capitanTexto("Jorge Quintero", false)).toEqual({
+    expect(capitanTexto("Mateo Paredes", false)).toEqual({
       etiqueta: "Capitán:",
-      quien: "Jorge Quintero",
+      quien: "Mateo Paredes",
     });
   });
   test("avance", () => {

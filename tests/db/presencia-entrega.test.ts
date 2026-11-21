@@ -28,12 +28,12 @@ beforeAll(async () => {
 describe("presencia de una entrega (D408)", () => {
   test("marcar y leer por entrega; latir no mueve `desde`; quitar la borra", async () => {
     const clave = claveEntrega(ENTREGA);
-    await marcarPresencia(db(), clave, PROFE_A, "Ana Pérez", AHORA);
-    await marcarPresencia(db(), clave, PROFE_A, "Ana Pérez", AHORA + 20_000);
+    await marcarPresencia(db(), clave, PROFE_A, "Adela Pérez", AHORA);
+    await marcarPresencia(db(), clave, PROFE_A, "Adela Pérez", AHORA + 20_000);
     expect(await leerPresenciaEntrega(db(), ENTREGA, AHORA + 20_000)).toEqual([
       {
         profeId: PROFE_A,
-        nombre: "Ana Pérez",
+        nombre: "Adela Pérez",
         desde: AHORA,
         latido: AHORA + 20_000,
       },
@@ -45,7 +45,7 @@ describe("presencia de una entrega (D408)", () => {
   });
 
   test("dos profes en la misma entrega; otra entrega no se cuela", async () => {
-    await marcarPresencia(db(), claveEntrega(ENTREGA), PROFE_A, "Ana", AHORA);
+    await marcarPresencia(db(), claveEntrega(ENTREGA), PROFE_A, "Adela", AHORA);
     await marcarPresencia(db(), claveEntrega(ENTREGA), PROFE_B, "Beto", AHORA);
     await marcarPresencia(db(), claveEntrega(OTRA), PROFE_B, "Beto", AHORA);
     const ids = (await leerPresenciaEntrega(db(), ENTREGA, AHORA))
@@ -64,7 +64,7 @@ describe("presencia de una entrega (D408)", () => {
   });
 
   test("la de una entrega no sale en Alumnos, ni la de un alumno en Evaluar", async () => {
-    await marcarPresencia(db(), claveEntrega(ENTREGA), PROFE_A, "Ana", AHORA);
+    await marcarPresencia(db(), claveEntrega(ENTREGA), PROFE_A, "Adela", AHORA);
     await marcarPresencia(db(), ALUMNO, PROFE_B, "Beto", AHORA);
     expect(await leerPresencia(db(), AHORA)).toEqual([
       {
@@ -87,7 +87,7 @@ describe("presencia de una entrega (D408)", () => {
   });
 
   test("las vencidas no se leen (pestaña cerrada sin `pagehide`)", async () => {
-    await marcarPresencia(db(), claveEntrega(ENTREGA), PROFE_A, "Ana", AHORA);
+    await marcarPresencia(db(), claveEntrega(ENTREGA), PROFE_A, "Adela", AHORA);
     expect(
       await leerPresenciaEntrega(db(), ENTREGA, AHORA + VIGENCIA_MS + 1),
     ).toEqual([]);

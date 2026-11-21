@@ -166,7 +166,7 @@ function EnviandoDemo() {
         <Input
           type="email"
           autoComplete="email"
-          defaultValue="mariana@correo.com"
+          defaultValue="julia@correo.com"
           readOnly={enviando}
         />
       </Field>
@@ -200,7 +200,7 @@ export function Formularios() {
             />
           </Field>
           <Field label="Lleno">
-            <Input defaultValue="Mariana Rivas" />
+            <Input defaultValue="Julia Rivas" />
           </Field>
           <Field label="Foco">
             <Input placeholder="Pulsa Tab hasta aquí" />
@@ -209,7 +209,7 @@ export function Formularios() {
             label="Correo"
             error="Escribe un correo con @, por ejemplo nombre@correo.com."
           >
-            <Input defaultValue="mariana.correo.com" type="email" />
+            <Input defaultValue="julia.correo.com" type="email" />
           </Field>
           <Field label="Equipo" success="Nombre disponible.">
             <Input defaultValue="Los Cometas" />
@@ -233,7 +233,7 @@ export function Formularios() {
             <Textarea
               maxLength={600}
               counter
-              defaultValue="Dividimos la tarea en tres partes: investigación, maqueta y presentación. Mariana armó la maqueta y Andrés preparó la presentación."
+              defaultValue="Dividimos la tarea en tres partes: investigación, maqueta y presentación. Julia armó la maqueta y Andrés preparó la presentación."
             />
           </Field>
           <Field label="Compacto (tarjeta de evaluación)">

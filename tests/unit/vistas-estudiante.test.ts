@@ -30,9 +30,9 @@ import {
 const AHORA = Date.UTC(2026, 10, 6, 5, 0);
 const seed = docsDesdeSeed(alumnosJson, gruposJson, tareaJson, AHORA);
 
-const YEILIN = "33272397"; // 5A, capitana de 5a-g2, 18,5 en Identidad
-const HEYMI = "33282883"; // 5A, 5a-g6, con desglose
-const GABRIEL = "33456636"; // 5A, sin equipo ni nota
+const RAQUEL = "45009896"; // 5A, capitana de 5a-g2, 18,5 en Identidad
+const ELSA = "45011133"; // 5A, 5a-g6, con desglose
+const HUGO = "45019792"; // 5A, sin equipo ni nota
 
 const abierta: ConId<Tarea> = {
   id: "presentacion",
@@ -106,7 +106,7 @@ const companerosDe = (equipoId: string) =>
 
 describe("notasDelAlumno / filasMisNotas", () => {
   test("evaluadas primero (más reciente), luego pendientes por fecha", () => {
-    const d = datosDe(YEILIN, { tareas: [abierta] });
+    const d = datosDe(RAQUEL, { tareas: [abierta] });
     const notas = notasDelAlumno(d);
     expect(notas.map((n) => n.tarea.id)).toEqual([
       "identidad-de-marca",
@@ -119,14 +119,14 @@ describe("notasDelAlumno / filasMisNotas", () => {
 
   test("la fecha de una evaluada es el día de Caracas de `evaluadaEn`", () => {
     expect(diaDeInstante(AHORA)).toBe("2026-11-06");
-    const filas = filasMisNotas(datosDe(YEILIN, { tareas: [abierta] }));
+    const filas = filasMisNotas(datosDe(RAQUEL, { tareas: [abierta] }));
     expect(filas[0]?.fecha).toBe("evaluada el 06/11/2026");
     expect(filas[2]?.fecha).toBe("vence el 07/11/2026");
     expect(filas[1]?.detalle).toBe("5A-G2 Repostería");
   });
 
   test("la base escala también la grupal (D177)", () => {
-    const d = datosDe(YEILIN, { usuario: { base: 15 } });
+    const d = datosDe(RAQUEL, { usuario: { base: 15 } });
     const grupal = filasMisNotas(d).find((f) => f.id === "logo-y-paleta");
     // 19 × 15 / 20 = 14,25 → 14,3 (D013)
     expect(grupal?.nota).toBe(14.3);
@@ -134,13 +134,13 @@ describe("notasDelAlumno / filasMisNotas", () => {
   });
 
   test("sin nota: todo Pendiente (D003)", () => {
-    const filas = filasMisNotas(datosDe(GABRIEL));
+    const filas = filasMisNotas(datosDe(HUGO));
     expect(filas.every((f) => f.nota === null)).toBe(true);
   });
 
   test("equipo eliminado: la nota grupal sigue con ella y nombra al equipo de entonces (D308)", () => {
     // Tras eliminar 5a-g2: sin equipo, y su grupal lleva `titularNombre`
-    const d = datosDe(YEILIN, { usuario: { equipoId: null } });
+    const d = datosDe(RAQUEL, { usuario: { equipoId: null } });
     expect(d.equipo).toBeNull();
     const sinEquipo: DatosAlumno = {
       ...d,
@@ -155,7 +155,7 @@ describe("notasDelAlumno / filasMisNotas", () => {
     expect(grupal?.detalle).toBe("5A-G2 Repostería");
 
     // En otro equipo, la grupal del viejo no lleva el nombre del nuevo
-    const otro = datosDe(YEILIN, { usuario: { equipoId: "5a-g6" } });
+    const otro = datosDe(RAQUEL, { usuario: { equipoId: "5a-g6" } });
     const fila = filasMisNotas(otro).find((f) => f.id === "logo-y-paleta");
     expect(fila?.nota).toBe(19);
     expect(fila?.detalle).toBeUndefined();
@@ -163,14 +163,14 @@ describe("notasDelAlumno / filasMisNotas", () => {
 });
 
 describe("«No participó» en sus vistas (D365, D367)", () => {
-  // Yeilin marcada «No participó» en la grupal «logo-y-paleta» (19/20 del equipo), con base 15
+  // Raquel marcada «No participó» en la grupal «logo-y-paleta» (19/20 del equipo), con base 15
   const marcada = (): DatosAlumno => {
-    const d = datosDe(YEILIN, { usuario: { base: 15 } });
+    const d = datosDe(RAQUEL, { usuario: { base: 15 } });
     return {
       ...d,
       entregas: d.entregas.map((e) =>
         e.tipo === "grupal" && e.evaluacion
-          ? { ...e, evaluacion: { ...e.evaluacion, noParticiparon: [YEILIN] } }
+          ? { ...e, evaluacion: { ...e.evaluacion, noParticiparon: [RAQUEL] } }
           : e,
       ),
     };
@@ -195,19 +195,19 @@ describe("«No participó» en sus vistas (D365, D367)", () => {
     expect(d.final).toBe(NOTA_MIN);
     expect(d.noParticipo).toBe(true);
     expect(d.puntaje).toBe(19);
-    const sin = detalleNota(datosDe(YEILIN), "logo-y-paleta");
+    const sin = detalleNota(datosDe(RAQUEL), "logo-y-paleta");
     expect(sin.estado === "ok" && sin.noParticipo).toBe(false);
   });
 });
 
 describe("detalleNota", () => {
   test("tarea de otra sección o inexistente → no-existe", () => {
-    expect(detalleNota(datosDe(YEILIN), "nada").estado).toBe("no-existe");
+    expect(detalleNota(datosDe(RAQUEL), "nada").estado).toBe("no-existe");
   });
 
   test("sin evaluar → sin-detalle", () => {
     const d = detalleNota(
-      datosDe(YEILIN, { tareas: [abierta] }),
+      datosDe(RAQUEL, { tareas: [abierta] }),
       "presentacion",
     );
     expect(d).toEqual({
@@ -218,12 +218,12 @@ describe("detalleNota", () => {
   });
 
   test("con desglose: puntos por pregunta sin escalar y respuesta faltante marcada", () => {
-    const d = detalleNota(datosDe(HEYMI), "identidad-de-marca");
+    const d = detalleNota(datosDe(ELSA), "identidad-de-marca");
     if (d.estado !== "ok") throw new Error(d.estado);
     expect(d.puntaje).toBe(18.5);
     expect(d.final).toBe(18.5);
     expect(d.preguntas).toHaveLength(tareaJson.preguntas.length);
-    const ev = tareaJson.evaluaciones.find((e) => e.cedula === HEYMI);
+    const ev = tareaJson.evaluaciones.find((e) => e.cedula === ELSA);
     expect(d.preguntas.map((p) => p.obtenido)).toEqual(ev?.puntos ?? []);
     expect(d.preguntas[0]?.respuesta).toBe(RESPUESTA_SIN_REGISTRO);
     expect(d.eyebrow).toBe("Individual · evaluada el 06/11/2026");
@@ -236,10 +236,10 @@ describe("detalleNota", () => {
       tipo: "grupal",
       titularId: "5a-g2",
       seccion: "5A",
-      integrantes: [YEILIN],
+      integrantes: [RAQUEL],
       estado: "evaluada",
       respuestas: { p1: { imagenPath: "entregas/x.jpg" } },
-      enviadaPor: YEILIN,
+      enviadaPor: RAQUEL,
       enviadaEn: AHORA,
       evaluacion: {
         puntos: { p1: 17 },
@@ -250,7 +250,7 @@ describe("detalleNota", () => {
       },
     };
     const d = detalleNota(
-      datosDe(YEILIN, {
+      datosDe(RAQUEL, {
         tareas: [abierta],
         entregas: [entrega],
         usuario: { base: 15 },
@@ -268,7 +268,7 @@ describe("detalleNota", () => {
   });
 
   test("comentario general y quién evaluó (D445, D447): solo el nombre corto, nunca la cédula", () => {
-    const PROFE = "30262232";
+    const PROFE = "45001237";
     const entrega = (
       evaluadaPor: string | null,
       comentarioGeneral?: string,
@@ -278,10 +278,10 @@ describe("detalleNota", () => {
       tipo: "grupal",
       titularId: "5a-g2",
       seccion: "5A",
-      integrantes: [YEILIN],
+      integrantes: [RAQUEL],
       estado: "evaluada",
       respuestas: {},
-      enviadaPor: YEILIN,
+      enviadaPor: RAQUEL,
       enviadaEn: AHORA,
       evaluacion: {
         puntos: { p1: 17 },
@@ -293,11 +293,11 @@ describe("detalleNota", () => {
       },
     });
     const profes = new Map([
-      [PROFE, { nombres: "Ana María", apellidos: "Pérez Gil" }],
+      [PROFE, { nombres: "Adela Juana", apellidos: "Pérez Iglesias" }],
     ]);
     const ver = (e: ConId<Entrega>, p = profes) => {
       const d = detalleNota(
-        datosDe(YEILIN, { tareas: [abierta], entregas: [e] }),
+        datosDe(RAQUEL, { tareas: [abierta], entregas: [e] }),
         "presentacion",
         p,
       );
@@ -306,7 +306,7 @@ describe("detalleNota", () => {
     };
 
     const d = ver(entrega(PROFE, "  ¡Gran equipo! 🎉\nSigan así  "));
-    expect(d.eyebrow).toBe("Grupal · evaluada el 06/11/2026 por Ana Pérez");
+    expect(d.eyebrow).toBe("Grupal · evaluada el 06/11/2026 por Adela Pérez");
     expect(d.comentarioGeneral).toBe("¡Gran equipo! 🎉\nSigan así");
     expect(JSON.stringify(d)).not.toContain(PROFE);
 
@@ -321,7 +321,7 @@ describe("detalleNota", () => {
   });
 
   test("nota importada sin desglose → ok sin preguntas", () => {
-    const d = detalleNota(datosDe(YEILIN), "logo-y-paleta");
+    const d = detalleNota(datosDe(RAQUEL), "logo-y-paleta");
     if (d.estado !== "ok") throw new Error(d.estado);
     expect(d.preguntas).toEqual([]);
     expect(d.final).toBe(19);
@@ -362,15 +362,15 @@ describe("desgloseReal", () => {
 
 describe("inicioVista", () => {
   test("puntos y puesto del ranking, pendientes y equipo", () => {
-    const d = datosDe(YEILIN, { tareas: [abierta] });
+    const d = datosDe(RAQUEL, { tareas: [abierta] });
     const v = inicioVista(d, companerosDe("5a-g2"));
     // 18,5 individual + 19 grupal (D007)
     expect(v.puntos?.puntos).toBe(37.5);
     expect(v.puntos?.puesto).toBe(
-      puestoAlumno(d.ranking, YEILIN)?.puesto ?? -1,
+      puestoAlumno(d.ranking, RAQUEL)?.puesto ?? -1,
     );
     expect(v.puntos?.deltaSemana).toBe(0);
-    expect(v.saludo.titulo).toBe("¡Hola, Yeilin!");
+    expect(v.saludo.titulo).toBe("¡Hola, Raquel!");
     expect(v.saludo.linea).toBe(
       "Tienes 1 tarea por entregar. Vence el 07/11/2026.",
     );
@@ -382,7 +382,7 @@ describe("inicioVista", () => {
     });
     expect(v.notas).toHaveLength(2);
     expect(v.equipo?.capitan).toEqual({ etiqueta: "Capitán:", quien: "tú" });
-    expect(v.equipo?.integrantes[0]?.id).toBe(YEILIN);
+    expect(v.equipo?.integrantes[0]?.id).toBe(RAQUEL);
   });
 
   test("una tarea ya entregada no está pendiente; un borrador sí, como «borrador»", () => {
@@ -392,7 +392,7 @@ describe("inicioVista", () => {
       tipo: "grupal",
       titularId: "5a-g2",
       seccion: "5A",
-      integrantes: [YEILIN],
+      integrantes: [RAQUEL],
       estado,
       respuestas: {},
       enviadaPor: null,
@@ -400,13 +400,13 @@ describe("inicioVista", () => {
       evaluacion: null,
     });
     const conEntrega = inicioVista(
-      datosDe(YEILIN, { tareas: [abierta], entregas: [entrega("entregada")] }),
+      datosDe(RAQUEL, { tareas: [abierta], entregas: [entrega("entregada")] }),
       [],
     );
     expect(conEntrega.pendientes).toEqual([]);
     expect(conEntrega.saludo.linea).toBe("Estás al día.");
     const borrador = inicioVista(
-      datosDe(YEILIN, { tareas: [abierta], entregas: [entrega("borrador")] }),
+      datosDe(RAQUEL, { tareas: [abierta], entregas: [entrega("borrador")] }),
       [],
     );
     expect(borrador.pendientes[0]?.avance).toBe("borrador");
@@ -419,7 +419,7 @@ describe("inicioVista", () => {
       tipo: "grupal",
       titularId: "5a-g2",
       seccion: "5A",
-      integrantes: [YEILIN],
+      integrantes: [RAQUEL],
       estado: "evaluada",
       respuestas: {},
       enviadaPor: null,
@@ -428,17 +428,17 @@ describe("inicioVista", () => {
         puntos: null,
         comentarios: {},
         puntaje: 16,
-        evaluadaPor: "30262232",
+        evaluadaPor: "45001237",
         evaluadaEn: 1,
       },
     };
     const v = inicioVista(
-      datosDe(YEILIN, { tareas: [abierta], entregas: [conNota] }),
+      datosDe(RAQUEL, { tareas: [abierta], entregas: [conNota] }),
       [],
     );
     expect(v.pendientes.map((p) => p.id)).toEqual(["presentacion"]);
     const cerrada = inicioVista(
-      datosDe(YEILIN, {
+      datosDe(RAQUEL, {
         tareas: [{ ...abierta, estado: "evaluada" }],
         entregas: [conNota],
       }),
@@ -448,7 +448,7 @@ describe("inicioVista", () => {
   });
 
   test("sin ranking: sin tarjeta de puntos; sin equipo: sin resumen", () => {
-    const d = { ...datosDe(GABRIEL), ranking: null };
+    const d = { ...datosDe(HUGO), ranking: null };
     const v = inicioVista(d, []);
     expect(v.puntos).toBeNull();
     expect(v.equipo).toBeNull();
@@ -457,13 +457,13 @@ describe("inicioVista", () => {
 
 describe("equipoVista", () => {
   test("capitana primero, puntos del ranking y nota del equipo sin base", () => {
-    const d = datosDe(YEILIN, { usuario: { base: 15 } });
+    const d = datosDe(RAQUEL, { usuario: { base: 15 } });
     const grupales = seed.entregas
       .map((e) => e.data)
       .filter((e) => e.tipo === "grupal" && e.seccion === "5A");
     const v = equipoVista(d, companerosDe("5a-g2"), grupales);
     expect(v?.integrantes[0]).toMatchObject({
-      id: YEILIN,
+      id: RAQUEL,
       esTu: true,
       esCapitan: true,
     });
@@ -483,7 +483,7 @@ describe("equipoVista", () => {
       tipo: "grupal",
       titularId,
       seccion: "5A",
-      integrantes: [YEILIN],
+      integrantes: [RAQUEL],
       estado: "evaluada",
       respuestas: {},
       enviadaPor: null,
@@ -496,7 +496,7 @@ describe("equipoVista", () => {
         evaluadaEn: AHORA,
       },
     });
-    const d = datosDe(YEILIN, { tareas: [tarea] });
+    const d = datosDe(RAQUEL, { tareas: [tarea] });
     const gana = equipoVista(d, [], [ent("5a-g2", 19), ent("5a-g1", 17)]);
     expect(gana?.premios).toEqual([
       {
@@ -510,36 +510,36 @@ describe("equipoVista", () => {
   });
 
   test("sin equipo → null", () => {
-    expect(equipoVista(datosDe(GABRIEL), [], [])).toBeNull();
+    expect(equipoVista(datosDe(HUGO), [], [])).toBeNull();
   });
 });
 
 describe("perfil, shell y topbar", () => {
   test("perfil: campos partidos, capitán y base", () => {
-    const d = datosDe(YEILIN, { usuario: { base: 15 } });
+    const d = datosDe(RAQUEL, { usuario: { base: 15 } });
     const p = perfilVista(d.usuario, d.equipo);
-    expect(p.cedula).toBe("C.I. 33.272.397");
+    expect(p.cedula).toBe("C.I. 45.009.896");
     expect(p.capitan).toBe("Capitán · 5A-G2");
     expect(p.base).toBe("Base 15");
     expect(p.campos.map((c) => c.valor)).toEqual([
-      "Yeilin",
-      "Marilyn",
-      "Duarte",
-      "Moncayo",
+      "Raquel",
+      "Leticia",
+      "Figueroa",
+      "Montes",
     ]);
   });
 
   test("usuario de la navegación con su avatar; estilo desconocido → el de defecto", () => {
-    const u = seed.usuarios.find((x) => x.id === YEILIN)?.data as Usuario;
+    const u = seed.usuarios.find((x) => x.id === RAQUEL)?.data as Usuario;
     expect(
       navUsuarioDe({
         ...u,
-        avatar: { estilo: "bottts-neutral", semilla: `${YEILIN}-1-2` },
+        avatar: { estilo: "bottts-neutral", semilla: `${RAQUEL}-1-2` },
       }),
     ).toEqual({
-      nombre: "Yeilin Duarte",
+      nombre: "Raquel Figueroa",
       estilo: "bottts-neutral",
-      seed: `${YEILIN}-1-2`,
+      seed: `${RAQUEL}-1-2`,
     });
     expect(estiloDe("pixel-art")).toBe("adventurer-neutral");
   });

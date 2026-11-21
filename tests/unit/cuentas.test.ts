@@ -59,28 +59,28 @@ describe("entrada de una cuenta (genérica por rol)", () => {
   test("profesor: trim, email vacío → null, en minúsculas", () => {
     const r = zEntradaCuenta.parse({
       rol: "profesor",
-      cedula: " 32888687 ",
-      nombres: "  Ana María ",
+      cedula: " 45004948 ",
+      nombres: "  Adela Juana ",
       apellidos: "Pérez",
       email: "",
     });
     expect(r).toEqual({
       rol: "profesor",
-      cedula: "32888687",
-      nombres: "Ana María",
+      cedula: "45004948",
+      nombres: "Adela Juana",
       apellidos: "Pérez",
       email: null,
     });
-    expect(zEntradaCuenta.parse({ ...r, email: " Ana@Gmail.com " }).email).toBe(
-      "ana@gmail.com",
-    );
+    expect(
+      zEntradaCuenta.parse({ ...r, email: " Adela@Gmail.com " }).email,
+    ).toBe("adela@gmail.com");
   });
 
   test("rechaza cédula inválida, nombres vacíos y email mal escrito", () => {
     const ok = {
       rol: "profesor",
-      cedula: "32888687",
-      nombres: "Ana",
+      cedula: "45004948",
+      nombres: "Adela",
       apellidos: "Pérez",
       email: "",
     };
@@ -91,7 +91,7 @@ describe("entrada de una cuenta (genérica por rol)", () => {
     expect(zEntradaCuenta.safeParse({ ...ok, nombres: "   " }).success).toBe(
       false,
     );
-    expect(zEntradaCuenta.safeParse({ ...ok, email: "ana@" }).success).toBe(
+    expect(zEntradaCuenta.safeParse({ ...ok, email: "adela@" }).success).toBe(
       false,
     );
     expect(zEntradaCuenta.safeParse({ ...ok, rol: "admin" }).success).toBe(
@@ -119,8 +119,8 @@ describe("entrada de una cuenta (genérica por rol)", () => {
   test("formularios de Profesores y Perfil", () => {
     expect(
       zCrearProfesor.safeParse({
-        cedula: "32888687",
-        nombres: "Ana",
+        cedula: "45004948",
+        nombres: "Adela",
         apellidos: "Pérez",
         email: "",
       }).success,
@@ -137,12 +137,12 @@ describe("entrada de una cuenta (genérica por rol)", () => {
 
 describe("usuarioNuevo", () => {
   test("profesor: sin sección, sin equipo, base 20, semilla opaca, cambio obligatorio", () => {
-    const semilla = semillaAvatarNueva("32888687");
+    const semilla = semillaAvatarNueva("45004948");
     const u = usuarioNuevo(
       {
         rol: "profesor",
-        cedula: "32888687",
-        nombres: "Ana",
+        cedula: "45004948",
+        nombres: "Adela",
         apellidos: "Pérez",
         email: null,
       },
@@ -150,7 +150,7 @@ describe("usuarioNuevo", () => {
       semilla,
     );
     expect(zUsuario.safeParse(u).success).toBe(true);
-    expect(u.avatar.semilla).not.toContain("32888687");
+    expect(u.avatar.semilla).not.toContain("45004948");
     expect(u).toMatchObject({
       seccion: null,
       equipoId: null,
@@ -211,17 +211,17 @@ describe("filasProfesores", () => {
   const usuarios: Usuario[] = [
     {
       ...base,
-      cedula: "30262232",
+      cedula: "45001237",
       rol: "profesor",
       nombres: "César",
-      apellidos: "Zambrano",
+      apellidos: "Zapata",
       admin: true,
     },
     {
       ...base,
-      cedula: "32888687",
+      cedula: "45004948",
       rol: "profesor",
-      nombres: "Ana",
+      nombres: "Adela",
       apellidos: "Álvarez",
       debeCambiarPassword: true,
     },
@@ -238,12 +238,12 @@ describe("filasProfesores", () => {
   test("solo profesores, por apellido (con tildes), con marcas", () => {
     const f = filasProfesores(
       usuarios,
-      { "32888687": "ana@gmail.com" },
-      "30262232",
+      { "45004948": "adela@gmail.com" },
+      "45001237",
     );
-    expect(f.map((p) => p.cedula)).toEqual(["32888687", "30262232"]);
+    expect(f.map((p) => p.cedula)).toEqual(["45004948", "45001237"]);
     expect(f[0]).toMatchObject({
-      email: "ana@gmail.com",
+      email: "adela@gmail.com",
       admin: false,
       pendiente: true,
       tu: false,

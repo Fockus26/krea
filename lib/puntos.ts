@@ -46,7 +46,7 @@ export type Candidato = {
   id: string;
   tipo: TipoDestino;
   seccion: SeccionId;
-  /** "Jorge Quintero" o "5A-G3 Ropa". */
+  /** "Mateo Paredes" o "5A-G3 Ropa". */
   nombre: string;
   /** Puntos actuales del ranking. */
   puntos: number;
@@ -83,7 +83,7 @@ export type CandidatosPuntos = Readonly<
   Record<TipoDestino, Readonly<Record<SeccionId, readonly Candidato[]>>>
 >;
 
-/** Clave de un destino en los mapas de puntos: "alumno:32828381" / "equipo:5a-g3". */
+/** Clave de un destino en los mapas de puntos: "alumno:45003711" / "equipo:5a-g3". */
 export function claveDestino(tipo: TipoDestino, id: string): string {
   return `${tipo}:${id}`;
 }
@@ -135,7 +135,7 @@ function movimientoTexto(m: Movimiento, antes: number, despues: number) {
 }
 
 /**
- * «Jorge Quintero pasa de 17 a 19 pts y sube del puesto 16 al 11. Su nota no cambia.»
+ * «Mateo Paredes pasa de 17 a 19 pts y sube del puesto 16 al 11. Su nota no cambia.»
  * `ranking` = los candidatos de su tipo y sección con los puntos actuales (ya con los deltas de la sesión);
  * el puesto nuevo se recalcula con `rankCompetition` (competencia 1-2-2-4, desempate por apellido).
  */
@@ -240,7 +240,7 @@ export type FilaHistorial = {
   tipo: TipoDestino;
   destinoId: string;
   seccion: SeccionId;
-  /** "Jorge Quintero" o "Equipo 5A-G3 Ropa". */
+  /** "Mateo Paredes" o "Equipo 5A-G3 Ropa". */
   nombre: string;
   valor: number;
   motivo: string;

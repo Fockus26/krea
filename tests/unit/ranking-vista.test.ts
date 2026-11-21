@@ -75,11 +75,11 @@ describe("textos", () => {
     expect(eyebrowRanking("5A", 1, "equipos")).toBe("Sección 5A · 1 equipo");
   });
   test("subtítulo de equipo con capitán/capitana (D075)", () => {
-    expect(subtituloEquipo(5, "Christian Sepúlveda")).toBe(
-      "5 integrantes · capitán Christian Sepúlveda",
+    expect(subtituloEquipo(5, "Diego Soler")).toBe(
+      "5 integrantes · capitán Diego Soler",
     );
-    expect(subtituloEquipo(1, "Ana Pérez", true)).toBe(
-      "1 integrante · capitana Ana Pérez",
+    expect(subtituloEquipo(1, "Adela Pérez", true)).toBe(
+      "1 integrante · capitana Adela Pérez",
     );
   });
   test("título de la lista", () => {
@@ -105,31 +105,31 @@ describe("movimientos", () => {
   const sube: Movimiento = {
     id: "1",
     tipo: "sube",
-    nombre: "María Méndez",
+    nombre: "Juana Montero",
     puesto: 4,
     cambio: 2,
     hace: 10,
   };
   test("texto de subida, bajada y ajuste", () => {
-    expect(movimientoTexto(sube)).toBe("María Méndez subió al puesto 4");
+    expect(movimientoTexto(sube)).toBe("Juana Montero subió al puesto 4");
     expect(
       movimientoTexto({
         ...sube,
         tipo: "baja",
-        nombre: "Valentina Gámez",
+        nombre: "Noemí Guzmán",
         puesto: 27,
       }),
-    ).toBe("Valentina Gámez bajó al puesto 27");
+    ).toBe("Noemí Guzmán bajó al puesto 27");
     expect(
       movimientoTexto({
         id: "3",
         tipo: "puntos",
-        nombre: "Jorge Quintero",
+        nombre: "Mateo Paredes",
         valor: 2,
         motivo: "Participación destacada",
         hace: 1,
       }),
-    ).toBe("Jorge Quintero · Participación destacada");
+    ).toBe("Mateo Paredes · Participación destacada");
   });
   test("puntos con signo tipográfico y texto accesible", () => {
     expect(puntosConSigno(2)).toBe("+2");

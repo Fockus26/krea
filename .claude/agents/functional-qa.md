@@ -90,7 +90,7 @@ For each field of each form:
 | Only spaces (`"   "`) | The case that almost always passes the "not empty" validation |
 | One character | Badly set minimums |
 | 10,000 characters | Does it break the UI? The database? Return a 500? |
-| Emoji and unicode (`👨‍👩‍👧‍👦`, `日本語`, `José`, `ñ`) | Broken encoding, miscounted length |
+| Emoji and unicode (`👨‍👩‍👧‍👦`, `日本語`, `Matías`, `ñ`) | Broken encoding, miscounted length |
 | `<script>alert(1)</script>` | Is it escaped when rendered? |
 | `'; DROP TABLE users;--` and `{"$ne": null}` | SQL / NoSQL injection |
 | `../../etc/passwd` | Path traversal in any field that touches files |

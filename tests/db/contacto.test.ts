@@ -46,8 +46,8 @@ beforeAll(async () => {
   base = await baseNueva();
   await docs.ponerUsuario(
     db(),
-    persona(PROFE_TODAS, "profesor", null, "Ana"),
-    "privado-ana@gmail.com",
+    persona(PROFE_TODAS, "profesor", null, "Adela"),
+    "privado-adela@gmail.com",
   );
   await docs.ponerUsuario(db(), persona(PROFE_A, "profesor", "5A", "Beto"));
   await docs.ponerUsuario(db(), persona(PROFE_C, "profesor", "5C", "Carla"));
@@ -61,13 +61,13 @@ describe("guardarContactoCon (D378)", () => {
       await guardarContactoCon(
         db(),
         PROFE_TODAS,
-        contacto("0412-123 4567", "Ana@Gmail.com"),
+        contacto("0412-123 4567", "Adela@Gmail.com"),
         AHORA,
       ),
     ).toEqual({ ok: true });
     expect(await leerContacto(db(), PROFE_TODAS)).toEqual({
       telefono: "584121234567",
-      emailContacto: "ana@gmail.com",
+      emailContacto: "adela@gmail.com",
     });
     await guardarContactoCon(db(), PROFE_TODAS, contacto("", ""), AHORA);
     expect(await leerContacto(db(), PROFE_TODAS)).toEqual({
@@ -75,7 +75,9 @@ describe("guardarContactoCon (D378)", () => {
       emailContacto: null,
     });
     // El email de recuperación es otra columna: no se toca
-    expect(await docs.emailDe(db(), PROFE_TODAS)).toBe("privado-ana@gmail.com");
+    expect(await docs.emailDe(db(), PROFE_TODAS)).toBe(
+      "privado-adela@gmail.com",
+    );
   });
 
   test("un alumno o una cédula sin perfil no guardan", async () => {
@@ -113,12 +115,16 @@ describe("contactosDeProfes (D380)", () => {
     await guardarContactoCon(
       db(),
       PROFE_TODAS,
-      contacto("", "ana@gmail.com"),
+      contacto("", "adela@gmail.com"),
       AHORA,
     );
     await guardarContactoCon(db(), PROFE_C, contacto("04165556677", ""), AHORA);
     const filas = await contactosDeProfes(db(), "5A");
-    expect(filas.map((f) => f.nombres).sort()).toEqual(["Ana", "Beto", "Dora"]);
+    expect(filas.map((f) => f.nombres).sort()).toEqual([
+      "Adela",
+      "Beto",
+      "Dora",
+    ]);
     for (const f of filas)
       expect(Object.keys(f).sort()).toEqual([
         "apellidos",
@@ -133,17 +139,17 @@ describe("contactosDeProfes (D380)", () => {
     expect(JSON.stringify(filas)).not.toContain(PROFE_A);
     const tarjetas = tarjetasProfes(filas);
     expect(tarjetas.map((t) => t.nombre)).toEqual([
-      "Ana Contacto",
+      "Adela Contacto",
       "Beto Contacto",
       "Dora Contacto",
     ]);
     expect(tarjetas.map((t) => t.sinContacto)).toEqual([false, false, true]);
-    expect(JSON.stringify(tarjetas)).not.toContain("privado-ana");
+    expect(JSON.stringify(tarjetas)).not.toContain("privado-adela");
     expect(JSON.stringify(tarjetas)).not.toContain(PROFE_TODAS);
-    // 5C ve a Carla (y a Ana y Dora, que ven todas), no a Beto
+    // 5C ve a Carla (y a Adela y Dora, que ven todas), no a Beto
     expect(
       (await contactosDeProfes(db(), "5C")).map((f) => f.nombres).sort(),
-    ).toEqual(["Ana", "Carla", "Dora"]);
+    ).toEqual(["Adela", "Carla", "Dora"]);
   }, 30_000);
 
   test("con semilla opaca el alumno ve el avatar del profe (D389)", async () => {
