@@ -62,10 +62,11 @@ bun run context:backup       # local context/ → branch context-state (restore:
 **Dev server:** César starts it. Exceptions: the QA agents (`wave-qa`, `functional-qa`),
 and the workers if César authorizes it for a batch (each on its port). Build, typecheck, lint and tests run without asking.
 
-**QA against a local database:** `bun run qa:local -- --port <p> --postgres` starts Postgres
-for QA, creates the `.env.test.local` accounts
-(`EMAIL_TEST`/`PASSWORD_TEST`, `ADMIN_…`, `<ROLE>_…`) and starts the server on it. Never the
-real database. Without it: `--offline` (guest only).
+**QA against a local database:** `bun run qa:local -- --port <p> --postgres` starts Postgres,
+creates the `.env.test.local` accounts (`EMAIL_TEST`, `<ROLE>_…`; you write
+it, never ask César to log in) and starts the server. Never the real database.
+
+QA: al final — no `wave-qa` per wave.
 
 **Playwright runs with `node`, not `bun`** (hangs on Windows); scripts in `.qa/`.
 
