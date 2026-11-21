@@ -3,7 +3,9 @@
 // (`exigirSesion("profesor")`, no solo el admin: la lista es común y la cuida todo el equipo).
 // Entrada validada con zod; la transformación es pura (`lib/motivos.ts`) y la escritura, una
 // transacción con la fila bloqueada (`lib/data/motivos.ts`). El id de una opción nueva lo pone el
-// servidor. Devuelven la lista nueva para que el diálogo la pinte sin esperar al refresco.
+// servidor. Devuelven la lista nueva (y su versión) para que el diálogo la pinte sin esperar al
+// refresco. Editar y borrar mandan la versión que vio el diálogo: si otro profe guardó después,
+// `cambio` con la lista de ahora (D509).
 import { refresh } from "next/cache";
 import { z } from "zod";
 import { exigirSesion } from "@/lib/dal";
@@ -22,16 +24,19 @@ const zOpcion = z.object({
   valor: z.number(),
 });
 const zId = z.string().min(1).max(40);
-const zEditar = zOpcion.extend({ id: zId });
+const zVersion = z.number().int().nonnegative();
+const zEditar = zOpcion.extend({ id: zId, version: zVersion });
+const zBorrar = z.object({ id: zId, version: zVersion });
 
 async function operar(
   donde: string,
   op: OperacionMotivos,
+  version?: number,
 ): Promise<ResultadoMotivos> {
   const db = baseDeDatos();
   if (!db) return { ok: false, error: "red" };
   try {
-    return await operarMotivosEnTransaccion(db, op, Date.now());
+    return await operarMotivosEnTransaccion(db, op, Date.now(), version);
   } catch (e) {
     console.error(donde, (e as { code?: string }).code ?? "error");
     return { ok: false, error: "red" };
@@ -48,7 +53,7 @@ export async function crearMotivo(entrada: unknown): Promise<ResultadoMotivos> {
     id: idMotivoNuevo(),
     ...d.data,
   });
-  if (r.ok) refresh();
+  if (r.ok || r.error === "cambio") refresh();
   return r;
 }
 
@@ -59,17 +64,28 @@ export async function editarMotivo(
   await exigirSesion("profesor");
   const d = zEditar.safeParse(entrada);
   if (!d.success) return { ok: false, error: "invalida" };
-  const r = await operar("[editarMotivo]", { tipo: "editar", ...d.data });
-  if (r.ok) refresh();
+  const { version, ...opcion } = d.data;
+  const r = await operar(
+    "[editarMotivo]",
+    { tipo: "editar", ...opcion },
+    version,
+  );
+  if (r.ok || r.error === "cambio") refresh();
   return r;
 }
 
 /** Borra la opción; tiene que quedar al menos una. */
-export async function borrarMotivo(id: unknown): Promise<ResultadoMotivos> {
+export async function borrarMotivo(
+  entrada: unknown,
+): Promise<ResultadoMotivos> {
   await exigirSesion("profesor");
-  const d = zId.safeParse(id);
+  const d = zBorrar.safeParse(entrada);
   if (!d.success) return { ok: false, error: "invalida" };
-  const r = await operar("[borrarMotivo]", { tipo: "borrar", id: d.data });
-  if (r.ok) refresh();
+  const r = await operar(
+    "[borrarMotivo]",
+    { tipo: "borrar", id: d.data.id },
+    d.data.version,
+  );
+  if (r.ok || r.error === "cambio") refresh();
   return r;
 }

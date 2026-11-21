@@ -2,9 +2,15 @@
 // que usan las Server Actions de lib/acciones/motivos.ts, y el ajuste que busca su opción en la
 // misma transacción.
 import { beforeAll, describe, expect, test } from "bun:test";
+import { eq } from "drizzle-orm";
 import { aplicarAjusteEnTransaccion } from "@/lib/data/ajustes";
-import { leerMotivos, operarMotivosEnTransaccion } from "@/lib/data/motivos";
+import {
+  leerMotivos,
+  leerMotivosConVersion,
+  operarMotivosEnTransaccion,
+} from "@/lib/data/motivos";
 import type { Db } from "@/lib/db";
+import { config } from "@/lib/db/schema";
 import { DOC_MOTIVOS, type Usuario } from "@/lib/modelo";
 import {
   MOTIVOS_INICIALES,
@@ -140,6 +146,72 @@ describe("config/motivos (D375)", () => {
     const ids = (await leerMotivos(db()))?.map((m) => m.id) ?? [];
     expect(ids).toContain("m-a");
     expect(ids).toContain("m-b");
+  });
+
+  test("editar o borrar con la lista vieja: `cambio` con la de ahora, sin pisar (D509)", async () => {
+    await ponerConfig(db(), DOC_MOTIVOS, {
+      motivos: MOTIVOS_INICIALES,
+      actualizadoEn: 5,
+    });
+    // Los dos profes abrieron la lista en la versión 5
+    expect((await leerMotivosConVersion(db()))?.version).toBe(5);
+    const extra = { tipo: "editar" as const, id: "extra" };
+    const p1 = await operarMotivosEnTransaccion(
+      db(),
+      { ...extra, etiqueta: "Trabajo extra (P1)", valor: 2 },
+      AHORA,
+      5,
+    );
+    expect(p1).toMatchObject({ ok: true, version: AHORA });
+    // El profe 2, con la lista de antes: no pisa el cambio del profe 1
+    const p2 = await operarMotivosEnTransaccion(
+      db(),
+      { ...extra, etiqueta: "Trabajo extra (P2)", valor: 3 },
+      AHORA + 1,
+      5,
+    );
+    expect(p2).toEqual({
+      ok: false,
+      error: "cambio",
+      motivos: lista(p1),
+      version: AHORA,
+    });
+    expect(
+      (await leerMotivos(db()))?.find((m) => m.id === "extra")?.etiqueta,
+    ).toBe("Trabajo extra (P1)");
+    expect(
+      await operarMotivosEnTransaccion(
+        db(),
+        { tipo: "borrar", id: "extra" },
+        AHORA + 1,
+        5,
+      ),
+    ).toMatchObject({ ok: false, error: "cambio" });
+    // Con la versión de ahora, sí; en el mismo milisegundo la versión igual avanza
+    expect(
+      await operarMotivosEnTransaccion(
+        db(),
+        { ...extra, etiqueta: "Trabajo extra (P2)", valor: 3 },
+        AHORA,
+        AHORA,
+      ),
+    ).toMatchObject({ ok: true, version: AHORA + 1 });
+  });
+
+  test("sin fila, la versión es 0 y materializarla no cuenta como cambio (D509)", async () => {
+    await db().delete(config).where(eq(config.id, DOC_MOTIVOS));
+    expect(await leerMotivosConVersion(db())).toEqual({
+      motivos: MOTIVOS_INICIALES,
+      version: 0,
+    });
+    expect(
+      await operarMotivosEnTransaccion(
+        db(),
+        { tipo: "editar", id: "extra", etiqueta: "Extra", valor: 2 },
+        AHORA,
+        0,
+      ),
+    ).toMatchObject({ ok: true, version: AHORA });
   });
 
   test("la última no se borra; una fila que no valida responde `invalida`", async () => {
