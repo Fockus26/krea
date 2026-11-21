@@ -7,14 +7,19 @@ import { GradeSummary } from "@/components/sections/notas/grade-summary";
 import { QuestionList } from "@/components/sections/notas/question-list";
 import { BackLink } from "@/components/sections/shared/back-link";
 import { PageHeader } from "@/components/sections/shared/page-header";
+import { PrizeCard } from "@/components/sections/tareas/prize-card";
 import { Card } from "@/components/ui/card";
 import tareaSeed from "@/data/seed/tarea-identidad-marca.json";
 import { verificarSesion } from "@/lib/dal";
-import { datosAlumno, evaluadoresDeTarea } from "@/lib/datos/estudiante";
+import {
+  competidoresPremio,
+  datosAlumno,
+  evaluadoresDeTarea,
+} from "@/lib/datos/estudiante";
 import { urlsFirmadas } from "@/lib/datos/imagenes";
 import { imagenesConAlt, respuestaFirmada } from "@/lib/question";
 import { TAREA_GRUPAL_SEED } from "@/lib/seed-firestore";
-import { detalleNota } from "@/lib/vistas-estudiante";
+import { detalleNota, premioIndividualGanado } from "@/lib/vistas-estudiante";
 
 type Props = PageProps<"/notas/[tarea]">;
 
@@ -64,10 +69,26 @@ export default async function DetalleNotaPage({ params }: Props) {
     );
   }
 
-  // Solo se firman las imágenes de esta entrega, que es suya (D195)
-  const urls = await urlsFirmadas(
-    d.preguntas.flatMap((p) => p.imagenPaths ?? []),
-  );
+  // Premio individual (D527): se resuelve en el servidor con las notas de su sección, al cerrar
+  // para todos; al alumno solo le llega si ganó. Después de los datos de la sesión (`ahora`)
+  const tarea = datos.tareas.find((t) => t.id === id);
+  const seccion = datos.usuario.seccion;
+  const premio =
+    tarea?.tipo === "individual" && tarea.premio && seccion
+      ? premioIndividualGanado(
+          tarea,
+          seccion,
+          datos.usuario.cedula,
+          await competidoresPremio(id, seccion),
+          Date.now(),
+        )
+      : null;
+
+  // Solo se firman las imágenes de esta entrega, que es suya (D195), y la foto del premio (D265)
+  const urls = await urlsFirmadas([
+    ...d.preguntas.flatMap((p) => p.imagenPaths ?? []),
+    ...(premio?.premioFoto ? [premio.premioFoto] : []),
+  ]);
   const preguntas = d.preguntas.map(({ imagenPaths, ...p }, i) => {
     const imagen = respuestaFirmada(
       imagenesConAlt(imagenPaths ?? [], d.autor, i + 1),
@@ -88,6 +109,14 @@ export default async function DetalleNotaPage({ params }: Props) {
         final={d.final}
         noParticipo={d.noParticipo}
       />
+      {premio ? (
+        <PrizeCard
+          premio={premio.premio}
+          tipo="individual"
+          fotoUrl={premio.premioFoto ? urls.get(premio.premioFoto) : null}
+          ganado
+        />
+      ) : null}
       {d.comentarioGeneral ? (
         // PROVISIONAL (CONTENT_CHECKLIST fila 250): rótulo del comentario general (D445)
         <ComentarioProfe

@@ -3,7 +3,12 @@
 
 import type { FilaPendiente } from "@/components/sections/inicio/pending-tasks";
 import type { FilaEntregada } from "@/components/sections/tareas/delivered-tasks";
-import type { RespuestasIniciales } from "@/components/sections/tareas/task-answer-form";
+import type { ParteDeIntegrante } from "@/components/sections/tareas/partes-integrante";
+import type { FilaRepartoPanel } from "@/components/sections/tareas/reparto-panel";
+import type {
+  BloqueoPregunta,
+  RespuestasIniciales,
+} from "@/components/sections/tareas/task-answer-form";
 import { inicioDe } from "@/lib/demo/inicio";
 import {
   alumnoPorCedula,
@@ -12,10 +17,12 @@ import {
   equipoDe,
   integrantes,
   nombreCompleto,
+  nombreCorto,
   primerNombre,
 } from "@/lib/demo/seed";
 import { type DemoTarea, TAREAS } from "@/lib/demo/tareas";
 import { formatFecha } from "@/lib/fecha";
+import { bloqueoTexto, parteTomadaTexto } from "@/lib/partes";
 import { answerImageAlt } from "@/lib/question";
 import {
   entregadaTexto,
@@ -120,7 +127,7 @@ export function entregaDe(modo: ModoEntrega, tareaId?: string) {
     eyebrow: eyebrowTarea(t.tipo, equipo?.nombre),
     vence: venceTexto(t.fecha),
     puntos: puntosPreguntasTexto(t.preguntas.map((p) => p.valor)),
-    premio: t.tipo === "grupal" ? t.premio : undefined,
+    premio: t.premio,
     preguntas: t.preguntas,
     autor: primerNombre(alumno),
     capitan:
@@ -159,4 +166,136 @@ export function entregaDe(modo: ModoEntrega, tareaId?: string) {
           }
         : undefined,
   };
+}
+
+/* ---------- Reparto (D422, D461) ---------- */
+
+export type ModoReparto = "reparto-capitan" | "reparto-integrante";
+
+/**
+ * Galería del reparto de «Presentación del producto» (D529), con el equipo real 5A-G2: una
+ * pregunta por estado. p1 entregada al capitán por otro integrante; p2 aceptada, p3 asignada sin
+ * entregar y p4 tomada por la capitana («La respondo yo»), las tres de Paola. `capitan`: el panel
+ * Reparto y los bloqueos de su formulario; `integrante`: lo que ve Paola. Los datos los arma la
+ * página real con `repartoVista`; aquí van a mano, con los mismos textos.
+ */
+export function repartoDe(modo: ModoReparto) {
+  const t = tarea("presentacion-producto");
+  const capitana = alumnoPorCedula(CEDULA_DEMO);
+  const paola = alumnoPorCedula(CEDULA_NO_CAPITAN);
+  const equipo = equipoDe(capitana);
+  const otro =
+    (equipo ? integrantes(equipo) : []).find(
+      (a) => a.cedula !== capitana.cedula && a.cedula !== paola.cedula,
+    ) ?? paola;
+  const texto = (id: string) => ({
+    tipo: "texto" as const,
+    texto: RESPUESTAS_ENTREGADAS[id] ?? "",
+  });
+  const imagen = (autor: DemoAlumno, numero: number) => ({
+    tipo: "imagen" as const,
+    src: IMAGEN_DEMO,
+    alt: answerImageAlt(primerNombre(autor), numero),
+  });
+
+  if (modo === "reparto-integrante") {
+    const partes: ParteDeIntegrante[] = [
+      { mia: false, bloqueadaPor: primerNombre(otro) },
+      {
+        mia: true,
+        estado: "aceptada",
+        inicial: RESPUESTAS_ENTREGADAS.p2 ?? null,
+        respuesta: texto("p2"),
+      },
+      { mia: true, estado: "asignada", inicial: null, respuesta: null },
+      {
+        mia: false,
+        bloqueadaPor: primerNombre(capitana),
+        aviso: parteTomadaTexto(primerNombre(capitana)),
+      },
+    ];
+    return {
+      modo,
+      tareaId: t.id,
+      preguntas: t.preguntas,
+      partes,
+      capitan: primerNombre(capitana),
+      autor: primerNombre(paola),
+      titular: paola.cedula,
+    } as const;
+  }
+
+  const filas: FilaRepartoPanel[] = [
+    {
+      preguntaId: "p1",
+      numero: 1,
+      enunciado: t.preguntas[0]?.enunciado ?? "",
+      asignado: otro.cedula,
+      nombre: nombreCorto(otro),
+      estado: "entregada",
+      respuesta: imagen(otro, 1),
+    },
+    {
+      preguntaId: "p2",
+      numero: 2,
+      enunciado: t.preguntas[1]?.enunciado ?? "",
+      asignado: paola.cedula,
+      nombre: nombreCorto(paola),
+      estado: "aceptada",
+      respuesta: texto("p2"),
+    },
+    {
+      preguntaId: "p3",
+      numero: 3,
+      enunciado: t.preguntas[2]?.enunciado ?? "",
+      asignado: paola.cedula,
+      nombre: nombreCorto(paola),
+      estado: "asignada",
+      respuesta: null,
+    },
+    {
+      preguntaId: "p4",
+      numero: 4,
+      enunciado: t.preguntas[3]?.enunciado ?? "",
+      asignado: paola.cedula,
+      nombre: nombreCorto(paola),
+      estado: "tomada",
+      respuesta: null,
+    },
+  ];
+  // Las de otros, vigentes y no tomadas, van en solo lectura en su formulario (D462)
+  const bloqueos: Record<string, BloqueoPregunta> = {
+    p1: {
+      texto: bloqueoTexto("entregada", nombreCorto(otro)),
+      respuesta: imagen(otro, 1),
+      aceptada: false,
+      nombre: nombreCorto(otro),
+      tomable: false,
+    },
+    p2: {
+      texto: bloqueoTexto("aceptada", nombreCorto(paola)),
+      respuesta: texto("p2"),
+      aceptada: true,
+      nombre: nombreCorto(paola),
+      tomable: false,
+    },
+    p3: {
+      texto: bloqueoTexto("asignada", nombreCorto(paola)),
+      respuesta: null,
+      aceptada: false,
+      nombre: nombreCorto(paola),
+      tomable: true,
+    },
+  };
+  return {
+    modo,
+    tareaId: t.id,
+    preguntas: t.preguntas,
+    filas,
+    integrantes: (equipo ? integrantes(equipo) : [])
+      .filter((a) => a.cedula !== capitana.cedula)
+      .map((a) => ({ id: a.cedula, nombre: nombreCorto(a) })),
+    bloqueos,
+    autor: primerNombre(capitana),
+  } as const;
 }

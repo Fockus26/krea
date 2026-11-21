@@ -22,7 +22,7 @@ export type DemoTarea = {
   estado: EstadoTarea;
   /** Día civil ISO: fecha de entrega (abierta) o de evaluación (evaluada). */
   fecha: string;
-  /** Solo grupales. */
+  /** Grupal o individual (D263). */
   premio?: string;
   preguntas: readonly DemoPregunta[];
 };

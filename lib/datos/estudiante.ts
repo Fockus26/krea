@@ -8,7 +8,7 @@ import { cache } from "react";
 import { type TarjetaProfe, tarjetasProfes } from "@/lib/contacto";
 import { exigirSesion } from "@/lib/dal";
 import { contactosDeProfes } from "@/lib/data/contacto";
-import { entregasDeIntegrante } from "@/lib/data/entregas";
+import { entregasDeIntegrante, leerEntrega } from "@/lib/data/entregas";
 import {
   ajusteDeFila,
   entregaDeFila,
@@ -166,6 +166,82 @@ export const evaluadoresDeTarea = cache(async (tareaId: string) => {
     ),
   );
 });
+
+/**
+ * La grupal de esa tarea de SU equipo actual, aunque él no figure como integrante (entró después
+ * del envío, D526): la vista la muestra en solo lectura y sin nota suya. Si falla, como antes.
+ */
+export const entregaDelEquipo = cache(
+  async (tareaId: string, equipoId: string): Promise<ConId<Entrega> | null> =>
+    opcional(
+      "entrega del equipo",
+      () => leerEntrega(db(), idEntrega(tareaId, equipoId)),
+      null,
+    ),
+);
+
+/**
+ * Nombre de quien envió una entrega y ya no está en el equipo (D525): solo un alumno de su
+ * sección, y solo nombres y apellidos (la vista arma el nombre corto; la cédula no sale).
+ */
+export const autorDeEnvio = cache(
+  async (
+    cedula: string,
+  ): Promise<Map<string, Pick<Usuario, "nombres" | "apellidos">>> => {
+    const { seccion } = await alumnoActual();
+    const u = await opcional(
+      "autor del envío",
+      () => leerUsuario(db(), cedula),
+      null,
+    );
+    return u && u.rol === "estudiante" && u.seccion === seccion
+      ? new Map([[cedula, { nombres: u.nombres, apellidos: u.apellidos }]])
+      : new Map();
+  },
+);
+
+/**
+ * Quiénes compiten por el premio de una individual en su sección (D527): los alumnos (solo lo que
+ * pide `notasPremioIndividual`) y sus entregas de esa tarea. Solo el servidor los lee: al alumno
+ * le llega si ganó, nunca las notas de los demás.
+ */
+export const competidoresPremio = cache(
+  async (
+    tareaId: string,
+    seccion: SeccionId,
+  ): Promise<{
+    alumnos: Array<Pick<Usuario, "cedula" | "rol" | "seccion" | "base">>;
+    entregas: Entrega[];
+  }> => {
+    const [filasAlumnos, filasEntregas] = await Promise.all([
+      db()
+        .select()
+        .from(usuarios)
+        .where(
+          and(eq(usuarios.seccion, seccion), eq(usuarios.rol, "estudiante")),
+        ),
+      db()
+        .select()
+        .from(entregas)
+        .where(
+          and(
+            eq(entregas.tareaId, tareaId),
+            eq(entregas.seccion, seccion),
+            eq(entregas.tipo, "individual"),
+          ),
+        ),
+    ]);
+    return {
+      alumnos: validas(filasAlumnos.map(usuarioDeFila)).map((u) => ({
+        cedula: u.cedula,
+        rol: u.rol,
+        seccion: u.seccion,
+        base: u.base,
+      })),
+      entregas: validas(filasEntregas.map(entregaDeFila)),
+    };
+  },
+);
 
 /** Entregas grupales de la sección (Mi equipo: notas del equipo y ganadores de premios). */
 export async function entregasGrupales(seccion: SeccionId): Promise<Entrega[]> {

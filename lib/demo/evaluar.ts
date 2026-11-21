@@ -421,7 +421,7 @@ export function evaluarVista(indice: number): EvaluarVista {
       tipoTexto: tipoChipTexto(entrega.tipo, integrantesN),
       seccion: `Sección ${seccion}`,
       base: baseChipTexto(entrega.tipo, baseAlumno),
-      premio: entrega.tipo === "grupal" ? entrega.tarea.premio : undefined,
+      premio: entrega.tarea.premio,
     },
     base: baseEfectiva(entrega.tipo, baseAlumno),
     integrantes: miembros,

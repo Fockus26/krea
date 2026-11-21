@@ -280,6 +280,12 @@ export function premioParaTexto(tipoTarea: TipoTareaId): string {
     : "Premio para el equipo con mejor nota";
 }
 
+/**
+ * Línea del premio individual que ganó, en el detalle de su nota (D527). PROVISIONAL
+ * (CONTENT_CHECKLIST fila 289).
+ */
+export const PREMIO_GANADO_TEXTO = "¡Ganaste el premio!";
+
 /** Ayuda del campo premio (constructor y diálogo). */
 export function ayudaPremio(tipoTarea: TipoTareaId): string {
   return tipoTarea === "individual"

@@ -18,9 +18,15 @@ export function TaskDelivered({
   notaHref,
   volverHref,
   accion,
+  enviadaPorFuera = false,
+  antesDeEntrar = false,
 }: {
-  /** Quién la envió; `null` si la nota vino del Excel sin ese registro. */
+  /** Quién la envió; `null` si la nota vino del Excel sin ese registro (o `enviadaPorFuera`). */
   quien: string | null;
+  /** Con registro de envío, pero quien la envió ya no está en el equipo ni se encontró (D525). */
+  enviadaPorFuera?: boolean;
+  /** Su equipo la envió antes de que él entrara: la ve, pero la nota no es suya (D526). */
+  antesDeEntrar?: boolean;
   /** dd/mm/aaaa; `null` sin registro de envío. */
   fecha: string | null;
   /** "4:12 p. m.". */
@@ -48,6 +54,12 @@ export function TaskDelivered({
         <p className="text-body text-text">
           La envió <strong className="font-bold">{quien}</strong>.
         </p>
+      ) : enviadaPorFuera ? (
+        // PROVISIONAL (CONTENT_CHECKLIST fila 287): quien la envió ya no está en el equipo (D525)
+        <p className="text-body text-text">
+          La envió alguien que ya no está en el equipo
+          {fecha && hora ? ` el ${fecha} a las ${hora}` : ""}.
+        </p>
       ) : (
         // PLACEHOLDER de copy (CONTENT_CHECKLIST fila 129): entrega cargada desde el Excel
         <p className="text-body text-text">
@@ -55,13 +67,16 @@ export function TaskDelivered({
         </p>
       )}
       <p className="text-body text-text-2">
-        {evaluada
-          ? notaHref
-            ? // PROVISIONAL (fila 141)
-              "Tu profe ya la evaluó. Mira tu nota y cómo salió cada pregunta."
-            : // PLACEHOLDER de copy (fila 129)
-              "Tu profe ya la evaluó: la nota está en Mis notas."
-          : "Tu profe la evaluará pronto. Cuando tengas la nota, aparece en Mis notas."}
+        {antesDeEntrar
+          ? // PROVISIONAL (CONTENT_CHECKLIST fila 288): entró al equipo después del envío (D526)
+            "Tu equipo la envió antes de que entraras: puedes ver sus respuestas, pero esta nota no es tuya."
+          : evaluada
+            ? notaHref
+              ? // PROVISIONAL (fila 141)
+                "Tu profe ya la evaluó. Mira tu nota y cómo salió cada pregunta."
+              : // PLACEHOLDER de copy (fila 129)
+                "Tu profe ya la evaluó: la nota está en Mis notas."
+            : "Tu profe la evaluará pronto. Cuando tengas la nota, aparece en Mis notas."}
       </p>
       <div className="mt-1 flex flex-wrap gap-3">
         {evaluada && notaHref ? (
