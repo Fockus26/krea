@@ -86,7 +86,7 @@ Reglas de reparto:
 ## Para la ola 2 (lo dejó la ola 1)
 
 - Leer D066 (secciones por props + `/secciones/<pantalla>` con `Vista`), D067 (`ActionBar`), D068 (`GradeRow`, ahora con `detalle`), D069 (datos de ejemplo: `lib/demo/`), D072 (variantes de una vista = `/secciones/<pantalla>/[estado]` con `generateStaticParams`: **`searchParams` rompe el prerender con `cacheComponents`**), D075 (género del capitán por prop).
-- Datos listos en `lib/demo/`: `alumnoPorCedula`, `equipoDe`, `integrantes` (capitán primero), `puntosAlumno`, `rankingAlumnos/Equipos`, `notasDe` (orden de Mis notas), `porEntregar`, `TAREA_IDENTIDAD` (puntajes por pregunta reales; Heymi Sierra para Detalle). `lib/fecha.ts` `formatFecha`.
+- Datos listos en `lib/demo/`: `alumnoPorCedula`, `equipoDe`, `integrantes` (capitán primero), `puntosAlumno`, `rankingAlumnos/Equipos`, `notasDe` (orden de Mis notas), `porEntregar`, `TAREA_IDENTIDAD` (puntajes por pregunta reales; Elsa Soto para Detalle). `lib/fecha.ts` `formatFecha`.
 - Patrón de una sección: componente en `components/sections/<pantalla>/`, textos/lógica en `lib/<pantalla>.ts` con pruebas, props de ejemplo en `lib/demo/<pantalla>.ts`, vista en `app/secciones/<pantalla>/page.tsx` + una línea en `PANTALLAS` de `app/secciones/page.tsx`.
 - `Card` no tiene `asChild`: el `h2` va en `CardTitle level={2}` dentro de `CardHeader`. Vacíos: copy del lienzo `design/canvas/Vacios.dc.html`.
 - Chips con texto largo (premios): `h-auto min-h-7 py-1 whitespace-normal` para que envuelvan a 320.
@@ -103,7 +103,7 @@ Reglas de reparto:
 ## Para la ola 4 (lo dejó la ola 3)
 
 - Leer D095 (segmentados que cambian de ruta = enlaces con `aria-current`, no radiogroup), D099 (filtro local con `ToggleGroup` + `<output>` de frase estable), D100 (tarjetas enlace), D101 (`DemoAjuste` en `lib/demo/ajustes.ts`: **`feat/sec-puntos` lo reutiliza**, no crea otro), D102 (`GradePill` `size="total"` y `raspado` chip/icono/ninguno), D103 (`NumberStepper` `value: number | null`, `aria-labelledby`), D104–D105 (Evaluar: `LiveTotal`, Ctrl+Enter, toast con Deshacer y Toaster local en `app/secciones/evaluar/layout.tsx`), D106–D109 (Alumnos: búsqueda sin tildes en `lib/alumnos.ts`, un `Dialog` por fila, motivo condicional).
-- Datos nuevos: `lib/demo/evaluar.ts` (`COLA` de 7 `DemoEntrega`), `lib/demo/panel.ts`, `lib/demo/alumnos.ts` (69 alumnos; base 15 de Jailyn placeholder), `lib/demo/ranking.ts`. `lib/ranking-vista.ts` para el ranking de equipos (Premios/Equipos pueden reutilizar subtítulo «n integrantes · capitán»).
+- Datos nuevos: `lib/demo/evaluar.ts` (`COLA` de 7 `DemoEntrega`), `lib/demo/panel.ts`, `lib/demo/alumnos.ts` (69 alumnos; base 15 de Fernanda placeholder), `lib/demo/ranking.ts`. `lib/ranking-vista.ts` para el ranking de equipos (Premios/Equipos pueden reutilizar subtítulo «n integrantes · capitán»).
 - `feat/sec-tareas-profe`: el medidor del constructor es `SumMeter` (no `LiveTotal`, §8 no unificar); `NumberStepper` ya admite `null` para valores sin poner. Un `Select` en `/secciones` hereda tema/acento del documento (no hace falta `PortalScope`).
 - `feat/sec-puntos`: «Nuevo ajuste» del Panel enlaza a `/profe/puntos`; motivos fijos y vista previa «Eso no cambia tu nota» (D007).
 - **Choques en paralelo:** la línea de `PANTALLAS` en `app/secciones/page.tsx` chocó en 3 de 4 PRs (tres unidades tras la misma línea). En la ola 4, dar a cada unidad un ancla distinta o resolverlo al mergear (2 min por PR). Las anclas distintas de `globals.css` funcionaron.

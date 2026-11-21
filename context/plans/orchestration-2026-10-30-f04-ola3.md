@@ -46,15 +46,15 @@ bloquea, rodéalo en tu archivo y repórtalo como "visto de paso".
 
 - **Cola "Por evaluar"** (W2 la muestra, W3 la recorre). Datos del lienzo (`Panel.dc.html`, `Evaluar.dc.html`): **7
   entregas** (4 individuales · 3 grupales). La 1.ª: equipo **5A-G2 Repostería**, tarea "Logo y paleta del emprendimiento",
-  grupal, entregó **Yeilin Duarte (capitana)** el 25/10/2026 4:12 p. m.; la 2.ª: **Jorge Quintero**, "Identidad de marca",
+  grupal, entregó **Raquel Figueroa (capitana)** el 25/10/2026 4:12 p. m.; la 2.ª: **Mateo Paredes**, "Identidad de marca",
   individual. Las demás las eliges del seed (5A/5C), con tareas de `lib/demo/tareas.ts`. Cada unidad guarda su propia
   copia en **su** `lib/demo/<pantalla>.ts` (W2 solo las filas que pinta; W3 la cola completa) con estos dos primeros
   iguales; la fase 07 cambia la fuente de las dos. Tipos: W3 exporta `DemoEntrega`; W2 no lo importa (corren a la vez).
 - **Ajustes de puntos** (W2 los muestra en «Últimos ajustes»; la ola 4 `feat/sec-puntos` los reutilizará): W2 crea
   `lib/demo/ajustes.ts` con
   `export type DemoAjuste = { id: string; destino: { tipo: "alumno"; cedula: string } | { tipo: "equipo"; id: string }; valor: number; motivo: string; fecha: string /* ISO */ }`
-  y `export const AJUSTES: readonly DemoAjuste[]` con los 4 del lienzo (Jorge Quintero +2 "Participación destacada"
-  25/10 10:15 a. m.; Klenyerber Corredor −1 "Uso del celular" 25/10 9:40 a. m.; Equipo 5A-G3 Ropa +1 "Ayudó a un
+  y `export const AJUSTES: readonly DemoAjuste[]` con los 4 del lienzo (Mateo Paredes +2 "Participación destacada"
+  25/10 10:15 a. m.; Pablo Escobar −1 "Uso del celular" 25/10 9:40 a. m.; Equipo 5A-G3 Ropa +1 "Ayudó a un
   compañero" 24/10 11:05 a. m.; Equipo 5C-G1 "Otro: …" del lienzo). Los signos exactos, del lienzo. Placeholders (§8).
 - **Rutas de la fase 05** que se escriben en enlaces y en `Vista ruta=`: `/ranking`, `/profe`, `/profe/evaluar`,
   `/profe/evaluar/[entrega]`, `/profe/alumnos`, `/profe/puntos`, `/profe/tareas`. Un enlace a una pantalla que aún no

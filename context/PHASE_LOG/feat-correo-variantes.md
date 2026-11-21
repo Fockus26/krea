@@ -16,4 +16,4 @@ Minimal, Lúdica) con el acento y el tema que el alumno guardó en el perfil. D3
 ## Filas de CONTENT_CHECKLIST (para que las añada el orquestador)
 
 | 174 | Correo «Lúdica»: píldora «1 hora» + «para usar el enlace, una sola vez» y el rótulo «Escuela Creativa» bajo el saludo (reordenación del copy de HANDOFF §5c; el resto del copy es el mismo en las cuatro presentaciones) | `lib/correo/restablecer.ts` | tanda 11-08 Y5 | — | Provisional — confirmar con César si elige Lúdica |
-| 175 | Galería `/correos`: datos de ejemplo inventados (nombre «Ana», C.I. 12345678, enlace `https://krea.test/recuperar/nueva?…oobCode=codigo-de-ejemplo`) y textos de la galería («Es la que se envía hoy.» / «No se envía: para comparar.») | `app/correos/page.tsx` | tanda 11-08 Y5 | — | Interno (solo dev/preview) |
+| 175 | Galería `/correos`: datos de ejemplo inventados (nombre «Adela», C.I. 12345678, enlace `https://krea.test/recuperar/nueva?…oobCode=codigo-de-ejemplo`) y textos de la galería («Es la que se envía hoy.» / «No se envía: para comparar.») | `app/correos/page.tsx` | tanda 11-08 Y5 | — | Interno (solo dev/preview) |

@@ -74,7 +74,7 @@ Decisiones previas además de las comunes: D012 (solo el capitán envía la grup
    `TeamCard` (logo 72 + «Subir logo»/«Cambiar» con `<input type="file">` oculto y etiquetado, vista previa local por
    `URL.createObjectURL` liberada al cambiar/desmontar; nombre h3; tema y número; chip; `Select` Capitán con `Label` y ayuda por
    `aria-describedby`; `<ul>` de integrantes con chip Capitán/Capitana (D075) y botón de menú Move), `UnassignedCard` (Sin
-   equipo), `TeamsBoard` (cliente: estado local de equipos, toasts o `role="status"` «Yeilin Duarte pasó a 5A-G1 Barbería»).
+   equipo), `TeamsBoard` (cliente: estado local de equipos, toasts o `role="status"` «Raquel Figueroa pasó a 5A-G1 Barbería»).
 3. Vista `/secciones/equipos-profe/[estado]` con `5a` y `5c`; `Vista rol="profesor" ruta="/profe/equipos"`.
 
 ### Trampas conocidas
@@ -83,7 +83,7 @@ Decisiones previas además de las comunes: D012 (solo el capitán envía la grup
 - Un alumno movido cambia el recuento del eyebrow, del Sin equipo y de «n integrantes»: todo sale del mismo estado.
 - Botón «Subir logo» con nombre que incluye el equipo («Subir logo de 5A-G2 Repostería»). Errores del archivo en texto
   asociado, no solo color.
-- Nombres largos («Valentina Consolación Gámez Rodríguez») envuelven a 320, sin elipsis.
+- Nombres largos («Noemí Bárbara Guzmán Rojas») envuelven a 320, sin elipsis.
 - Género del capitán: hoy D075 (prop, «Capitán» por defecto, pendiente de César): no lo infieras del nombre.
 
 ### Cómo verificar
@@ -199,13 +199,13 @@ D011 (ranking por sección), D030–D032 (`Field`, `NumberStepper`), D041 (Badge
   de 8 opciones radio 52 px (borde 1 px `--input`, radio 12; elegida: fondo `--accent-soft`, borde+anillo `--accent`, Check) con
   valor en chip ok/err («+2», «−3»; «Otro» con «± escribe») · Puntos stepper con signo (color `--success`/`--error` + signo
   explícito) «Propuesto por el motivo. Pasos de 0,5.» · Detalle (obligatorio en Otro) · vista previa alert-ok/err con TrendingUp:
-  «**Jorge Quintero** pasa de 17 a **19 pts** y sube del puesto 16 al 11. Su nota no cambia.» · «Aplicar ajuste» primary lg.
+  «**Mateo Paredes** pasa de 17 a **19 pts** y sube del puesto 16 al 11. Su nota no cambia.» · «Aplicar ajuste» primary lg.
   **Historial** (card): filas con chip ±, a quién (h4), motivo (+ detalle entre comillas en Otro), fecha + profe; «Filtrar» ghost sm
   (por sección, alumno/equipo, motivo). Cada ajuste se puede **anular** (no borrar) desde un menú de la fila: crea el ajuste
   inverso con motivo «Anulación». Motivos fijos: Participación destacada +2 · Ayudó a un compañero +1 · Trabajo extra +2 · No
   estuvo en clase −2 · No prestó atención −1 · Uso del celular −1 · Falta de respeto −3 · Otro (valor libre ±, detalle obligatorio).
 - Lienzos: `design/canvas/Puntos.dc.html`, `Puntos-movil.dc.html` (eyebrow «Puntos del ranking · no cambian la nota»; card
-  «Nuevo ajuste»; historial: Jorge Quintero +2 · Klenyerber Corredor −1 · Equipo 5A-G3 Ropa +1 · Gabriel Gil −2 «No estuvo en
+  «Nuevo ajuste»; historial: Mateo Paredes +2 · Pablo Escobar −1 · Equipo 5A-G3 Ropa +1 · Hugo Iglesias −2 «No estuvo en
   clase» 23/10/2026 7:30 a. m. · Equipo 5C-G1 Otro: «Entregaron la m…»; «· [Nombre del profe]» tras la fecha).
 - Componentes que **usas sin editar**: `components/krea/{number-stepper,user-avatar,team-logo}.tsx`,
   `components/ui/{card,badge,button,alert,field,label,textarea,toggle-group,dropdown-menu,sonner}.tsx` (+ `lib/alert.ts`),
@@ -213,7 +213,7 @@ D011 (ranking por sección), D030–D032 (`Field`, `NumberStepper`), D041 (Badge
   como referencia de fila (no la edites; si la fila del historial es la misma, extrae nada: escribe la tuya con las funciones de `lib/panel.ts`).
 - **Nuevo y tuyo:** `components/ui/popover.tsx` (estilo shadcn sobre `Popover` de `radix-ui`, ya instalado: comprueba en
   `node_modules/radix-ui` que lo exporta) para el combobox. Sin `cmdk` ni dependencias nuevas (brief).
-- Datos: `lib/demo/ajustes.ts` (`DemoAjuste`, `AJUSTES`: añade las filas del lienzo que faltan — Gabriel Gil, el detalle de
+- Datos: `lib/demo/ajustes.ts` (`DemoAjuste`, `AJUSTES`: añade las filas del lienzo que faltan — Hugo Iglesias, el detalle de
   5C-G1 — y campos **opcionales** `detalle?`, `profe?`, `anulaA?`; no cambies los 4 primeros ni rompas `lib/panel.ts`),
   `lib/demo/seed.ts` (`rankingAlumnos`, `rankingEquipos`, `puntosAlumno`, `puntosDeEquipo`, `alumnoPorCedula`, `equipoPorId`),
   `lib/ranking.ts` (`rankCompetition`), `lib/demo/usuarios.ts` (`USUARIO_PROFESOR` para «· profe»).
@@ -238,7 +238,7 @@ D011 (ranking por sección), D030–D032 (`Field`, `NumberStepper`), D041 (Badge
   `DropdownMenu` con `CheckboxItem`/`RadioItem`; menú de fila «Opciones del ajuste de {nombre}» con «Anular ajuste»), `PuntosView`.
   Toaster local en `app/secciones/puntos/layout.tsx` (D105).
 4. Vista `/secciones/puntos` (o `[estado]` con `alumno` / `equipo` si quieres mostrar las dos vistas previas; decide) con
-  `Vista rol="profesor" ruta="/profe/puntos"`; ejemplo inicial = Jorge Quintero + Participación destacada (como el lienzo).
+  `Vista rol="profesor" ruta="/profe/puntos"`; ejemplo inicial = Mateo Paredes + Participación destacada (como el lienzo).
 
 ### Trampas conocidas
 - **Nota ≠ puntos (D007):** ningún texto dice «nota» salvo «Su nota no cambia.»; los valores son «pts».

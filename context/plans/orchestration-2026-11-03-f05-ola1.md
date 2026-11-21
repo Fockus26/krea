@@ -52,7 +52,7 @@
   `/recuperar/nueva`. Las que aún no existen se crean en las olas 2–3: un enlace hacia ellas **no** cuenta como roto
   para `check:paginas` si está en esta lista (W2 la deja como constante `RUTAS_PLANIFICADAS` en el script, y la ola 3
   la vacía al cerrar la fase).
-- **Usuario actual** hasta la fase 07: `USUARIO_ESTUDIANTE` / `USUARIO_PROFESOR` de `lib/demo/usuarios.ts` (Yeilin Duarte;
+- **Usuario actual** hasta la fase 07: `USUARIO_ESTUDIANTE` / `USUARIO_PROFESOR` de `lib/demo/usuarios.ts` (Raquel Figueroa;
   profe placeholder). Nada lee sesión ni cookies.
 - **Las vistas `/secciones/*` no se tocan** (sus Toasters locales se quedan: están fuera de los grupos).
 

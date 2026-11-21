@@ -202,7 +202,7 @@ acepta, revierte o reasigna; solo él envía (D012).
   pasa `inicial` y un `key` con la versión de las partes aceptadas (p. ej. el mayor
   `actualizadoEn`) para remontar el formulario. Ojo: hoy el borrador local **gana** sobre `inicial`
   (`task-answer-form.tsx:275–311`): para una pregunta con parte aceptada debe ganar la aceptada.
-- El diálogo de confirmación de «Entregar» del capitán lista a quién se premarcará («Ana y Luis
+- El diálogo de confirmación de «Entregar» del capitán lista a quién se premarcará («Adela y Luis
   quedarán como “No participó”: tenían preguntas y no entregaron ninguna»), si hay alguno.
 - Evaluar: `vistaEvaluar` (`lib/evaluar-datos.ts:755–759`): sin evaluación vigente,
   `inicial.noParticiparon = entrega.sinParte ?? []`; con evaluación, lo que ya hace. Cada

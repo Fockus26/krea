@@ -13,7 +13,7 @@ Cada `page.tsx` importa las mismas secciones que su vista `app/secciones/<pantal
 Rutas: `/profe/evaluar` y `/profe/evaluar/[entrega]` (vista de referencia `app/secciones/evaluar/[estado]`, datos `lib/demo/evaluar.ts`: `COLA`, `evaluarVista(indice)`).
 - `/profe/evaluar` redirige (`redirect`) a la primera entrega de `COLA`; si `COLA` está vacía, estado vacío (el de la vista `/secciones/evaluar`).
 - `/profe/evaluar/[entrega]`: `generateStaticParams` desde `COLA`; el índice de la entrega en la cola da `evaluarVista`. La topbar móvil ya sale de `topbarDe` + `titulosTopbar` (`lib/demo/topbar.ts`, «Entrega n de m»). El Toaster es el global (quita cualquier Toaster local de la sección al usarla en la página, sin romper la vista de `/secciones/evaluar`).
-- **Alinear ids:** `ENTREGAS_PANEL` (`lib/demo/panel.ts:51`, ids `5a-g2-logo`, `32828381-identidad`…) no casa con `COLA` (`5a-g2-logo-y-paleta`…). Haz que el Panel (`/profe`) enlace a ids de `COLA` (lo más simple: que `ENTREGAS_PANEL` derive sus `href`/ids de `COLA` o use esos ids; mantén los tests de `lib/demo` verdes y actualízalos si dependían del id viejo). Cada enlace del Panel a Evaluar debe tener página.
+- **Alinear ids:** `ENTREGAS_PANEL` (`lib/demo/panel.ts:51`, ids `5a-g2-logo`, `45003711-identidad`…) no casa con `COLA` (`5a-g2-logo-y-paleta`…). Haz que el Panel (`/profe`) enlace a ids de `COLA` (lo más simple: que `ENTREGAS_PANEL` derive sus `href`/ids de `COLA` o use esos ids; mantén los tests de `lib/demo` verdes y actualízalos si dependían del id viejo). Cada enlace del Panel a Evaluar debe tener página.
 - Navegación anterior/siguiente dentro de la cola con enlaces reales si la sección lo admite.
 
 ## W2 — `feat/pag-profe-tareas` · D152–D155 · filas 112–114

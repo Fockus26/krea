@@ -64,7 +64,7 @@ Decisiones previas que te limitan: D003 (nota `null` = Pendiente, nunca 0), D004
 - `design/HANDOFF.md:480` — lista de utilidades: `gradeColor(n)`, `formatNota` (coma, 1 decimal máx.), `notaFinal(puntaje, base)`, `puntosRanking(nota)`, `rankCompetition(list)`, `maskEmail`, `maskCedula`.
 - `design/HANDOFF.md:494-505` — §8: puntos del equipo (G2 19 · G3 18 · G1 17 · G5 17 · G4 15 · G6 14 con el seed), empates 1-2-2-4 con orden alfabético por primer apellido, chip "Empate" solo en top 10, zona de riesgo = 5 últimos **incluyendo empatados en el borde**.
 - `design/HANDOFF.md:285` — `maskEmail`: primera letra + 4 puntos (`•`) + `@dominio` → `y••••@gmail.com`.
-- `design/HANDOFF.md:435` — `maskCedula`: 2 primeros + 3 puntos + 3 últimos → `33•••397`.
+- `design/HANDOFF.md:435` — `maskCedula`: 2 primeros + 3 puntos + 3 últimos → `45•••896`.
 - `data/seed/alumnos.json`, `data/seed/grupos.json`, `data/seed/tarea-identidad-marca.json` — datos reales para pruebas de ranking (apellidos "Primero Segundo").
 - `tests/unit/` — vacío; la suite es `bun test ./tests/unit`.
 

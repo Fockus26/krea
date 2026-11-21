@@ -2,7 +2,7 @@
 
 `main @ d50568b` · slot `C:/Users/Cesar/Documents/Work/krea-wt/wt3`
 
-**Entorno:** Chromium 156 headless (Playwright 1.64, node) · `next dev` en :4303 sobre los emuladores Firebase de functional-qa (`qa:local --no-reset`) · cuentas de prueba alumno 33272397 y profesor 10000000 · **verificado en navegador: sí**.
+**Entorno:** Chromium 156 headless (Playwright 1.64, node) · `next dev` en :4303 sobre los emuladores Firebase de functional-qa (`qa:local --no-reset`) · cuentas de prueba alumno 45009896 y profesor 10000000 · **verificado en navegador: sí**.
 **Resultado:** 0 críticos · 3 altos (+1 alto ya conocido: galerías públicas) · 4 medios · 3 bajos.
 
 **Incidencias del entorno (no son hallazgos de la app):**
@@ -76,7 +76,7 @@ El sistema está sólido: **axe 0 violaciones** en todas las rutas (alumno, prof
 - **Qué pasa:** el nombre mide 27 px de los 90–116 que necesita: «Á…», «Y…», «Ei…», «W…», «5A-G5 Ce…». El handoff permite elipsis en el ranking, pero aquí no queda nada legible.
 - **Por qué importa:** el alumno no puede saber con quién está empatado en el teléfono más pequeño.
 - **Evidencia:** `wt3/.qa/dqa/shots/repro1-320-ranking.png`, `estudiante-ranking-equipos-w320.png`.
-- **Repro:** `node .qa/repro/1-ranking-nombre-recortado.mjs <base>` → `FAIL 5 nombres < 64px: 320 /ranking «Ángel Pernia» 27px de 90 (con Empate) | … | 320 /ranking/equipos «5A-G5 Celulares» 27px de 116 (con Empate)`.
+- **Repro:** `node .qa/repro/1-ranking-nombre-recortado.mjs <base>` → `FAIL 5 nombres < 64px: 320 /ranking «Armando Osorio» 27px de 90 (con Empate) | … | 320 /ranking/equipos «5A-G5 Celulares» 27px de 116 (con Empate)`.
 - **Corrección sugerida:** por debajo de 360, el chip «Empate» baja a la línea del subtítulo (o pasa a un «=» con `aria-label`), y el nombre gana el ancho.
 - **Tipo:** implementación.
 

@@ -57,3 +57,6 @@
 - (2026-11-20, visto por Q1) 24 archivos atrapan errores de Server Actions con su propio try/catch: un `UnrecognizedActionError` no llega a `error.tsx` (lo cubre Skew Protection). Bajo.
 - (2026-11-20, D457, Q4) Costura: `app/(profesor)/profe/evaluar/[entrega]/page.tsx:159-160` aún llama `puedeDevolver` sin `ahora`: con la tarea vencida ofrece «Devolver» y el servidor responde `tarea-cerrada`. Pasar `Date.now()` y `tareaCerrada={estadoEfectivo(tarea, ahora) !== "abierta"}` tras mergear Q2/Q3/Q4. Medio → va en la ola 2.
 - (2026-11-20, Q4) `bun run lint` falla en main por formato en `app/layout.tsx` y `tests/unit/instalar-pwa.test.ts`. Bajo.
+- (2026-11-20, Q7) `ideal-respuesta.tsx`: el texto de la ideal sin `break-words` (puede desbordar a 320 px). Bajo.
+- (2026-11-20, Q7) `question-editor.tsx`: el `ToggleGroup` de formato no filtra el valor vacío al deseleccionar. Bajo.
+- (2026-11-20, Q6) `sinParteDe` en `enviarEnTransaccion` recibe el reparto sin filtrar por vigencia (funciona; revisar). Bajo.

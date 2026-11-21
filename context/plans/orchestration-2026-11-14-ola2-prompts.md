@@ -200,9 +200,9 @@ Enfoque decidido (no lo re-decidas):
 3. **Hooks:** generaliza dentro de `use-presencia.ts` sin cambiar lo que exporta hoy (añade, por
    ejemplo, `usePresenciaEntrega(yo, entregaId)` que sondea `?entrega=` y marca con latido y
    `pagehide`). Reutiliza `editoresVigentes`, `LATIDO_MS`, `VIGENCIA_MS`.
-4. **Texto:** funciones puras nuevas en `lib/presencia.ts` (no cambies las de alumnos): «Ana Pérez
-   está evaluando esta entrega. Si guarda antes que tú, te avisaremos.» / «Ana Pérez y Luis Díaz
-   están evaluando…» / «Ana Pérez y 2 más están evaluando…». PROVISIONAL, con su fila.
+4. **Texto:** funciones puras nuevas en `lib/presencia.ts` (no cambies las de alumnos): «Adela Pérez
+   está evaluando esta entrega. Si guarda antes que tú, te avisaremos.» / «Adela Pérez y Luis Farías
+   están evaluando…» / «Adela Pérez y 2 más están evaluando…». PROVISIONAL, con su fila.
 5. **Componente** `components/sections/evaluar/presencia-evaluar.tsx` (cliente): recibe `entregaId`
    y `yo`; marca la presencia propia mientras está montado y pinta el aviso con el patrón de
    `edit-student-dialog.tsx:290-305` (anuncio `polite` una vez por cambio de quién evalúa, ícono +

@@ -16,8 +16,8 @@ D175 (escrituras solo en el servidor), D180 (cookie de sesión), D192 (cambiar c
 D158 (perfil del profe), D090 / D191 (perfil y avatar), D132 (nav del profe).
 
 ### Lo que pide César
-> 1. «Agregar el profesor con cédula 32888687.»
-> 2. «Un profesor admin (cédula 30262232) que puede crear, editar y eliminar a los otros profesores.»
+> 1. «Agregar el profesor con cédula 45004948.»
+> 2. «Un profesor admin (cédula 45001237) que puede crear, editar y eliminar a los otros profesores.»
 > 4. «Los profesores no pueden cambiar los datos de otro profesor (avatar, cédula, nombres); los suyos propios sí.»
 
 Decisión de César: cuentas nuevas con **contraseña temporal generada, mostrada una sola vez**
@@ -56,12 +56,12 @@ a quien crea la cuenta; al primer ingreso se **obliga a cambiarla**.
 - **Cambio obligatorio:** si `debeCambiarPassword`, tras ingresar se redirige a una pantalla
   «Crea tu contraseña» (reutiliza el formulario de `new-password-form` / `cambiarPassword`) y
   ninguna otra ruta de su rol carga hasta cambiarla (en `exigirSesion`). Aplica a ambos roles.
-- **Admin inicial y profe 32888687:** no los creas en producción. Deja `scripts/admin-profesor.ts`
+- **Admin inicial y profe 45004948:** no los creas en producción. Deja `scripts/admin-profesor.ts`
   (bun, Admin SDK con las credenciales del `.env`, idempotente): `--hacer-admin <cédula>` marca
   `admin: true` y refresca claims; `--crear-profesor <cédula> --nombres … --apellidos …` usa
   `crearCuenta` e imprime la contraseña temporal. Acción manual para César: correr
-  `--hacer-admin 30262232` (si 30262232 no existe aún, crearla primero con `--crear-profesor`) y
-  luego crear 32888687 desde la pantalla Profesores (o el script). Los nombres no los inventes.
+  `--hacer-admin 45001237` (si 45001237 no existe aún, crearla primero con `--crear-profesor`) y
+  luego crear 45004948 desde la pantalla Profesores (o el script). Los nombres no los inventes.
 - Reglas: el cliente sigue sin escribir; si una lectura nueva lo requiere (lista de profes), el
   admin lee por servidor.
 
@@ -83,7 +83,7 @@ a quien crea la cuenta; al primer ingreso se **obliga a cambiarla**.
 ### Cierre
 PR «feat: profesor admin gestiona profesores y cuentas con contraseña temporal». En «Cómo probar»:
 flujo admin crea/edita/elimina profe, primer ingreso con temporal, profe no admin no ve la pantalla.
-Acciones manuales: el script para 30262232 y 32888687.
+Acciones manuales: el script para 45001237 y 45004948.
 
 ---
 

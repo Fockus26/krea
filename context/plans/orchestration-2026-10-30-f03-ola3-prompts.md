@@ -13,7 +13,7 @@ Brief: `context/plans/orchestration-2026-10-30-f03-ola3.md` (+ las reglas de `or
   handoff ni en el lienzo, no lo estimes: déjalo marcado y dilo en el PR.
 - Cifras con `nums` (tabulares); notas y puntos con `formatNota`/`formatDecimal` (coma es-VE), nunca `toFixed`.
 - Tu página: **solo** `app/componentes/_familias/<tu-familia>.tsx` (hoy un stub `Pendiente`): cada componente × variante ×
-  estado, con datos de ejemplo realistas en español (nombres del estilo del seed: "María Méndez", "Jorge Quintero"; los
+  estado, con datos de ejemplo realistas en español (nombres del estilo del seed: "Juana Montero", "Mateo Paredes"; los
   textos de ejemplo son provisionales → tus filas del checklist). Se ve en 4 acentos × claro/oscuro por el `Escenario`.
 - Si tu familia necesita interacción, que el componente cliente sea solo esa sección, no la página.
 - Sin entorno DOM: pruebas solo de lógica pura en `tests/unit/` (mapas de clases, textos accesibles, cálculos).
@@ -60,7 +60,7 @@ D046–D049 (Avatar `size`/`ring`, `UserAvatar`, `TeamLogo` por hash, utilidades
    fondo), `risk` (fondo `--surface-2`, `grayscale` + opacidad .75 **solo en la imagen del avatar**, puesto y puntos `--text-2`).
    `me` se combina con cualquiera de los otros. Chip "Empate" (Badge neutral) solo cuando `mostrarChipEmpate`. Funciona para
    estudiante (`UserAvatar`, subtítulo = equipo) y equipo (`TeamLogo`, subtítulo "n integrantes · capitán {nombre}"): un prop
-   `media: ReactNode` o dos variantes — tú eliges y lo documentas. Nombre accesible del `<li>` "Puesto 4, María Méndez, 30,5
+   `media: ReactNode` o dos variantes — tú eliges y lo documentas. Nombre accesible del `<li>` "Puesto 4, Juana Montero, 30,5
    puntos, subió 2" (función pura probada; mira que el lector no lo lea dos veces: el contenido visual va `aria-hidden` o el
    nombre sale del contenido, decide y documenta).
 3. **Lista y separador:** `RankList` (`<ol>`) que pinta las filas y, antes de la primera fila `enRiesgo`, el separador "Zona
@@ -238,7 +238,7 @@ D034 (`PortalScope`: overlays con tema/acento del escenario), D037 (overlay del 
 
 ### Trampas conocidas
 - El color de la nota nunca es color de texto (§8): la barra y la píldora sí, "3,5 / 4" en `--text`/`--text-2`.
-- `next/image` no: D046 usa `<img>` (blobs locales y remotos); da `alt` real ("Respuesta de María a la pregunta 3"), y el
+- `next/image` no: D046 usa `<img>` (blobs locales y remotos); da `alt` real ("Respuesta de Juana a la pregunta 3"), y el
   `alt` del visor igual.
 - El `<input type="file">` oculto debe seguir siendo alcanzable y nombrado (no `display:none` sin un control enfocable que lo abra).
 - `aria-live` del progreso: no anuncies cada 1 %; el texto vivo cambia por tramos o solo al empezar/terminar (decide, documenta).

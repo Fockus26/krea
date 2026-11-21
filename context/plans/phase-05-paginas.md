@@ -71,7 +71,7 @@ Reglas de reparto:
   borrador</Button></TopBarAccion>`), D131 (Toaster por grupo; el toast sube sobre la `ActionBar` con `ActionBarAltura`),
   D132 (nav del profe), D133 (saludo del Panel en cliente).
 - Las páginas nuevas **no** montan Toaster propio: `toast()` sin `toasterId` usa el global (Evaluar incluido).
-- **Ids de entrega del Panel ≠ `COLA`:** `ENTREGAS_PANEL` (`lib/demo/panel.ts`: `5a-g2-logo`, `32828381-identidad`…) no
+- **Ids de entrega del Panel ≠ `COLA`:** `ENTREGAS_PANEL` (`lib/demo/panel.ts`: `5a-g2-logo`, `45003711-identidad`…) no
   casan con `COLA` (`lib/demo/evaluar.ts`: `5a-g2-logo-y-paleta`…), ni en orden. `feat/pag-profe-evaluar` (ola 3) los
   alinea (el Panel lee de `COLA` o usa sus ids); `check:paginas` fallará hasta entonces si no.
 - `RUTAS_PLANIFICADAS` (`scripts/qa/paginas.mjs`): **cada unidad quita de la lista las rutas que crea** (hoy aún

@@ -69,8 +69,8 @@ repórtalo como "visto de paso".
   (HANDOFF §8): si `Vista` no lo admite, no edites `_vista/`: dilo en el PR como pendiente de la fase 05 y monta la
   `ActionBar` como lo admita hoy.
 - **Menús y selects:** `components/ui/dropdown-menu.tsx` y `select.tsx` existen; en `/secciones` heredan tema y acento del
-  documento (no hace falta `PortalScope`). Un menú de fila lleva nombre accesible con el objeto («Mover a Yeilin Duarte a
-  otro equipo», «Opciones del ajuste de Jorge Quintero»).
+  documento (no hace falta `PortalScope`). Un menú de fila lleva nombre accesible con el objeto («Mover a Raquel Figueroa a
+  otro equipo», «Opciones del ajuste de Mateo Paredes»).
 - **Estado de la vista previa:** las acciones (mover, capitán, publicar, aplicar, anular, elegir ganador) cambian estado
   local del cliente y lo dicen con un toast o un `role="status"`; nada se guarda. Si necesitas ver un toast, monta un
   `<Toaster />` local en el `layout.tsx` de **tu** carpeta de vista, como `app/secciones/evaluar/layout.tsx` (D105).
