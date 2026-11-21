@@ -109,6 +109,7 @@ export function StudentsTable({
   const { registrar } = useFlip<HTMLTableRowElement>({
     duracion: "--d-normal",
     entrada: true,
+    salida: true,
   });
   const editores = (cedula: string) => presencia?.editoresDe(cedula) ?? [];
   return (

@@ -1,6 +1,7 @@
 "use client";
 
 import { TriangleAlert } from "lucide-react";
+import { useFlip } from "@/components/krea/use-flip";
 import { UserAvatar } from "@/components/krea/user-avatar";
 import { MemberMenu } from "@/components/sections/equipos-profe/member-menu";
 import { Card } from "@/components/ui/card";
@@ -36,8 +37,16 @@ export function UnassignedCard({
   onMover: (cedula: string, destino: string | null) => void;
   tituloId: string;
 }) {
+  // Asignar a alguien lo despide con un fundido y los demás cierran el hueco por la cuadrícula
+  // (X e Y); `raiz` evita animarlos además si la tarjeta entera baja o sube (D542, D543)
+  const { registrar, raiz } = useFlip<HTMLLIElement, HTMLDivElement>({
+    duracion: "--d-normal",
+    entrada: true,
+    salida: true,
+  });
   return (
     <Card
+      ref={raiz}
       className="flex flex-col gap-4 ring-2 ring-warning ring-inset"
       role="region"
       aria-labelledby={tituloId}
@@ -58,7 +67,11 @@ export function UnassignedCard({
       ) : (
         <ul className="m-0 grid list-none grid-cols-1 gap-x-6 gap-y-2 p-0 md:grid-cols-2 lg:grid-cols-3">
           {alumnos.map((a) => (
-            <li key={a.cedula} className="flex min-h-11 items-center gap-3">
+            <li
+              key={a.cedula}
+              ref={registrar(a.cedula)}
+              className="flex min-h-11 items-center gap-3"
+            >
               <UserAvatar
                 estilo={a.estilo ?? "adventurer-neutral"}
                 seed={a.seed ?? a.cedula}
