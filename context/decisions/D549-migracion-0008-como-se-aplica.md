@@ -1,0 +1,5 @@
+# D549 · Data · La migración 0008 se aplica como la 0007: `bun run db:migrate` con el rol de la app, antes del deploy · Pending
+
+**Decision:** `drizzle/0008_borrador_grupal.sql` solo crea una tabla y dos índices (no toca filas). Se aplica en `krea_preview` y en `krea` con `bun run db:migrate` y el `DIRECT_URL` del rol de la app, antes de que el código llegue a ese entorno; si va por `psql` como `postgres`, correr después `scripts/sql/2026-11-20-duenos-tablas.sql` en esa base (D436). Mientras no esté aplicada, la página no se cae: `borradorDelEquipo` va con `opcional` (sin borrador) y el guardado responde `red`; pero enviar una grupal falla (el `DELETE` de la tabla está en la transacción), así que no se despliega sin ella.
+**Why:** es la única migración de la ola; el orden importa porque el envío ya cuenta con la tabla.
+**Discarded alternative:** borrar el borrador fuera de la transacción del envío para no depender de la tabla: dejaría borradores huérfanos si falla y el integrante vería un borrador de una entrega ya enviada.

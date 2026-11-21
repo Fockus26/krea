@@ -5,8 +5,10 @@ import "server-only";
 // con zod: se omite y se registra.
 import { and, arrayContains, eq } from "drizzle-orm";
 import { cache } from "react";
+import type { BorradorGuardado } from "@/lib/borrador-grupal";
 import { type TarjetaProfe, tarjetasProfes } from "@/lib/contacto";
 import { exigirSesion } from "@/lib/dal";
+import { leerBorradorGrupal } from "@/lib/data/borrador-grupal";
 import { contactosDeProfes } from "@/lib/data/contacto";
 import {
   entregasDeIntegrante,
@@ -122,6 +124,20 @@ export const partesDelEquipo = cache(
       "partes del equipo",
       () => leerPartes(db(), idEntrega(tareaId, equipoId)),
       [],
+    ),
+);
+
+/**
+ * El borrador compartido del capitán de SU equipo en esa grupal (D544). Lo pinta la página (el
+ * integrante en solo lectura, el capitán como punto de partida); `actualizadoPor` no sale al
+ * cliente. Si la lectura falla, sin borrador (como antes de D544).
+ */
+export const borradorDelEquipo = cache(
+  async (tareaId: string, equipoId: string): Promise<BorradorGuardado | null> =>
+    opcional(
+      "borrador del equipo",
+      () => leerBorradorGrupal(db(), idEntrega(tareaId, equipoId)),
+      null,
     ),
 );
 

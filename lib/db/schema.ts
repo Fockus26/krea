@@ -24,6 +24,7 @@ import type {
   RankingSeccion,
   Respuesta,
 } from "@/lib/modelo";
+import type { Borrador } from "@/lib/tareas";
 
 const ms = (nombre: string) => bigint(nombre, { mode: "number" });
 
@@ -259,6 +260,31 @@ export const partes = pgTable(
   (t) => [
     primaryKey({ columns: [t.entregaId, t.preguntaId] }),
     index("partes_tarea_idx").on(t.tareaId),
+  ],
+);
+
+/**
+ * Borrador del capitán de una grupal sin enviar (D544): una fila por entrega (`entregaId` =
+ * `idEntrega(tareaId, equipoId)`), con las respuestas en el formato del borrador local (`Borrador`
+ * de `lib/tareas`: textos e imágenes ya subidas, solo su ruta). Los integrantes lo ven en solo
+ * lectura. `version` sube en cada guardado (versión optimista, D546). Se borra al enviar la
+ * entrega, y con la tarea o el equipo en su transacción (sin claves foráneas, como `partes`).
+ */
+export const borradoresGrupales = pgTable(
+  "borradores_grupales",
+  {
+    entregaId: text("entrega_id").primaryKey(),
+    tareaId: text("tarea_id").notNull(),
+    equipoId: text("equipo_id").notNull(),
+    respuestas: jsonb("respuestas").$type<Borrador>().notNull(),
+    /** Cédula de quien guardó: no sale al cliente (se muestra su nombre). */
+    actualizadoPor: text("actualizado_por").notNull(),
+    actualizadoEn: ms("actualizado_en").notNull(),
+    version: integer("version").notNull(),
+  },
+  (t) => [
+    index("borradores_grupales_tarea_idx").on(t.tareaId),
+    index("borradores_grupales_equipo_idx").on(t.equipoId),
   ],
 );
 

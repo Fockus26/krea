@@ -384,6 +384,53 @@ describe("editar la entrega (D395–D397)", () => {
     await docs.actualizarDoc(db(), "usuarios", "39000009", { equipoId: null });
   });
 
+  test("capitán que entró después del envío: no la reenvía ni sube imágenes (D526, D545)", async () => {
+    const T_NUEVO = "w5-edit-nuevo";
+    const NUEVO = "39000010";
+    await docs.ponerDoc(db(), "tareas", T_NUEVO, tarea("grupal", "abierta"));
+    const primero = await con(T_NUEVO, EQUIPO, UUID, "Del equipo");
+    expect(await enviarEnTransaccion(db(), CAPITAN, primero, AHORA)).toEqual({
+      ok: true,
+    });
+    const id = idEntrega(T_NUEVO, EQUIPO);
+    const antes = (await docs.snap(db(), "entregas", id)).data();
+    // Entra al equipo después del envío y el profe lo hace capitán
+    await docs.ponerDoc(db(), "usuarios", NUEVO, usuario(NUEVO, EQUIPO));
+    await docs.actualizarDoc(db(), "equipos", EQUIPO, { capitanId: NUEVO });
+    try {
+      const suyo = await con(T_NUEVO, EQUIPO, UUID, "Del capitán nuevo");
+      expect(await enviarEnTransaccion(db(), NUEVO, suyo, AHORA + 1)).toEqual({
+        ok: false,
+        error: "ya-entregada",
+      });
+      // También desde la cola (mismo camino, con opId)
+      expect(
+        await enviarEnTransaccion(
+          db(),
+          NUEVO,
+          { ...suyo, opId: "5d1f6a2b-3c4d-4e5f-8a9b-0c1d2e3f4a5b" },
+          AHORA + 2,
+        ),
+      ).toEqual({ ok: false, error: "ya-entregada" });
+      expect(await permisoSubida(db(), NUEVO, T_NUEVO, "p1", AHORA)).toEqual({
+        ok: false,
+        error: "ya-entregada",
+      });
+      expect((await docs.snap(db(), "entregas", id)).data()).toEqual(antes);
+      // Un integrante de la entrega que pasa a capitán sí la edita
+      await docs.actualizarDoc(db(), "equipos", EQUIPO, {
+        capitanId: INTEGRANTE,
+      });
+      const delIntegrante = await con(T_NUEVO, EQUIPO, UUID, "Editada");
+      expect(
+        await enviarEnTransaccion(db(), INTEGRANTE, delIntegrante, AHORA + 3),
+      ).toEqual({ ok: true });
+    } finally {
+      await docs.actualizarDoc(db(), "equipos", EQUIPO, { capitanId: CAPITAN });
+      await docs.actualizarDoc(db(), "usuarios", NUEVO, { equipoId: null });
+    }
+  });
+
   test("tarea cerrada: no se edita", async () => {
     await docs.actualizarDoc(db(), "tareas", T_GRU, { estado: "evaluada" });
     const editado = await con(T_GRU, EQUIPO, UUID, "Tarde");

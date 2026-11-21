@@ -20,13 +20,21 @@ import {
 } from "@/lib/data/operaciones";
 import { leerUsuario } from "@/lib/data/usuarios";
 import { type Db, enSerie, type Tx } from "@/lib/db";
-import { entregas, equipos, partes, tareas, usuarios } from "@/lib/db/schema";
+import {
+  borradoresGrupales,
+  entregas,
+  equipos,
+  partes,
+  tareas,
+  usuarios,
+} from "@/lib/db/schema";
 import {
   armarEntrega,
   type EnvioEntrega,
   type ErrorEntrega,
   type ErrorEnvio,
   enOtraEntrega,
+  entroDespues,
   imagenesSinUso,
   modoEnvio,
   type PermisoEntrega,
@@ -121,9 +129,16 @@ export async function permisoSubida(
   const pregunta = c.tarea?.preguntas.find((x) => x.id === preguntaId);
   if (pregunta?.formato !== "imagen") return { ok: false, error: "incompleta" };
   const [existente] = await db
-    .select({ estado: entregas.estado, respuestas: entregas.respuestas })
+    .select({
+      estado: entregas.estado,
+      respuestas: entregas.respuestas,
+      integrantes: entregas.integrantes,
+    })
     .from(entregas)
     .where(eq(entregas.id, p.permiso.entregaId));
+  // Capitán que entró después del envío (D545): no sube para editarla
+  if (p.permiso.tipo === "grupal" && entroDespues(existente ?? null, uid))
+    return { ok: false, error: "ya-entregada" };
   // También para editar una entregada sin evaluar (D395); evaluada, no (salvo completar)
   const m = modoEnvio(existente ?? null, c.tarea?.preguntas ?? []);
   return m.ok ? p : m;
@@ -202,6 +217,10 @@ export async function enviarEnTransaccion(
     const existente = previa ? entregaDeFila(previa) : null;
     // Una fila que existe pero no valida no se pisa
     if (previa && !existente) return { ok: false, error: "ya-entregada" };
+    // Grupal ya enviada y él no figura (entró después y lo hicieron capitán, D526/D545): no la
+    // edita. También desde la cola, que llega por aquí.
+    if (p.permiso.tipo === "grupal" && entroDespues(existente, uid))
+      return { ok: false, error: "ya-entregada" };
     // Evaluada: no se edita. Sí se completa una con nota y sin respuestas (el profe la evaluó
     // antes, `faltanRespuestas`): la evaluación se queda.
     const m = modoEnvio(existente, c.tarea.preguntas);
@@ -332,6 +351,11 @@ export async function enviarEnTransaccion(
       .insert(entregas)
       .values(fila)
       .onConflictDoUpdate({ target: entregas.id, set: fila });
+    // El borrador compartido del capitán sobra: los integrantes ya ven lo enviado (D544)
+    if (p.permiso.tipo === "grupal")
+      await tx
+        .delete(borradoresGrupales)
+        .where(eq(borradoresGrupales.entregaId, entregaId));
     await registrarOperacionEnTx(tx, op, uid, "entrega", null, ahora);
     const sinUso = existente
       ? imagenesSinUso(existente.respuestas, doc.respuestas)

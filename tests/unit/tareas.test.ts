@@ -74,7 +74,7 @@ describe("aviso de capitán", () => {
     expect(avisoCapitanTexto("Raquel Figueroa", true)).toEqual({
       titulo: "La entrega Raquel Figueroa, capitana de tu equipo.",
       texto:
-        "Puedes ver las preguntas. Las respuestas aparecen aquí cuando se envíen.",
+        "Puedes ver las preguntas y su borrador mientras responde. Cuenta lo que se entregue.",
     });
   });
 });

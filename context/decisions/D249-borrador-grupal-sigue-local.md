@@ -1,4 +1,4 @@
-# D249 · Data · El borrador del capitán sigue solo en su teléfono: los integrantes ven las respuestas al enviar, no antes · Implemented
+# D249 · Data · El borrador del capitán sigue solo en su teléfono: los integrantes ven las respuestas al enviar, no antes · Obsolete → D544
 
 **Decision:** se mantiene D196: el borrador vive en `localStorage` del capitán y no se escribe nada en Firestore hasta «Entregar». Por eso los integrantes no ven respuestas a medias; ven las preguntas bloqueadas y, cuando el capitán envía, las respuestas (D248). El aviso del capitán ya lo dice: «Las respuestas aparecen aquí cuando él las envíe».
 **Why:** el pedido (9) habla de las respuestas del capitán «si ya guardó o envió». Compartir el guardado exige un borrador en el servidor, y D196 lo descartó (escrituras cada 2 s, y la recomendación del handoff §9 #4). No hay forma de leer el `localStorage` de otro dispositivo.

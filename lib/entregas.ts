@@ -174,6 +174,17 @@ export function modoEnvio(
 }
 
 /**
+ * Grupal ya enviada en la que quien envía no figura (D545): entró al equipo después del envío y
+ * hoy es su capitán. La ve en solo lectura (D526); no la edita, ni completa, ni guarda borrador.
+ */
+export function entroDespues(
+  existente: Pick<Entrega, "estado" | "integrantes"> | null,
+  cedula: string,
+): boolean {
+  return yaEnviada(existente) && !existente?.integrantes.includes(cedula);
+}
+
+/**
  * ¿Ve «Editar entrega» en /tareas/[tarea]? (D395) Solo quien puede enviar (individual: el alumno;
  * grupal: el capitán del equipo actual, D012), con la tarea abierta (D196) y su propia entrega
  * `entregada` sin evaluar. Un integrante que cambió de equipo ve la del equipo viejo: no es la
