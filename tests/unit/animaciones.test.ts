@@ -11,13 +11,13 @@ const leer = (ruta: string) => readFileSync(join(raiz, ruta), "utf8");
 describe("idsNuevos", () => {
   test("las filas que no estaban, en el orden nuevo", () => {
     const antes = new Map([
-      ["a", 0],
-      ["b", 40],
+      ["a", { x: 0, y: 0 }],
+      ["b", { x: 0, y: 40 }],
     ]);
     const despues = new Map([
-      ["c", 0],
-      ["a", 40],
-      ["d", 80],
+      ["c", { x: 0, y: 0 }],
+      ["a", { x: 0, y: 40 }],
+      ["d", { x: 0, y: 80 }],
     ]);
     expect(idsNuevos(antes, despues)).toEqual(["c", "d"]);
     expect(idsNuevos(despues, despues)).toEqual([]);
@@ -34,7 +34,7 @@ describe("FLIP en las listas de gestión (guardián por código)", () => {
     test(`${ruta}: viaje con --d-normal y entrada de las filas nuevas`, () => {
       const src = leer(ruta);
       expect(src).toMatch(
-        /useFlip<[A-Za-z]+>\(\{\s*duracion: "--d-normal",\s*entrada: true,\s*\}\)/,
+        /useFlip<[A-Za-z,\s]+>\(\{\s*duracion: "--d-normal",\s*entrada: true,(\s*salida: true,)?\s*\}\)/,
       );
       expect(src).toContain(`ref={${ref}}`);
     });
