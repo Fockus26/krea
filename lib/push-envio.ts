@@ -3,7 +3,11 @@ import "server-only";
 // nunca sale de aquí. Sin las tres variables, `programarAvisoTarea` no hace nada.
 import { after } from "next/server";
 import { sendNotification } from "web-push";
-import { avisarTareaPublicada, type Enviar } from "@/lib/data/push";
+import {
+  avisarParteEntregada,
+  avisarTareaPublicada,
+  type Enviar,
+} from "@/lib/data/push";
 import { baseDeDatos } from "@/lib/db";
 import { type ConfigPush, configPush, type TareaPublicada } from "@/lib/push";
 
@@ -30,6 +34,30 @@ function enviador(config: ConfigPush): Enviar {
         timeout: ESPERA_MS,
       },
     );
+}
+
+/**
+ * Después de responder al integrante (`after`, no lo retrasa): avisa al capitán de su equipo de que
+ * entregó su parte (D535). Un fallo aquí nunca deshace la entrega; sin VAPID no hace nada.
+ */
+export function programarAvisoParte(entrada: {
+  uid: string;
+  tareaId: string;
+  preguntaId: string;
+}) {
+  const config = configPush(process.env);
+  if (!config) return;
+  after(async () => {
+    const db = baseDeDatos();
+    if (!db) return;
+    try {
+      const r = await avisarParteEntregada(db, entrada, enviador(config));
+      if (r && (r.fallidos > 0 || r.vencidos > 0))
+        console.error("[avisoParte]", r);
+    } catch (e) {
+      console.error("[avisoParte]", (e as { code?: string }).code ?? "error");
+    }
+  });
 }
 
 /**

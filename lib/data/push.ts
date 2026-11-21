@@ -5,10 +5,17 @@
 //
 // Nunca se registran endpoints ni cédulas: solo conteos y códigos.
 import { and, eq, inArray } from "drizzle-orm";
-import type { Db } from "@/lib/db";
-import { pushSuscripciones, usuarios } from "@/lib/db/schema";
+import { type Db, enSerie } from "@/lib/db";
+import {
+  equipos,
+  partes,
+  pushSuscripciones,
+  tareas,
+  usuarios,
+} from "@/lib/db/schema";
 import {
   type AvisoPush,
+  avisoParteEntregada,
   avisoTareaNueva,
   type SuscripcionPush,
   suscripcionVencida,
@@ -96,8 +103,90 @@ export async function avisarTareaPublicada(
   tarea: TareaPublicada,
   enviar: Enviar,
 ): Promise<ResumenAviso> {
-  const aviso = avisoTareaNueva(tarea);
-  const todos = await destinatarios(db, tarea.secciones);
+  return enviarAviso(
+    db,
+    await destinatarios(db, tarea.secciones),
+    avisoTareaNueva(tarea),
+    enviar,
+  );
+}
+
+/** Las suscripciones de una persona (un navegador cada una). */
+export async function destinosDe(db: Db, cedula: string): Promise<Destino[]> {
+  return db
+    .select({
+      endpoint: pushSuscripciones.endpoint,
+      p256dh: pushSuscripciones.p256dh,
+      auth: pushSuscripciones.auth,
+    })
+    .from(pushSuscripciones)
+    .where(eq(pushSuscripciones.cedula, cedula));
+}
+
+/**
+ * Tras el commit de «entregar parte» (D535): avisa al capitán del equipo del integrante. Devuelve
+ * `null` si no hay a quién (la parte ya no está entregada por este alumno, sin equipo o sin
+ * capitán, el capitán es quien entrega) y, si no, el resumen del envío. Sin preferencia por tipo
+ * de aviso (D536): avisa a quien ya tenga el aviso activado en algún navegador.
+ */
+export async function avisarParteEntregada(
+  db: Db,
+  entrada: { uid: string; tareaId: string; preguntaId: string },
+  enviar: Enviar,
+): Promise<ResumenAviso | null> {
+  const { uid, tareaId, preguntaId } = entrada;
+  const [[yo], [tarea], [parte]] = await enSerie([
+    db
+      .select({
+        nombres: usuarios.nombres,
+        apellidos: usuarios.apellidos,
+        equipoId: usuarios.equipoId,
+      })
+      .from(usuarios)
+      .where(eq(usuarios.cedula, uid)),
+    db
+      .select({ titulo: tareas.titulo, preguntas: tareas.preguntas })
+      .from(tareas)
+      .where(eq(tareas.id, tareaId)),
+    db
+      .select({ estado: partes.estado })
+      .from(partes)
+      .where(
+        and(
+          eq(partes.tareaId, tareaId),
+          eq(partes.preguntaId, preguntaId),
+          eq(partes.asignado, uid),
+          eq(partes.estado, "entregada"),
+        ),
+      ),
+  ]);
+  if (!yo?.equipoId || !tarea || !parte) return null;
+  const [equipo] = await db
+    .select({ capitanId: equipos.capitanId })
+    .from(equipos)
+    .where(eq(equipos.id, yo.equipoId));
+  const capitan = equipo?.capitanId;
+  if (!capitan || capitan === uid) return null;
+  const indice = tarea.preguntas.findIndex(
+    (p) => (p as { id?: unknown } | null)?.id === preguntaId,
+  );
+  if (indice < 0) return null;
+  const aviso = avisoParteEntregada({
+    tareaId,
+    preguntaId,
+    tituloTarea: tarea.titulo,
+    numero: indice + 1,
+    integrante: yo,
+  });
+  return enviarAviso(db, await destinosDe(db, capitan), aviso, enviar);
+}
+
+async function enviarAviso(
+  db: Db,
+  todos: readonly Destino[],
+  aviso: AvisoPush,
+  enviar: Enviar,
+): Promise<ResumenAviso> {
   const resumen: ResumenAviso = { enviados: 0, vencidos: 0, fallidos: 0 };
   const vencidos: string[] = [];
   for (let i = 0; i < todos.length; i += LOTE) {

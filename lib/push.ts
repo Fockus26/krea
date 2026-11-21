@@ -70,6 +70,40 @@ export function avisoTareaNueva(tarea: {
   };
 }
 
+// PROVISIONAL (CONTENT_CHECKLIST fila 293): título de la notificación al capitán
+export const TITULO_AVISO_PARTE = "Parte entregada";
+const MAX_TITULO_TAREA_PARTE = 60;
+
+/**
+ * Aviso al capitán de que un integrante entregó su parte (D535): «Ana Pérez entregó la pregunta 2
+ * de “Afiche”». Solo nombre y primer apellido, nunca la cédula. `numero` cuenta desde 1.
+ */
+export function avisoParteEntregada(parte: {
+  tareaId: string;
+  preguntaId: string;
+  tituloTarea: string;
+  numero: number;
+  integrante: { nombres: string; apellidos: string };
+}): AvisoPush {
+  const primera = (s: string) => s.trim().split(/\s+/)[0] ?? "";
+  const quien =
+    `${primera(parte.integrante.nombres)} ${primera(parte.integrante.apellidos)}`.trim() ||
+    "Un integrante";
+  const t = parte.tituloTarea.trim();
+  const tarea =
+    t.length > MAX_TITULO_TAREA_PARTE
+      ? `${t.slice(0, MAX_TITULO_TAREA_PARTE - 1).trimEnd()}…`
+      : t;
+  return {
+    titulo: TITULO_AVISO_PARTE,
+    // PROVISIONAL (CONTENT_CHECKLIST fila 294): cuerpo del aviso de parte entregada
+    cuerpo: `${quien} entregó la pregunta ${parte.numero} de “${tarea}”`,
+    url: `/tareas/${encodeURIComponent(parte.tareaId)}`,
+    // Reentregar la misma parte reemplaza la notificación en vez de apilarla
+    etiqueta: `parte-${parte.tareaId}-${parte.preguntaId}`,
+  };
+}
+
 /** La tarea que se acaba de publicar, para avisar a sus secciones. */
 export type TareaPublicada = {
   id: string;

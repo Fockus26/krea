@@ -13,6 +13,7 @@ import { accionParteEnTransaccion } from "@/lib/data/partes";
 import { idPublico } from "@/lib/datos/id-publico";
 import { baseDeDatos } from "@/lib/db";
 import { comprobarImagenes } from "@/lib/entregas";
+import { programarAvisoParte } from "@/lib/push-envio";
 import {
   type AccionParte,
   type ErrorParte,
@@ -74,7 +75,7 @@ export async function tomarParte(entrada: unknown): Promise<ResultadoParte> {
 /** Integrante asignado: entrega su respuesta al capitán (otra vez, mientras no esté aceptada). */
 export async function entregarParte(entrada: unknown): Promise<ResultadoParte> {
   // Antes de tocar B2 (`verificarSesion` va en `cache`: `ejecutar` no vuelve a leerla)
-  await exigirSesion("estudiante");
+  const sesion = await exigirSesion("estudiante");
   const e = zEntregarParte.safeParse(entrada);
   if (!e.success) return { ok: false, error: "incompleta" };
   const almacen = almacenB2();
@@ -87,7 +88,15 @@ export async function entregarParte(entrada: unknown): Promise<ResultadoParte> {
     tipo: "entregar",
     respuesta: e.data.respuesta,
   });
-  if (r.ok) refresh();
+  if (r.ok) {
+    // Solo al entregar (no al aceptar ni devolver), tras el commit y sin bloquear (D535)
+    programarAvisoParte({
+      uid: sesion.uid,
+      tareaId: e.data.tareaId,
+      preguntaId: e.data.preguntaId,
+    });
+    refresh();
+  }
   return r;
 }
 

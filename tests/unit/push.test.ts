@@ -5,6 +5,7 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { contraste } from "@/lib/grades";
 import {
+  avisoParteEntregada,
   avisoTareaNueva,
   bytesDeClave,
   clavePublicaPush,
@@ -175,4 +176,56 @@ describe("contraste del interruptor (4 acentos × claro/oscuro)", () => {
         ).toBeGreaterThanOrEqual(MIN_GRAFICO);
       });
     }
+});
+
+describe("aviso de parte entregada al capitán (D535)", () => {
+  const base = {
+    tareaId: "t-1",
+    preguntaId: "p2",
+    tituloTarea: "  Afiche  ",
+    numero: 2,
+    integrante: { nombres: "Ana María", apellidos: "Paredes Aranda" },
+  };
+
+  test("nombre y primer apellido, número de pregunta y enlace a la tarea", () => {
+    expect(avisoParteEntregada(base)).toEqual({
+      titulo: "Parte entregada",
+      cuerpo: "Ana Paredes entregó la pregunta 2 de “Afiche”",
+      url: "/tareas/t-1",
+      etiqueta: "parte-t-1-p2",
+    });
+  });
+
+  test("título largo recortado; sin nombre, «Un integrante»", () => {
+    const largo = avisoParteEntregada({ ...base, tituloTarea: "a".repeat(200) });
+    expect(largo.cuerpo.length).toBeLessThan(110);
+    expect(largo.cuerpo).toContain("…”");
+    expect(
+      avisoParteEntregada({
+        ...base,
+        integrante: { nombres: " ", apellidos: "" },
+      }).cuerpo,
+    ).toStartWith("Un integrante entregó");
+  });
+
+  test("solo entregarParte programa el aviso (no asignar, aceptar, devolver ni tomar)", () => {
+    const src = readFileSync("lib/acciones/partes.ts", "utf8");
+    expect(src.match(/programarAvisoParte\(/g)).toHaveLength(1);
+    const entregar = src.slice(
+      src.indexOf("export async function entregarParte"),
+      src.indexOf("async function ejecutar"),
+    );
+    expect(entregar).toContain("programarAvisoParte(");
+  });
+
+  test("el envío no falla ni envía sin VAPID", () => {
+    const src = readFileSync("lib/push-envio.ts", "utf8");
+    const parte = src.slice(
+      src.indexOf("export function programarAvisoParte"),
+      src.indexOf("export function programarAvisoTarea"),
+    );
+    expect(parte).toMatch(/if \(!config\) return;/);
+    expect(parte).toContain("after(");
+    expect(parte).toContain("catch");
+  });
 });
