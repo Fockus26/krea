@@ -140,7 +140,7 @@ function tareaProfe(t: DemoTarea): TareaProfe {
     // La del alumno es `evaluada` (cerrada para el profe, D451) o `abierta`
     estado: p?.estado ?? (t.estado === "evaluada" ? "cerrada" : t.estado),
     fecha: t.fecha,
-    premio: t.tipo === "grupal" ? (t.premio ?? null) : null,
+    premio: t.premio ?? null,
     preguntas: p?.preguntas ?? t.preguntas.length,
     suma: sumaValores(t.preguntas),
     avance: p?.avance ?? null,

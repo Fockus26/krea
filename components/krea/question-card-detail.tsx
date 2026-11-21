@@ -27,6 +27,12 @@ type QuestionCardDetailProps = {
   respuesta: QuestionAnswer;
   /** Comentario del profe, si lo dejó. */
   comentario?: string;
+  /**
+   * Evaluada pero sin puntos de esta pregunta (D528): el texto que va en lugar de la barra
+   * («Sin puntaje por pregunta», «No participaste…»). La cabecera dice solo «vale N», nunca
+   * «Pendiente» (D003 es solo sin evaluación). Ignorado si hay `obtenido`.
+   */
+  sinPuntaje?: string;
   level?: 2 | 3 | 4;
 };
 
@@ -43,8 +49,10 @@ export function QuestionCardDetail({
   obtenido,
   respuesta,
   comentario,
+  sinPuntaje,
   level,
 }: QuestionCardDetailProps) {
+  const sinPuntos = obtenido === null && sinPuntaje !== undefined;
   return (
     <li className="list-none">
       <Card className="flex flex-col gap-3">
@@ -52,11 +60,16 @@ export function QuestionCardDetail({
           numero={numero}
           enunciado={enunciado}
           valor={valor}
-          variant="detalle"
+          // Sin puntos: «vale N» (como al evaluar); el porqué va en texto debajo
+          variant={sinPuntos ? "evaluar" : "detalle"}
           obtenido={obtenido}
           level={level}
         />
-        <QuestionBar obtenido={obtenido} valor={valor} hideText />
+        {sinPuntos ? (
+          <p className="text-small text-text-2">{sinPuntaje}</p>
+        ) : (
+          <QuestionBar obtenido={obtenido} valor={valor} hideText />
+        )}
         <div className="flex flex-col gap-1.5">
           <p className="text-eyebrow text-text-2">Tu respuesta</p>
           {respuesta.tipo === "texto" ? (

@@ -29,7 +29,9 @@ import {
 } from "@/lib/acciones/partes";
 import { verificarSesion } from "@/lib/dal";
 import {
+  autorDeEnvio,
   datosAlumno,
+  entregaDelEquipo,
   integrantesDe,
   partesDelEquipo,
 } from "@/lib/datos/estudiante";
@@ -85,9 +87,28 @@ export default async function TareaPage({ params }: Props) {
   const id = (await params).tarea;
   const datos = await datosAlumno();
   const companeros = datos.equipo ? await integrantesDe(datos.equipo.id) : [];
+  // Entró al equipo después del envío: no figura en la grupal, pero la ve (D526)
+  const propia = datos.entregas.find((e) => e.tareaId === id) ?? null;
+  const delEquipo =
+    !propia &&
+    datos.equipo &&
+    datos.tareas.find((t) => t.id === id)?.tipo === "grupal"
+      ? await entregaDelEquipo(id, datos.equipo.id)
+      : null;
+  // Quien la envió ya no está en el equipo: su nombre lo busca el servidor (D525)
+  const enviadaPor = (propia ?? delEquipo)?.enviadaPor ?? null;
+  const autores =
+    enviadaPor &&
+    enviadaPor !== datos.usuario.cedula &&
+    !companeros.some((c) => c.cedula === enviadaPor)
+      ? await autorDeEnvio(enviadaPor)
+      : undefined;
   // Después de los datos de la sesión: abierta o cerrada para él en este instante (D451)
   const ahora = Date.now();
-  const d = entregaVista(datos, id, companeros, ahora);
+  const d = entregaVista(datos, id, companeros, ahora, {
+    delEquipo,
+    ...(autores ? { autores } : {}),
+  });
   if (d.estado === "no-existe") notFound();
 
   // Grupal abierta sin enviar: el reparto del equipo (D422), que se actualiza solo (D465)
@@ -215,6 +236,8 @@ export default async function TareaPage({ params }: Props) {
             hora={d.hora}
             evaluada={d.evaluada}
             notaHref={d.notaHref}
+            enviadaPorFuera={d.enviadaPorFuera}
+            antesDeEntrar={d.antesDeEntrar}
             volverHref="/tareas"
             accion={<BotonEditarEntrega />}
           />
@@ -246,6 +269,9 @@ export default async function TareaPage({ params }: Props) {
                       obtenido={
                         puntosEvaluados ? (puntosEvaluados[p.id] ?? 0) : null
                       }
+                      // Evaluada sin puntos por pregunta o enviada antes de que entrara: no es
+                      // «Pendiente» (D003, D526, D528)
+                      sinPuntaje={d.sinPuntaje ?? undefined}
                       respuesta={
                         r.tipo === "texto" || r.tipo === "url"
                           ? r

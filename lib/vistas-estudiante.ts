@@ -20,8 +20,13 @@ import type {
 } from "@/components/sections/tareas/task-answer-form";
 import { type DicebearEstilo, esEstiloDicebear } from "@/lib/dicebear";
 import { faltanRespuestas, inicialEdicion, yaEnviada } from "@/lib/entregas";
-import { enJuegoTexto, ganadoresPremio, premioGanadoTexto } from "@/lib/equipo";
-import { estadoEn, vencimientoDe } from "@/lib/estado-tarea";
+import {
+  enJuegoTexto,
+  ganadoresPremio,
+  notasPremioIndividual,
+  premioGanadoTexto,
+} from "@/lib/equipo";
+import { cerradaParaTodos, estadoEn, vencimientoDe } from "@/lib/estado-tarea";
 import {
   claveVencimiento,
   comparaFecha,
@@ -47,6 +52,7 @@ import {
   type Parte,
   type RankingSeccion,
   rutasImagen,
+  type SeccionId,
   type Tarea,
   type Usuario,
 } from "@/lib/modelo";
@@ -69,7 +75,11 @@ import {
   cedulaTexto,
   partirNombre,
 } from "@/lib/perfil";
-import { imagenesConAlt, respuestaFirmada } from "@/lib/question";
+import {
+  imagenesConAlt,
+  respuestaFirmada,
+  SIN_PUNTAJE_PREGUNTA,
+} from "@/lib/question";
 import { primerApellido, rankCompetition } from "@/lib/ranking";
 import {
   baseDeIntegrante,
@@ -588,6 +598,37 @@ export function detalleNota(
   };
 }
 
+/**
+ * ¿Ganó el premio de esta individual? (D527): con premio y cerrada para todos (D453, como lo
+ * resuelve el profe), entre los alumnos de su sección con su nota final (`notasPremioIndividual`,
+ * D264); con empate, lo que decidió el profe (D123, D124). El premio y su foto si ganó; si no,
+ * `null`. Las notas de los demás no salen de aquí.
+ */
+export function premioIndividualGanado(
+  t: ConId<Tarea>,
+  seccion: SeccionId,
+  cedula: string,
+  competidores: {
+    alumnos: ReadonlyArray<
+      Pick<Usuario, "cedula" | "rol" | "seccion" | "base">
+    >;
+    entregas: ReadonlyArray<Entrega>;
+  },
+  ahora: number,
+): { premio: string; premioFoto: string | null } | null {
+  if (t.tipo !== "individual" || !t.premio) return null;
+  if (!cerradaParaTodos(t, ahora)) return null;
+  const notas = notasPremioIndividual(
+    t.id,
+    seccion,
+    competidores.alumnos,
+    competidores.entregas,
+  );
+  return ganadoresPremio(notas, t.decisionesPremio?.[seccion]).includes(cedula)
+    ? { premio: t.premio, premioFoto: t.premioFoto ?? null }
+    : null;
+}
+
 /* ---------- Ranking ---------- */
 
 type PuestoDe = { puesto: number; total: number; puntos: number };
@@ -1086,13 +1127,33 @@ export type EntregaVista =
         | { estado: "cerrada" }
         | {
             estado: "entregada";
-            /** Nombre de quien la envió; `null` si vino del Excel sin registro. */
+            /**
+             * Nombre de quien la envió; `null` si vino del Excel sin registro o si quien la envió
+             * ya no se encuentra (`enviadaPorFuera`).
+             */
             quien: string | null;
-            /** Primer nombre de quien respondió (alt de las imágenes). */
+            /**
+             * La envió alguien con registro (no es del Excel) que ya no está en el equipo y cuyo
+             * nombre no se encontró (D525): «la envió alguien que ya no está en el equipo».
+             */
+            enviadaPorFuera: boolean;
+            /**
+             * Grupal de su equipo enviada antes de que él entrara (D526): la ve en solo lectura y
+             * sin nota suya (no es integrante de la entrega, D221/D396).
+             */
+            antesDeEntrar: boolean;
+            /** Primer nombre de quien respondió (alt de las imágenes) o «tu equipo». */
             autor: string;
             fecha: string | null;
             hora: string | null;
             evaluada: boolean;
+            /**
+             * Lo que dice cada pregunta en vez de sus puntos cuando no hay puntos que mostrar y no
+             * es «Pendiente» (D003 = solo sin evaluación, D528): evaluada sin puntos por pregunta
+             * («Sin puntaje por pregunta» o, si el profe lo marcó, «No participaste…») o enviada
+             * antes de que entrara (D526). `null`: los puntos, o «Pendiente» sin evaluar.
+             */
+            sinPuntaje: string | null;
             /** Su nota y el desglose por pregunta (D248) si ya está evaluada; si no, `null`. */
             notaHref: string | null;
             /** Por pregunta, en orden; `null` si no hay respuesta guardada. */
@@ -1103,11 +1164,21 @@ export type EntregaVista =
 /** PLACEHOLDER de copy (CONTENT_CHECKLIST fila 129): tarea sin fecha de entrega. */
 export const SIN_FECHA_ENTREGA = "Sin fecha de entrega";
 
+/** Autor del `alt` de las imágenes cuando no se sabe quién respondió (como en el detalle de la nota). */
+const EL_EQUIPO = "tu equipo";
+
+/**
+ * Cada pregunta de la grupal que su equipo envió antes de que él entrara (D526): no es su nota.
+ * PROVISIONAL (CONTENT_CHECKLIST fila 288).
+ */
+export const ENTREGA_ANTES_DE_ENTRAR_PREGUNTA = "No cuenta para tu nota";
+
 /**
  * /tareas/[tarea] según la sesión y los datos: `no-existe` (no es de su sección o borrador →
  * 404); `entregada` si ya hay una entrega enviada donde figura (también los integrantes de una
- * grupal: ven las respuestas del capitán y, evaluada, el enlace a su nota; D248); si no, con la
- * tarea abierta,
+ * grupal: ven las respuestas del capitán y, evaluada, el enlace a su nota; D248) o, si entró al
+ * equipo después, la grupal que su equipo ya envió (`delEquipo`, solo lectura y sin nota, D526);
+ * si no, con la tarea abierta,
  * `responder` (individual, o grupal y es el capitán, D012) o `lector` (grupal, no capitán);
  * `sin-equipo` (grupal sin equipo); `cerrada` (ya no está abierta y no la entregó).
  */
@@ -1117,6 +1188,12 @@ export function entregaVista(
   companeros: readonly Companero[],
   /** Para «Vence» / «Venció» por fecha y hora en el encabezado (D357). */
   ahora?: number,
+  extra: {
+    /** La grupal de su equipo actual (`entregaDelEquipo`), si él no figura en ninguna. */
+    delEquipo?: ConId<Entrega> | null;
+    /** Cédula → nombre de quien la envió si ya no está en el equipo (`autorDeEnvio`, D525). */
+    autores?: ReadonlyMap<string, Pick<Usuario, "nombres" | "apellidos">>;
+  } = {},
 ): EntregaVista {
   const t = d.tareas.find((x) => x.id === tareaId);
   if (!t) return { estado: "no-existe" };
@@ -1143,22 +1220,57 @@ export function entregaVista(
     })),
   };
 
-  const e = entregaDe(t.id, d.entregas);
+  const propia = entregaDe(t.id, d.entregas);
+  // Entró al equipo después de que se envió: la del equipo, en solo lectura (D526)
+  const delEquipo =
+    !propia &&
+    t.tipo === "grupal" &&
+    d.equipo &&
+    extra.delEquipo?.tareaId === t.id &&
+    extra.delEquipo.titularId === d.equipo.id
+      ? extra.delEquipo
+      : null;
+  const e = propia ?? delEquipo;
   if (e && enviada(e, t, abierta)) {
-    const envio =
+    const companero =
       e.enviadaPor === u.cedula
         ? u
-        : (companeros.find((c) => c.cedula === e.enviadaPor) ?? null);
+        : companeros.find((c) => c.cedula === e.enviadaPor);
+    // Ya no está en el equipo (D525): su nombre corto, si se encontró
+    const deFuera =
+      !companero && e.enviadaPor ? extra.autores?.get(e.enviadaPor) : undefined;
+    const evaluada = e.estado === "evaluada";
+    const sinPuntaje = delEquipo
+      ? ENTREGA_ANTES_DE_ENTRAR_PREGUNTA
+      : evaluada && !e.evaluacion?.puntos
+        ? noParticipo(e, u.cedula)
+          ? NO_PARTICIPASTE
+          : SIN_PUNTAJE_PREGUNTA
+        : null;
     return {
       ...cabecera,
       estado: "entregada",
-      quien: envio ? nombreCompleto(envio) : null,
-      autor: primerNombre((envio ?? u).nombres),
+      quien: companero
+        ? nombreCompleto(companero)
+        : deFuera
+          ? nombreCorto(deFuera)
+          : null,
+      enviadaPorFuera: !companero && !deFuera && e.enviadaPor !== null,
+      antesDeEntrar: delEquipo !== null,
+      autor: companero
+        ? primerNombre(companero.nombres)
+        : deFuera
+          ? primerNombre(deFuera.nombres)
+          : e.enviadaPor !== null || delEquipo
+            ? EL_EQUIPO
+            : primerNombre(u.nombres),
       fecha:
         e.enviadaEn !== null ? formatFecha(diaDeInstante(e.enviadaEn)) : null,
       hora: e.enviadaEn !== null ? horaDeInstante(e.enviadaEn) : null,
-      evaluada: e.estado === "evaluada",
-      notaHref: e.estado === "evaluada" ? `/notas/${t.id}` : null,
+      evaluada,
+      sinPuntaje,
+      // Sin nota suya si entró después (D221, D396)
+      notaHref: evaluada && !delEquipo ? `/notas/${t.id}` : null,
       respuestas: t.preguntas.map((p): RespuestaEnviada | null => {
         const r = e.respuestas[p.id];
         if (!r) return null;

@@ -68,7 +68,7 @@ export function IdealRespuesta({
   if (respuesta.tipo === "url") return <RespuestaEnlace url={respuesta.url} />;
   if (respuesta.tipo === "texto") {
     return (
-      <p className="whitespace-pre-line rounded-nav bg-surface-2 px-3.5 py-3 text-callout text-text">
+      <p className="whitespace-pre-line break-words rounded-nav bg-surface-2 px-3.5 py-3 text-callout text-text">
         {respuesta.texto}
       </p>
     );
@@ -115,7 +115,7 @@ export function IdealPorque({
       />
       <div className="min-w-0 flex-1">
         <p className="text-small-b">{titulo}</p>
-        <p className="whitespace-pre-line">{children}</p>
+        <p className="whitespace-pre-line break-words">{children}</p>
       </div>
     </div>
   );

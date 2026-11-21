@@ -17,6 +17,12 @@ export const ANSWER_MAX_LENGTH = 600;
 export const COMMENT_MAX_LENGTH = 300;
 
 /**
+ * Pregunta de una entrega evaluada sin puntos por pregunta (puntaje final, nota del Excel): no es
+ * «Pendiente», que es solo sin evaluación (D003, D528). PROVISIONAL (CONTENT_CHECKLIST fila 290).
+ */
+export const SIN_PUNTAJE_PREGUNTA = "Sin puntaje por pregunta";
+
+/**
  * Texto del valor a la derecha de la cabecera: "3,5 / 4" en detalle, "vale 4" al evaluar,
  * "4 pts" al responder. En detalle sin nota (`obtenido` null) es "Pendiente · vale 4":
  * nunca "0 / 4" (D003).

@@ -49,7 +49,7 @@ import {
 import { formatNota } from "@/lib/grades";
 import { idEntrega } from "@/lib/modelo";
 import { nombrePresencia } from "@/lib/presencia";
-import { respuestaFirmada } from "@/lib/question";
+import { respuestaFirmada, SIN_PUNTAJE_PREGUNTA } from "@/lib/question";
 import { seccionesDe } from "@/lib/secciones";
 
 type Props = PageProps<"/profe/evaluar/[entrega]">;
@@ -260,6 +260,12 @@ export default async function EvaluarEntregaPage({
                 obtenido={entrega.evaluacion?.puntos?.[p.id] ?? null}
                 respuesta={p.respuesta}
                 comentario={entrega.evaluacion?.comentarios[p.id]}
+                // Evaluada sin puntos por pregunta: no es «Pendiente» (D528)
+                sinPuntaje={
+                  entrega.evaluacion && !entrega.evaluacion.puntos
+                    ? SIN_PUNTAJE_PREGUNTA
+                    : undefined
+                }
                 level={3}
               />
             ))}

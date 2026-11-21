@@ -120,7 +120,7 @@ export function entregaDe(modo: ModoEntrega, tareaId?: string) {
     eyebrow: eyebrowTarea(t.tipo, equipo?.nombre),
     vence: venceTexto(t.fecha),
     puntos: puntosPreguntasTexto(t.preguntas.map((p) => p.valor)),
-    premio: t.tipo === "grupal" ? t.premio : undefined,
+    premio: t.premio,
     preguntas: t.preguntas,
     autor: primerNombre(alumno),
     capitan:
