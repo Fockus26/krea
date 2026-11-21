@@ -95,7 +95,9 @@ export function RankRow({
 
   const caja = (
     <div
-      aria-hidden="true"
+      // Interactiva: el nombre sale del contenido (puesto, nombre, puntos y cambio) para que
+      // contenga el texto visible (WCAG 2.5.3, D506); si no, lo lleva el `<li>`
+      aria-hidden={interactiva ? undefined : "true"}
       data-slot="rank-row"
       data-kind={kind}
       data-me={esTu ? "true" : undefined}
@@ -117,6 +119,7 @@ export function RankRow({
             "mx-auto grid size-8 place-items-center rounded-pill bg-accent-soft-2 text-text",
         )}
       >
+        {interactiva ? <span className="sr-only">Puesto </span> : null}
         {puesto}
       </span>
 
@@ -158,6 +161,9 @@ export function RankRow({
         )}
       >
         {formatDecimal(puntos)}
+        {interactiva ? (
+          <span className="sr-only"> {puntos === 1 ? "punto" : "puntos"}</span>
+        ) : null}
       </span>
     </div>
   );
@@ -173,13 +179,12 @@ export function RankRow({
       )}
     >
       {href !== undefined ? (
-        <Link href={href} aria-label={label} className={claseToque}>
+        <Link href={href} className={claseToque}>
           {caja}
         </Link>
       ) : onAbrir !== undefined ? (
         <button
           type="button"
-          aria-label={label}
           aria-haspopup="dialog"
           onClick={onAbrir}
           className={cn(claseToque, "cursor-pointer")}

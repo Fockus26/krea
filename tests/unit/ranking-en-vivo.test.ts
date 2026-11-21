@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { conCedula } from "@/lib/id-publico";
 import type { RankingSeccion } from "@/lib/modelo";
 import {
   eventosEntre,
@@ -41,7 +42,8 @@ const ranking = (puntos: Record<string, number>): RankingSeccion => ({
   actualizadoEn: 0,
 });
 
-const tu = { cedula: "22222222", equipoId: "g2" };
+// Con las claves tal cual (la vista del profe); la del alumno, con ids públicos: id-publico.test.ts
+const tu = { id: "22222222", equipoId: "g2" };
 const info = {
   g1: { tema: "Barbería", capitan: "11111111" },
   g2: { tema: null, capitan: null },
@@ -152,6 +154,7 @@ describe("logos de equipo (D212)", () => {
       { id: "g2", tema: null, capitanId: null, logoPath: null },
     ],
     new Map([["equipos/g1/a.webp", "https://firmada/a"]]),
+    conCedula,
   );
 
   test("pinta la URL firmada si el documento en vivo trae la misma ruta", () => {

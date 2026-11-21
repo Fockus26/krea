@@ -32,6 +32,7 @@ import {
   vencida,
 } from "@/lib/fecha";
 import { formatNota, puntosRanking } from "@/lib/grades";
+import type { IdAlumno } from "@/lib/id-publico";
 import {
   capitanTexto,
   equipoChipTexto,
@@ -92,8 +93,8 @@ export type RepartoVista =
   | {
       modo: "capitan";
       filas: FilaRepartoPanel[];
-      /** A quién se puede asignar: el equipo sin el capitán. */
-      integrantes: Array<{ cedula: string; nombre: string }>;
+      /** A quién se puede asignar: el equipo sin el capitán, por su id público (D495). */
+      integrantes: Array<{ id: string; nombre: string }>;
       /** Lo último que entregó el integrante en las que el capitán tomó (D461): precarga el campo. */
       inicial: ReturnType<typeof inicialEdicion>;
       /** Las asignadas a otro (vigentes y no tomadas): solo lectura en su formulario (D462). */
@@ -110,6 +111,8 @@ type EntradaReparto = {
   equipo: Pick<Equipo, "capitanId"> | null;
   companeros: readonly Companero[];
   partes: readonly Parte[];
+  /** Cédula → id público: lo que sale al cliente en vez de la cédula de un compañero (D495). */
+  idDe: IdAlumno;
 };
 
 /** Solo hay reparto en una grupal abierta y sin enviar: responder (capitán) o lector. */
@@ -195,7 +198,7 @@ export function repartoVista(
         preguntaId: f.preguntaId,
         numero: i + 1,
         enunciado: v.preguntas[i]?.enunciado ?? "",
-        asignado: f.asignado,
+        asignado: f.asignado ? e.idDe(f.asignado) : null,
         nombre: f.asignado ? corto(f.asignado) : null,
         estado: f.estado,
         respuesta,
@@ -206,7 +209,7 @@ export function repartoVista(
       filas: filasPanel,
       integrantes: e.companeros
         .filter((c) => c.cedula !== capitanId)
-        .map((c) => ({ cedula: c.cedula, nombre: nombreCorto(c) })),
+        .map((c) => ({ id: e.idDe(c.cedula), nombre: nombreCorto(c) })),
       // Al tomar una devuelta, lo último que entregó precarga el campo (su borrador gana)
       inicial: inicialEdicion(
         v.preguntas,
@@ -268,6 +271,38 @@ export function repartoVista(
       };
     }),
   };
+}
+
+/**
+ * «Editar entrega» de una grupal ya enviada (D508): las preguntas con parte aceptada de otro
+ * integrante van en solo lectura, como antes de enviar (D462), con lo que entregó. El servidor las
+ * vuelve a poner desde el reparto. `integrantes`: los de la entrega (D396), como en el servidor.
+ */
+export function bloqueosEdicion(e: {
+  preguntas: ReadonlyArray<{ id: string }>;
+  partes: readonly Parte[];
+  integrantes: readonly string[];
+  capitanId: string | null;
+  companeros: readonly Companero[];
+  urls: ReadonlyMap<string, string>;
+}): Record<string, BloqueoPregunta> {
+  const persona = new Map(e.companeros.map((c) => [c.cedula, c]));
+  const bloqueos: Record<string, BloqueoPregunta> = {};
+  repartoCapitan(e.preguntas, e.partes, e.integrantes, e.capitanId).forEach(
+    (f, i) => {
+      if (f.estado !== "aceptada" || !f.asignado || !f.respuesta) return;
+      const c = persona.get(f.asignado);
+      const nombre = c ? nombreCorto(c) : PARTE_SIN_NOMBRE;
+      bloqueos[f.preguntaId] = {
+        texto: bloqueoTexto("aceptada", nombre),
+        respuesta: parteFirmada(f.respuesta, nombre, i + 1, e.urls),
+        aceptada: true,
+        nombre,
+        tomable: false,
+      };
+    },
+  );
+  return bloqueos;
 }
 
 /** Lo que el servidor lee para un estudiante (todo de su sección y lo suyo). */
@@ -747,6 +782,8 @@ const puntosEnRanking = (ranking: RankingSeccion | null) => (c: string) =>
 export function inicioVista(
   d: DatosAlumno,
   companeros: readonly Companero[],
+  /** Cédula → id público de cada integrante (D496): su cédula no sale al cliente. */
+  idDe: IdAlumno,
   /** Instante de la petición: «vence» / «venció» por fecha y hora (D357). */
   ahora?: number,
 ): InicioVista {
@@ -773,7 +810,7 @@ export function inicioVista(
       chip: pe ? equipoChipTexto(pe.puesto, pe.total, pe.puntos) : "",
       meta: equipoMetaTexto(eq.tema, miembros.length),
       integrantes: miembros.map((m) => ({
-        id: m.cedula,
+        id: idDe(m.cedula),
         nombre: nombreCorto(m),
         estilo: estiloDe(m.avatar.estilo),
         seed: m.avatar.semilla,
@@ -836,6 +873,8 @@ export function equipoVista(
   d: Pick<DatosAlumno, "usuario" | "equipo" | "tareas" | "ranking">,
   companeros: readonly Companero[],
   entregasGrupales: ReadonlyArray<Entrega>,
+  /** Cédula → id público de cada integrante (D496): su cédula no sale al cliente. */
+  idDe: IdAlumno,
   /** Para «vence» / «venció» de las notas pendientes (D357). */
   ahora?: number,
 ): EquipoVista | null {
@@ -884,7 +923,7 @@ export function equipoVista(
       puntos: pe?.puntos ?? 0,
     },
     integrantes: miembros.map((m) => ({
-      id: m.cedula,
+      id: idDe(m.cedula),
       nombre: nombreCompleto(m),
       estilo: estiloDe(m.avatar.estilo),
       seed: m.avatar.semilla,

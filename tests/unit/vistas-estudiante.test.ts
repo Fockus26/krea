@@ -4,9 +4,15 @@ import gruposJson from "@/data/seed/grupos.json";
 import tareaJson from "@/data/seed/tarea-identidad-marca.json";
 import { diaDeInstante } from "@/lib/fecha";
 import { NOTA_MIN } from "@/lib/grades";
+import {
+  conSemillaPublica,
+  crearIdPublico,
+  rankingPublico,
+} from "@/lib/id-publico";
 import type { Ajuste, Entrega, SeccionId, Tarea, Usuario } from "@/lib/modelo";
 import { NO_PARTICIPASTE } from "@/lib/notas";
 import { calcularRanking } from "@/lib/ranking-datos";
+import { infoDeEquipos, itemsDeRanking } from "@/lib/ranking-en-vivo";
 import { docsDesdeSeed } from "@/lib/seed-firestore";
 import {
   type ConId,
@@ -33,6 +39,8 @@ const seed = docsDesdeSeed(alumnosJson, gruposJson, tareaJson, AHORA);
 const RAQUEL = "45009896"; // 5A, capitana de 5a-g2, 18,5 en Identidad
 const ELSA = "45011133"; // 5A, 5a-g6, con desglose
 const HUGO = "45019792"; // 5A, sin equipo ni nota
+/** Cédula → id público, como en el servidor (D496). */
+const ID = crearIdPublico("secreto-de-prueba-vistas");
 
 const abierta: ConId<Tarea> = {
   id: "presentacion",
@@ -363,7 +371,7 @@ describe("desgloseReal", () => {
 describe("inicioVista", () => {
   test("puntos y puesto del ranking, pendientes y equipo", () => {
     const d = datosDe(RAQUEL, { tareas: [abierta] });
-    const v = inicioVista(d, companerosDe("5a-g2"));
+    const v = inicioVista(d, companerosDe("5a-g2"), ID);
     // 18,5 individual + 19 grupal (D007)
     expect(v.puntos?.puntos).toBe(37.5);
     expect(v.puntos?.puesto).toBe(
@@ -382,7 +390,7 @@ describe("inicioVista", () => {
     });
     expect(v.notas).toHaveLength(2);
     expect(v.equipo?.capitan).toEqual({ etiqueta: "Capitán:", quien: "tú" });
-    expect(v.equipo?.integrantes[0]?.id).toBe(RAQUEL);
+    expect(v.equipo?.integrantes[0]?.id).toBe(ID(RAQUEL));
   });
 
   test("una tarea ya entregada no está pendiente; un borrador sí, como «borrador»", () => {
@@ -402,12 +410,14 @@ describe("inicioVista", () => {
     const conEntrega = inicioVista(
       datosDe(RAQUEL, { tareas: [abierta], entregas: [entrega("entregada")] }),
       [],
+      ID,
     );
     expect(conEntrega.pendientes).toEqual([]);
     expect(conEntrega.saludo.linea).toBe("Estás al día.");
     const borrador = inicioVista(
       datosDe(RAQUEL, { tareas: [abierta], entregas: [entrega("borrador")] }),
       [],
+      ID,
     );
     expect(borrador.pendientes[0]?.avance).toBe("borrador");
   });
@@ -435,6 +445,7 @@ describe("inicioVista", () => {
     const v = inicioVista(
       datosDe(RAQUEL, { tareas: [abierta], entregas: [conNota] }),
       [],
+      ID,
     );
     expect(v.pendientes.map((p) => p.id)).toEqual(["presentacion"]);
     const cerrada = inicioVista(
@@ -443,13 +454,14 @@ describe("inicioVista", () => {
         entregas: [conNota],
       }),
       [],
+      ID,
     );
     expect(cerrada.pendientes).toEqual([]);
   });
 
   test("sin ranking: sin tarjeta de puntos; sin equipo: sin resumen", () => {
     const d = { ...datosDe(HUGO), ranking: null };
-    const v = inicioVista(d, []);
+    const v = inicioVista(d, [], ID);
     expect(v.puntos).toBeNull();
     expect(v.equipo).toBeNull();
   });
@@ -461,9 +473,9 @@ describe("equipoVista", () => {
     const grupales = seed.entregas
       .map((e) => e.data)
       .filter((e) => e.tipo === "grupal" && e.seccion === "5A");
-    const v = equipoVista(d, companerosDe("5a-g2"), grupales);
+    const v = equipoVista(d, companerosDe("5a-g2"), grupales, ID);
     expect(v?.integrantes[0]).toMatchObject({
-      id: RAQUEL,
+      id: ID(RAQUEL),
       esTu: true,
       esCapitan: true,
     });
@@ -497,7 +509,7 @@ describe("equipoVista", () => {
       },
     });
     const d = datosDe(RAQUEL, { tareas: [tarea] });
-    const gana = equipoVista(d, [], [ent("5a-g2", 19), ent("5a-g1", 17)]);
+    const gana = equipoVista(d, [], [ent("5a-g2", 19), ent("5a-g1", 17)], ID);
     expect(gana?.premios).toEqual([
       {
         id: "presentacion",
@@ -505,12 +517,12 @@ describe("equipoVista", () => {
         detalle: "Mejor nota en Presentación del producto · 19",
       },
     ]);
-    const empate = equipoVista(d, [], [ent("5a-g2", 19), ent("5a-g1", 19)]);
+    const empate = equipoVista(d, [], [ent("5a-g2", 19), ent("5a-g1", 19)], ID);
     expect(empate?.premios).toEqual([]);
   });
 
   test("sin equipo → null", () => {
-    expect(equipoVista(datosDe(HUGO), [], [])).toBeNull();
+    expect(equipoVista(datosDe(HUGO), [], [], ID)).toBeNull();
   });
 });
 
@@ -549,5 +561,50 @@ describe("perfil, shell y topbar", () => {
       "/notas/presentacion": "Presentación del producto",
       "/tareas/presentacion": "Tarea grupal",
     });
+  });
+});
+
+describe("ninguna cédula ajena sale al cliente (QA v2 F-M1, D494–D496)", () => {
+  const CEDULAS = new Set(seed.usuarios.map((u) => u.id));
+  /** Las cédulas del seed que aparecen en `x`, salvo la propia. */
+  const ajenas = (x: unknown, propia: string) =>
+    [...JSON.stringify(x).matchAll(/\b\d{7,9}\b/g)]
+      .map((m) => m[0])
+      .filter((c) => CEDULAS.has(c) && c !== propia);
+
+  test("Inicio, Mi equipo y el ranking (filas, capitanes y «tú») de un alumno", () => {
+    const d = datosDe(RAQUEL, { tareas: [abierta] });
+    // Como `integrantesDe`: la semilla del seed lleva la cédula y se cambia por el id
+    const companeros = companerosDe("5a-g2").map((u) =>
+      conSemillaPublica(u, ID),
+    );
+    const grupales = seed.entregas
+      .map((e) => e.data)
+      .filter((e) => e.tipo === "grupal" && e.seccion === "5A");
+    if (!d.ranking) throw new Error("sin ranking");
+    // Sin el arreglo, el ranking solo ya trae las 34 cédulas de la sección
+    expect(ajenas(d.ranking, RAQUEL).length).toBeGreaterThan(30);
+
+    const ranking = rankingPublico(d.ranking, ID);
+    const info = infoDeEquipos(
+      seed.equipos
+        .filter((e) => e.data.seccion === "5A")
+        .map((e) => ({ id: e.id, ...e.data })),
+      new Map(),
+      ID,
+    );
+    const tu = { id: ID(RAQUEL), equipoId: "5a-g2" };
+    const salida = {
+      ranking,
+      info,
+      estudiantes: itemsDeRanking(ranking, "estudiantes", tu, info),
+      equipos: itemsDeRanking(ranking, "equipos", tu, info),
+      inicio: inicioVista(d, companeros, ID, AHORA),
+      equipo: equipoVista(d, companeros, grupales, ID, AHORA),
+    };
+    expect(ajenas(salida, RAQUEL)).toEqual([]);
+    // Y tampoco la propia: el alumno se reconoce por su id
+    expect(ajenas(salida, "")).toEqual([]);
+    expect(salida.estudiantes.find((i) => i.esTu)?.id).toBe(ID(RAQUEL));
   });
 });

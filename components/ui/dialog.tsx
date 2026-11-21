@@ -2,7 +2,7 @@
 
 import { XIcon } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
-import type * as React from "react";
+import * as React from "react";
 
 import { Button } from "@/components/ui/button";
 import { usePortalContainer } from "@/components/ui/portal-scope";
@@ -70,10 +70,15 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  onOpenAutoFocus,
+  onCloseAutoFocus,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean;
 }) {
+  // Quién tenía el foco al abrir. Radix solo devuelve el foco a un `DialogTrigger`; los diálogos
+  // controlados (abiertos desde un botón cualquiera) lo perdían en `<body>` (D506).
+  const abrio = React.useRef<HTMLElement | null>(null);
   return (
     <DialogPortal>
       <DialogOverlay />
@@ -88,6 +93,25 @@ function DialogContent({
           "data-[state=open]:animate-dialog-in data-[state=closed]:animate-dialog-out",
           className,
         )}
+        onOpenAutoFocus={(e) => {
+          const activo = document.activeElement;
+          abrio.current = activo instanceof HTMLElement ? activo : null;
+          onOpenAutoFocus?.(e);
+        }}
+        onCloseAutoFocus={(e) => {
+          onCloseAutoFocus?.(e);
+          // Un diálogo que ya decidió el destino (`preventDefault`) manda; si no, vuelve al que lo abrió
+          const destino = abrio.current;
+          abrio.current = null;
+          if (
+            !e.defaultPrevented &&
+            destino?.isConnected &&
+            destino !== document.body
+          ) {
+            e.preventDefault();
+            destino.focus();
+          }
+        }}
         {...props}
       >
         {children}

@@ -592,7 +592,10 @@ export const zFilaRankingAlumno = z.object({
   apellidos: z.string(),
   equipoId: z.string().nullable(),
   estilo: z.string(),
-  /** Semilla del avatar (D191); los documentos anteriores no la traen: se usa la cédula. */
+  /**
+   * Semilla del avatar (D191); los documentos anteriores no la traen: se usa la clave de la fila
+   * (el id público en lo que recibe un alumno, D494).
+   */
   semilla: z.string().optional(),
   puntos: z.number(),
 });
@@ -609,6 +612,20 @@ export const zRankingSeccion = z.object({
   actualizadoEn: zInstante,
 });
 export type RankingSeccion = z.infer<typeof zRankingSeccion>;
+
+/**
+ * Id público de un alumno (D493): lo que recibe el navegador de otro alumno en vez de su cédula.
+ * 22 caracteres base64url (`lib/id-publico.ts` lo calcula; aquí solo la forma, apta para el cliente).
+ */
+export const zIdPublico = z
+  .string()
+  .regex(/^[A-Za-z0-9_-]{22}$/, "Id inválido");
+
+/** El ranking que recibe un alumno (D494): las filas con su id público, nunca la cédula. */
+export const zRankingPublico = zRankingSeccion.extend({
+  alumnos: z.record(zIdPublico, zFilaRankingAlumno),
+});
+export type RankingPublico = z.infer<typeof zRankingPublico>;
 
 /* ---------- config/secciones: catálogo de años y secciones (D317) ---------- */
 

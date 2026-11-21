@@ -35,6 +35,7 @@ export function StatusScreen({
   linea,
   extra,
   acciones,
+  enShell = false,
 }: {
   sesion: SesionEstado;
   /** Usuario de la cabecera (con sesión). */
@@ -48,8 +49,30 @@ export function StatusScreen({
   extra?: ReactNode;
   /** Botones ya armados con `accionesEstadoClases` (fila; en móvil apilados `lg block`). */
   acciones: ReactNode;
+  /**
+   * Dentro del shell de la app (404 de una ruta dinámica con sesión, D504): el shell ya trae
+   * cabecera, navegación y `<main id="contenido">`, así que solo se pinta el cuerpo.
+   */
+  enShell?: boolean;
 }) {
   const usuario = usuarioSesion ?? SIN_USUARIO;
+  if (enShell)
+    return (
+      <div
+        data-slot="status-screen"
+        className="flex w-full max-w-status flex-col items-start gap-4 py-6"
+      >
+        <CuerpoEstado
+          codigo={codigo}
+          icono={Icono}
+          eyebrow={eyebrow}
+          titulo={titulo}
+          linea={linea}
+          extra={extra}
+          acciones={acciones}
+        />
+      </div>
+    );
   return (
     <div
       data-slot="status-screen"
@@ -89,24 +112,57 @@ export function StatusScreen({
         tabIndex={-1}
         className="mx-auto flex w-full max-w-status flex-1 flex-col items-start justify-center gap-4 px-5 py-8 md:px-6 md:py-10"
       >
-        {codigo ? (
-          <p aria-hidden="true" className="text-status-code text-accent-ink">
-            {codigo}
-          </p>
-        ) : Icono ? (
-          <span className="grid size-18 place-items-center rounded-lg bg-accent-soft text-accent-ink">
-            <Icono aria-hidden="true" className="size-8" />
-          </span>
-        ) : null}
-        <p className="text-eyebrow text-text-2">{eyebrow}</p>
-        <h1 className="text-h1">{titulo}</h1>
-        <p className="max-w-130 text-body text-text-2">{linea}</p>
-        {extra}
-        <div className="mt-2 flex w-full flex-col gap-2 md:w-auto md:flex-row md:flex-wrap">
-          {acciones}
-        </div>
+        <CuerpoEstado
+          codigo={codigo}
+          icono={Icono}
+          eyebrow={eyebrow}
+          titulo={titulo}
+          linea={linea}
+          extra={extra}
+          acciones={acciones}
+        />
       </main>
     </div>
+  );
+}
+
+/** Contenido de la pantalla (código o ícono, textos y acciones), igual con o sin shell. */
+function CuerpoEstado({
+  codigo,
+  icono: Icono,
+  eyebrow,
+  titulo,
+  linea,
+  extra,
+  acciones,
+}: {
+  codigo?: string;
+  icono?: LucideIcon;
+  eyebrow: string;
+  titulo: string;
+  linea: string;
+  extra?: ReactNode;
+  acciones: ReactNode;
+}) {
+  return (
+    <>
+      {codigo ? (
+        <p aria-hidden="true" className="text-status-code text-accent-ink">
+          {codigo}
+        </p>
+      ) : Icono ? (
+        <span className="grid size-18 place-items-center rounded-lg bg-accent-soft text-accent-ink">
+          <Icono aria-hidden="true" className="size-8" />
+        </span>
+      ) : null}
+      <p className="text-eyebrow text-text-2">{eyebrow}</p>
+      <h1 className="text-h1">{titulo}</h1>
+      <p className="max-w-130 text-body text-text-2">{linea}</p>
+      {extra}
+      <div className="mt-2 flex w-full flex-col gap-2 md:w-auto md:flex-row md:flex-wrap">
+        {acciones}
+      </div>
+    </>
   );
 }
 

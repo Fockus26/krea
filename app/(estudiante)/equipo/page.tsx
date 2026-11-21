@@ -13,6 +13,7 @@ import {
   integrantesDe,
   logoDeEquipo,
 } from "@/lib/datos/estudiante";
+import { idPublico } from "@/lib/datos/id-publico";
 import { equipoVista } from "@/lib/vistas-estudiante";
 
 export const metadata: Metadata = { title: "Mi equipo" };
@@ -30,7 +31,7 @@ export default async function EquipoPage() {
       entregasGrupales(seccion),
       logoDeEquipo(datos.equipo),
     ]);
-    d = equipoVista(datos, companeros, grupales, Date.now());
+    d = equipoVista(datos, companeros, grupales, idPublico, Date.now());
     logo = firmado;
   }
   return d ? (

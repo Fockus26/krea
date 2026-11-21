@@ -19,7 +19,7 @@ import {
   type Respuesta,
   rutasImagen,
   type Usuario,
-  zCedula,
+  zIdPublico,
   zRespuesta,
 } from "@/lib/modelo";
 
@@ -31,7 +31,8 @@ const zClaveParte = z.object({ tareaId: zIdTarea, preguntaId: zIdPregunta });
 
 /** Capitán: asigna la pregunta a un integrante, o la quita (`asignado: null`, la responde él). */
 export const zAsignarParte = zClaveParte.extend({
-  asignado: zCedula.nullable(),
+  /** El id público del integrante (D495): la capa de datos lo traduce a su cédula. */
+  asignado: zIdPublico.nullable(),
 });
 /** Capitán: acepta o devuelve una parte entregada. */
 export const zDecidirParte = zClaveParte;
@@ -393,6 +394,28 @@ export function repartoParaEnviar(
     respuestas[p.preguntaId] = p.respuesta;
   }
   return { ok: true, respuestas };
+}
+
+/**
+ * Editar, reenviar o completar una grupal ya enviada (D508): lo aceptado de cada integrante
+ * vigente vuelve a entrar desde el reparto, como en el primer envío (D463), sin frenar por lo que
+ * quedó sin aceptar. `miembros` son los integrantes de la entrega (la foto del primer envío, D396).
+ * Las tomadas (D461) son del capitán: esas las edita él.
+ */
+export function aceptadasParaReenviar(
+  preguntas: ReadonlyArray<{ id: string }>,
+  partes: ReadonlyArray<
+    Pick<Parte, "preguntaId" | "asignado" | "estado" | "respuesta">
+  >,
+  miembros: readonly string[],
+  capitanId: string | null,
+): Record<string, Respuesta> {
+  const ids = new Set(preguntas.map((p) => p.id));
+  const respuestas: Record<string, Respuesta> = {};
+  for (const p of partesVigentes(partes, miembros, capitanId))
+    if (ids.has(p.preguntaId) && p.estado === "aceptada" && p.respuesta)
+      respuestas[p.preguntaId] = p.respuesta;
+  return respuestas;
 }
 
 /* ---------- Reparto en vivo (D465) ---------- */

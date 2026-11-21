@@ -78,7 +78,8 @@ export function Podium({ entradas, label, className }: PodiumProps) {
           "block w-full rounded-pod-step outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
         const columna = (
           <div
-            aria-hidden="true"
+            // Interactiva: el nombre sale del contenido y contiene el texto visible (WCAG 2.5.3, D506)
+            aria-hidden={interactiva ? undefined : "true"}
             className="flex min-w-0 flex-col items-center gap-2 text-center"
           >
             {primero ? (
@@ -109,7 +110,15 @@ export function Podium({ entradas, label, className }: PodiumProps) {
             <span className="text-pod-name max-w-full truncate">
               {e.nombre}
             </span>
-            <span className="text-pod-pts">{formatDecimal(e.puntos)}</span>
+            <span className="text-pod-pts">
+              {formatDecimal(e.puntos)}
+              {interactiva ? (
+                <span className="sr-only">
+                  {" "}
+                  {e.puntos === 1 ? "punto" : "puntos"}
+                </span>
+              ) : null}
+            </span>
             <span
               style={
                 {
@@ -121,6 +130,7 @@ export function Podium({ entradas, label, className }: PodiumProps) {
                 ESCALON[nivel],
               )}
             >
+              {interactiva ? <span className="sr-only">Puesto </span> : null}
               {e.puesto}
             </span>
           </div>
@@ -133,17 +143,12 @@ export function Podium({ entradas, label, className }: PodiumProps) {
             className={cn("relative list-none min-w-0", ORDEN_VISUAL[i])}
           >
             {e.href !== undefined ? (
-              <Link
-                href={e.href}
-                aria-label={podiumLabel(e)}
-                className={claseToque}
-              >
+              <Link href={e.href} className={claseToque}>
                 {columna}
               </Link>
             ) : e.onAbrir !== undefined ? (
               <button
                 type="button"
-                aria-label={podiumLabel(e)}
                 aria-haspopup="dialog"
                 onClick={e.onAbrir}
                 className={cn(claseToque, "cursor-pointer")}

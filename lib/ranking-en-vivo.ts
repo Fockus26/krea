@@ -1,7 +1,8 @@
 // Ranking en vivo (fase 07, D011, D190): del documento `ranking/{seccion}` a las filas de la
 // pantalla, y lo que cambió entre dos instantáneas (chips de puesto, feed y anuncios). Puro: lo
 // usa el componente cliente que escucha con `onSnapshot` y lo prueban los tests.
-import type { RankingSeccion } from "@/lib/modelo";
+import type { IdAlumno } from "@/lib/id-publico";
+import type { RankingPublico } from "@/lib/modelo";
 import type { RankEvento } from "@/lib/rank-row";
 import {
   primerApellido,
@@ -20,7 +21,8 @@ import { estiloDe } from "@/lib/vistas-estudiante";
 /**
  * Lo que el ranking no trae y no cambia en vivo: tema y capitán de cada equipo, y su logo con URL
  * firmada (servidor, D212). `logoPath` es la ruta que se firmó: si el documento en vivo trae otra
- * (el profe lo cambió con la página abierta), se pintan las iniciales hasta recargar.
+ * (el profe lo cambió con la página abierta), se pintan las iniciales hasta recargar. `capitan` es
+ * la clave de su fila en el ranking: el id público para el alumno, la cédula para el profe (D494).
  */
 export type InfoEquipos = Readonly<
   Record<
@@ -34,7 +36,7 @@ export type InfoEquipos = Readonly<
   >
 >;
 
-/** `InfoEquipos` de unos equipos y sus URLs firmadas (ruta → URL). */
+/** `InfoEquipos` de unos equipos y sus URLs firmadas (ruta → URL); `idDe` como el del ranking. */
 export function infoDeEquipos(
   equipos: ReadonlyArray<{
     id: string;
@@ -43,13 +45,14 @@ export function infoDeEquipos(
     logoPath: string | null;
   }>,
   logos: ReadonlyMap<string, string>,
+  idDe: IdAlumno,
 ): InfoEquipos {
   return Object.fromEntries(
     equipos.map((e) => [
       e.id,
       {
         tema: e.tema,
-        capitan: e.capitanId,
+        capitan: e.capitanId === null ? null : idDe(e.capitanId),
         logoPath: e.logoPath,
         logo: (e.logoPath && logos.get(e.logoPath)) || null,
       },
@@ -57,7 +60,8 @@ export function infoDeEquipos(
   );
 }
 
-export type Tu = { cedula: string | null; equipoId: string | null };
+/** La fila «tú»: su clave en el ranking (el id público, D494) y su equipo; el profe, ninguna. */
+export type Tu = { id: string | null; equipoId: string | null };
 
 const nombreCorto = (nombres: string, apellidos: string) =>
   `${nombres.trim().split(/\s+/)[0] ?? ""} ${primerApellido(apellidos)}`;
@@ -68,7 +72,7 @@ const nombreCorto = (nombres: string, apellidos: string) =>
  * chip): el documento no guarda puestos anteriores (CONTENT_CHECKLIST fila 128).
  */
 export function itemsDeRanking(
-  ranking: RankingSeccion,
+  ranking: RankingPublico,
   vista: Vista,
   tu: Tu,
   info: InfoEquipos,
@@ -98,7 +102,7 @@ export function itemsDeRanking(
       subtitulo:
         (f.equipoId && ranking.equipos[f.equipoId]?.nombre) || "Sin equipo",
       delta: delta(f.id, f.puesto),
-      esTu: f.id === tu.cedula,
+      esTu: f.id === tu.id,
       estilo: estiloDe(f.estilo),
       seed: f.semilla ?? f.id,
     }));

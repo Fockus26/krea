@@ -1,6 +1,7 @@
 "use server";
 // Server Actions de la grupal por partes (D416–D421, D461). La cédula sale SIEMPRE de la sesión
-// (`exigirSesion`), nunca del body. Solo en línea (D424): sin red, el cliente avisa con `red` y no
+// (`exigirSesion`), nunca del body; a quién se asigna llega con su id público y la capa de datos
+// lo traduce (D495). Solo en línea (D424): sin red, el cliente avisa con `red` y no
 // encola nada; el envío de la tarea del capitán sigue yendo por la cola de siempre. Tras el commit
 // se borran de B2 las imágenes que la parte dejó de usar (D396) y se refresca la página: el
 // servidor es la fuente de lo aceptado (D463).
@@ -9,6 +10,7 @@ import { almacenB2 } from "@/lib/almacen/b2";
 import type { Almacen } from "@/lib/almacen/s3";
 import { exigirSesion } from "@/lib/dal";
 import { accionParteEnTransaccion } from "@/lib/data/partes";
+import { idPublico } from "@/lib/datos/id-publico";
 import { baseDeDatos } from "@/lib/db";
 import { comprobarImagenes } from "@/lib/entregas";
 import {
@@ -104,6 +106,7 @@ async function ejecutar(
       sesion.uid,
       { tareaId, preguntaId, accion },
       Date.now(),
+      idPublico,
     );
     if (!r.ok) return r;
     const almacen = almacenB2();

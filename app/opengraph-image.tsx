@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
-import { GRADE_SOMBRA } from "@/lib/grades";
+import { GRADE_SOMBRA, gradeNumeroOscuro } from "@/lib/grades";
 import {
   BRAND_BG,
   BRAND_BLUE,
@@ -15,8 +15,16 @@ export const alt = SITE_TITLE;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-const { SPLASH, INK, MUTED, GRADE_INK, PILL_HIGH, PILL_LOW, PILL_MID } =
-  OG_COLORS;
+const {
+  SPLASH,
+  INK,
+  MUTED,
+  GRADE_INK,
+  GRADE_INK_OSCURA,
+  PILL_HIGH,
+  PILL_LOW,
+  PILL_MID,
+} = OG_COLORS;
 
 const FETCH_TIMEOUT_MS = 20_000;
 
@@ -57,6 +65,7 @@ const pill = (
   minWidth: number,
   fontSize: number,
   text: string,
+  nota: number,
 ) => (
   <div
     style={{
@@ -68,8 +77,8 @@ const pill = (
       padding: "0 10px",
       borderRadius: 999,
       background: bg,
-      color: GRADE_INK,
-      textShadow: GRADE_SOMBRA,
+      color: gradeNumeroOscuro(nota) ? GRADE_INK_OSCURA : GRADE_INK,
+      textShadow: gradeNumeroOscuro(nota) ? "none" : GRADE_SOMBRA,
       fontFamily: "Poppins",
       fontWeight: 700,
       fontSize,
@@ -202,9 +211,9 @@ export default async function Image() {
           alignItems: "flex-end",
         }}
       >
-        {pill(PILL_HIGH, 72, 132, 40, "18,5")}
-        {pill(PILL_LOW, 56, 104, 30, "10")}
-        {pill(PILL_MID, 56, 104, 30, "15")}
+        {pill(PILL_HIGH, 72, 132, 40, "18,5", 18.5)}
+        {pill(PILL_LOW, 56, 104, 30, "10", 10)}
+        {pill(PILL_MID, 56, 104, 30, "15", 15)}
       </div>
     </div>,
     { ...size, fonts },

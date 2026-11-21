@@ -79,11 +79,32 @@ export type ErrorMotivos =
   | "ultima"
   | "tope"
   | "invalida"
-  | "red";
+  | "red"
+  /** Otro profe guardó la lista desde que se abrió (D509): no se pisa. */
+  | "cambio";
 
+/**
+ * `version` = el `actualizadoEn` de `config/motivos` (0 sin fila): lo devuelve el servidor y el
+ * cliente lo manda al editar o borrar (D509). Con `cambio` viene la lista de ahora para repintar.
+ * Sin `acciones` (galerías) no hay versión.
+ */
 export type ResultadoMotivos =
+  | { ok: true; motivos: CatalogoMotivos; version?: number }
+  | { ok: false; error: "cambio"; motivos: CatalogoMotivos; version: number }
+  | { ok: false; error: Exclude<ErrorMotivos, "cambio"> };
+
+/** Lo que devuelve la operación pura (sin versión). */
+export type ResultadoOperacionMotivos =
   | { ok: true; motivos: CatalogoMotivos }
-  | { ok: false; error: ErrorMotivos };
+  | { ok: false; error: Exclude<ErrorMotivos, "cambio"> };
+
+/** Sin fila `config/motivos` la lista no tiene versión guardada: vale 0. */
+export const VERSION_MOTIVOS_INICIAL = 0;
+
+/** Versión que deja una escritura: el instante, o una más si el reloj no avanzó (D509). */
+export function versionMotivosNueva(anterior: number, ahora: number): number {
+  return ahora > anterior ? ahora : anterior + 1;
+}
 
 /** Id de una opción nueva: «m-» + 10 hexadecimales; nunca choca con `IDS_RESERVADOS`. */
 export function idMotivoNuevo(): string {
@@ -104,7 +125,7 @@ function errorEtiqueta(
   catalogo: CatalogoMotivos,
   etiqueta: string,
   excepto?: string,
-): ErrorMotivos | null {
+): Exclude<ErrorMotivos, "cambio"> | null {
   if (etiqueta.length === 0 || etiqueta.length > ETIQUETA_MAX)
     return "etiqueta";
   const clave = normalizar(etiqueta);
@@ -123,7 +144,7 @@ function errorEtiqueta(
 export function aplicarOperacionMotivos(
   catalogo: CatalogoMotivos,
   op: OperacionMotivos,
-): ResultadoMotivos {
+): ResultadoOperacionMotivos {
   if (op.tipo === "borrar") {
     if (!catalogo.some((m) => m.id === op.id))
       return { ok: false, error: "no-existe" };
@@ -194,6 +215,9 @@ export function errorMotivosTexto(e: ErrorMotivos, que?: string): string {
       return `Ya hay ${MOTIVOS_MAX} opciones. Borra una para crear otra.`;
     case "red":
       return "No se pudo guardar. Revisa tu conexión e inténtalo de nuevo.";
+    case "cambio":
+      // PROVISIONAL (CONTENT_CHECKLIST fila 280)
+      return "Otro profe cambió las opciones mientras las tenías abiertas. Ya ves la lista de ahora: revisa y vuelve a intentarlo.";
     default:
       return "No se pudo guardar. Recarga la página e inténtalo de nuevo.";
   }
