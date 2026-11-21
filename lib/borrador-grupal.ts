@@ -151,9 +151,16 @@ export function mismoBorrador(a: Borrador, b: Borrador): boolean {
 
 /* ---------- Sondeo (D547) ---------- */
 
-/** Parte de la huella de `/api/partes/version` que es del borrador: su versión (0 sin fila). */
-export function huellaBorrador(version: number | null): string {
-  return `b${version ?? 0}`;
+/**
+ * La huella de `/api/partes/version` con la versión del borrador (0 sin fila) al final, para quien
+ * lo sigue (el integrante, `?borrador=1`). El capitán no la pide: su propio guardado no le refresca
+ * la página.
+ */
+export function huellaConBorrador(
+  huellaPartes: string,
+  version: number | null,
+): string {
+  return `${huellaPartes}.b${version ?? 0}`;
 }
 
 /* ---------- Lo que ve cada uno ---------- */

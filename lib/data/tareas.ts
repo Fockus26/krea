@@ -8,6 +8,7 @@
 import { eq, inArray, sql } from "drizzle-orm";
 import { idNuevo } from "@/lib/data/ajustes";
 import { borrarAnalisisDe } from "@/lib/data/analisis-ia";
+import { borrarBorradoresDeTarea } from "@/lib/data/borrador-grupal";
 import {
   entregaDeFila,
   equipoDeFila,
@@ -163,6 +164,8 @@ export async function eliminarTareaEnTransaccion(
     for (const s of plan.secciones) datos.push(await leerSeccion(tx, s));
     // El reparto de sus grupales se va con ella (D421), y con él sus imágenes
     const dePartes = await borrarPartesDeTarea(tx, id);
+    // Y el borrador compartido de sus capitanes (D544), con sus imágenes
+    const deBorradores = await borrarBorradoresDeTarea(tx, id);
     // Los experimentales también (D531): el % de IA de sus entregas y su ideal
     await borrarAnalisisDe(
       tx,
@@ -190,6 +193,7 @@ export async function eliminarTareaEnTransaccion(
         ...new Set([
           ...plan.imagenes,
           ...dePartes,
+          ...deBorradores,
           ...(fotoPremio ? [fotoPremio] : []),
         ]),
       ],

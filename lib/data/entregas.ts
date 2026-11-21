@@ -20,7 +20,14 @@ import {
 } from "@/lib/data/operaciones";
 import { leerUsuario } from "@/lib/data/usuarios";
 import { type Db, enSerie, type Tx } from "@/lib/db";
-import { entregas, equipos, partes, tareas, usuarios } from "@/lib/db/schema";
+import {
+  borradoresGrupales,
+  entregas,
+  equipos,
+  partes,
+  tareas,
+  usuarios,
+} from "@/lib/db/schema";
 import {
   armarEntrega,
   type EnvioEntrega,
@@ -344,6 +351,11 @@ export async function enviarEnTransaccion(
       .insert(entregas)
       .values(fila)
       .onConflictDoUpdate({ target: entregas.id, set: fila });
+    // El borrador compartido del capitán sobra: los integrantes ya ven lo enviado (D544)
+    if (p.permiso.tipo === "grupal")
+      await tx
+        .delete(borradoresGrupales)
+        .where(eq(borradoresGrupales.entregaId, entregaId));
     await registrarOperacionEnTx(tx, op, uid, "entrega", null, ahora);
     const sinUso = existente
       ? imagenesSinUso(existente.respuestas, doc.respuestas)

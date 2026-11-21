@@ -447,9 +447,12 @@ export const RUTA_VERSION_PARTES = "/api/partes/version";
 export function rutaVersionPartes(
   tareaId: string,
   desde: string | null,
+  /** El integrante (no el capitán) también sigue el borrador compartido (D547). */
+  conBorrador = false,
 ): string {
   const q = new URLSearchParams({ tarea: tareaId });
   if (desde) q.set("desde", desde);
+  if (conBorrador) q.set("borrador", "1");
   return `${RUTA_VERSION_PARTES}?${q.toString()}`;
 }
 

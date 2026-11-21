@@ -8,6 +8,7 @@
 // sincronizar: la sesión lee el equipo de `usuarios` en cada request.
 import { and, eq, inArray, ne } from "drizzle-orm";
 import { idNuevo } from "@/lib/data/ajustes";
+import { borrarBorradoresDeEquipo } from "@/lib/data/borrador-grupal";
 import { equipoDeFila, filaDeEquipo } from "@/lib/data/filas";
 import { borrarPartesDeEquipo } from "@/lib/data/partes";
 import { escribirRanking, leerSeccion } from "@/lib/data/ranking";
@@ -327,8 +328,10 @@ export async function eliminarEquipoEnTransaccion(
     // El reparto de sus grupales se va con él (D421), y con él las imágenes que solo usaban sus
     // partes (D530): las que entraron en una entrega suya (aceptadas) se quedan con ella
     const dePartes = await borrarPartesDeEquipo(tx, equipoId);
+    // Y el borrador compartido del capitán (D544): sus imágenes, con la misma regla
+    const deBorradores = await borrarBorradoresDeEquipo(tx, equipoId);
     const imagenes = rutasSinUso(
-      dePartes,
+      [...dePartes, ...deBorradores],
       suyas.map((f) => f.respuestas),
     );
     await tx.delete(equipos).where(eq(equipos.id, equipoId));
