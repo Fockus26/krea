@@ -42,6 +42,7 @@ import {
   zTarea,
 } from "@/lib/modelo";
 import {
+  aceptadasParaReenviar,
   permisoParte,
   repartoCongelado,
   repartoParaEnviar,
@@ -253,6 +254,27 @@ export async function enviarEnTransaccion(
         })),
         entregaId,
       );
+    } else if (p.permiso.tipo === "grupal" && existente) {
+      // Editar, reenviar o completar (D508): lo aceptado sigue siendo del integrante, aunque el
+      // cliente (un formulario viejo, un segundo envío que llega tarde) mande otra cosa
+      const filasPartes = await tx
+        .select({
+          preguntaId: partes.preguntaId,
+          asignado: partes.asignado,
+          estado: partes.estado,
+          respuesta: partes.respuesta,
+        })
+        .from(partes)
+        .where(eq(partes.entregaId, entregaId));
+      enviadas = {
+        ...respuestas,
+        ...aceptadasParaReenviar(
+          c.tarea.preguntas,
+          filasPartes,
+          existente.integrantes,
+          c.equipo?.capitanId ?? null,
+        ),
+      };
     }
     const armada = armarEntrega({
       tareaId,

@@ -30,11 +30,26 @@ import { AdjustmentForm } from "./adjustment-form";
 import { AdjustmentHistory } from "./adjustment-history";
 import { type AccionesMotivos, MotivosDialog } from "./motivos-dialog";
 
+/**
+ * Server Actions de las opciones fijas (D375): editar y borrar llevan la versión de la lista que
+ * se vio (D509).
+ */
+export type AccionesMotivosServidor = {
+  crear: AccionesMotivos["crear"];
+  editar: (e: {
+    id: string;
+    etiqueta: string;
+    valor: number;
+    version: number;
+  }) => Promise<ResultadoMotivos>;
+  borrar: (e: { id: string; version: number }) => Promise<ResultadoMotivos>;
+};
+
 /** Server Actions de Ajustes de puntos (W7, D207) y de sus opciones fijas (D375). */
 export type AccionesPuntos = {
   aplicar: (e: AplicarAjuste) => Promise<ResultadoAjuste>;
   anular: (e: { ajusteId: string }) => Promise<ResultadoAjuste>;
-  motivos: AccionesMotivos;
+  motivos: AccionesMotivosServidor;
 };
 
 const sinRed = (): ResultadoAjuste => ({ ok: false, error: "red" });
@@ -45,12 +60,15 @@ const sinRed = (): ResultadoAjuste => ({ ok: false, error: "red" });
  * estado es local: aplicar y anular añaden filas al historial y mueven los puntos de la vista
  * previa. Con `acciones` (W7) se guarda en Firestore y el servidor devuelve el historial y los
  * puntos ya recalculados (la página se refresca). Las opciones de Motivo (D375) siguen la misma
- * regla: sin `acciones` se editan en el estado local; con ellas, la acción devuelve la lista guardada.
+ * regla: sin `acciones` se editan en el estado local; con ellas, la acción devuelve la lista guardada
+ * y su versión. Si otro profe la cambió desde que se abrió (`cambio`, D509), llega la de ahora: se
+ * pinta y el diálogo conserva lo escrito para volver a guardar.
  */
 export function PuntosView({
   candidatos,
   secciones,
   motivos: motivosServidor,
+  versionMotivos = 0,
   historial,
   inicial,
   profe,
@@ -61,6 +79,8 @@ export function PuntosView({
   secciones: readonly SeccionId[];
   /** Opciones fijas de Motivo (`config/motivos`, D375). */
   motivos: CatalogoMotivos;
+  /** `actualizadoEn` de `config/motivos` (D509); sin `acciones` no se usa. */
+  versionMotivos?: number;
   historial: readonly FilaHistorial[];
   inicial?: InicialAjuste;
   profe: string;
@@ -74,10 +94,12 @@ export function PuntosView({
     setFilas(historial);
   }
   const [motivos, setMotivos] = React.useState(motivosServidor);
+  const [version, setVersion] = React.useState(versionMotivos);
   const [motivosPrevios, setMotivosPrevios] = React.useState(motivosServidor);
   if (motivosPrevios !== motivosServidor) {
     setMotivosPrevios(motivosServidor);
     setMotivos(motivosServidor);
+    setVersion(versionMotivos);
   }
   const [filtro, setFiltro] = React.useState<FiltroHistorial>(FILTRO_VACIO);
 
@@ -86,7 +108,11 @@ export function PuntosView({
     r: ResultadoMotivos | Promise<ResultadoMotivos>,
   ): Promise<ResultadoMotivos> => {
     const x = await r;
-    if (x.ok) setMotivos(x.motivos);
+    // Guardado, o `cambio` con la lista de ahora (D509): se pinta la que trae
+    if (x.ok || x.error === "cambio") {
+      setMotivos(x.motivos);
+      if (x.version !== undefined) setVersion(x.version);
+    }
     return x;
   };
   const local = (op: OperacionMotivos) => aplicarOperacionMotivos(motivos, op);
@@ -99,11 +125,15 @@ export function PuntosView({
       ),
     editar: (e) =>
       conLista(
-        acciones ? acciones.motivos.editar(e) : local({ tipo: "editar", ...e }),
+        acciones
+          ? acciones.motivos.editar({ ...e, version })
+          : local({ tipo: "editar", ...e }),
       ),
     borrar: (id) =>
       conLista(
-        acciones ? acciones.motivos.borrar(id) : local({ tipo: "borrar", id }),
+        acciones
+          ? acciones.motivos.borrar({ id, version })
+          : local({ tipo: "borrar", id }),
       ),
   };
   const deltas = deltasSesion(filas);

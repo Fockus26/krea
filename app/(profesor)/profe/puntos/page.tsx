@@ -76,7 +76,8 @@ export default async function PuntosPage() {
       <PuntosView
         candidatos={candidatosDe({ usuarios, equipos, rankings, secciones })}
         secciones={secciones}
-        motivos={motivos}
+        motivos={motivos.motivos}
+        versionMotivos={motivos.version}
         historial={historialDe(ajustes, nombres)}
         profe={usuario ? nombreCorto(usuario) : ""}
         acciones={ACCIONES}
