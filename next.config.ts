@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // kit-deploy (D580): el Dockerfile construye con NEXT_OUTPUT=standalone (la imagen lleva solo
+  // .next/standalone). Vercel construye igual que antes mientras sea el respaldo.
+  ...(process.env.NEXT_OUTPUT === "standalone" && {
+    output: "standalone" as const,
+  }),
   cacheComponents: true,
   partialPrefetching: true,
   reactCompiler: true,

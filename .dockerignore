@@ -1,0 +1,27 @@
+# kit-deploy · copied to the project as `.dockerignore`.
+# Nothing local, nothing secret, enters the image: runtime variables come from kit-agent.
+.git
+.github
+node_modules
+.next
+out
+build
+coverage
+.env*
+!.env.example
+*.log
+.DS_Store
+.vercel
+.claude
+context
+# krea: datos reales de alumnos (D490), QA, diseño y documentos no entran en la imagen
+data/privado
+.qa
+.pr-shots
+design
+phases
+tests
+deploy
+Dockerfile
+README.md
+tsconfig.tsbuildinfo
