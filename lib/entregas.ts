@@ -10,6 +10,7 @@ import {
   idEntrega,
   limiteImagenes,
   rutasImagen,
+  rutasSinUso,
   type Tarea,
   type Usuario,
   zRespuesta,
@@ -254,35 +255,25 @@ export function inicialEdicion(
 
 /**
  * Imágenes que la entrega deja de usar al reenviarla (D396): las que tenía y ya no están en las
- * respuestas nuevas. Se borran de B2 después del commit.
+ * respuestas nuevas (por archivo, `rutasSinUso`). Se borran de B2 después del commit.
  */
 export function imagenesSinUso(
   antes: Readonly<Record<string, Parameters<typeof rutasImagen>[0]>>,
   despues: Readonly<Record<string, Parameters<typeof rutasImagen>[0]>>,
 ): string[] {
-  const nuevas = new Set(Object.values(despues).flatMap((r) => rutasImagen(r)));
-  return [
-    ...new Set(Object.values(antes).flatMap((r) => rutasImagen(r))),
-  ].filter((ruta) => !nuevas.has(ruta));
+  return rutasSinUso(
+    Object.values(antes).flatMap((r) => rutasImagen(r)),
+    Object.values(despues).flatMap((r) => rutasImagen(r)),
+  );
 }
 
 /* ---------- Claves de imagen (D195) ---------- */
 
-/**
- * Carpeta de una entrega en el almacén: SHA-256 del id de la entrega (que lleva la cédula del
- * titular en las individuales), 32 hex. Así la clave no muestra datos personales.
- */
-export async function carpetaEntrega(entregaId: string): Promise<string> {
-  const hash = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(entregaId),
-  );
-  return Array.from(new Uint8Array(hash), (b) =>
-    b.toString(16).padStart(2, "0"),
-  )
-    .join("")
-    .slice(0, 32);
-}
+// La carpeta de cada entrega (HMAC con el secreto, D512) se calcula en `lib/carpeta-entrega.ts`,
+// solo en el servidor: este archivo también corre en el cliente.
+
+/** Carpetas que valen para una entrega: una o varias (la nueva y la vieja mientras se migra, D514). */
+export type Carpetas = string | readonly string[];
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
@@ -298,23 +289,36 @@ export function claveImagen(
   return `entregas/${tareaId}/${carpeta}/${uuid}.jpg`;
 }
 
-/** ¿La ruta es una imagen subida para ESTA entrega (misma tarea y carpeta)? */
+/** `entregas/{tareaId}/{carpeta}/{uuid}.jpg` → sus partes; `null` si la ruta no tiene esa forma. */
+export function partesDeImagen(
+  ruta: string,
+): { tareaId: string; carpeta: string; uuid: string } | null {
+  const partes = ruta.split("/");
+  if (partes.length !== 4) return null;
+  const [raiz, tareaId, carpeta, archivo] = partes;
+  if (
+    raiz !== "entregas" ||
+    tareaId === undefined ||
+    carpeta === undefined ||
+    archivo === undefined ||
+    !archivo.endsWith(".jpg")
+  )
+    return null;
+  const uuid = archivo.slice(0, -4);
+  return UUID.test(uuid) ? { tareaId, carpeta, uuid } : null;
+}
+
+/** ¿La ruta es una imagen subida para ESTA entrega (misma tarea y una de sus carpetas)? */
 export function esImagenDe(
   ruta: string,
   tareaId: string,
-  carpeta: string,
+  carpeta: Carpetas,
 ): boolean {
-  const partes = ruta.split("/");
-  if (partes.length !== 4) return false;
-  const [raiz, tarea, carp, archivo] = partes;
-  return (
-    raiz === "entregas" &&
-    tarea === tareaId &&
-    carp === carpeta &&
-    archivo !== undefined &&
-    archivo.endsWith(".jpg") &&
-    UUID.test(archivo.slice(0, -4))
-  );
+  const p = partesDeImagen(ruta);
+  if (!p || p.tareaId !== tareaId) return false;
+  return typeof carpeta === "string"
+    ? p.carpeta === carpeta
+    : carpeta.includes(p.carpeta);
 }
 
 /* ---------- Armar la entrega ---------- */
@@ -324,7 +328,8 @@ export function esImagenDe(
  * en los extremos, no vacíos y de hasta `ANSWER_MAX_LENGTH`; enlaces que pasan `normalizarUrl`
  * (solo `http(s)`, sin credenciales; se guardan normalizados, D469); imágenes de esta entrega, de 1
  * al límite de la pregunta y sin repetir (D373). Una pregunta de una imagen se guarda `imagenPath`;
- * la de varias, `imagenPaths` (aunque el alumno haya subido una sola).
+ * la de varias, `imagenPaths` (aunque el alumno haya subido una sola). `carpeta`: las de la
+ * entrega (la nueva y la vieja mientras se migra, D514); la misma imagen en las dos cuenta repetida.
  */
 export function respuestasValidas(
   preguntas: ReadonlyArray<
@@ -332,7 +337,7 @@ export function respuestasValidas(
   >,
   respuestas: EnvioEntrega["respuestas"],
   tareaId: string,
-  carpeta: string,
+  carpeta: Carpetas,
 ): Entrega["respuestas"] | null {
   const ids = new Set(preguntas.map((p) => p.id));
   if (Object.keys(respuestas).some((k) => !ids.has(k))) return null;
@@ -355,9 +360,10 @@ export function respuestasValidas(
       const rutas = rutasImagen(r);
       const limite = limiteImagenes(p);
       if (rutas.length === 0 || rutas.length > limite) return null;
-      if (new Set(rutas).size !== rutas.length) return null;
       if (rutas.some((ruta) => !esImagenDe(ruta, tareaId, carpeta)))
         return null;
+      const uuids = rutas.map((ruta) => partesDeImagen(ruta)?.uuid);
+      if (new Set(uuids).size !== rutas.length) return null;
       const [primera] = rutas;
       out[p.id] =
         limite === 1 && primera !== undefined
@@ -400,7 +406,7 @@ export function armarEntrega(args: {
   integrantes: readonly string[];
   excluidos?: ReadonlySet<string>;
   respuestas: EnvioEntrega["respuestas"];
-  carpeta: string;
+  carpeta: Carpetas;
   ahora: number;
 }): { ok: true; entrega: Entrega } | { ok: false; error: ErrorEntrega } {
   const { permiso, usuario } = args;

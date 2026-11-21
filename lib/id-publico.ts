@@ -19,12 +19,18 @@ export type IdAlumno = (cedula: string) => string;
 /** El profe ve y edita cédulas (enlaces a Alumnos, D-perfil): su vista no las cambia. */
 export const conCedula: IdAlumno = (cedula) => cedula;
 
+/**
+ * Clave derivada del secreto para un uso (`etiqueta`): HMAC-SHA256(secreto, etiqueta). Cada uso
+ * (id público, carpeta de entrega D512…) tiene su etiqueta y por eso su clave.
+ */
+export function claveDerivada(secreto: string, etiqueta: string): Buffer {
+  return createHmac("sha256", secreto).update(etiqueta).digest();
+}
+
 /** `idPublico` con un secreto dado; memoriza cada cédula ya calculada. */
 export function crearIdPublico(secreto: string): IdAlumno {
   if (!secreto) throw new Error("Falta el secreto del id público");
-  const clave = createHmac("sha256", secreto)
-    .update(ETIQUETA_ID_PUBLICO)
-    .digest();
+  const clave = claveDerivada(secreto, ETIQUETA_ID_PUBLICO);
   const hechos = new Map<string, string>();
   return (cedula) => {
     let id = hechos.get(cedula);

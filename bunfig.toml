@@ -1,0 +1,3 @@
+# Antes de cada `bun test`: el secreto de prueba de la carpeta de entrega (D512).
+[test]
+preload = ["./tests/preparar.ts"]

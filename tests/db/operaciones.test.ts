@@ -4,9 +4,10 @@ import { beforeAll, describe, expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 import { enviarEnTransaccion } from "@/lib/data/entregas";
 import { guardarTareaEnTransaccion } from "@/lib/data/tareas";
+import { carpetaEntrega } from "@/lib/carpeta-entrega";
 import type { Db } from "@/lib/db";
 import { tareas as tareasTabla } from "@/lib/db/schema";
-import { carpetaEntrega, claveImagen } from "@/lib/entregas";
+import { claveImagen } from "@/lib/entregas";
 import { idEntrega, type Tarea, type Usuario } from "@/lib/modelo";
 import type { EntradaTarea } from "@/lib/tareas-profe-datos";
 import { baseNueva } from "./base";
@@ -65,7 +66,7 @@ const borrador: EntradaTarea = {
 };
 
 async function envio(titular: string, opId: string) {
-  const c = await carpetaEntrega(idEntrega(TAREA, titular));
+  const c = carpetaEntrega(idEntrega(TAREA, titular));
   return {
     tareaId: TAREA,
     opId,

@@ -80,6 +80,11 @@ export type Almacen = {
   borrar: (clave: string) => Promise<ResultadoAlmacen>;
   /** ¿Existe el objeto? (HEAD firmado: 200 sí, 404 no; otro estado o sin red → error, D229). */
   existe: (clave: string) => Promise<ResultadoExiste>;
+  /**
+   * Copia un objeto dentro del mismo bucket (CopyObject, sin bajarlo), con su tipo. Lo usa el
+   * script que mueve las carpetas de entrega (D513).
+   */
+  copiar: (origen: string, destino: string) => Promise<ResultadoAlmacen>;
 };
 
 export function crearAlmacen(config: ConfigS3, deps: DepsS3): Almacen {
@@ -161,6 +166,40 @@ export function crearAlmacen(config: ConfigS3, deps: DepsS3): Almacen {
         method: "DELETE",
       });
       return enviar(req);
+    },
+    async copiar(origen, destino) {
+      // `urlObjeto` valida las dos claves; el origen va como `/{bucket}/{clave}` (codificado)
+      const fuente = new URL(urlObjeto(config, origen)).pathname;
+      const vacio = new Uint8Array();
+      const req = await cliente.sign(urlObjeto(config, destino), {
+        method: "PUT",
+        headers: {
+          "X-Amz-Copy-Source": fuente,
+          "X-Amz-Content-Sha256": await sha256Hex(vacio),
+        },
+      });
+      const headers = new Headers(req.headers);
+      headers.set("Content-Length", "0");
+      try {
+        const res = await deps.fetch(req.url, {
+          method: "PUT",
+          headers,
+          body: vacio,
+        });
+        // CopyObject puede responder 200 con un `<Error>` en el cuerpo
+        const texto = res.ok ? await res.text() : "";
+        if (res.ok && !texto.includes("<Error>")) return { ok: true };
+        console.error(
+          "[almacen] copia",
+          res.status,
+          /<Code>([A-Za-z]+)<\/Code>/.exec(texto)?.[1] ??
+            (res.ok ? "-" : await codigoS3(res)),
+        );
+        return { ok: false, error: "rechazado" };
+      } catch {
+        console.error("[almacen] sin conexión");
+        return { ok: false, error: "red" };
+      }
     },
   };
 }

@@ -6,6 +6,7 @@
 // una. Así dos envíos del mismo equipo, o del equipo viejo y el nuevo de un alumno (D221), no se
 // pisan (en Firestore lo hacía el reintento de la transacción).
 import { and, eq, sql } from "drizzle-orm";
+import { carpetasDeEntrega } from "@/lib/carpeta-entrega";
 import {
   entregaDeFila,
   equipoDeFila,
@@ -22,7 +23,6 @@ import { type Db, enSerie, type Tx } from "@/lib/db";
 import { entregas, equipos, partes, tareas, usuarios } from "@/lib/db/schema";
 import {
   armarEntrega,
-  carpetaEntrega,
   type EnvioEntrega,
   type ErrorEntrega,
   type ErrorEnvio,
@@ -284,7 +284,7 @@ export async function enviarEnTransaccion(
       integrantes,
       excluidos,
       respuestas: enviadas,
-      carpeta: await carpetaEntrega(entregaId),
+      carpeta: carpetasDeEntrega(entregaId),
       ahora,
     });
     if (!armada.ok) return armada;

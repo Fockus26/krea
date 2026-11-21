@@ -7,8 +7,9 @@ import {
   enviarEnTransaccion,
   permisoSubida,
 } from "@/lib/data/entregas";
+import { carpetaEntrega, carpetaEntregaLegada } from "@/lib/carpeta-entrega";
 import type { Db } from "@/lib/db";
-import { carpetaEntrega, claveImagen } from "@/lib/entregas";
+import { claveImagen } from "@/lib/entregas";
 import {
   type Equipo,
   idEntrega,
@@ -70,7 +71,7 @@ const equipo: Equipo = {
 };
 
 async function respuestas(tareaId: string, titular: string) {
-  const c = await carpetaEntrega(idEntrega(tareaId, titular));
+  const c = carpetaEntrega(idEntrega(tareaId, titular));
   return {
     p1: { imagenPath: claveImagen(tareaId, c, UUID) },
     p2: { texto: "  Respuesta  " },
@@ -254,7 +255,7 @@ describe("editar la entrega (D395–D397)", () => {
     uuid: string,
     texto: string,
   ) {
-    const c = await carpetaEntrega(idEntrega(tareaId, titular));
+    const c = carpetaEntrega(idEntrega(tareaId, titular));
     return {
       tareaId,
       respuestas: {
@@ -289,6 +290,32 @@ describe("editar la entrega (D395–D397)", () => {
         p2: { texto: "Segunda" },
       },
     });
+  });
+
+  test("carpeta vieja mientras se migra (D514): se acepta y la misma imagen en la nueva no se borra", async () => {
+    const id = idEntrega(T, SOLO);
+    const vieja = `entregas/${T}/${carpetaEntregaLegada(id)}/${UUID_2}.jpg`;
+    // Un formulario abierto antes de mover las carpetas manda la ruta vieja de la misma imagen
+    expect(
+      await enviarEnTransaccion(
+        db(),
+        SOLO,
+        { tareaId: T, respuestas: { p1: { imagenPath: vieja }, p2: { texto: "Segunda" } } },
+        AHORA + 90_000,
+      ),
+    ).toEqual({ ok: true });
+    const e = zEntrega.parse((await docs.snap(db(), "entregas", id)).data());
+    expect(e.respuestas.p1).toEqual({ imagenPath: vieja });
+    // La carpeta vieja de OTRA entrega no vale
+    const ajena = `entregas/${T}/${carpetaEntregaLegada(idEntrega(T, CAPITAN))}/${UUID}.jpg`;
+    expect(
+      await enviarEnTransaccion(
+        db(),
+        SOLO,
+        { tareaId: T, respuestas: { p1: { imagenPath: ajena }, p2: { texto: "Segunda" } } },
+        AHORA + 91_000,
+      ),
+    ).toEqual({ ok: false, error: "incompleta" });
   });
 
   test("evaluada: `ya-evaluada` al enviar y al subir; no cambia nada", async () => {

@@ -10,9 +10,10 @@ import {
   leerVersionPartes,
 } from "@/lib/data/partes";
 import { eliminarTareaEnTransaccion } from "@/lib/data/tareas";
+import { carpetaEntrega } from "@/lib/carpeta-entrega";
 import type { Db } from "@/lib/db";
 import { entregas, partes } from "@/lib/db/schema";
-import { carpetaEntrega, claveImagen } from "@/lib/entregas";
+import { claveImagen } from "@/lib/entregas";
 import { crearIdPublico } from "@/lib/id-publico";
 import { type Equipo, idEntrega, type Tarea, type Usuario } from "@/lib/modelo";
 import { type AccionParte, huellaDePartes } from "@/lib/partes";
@@ -96,7 +97,7 @@ const entregarTexto = (uid: string, preguntaId: string, texto: string) =>
   accion(uid, preguntaId, { tipo: "entregar", respuesta: { texto } });
 
 async function imagen(uuid = UUID_1) {
-  return claveImagen(TAREA, await carpetaEntrega(ENTREGA), uuid);
+  return claveImagen(TAREA, carpetaEntrega(ENTREGA), uuid);
 }
 
 async function envio() {
@@ -260,7 +261,7 @@ describe("reparto (D417)", () => {
       await accion(ADELA, "p2", {
         tipo: "entregar",
         respuesta: {
-          imagenPath: claveImagen(TAREA, await carpetaEntrega("otra"), UUID_1),
+          imagenPath: claveImagen(TAREA, carpetaEntrega("otra"), UUID_1),
         },
       }),
     ).toEqual({ ok: false, error: "incompleta" });

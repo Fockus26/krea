@@ -14,7 +14,8 @@ import {
 } from "@/lib/data/filas";
 import { type Db, enSerie, type Tx } from "@/lib/db";
 import { entregas, partes, usuarios } from "@/lib/db/schema";
-import { carpetaEntrega, respuestasValidas } from "@/lib/entregas";
+import { carpetasDeEntrega } from "@/lib/carpeta-entrega";
+import { respuestasValidas } from "@/lib/entregas";
 import { cedulaDeId, type IdAlumno } from "@/lib/id-publico";
 import { type Parte, rutasImagen } from "@/lib/modelo";
 import {
@@ -101,7 +102,7 @@ export async function accionParteEnTransaccion(
         [pregunta],
         { [preguntaId]: a.respuesta },
         tareaId,
-        await carpetaEntrega(entregaId),
+        carpetasDeEntrega(entregaId),
       )?.[preguntaId];
       if (!normal) return { ok: false, error: "incompleta" };
       a = { tipo: "entregar", respuesta: normal };
