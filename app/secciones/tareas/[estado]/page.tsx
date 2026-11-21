@@ -3,11 +3,18 @@ import { notFound } from "next/navigation";
 import { QuestionCardDetail } from "@/components/krea/question-card-detail";
 import { BackLink } from "@/components/sections/shared/back-link";
 import { CaptainNotice } from "@/components/sections/tareas/captain-notice";
+import { PartesIntegrante } from "@/components/sections/tareas/partes-integrante";
 import { PrizeCard } from "@/components/sections/tareas/prize-card";
+import { RepartoPanel } from "@/components/sections/tareas/reparto-panel";
 import { TaskAnswerForm } from "@/components/sections/tareas/task-answer-form";
 import { TaskDelivered } from "@/components/sections/tareas/task-delivered";
 import { TaskHeader } from "@/components/sections/tareas/task-header";
-import { entregaDe, type ModoEntrega } from "@/lib/demo/entrega";
+import {
+  entregaDe,
+  type ModoEntrega,
+  type ModoReparto,
+  repartoDe,
+} from "@/lib/demo/entrega";
 import { Estados } from "../../_vista/estados";
 import { Vista } from "../../_vista/vista";
 
@@ -22,9 +29,16 @@ const ESTADOS = [
   ["no-capitan", "Grupal · no capitán"],
   ["individual", "Individual"],
   ["entregada", "Entregada"],
-] as const satisfies ReadonlyArray<readonly [ModoEntrega, string]>;
+  // Reparto (D422, D529): una pregunta por estado; sin acciones, los controles no hacen nada
+  ["reparto-capitan", "Reparto · capitana"],
+  ["reparto-integrante", "Reparto · integrante"],
+] as const satisfies ReadonlyArray<
+  readonly [ModoEntrega | ModoReparto, string]
+>;
 
-function estadoDe(valor: string): ModoEntrega | undefined {
+type Modo = (typeof ESTADOS)[number][0];
+
+function estadoDe(valor: string): Modo | undefined {
   return ESTADOS.find(([k]) => k === valor)?.[0];
 }
 
@@ -40,7 +54,17 @@ export default async function EntregaVista({
 }: PageProps<"/secciones/tareas/[estado]">) {
   const modo = estadoDe((await params).estado);
   if (!modo) notFound();
-  const d = entregaDe(modo);
+  const reparto =
+    modo === "reparto-capitan" || modo === "reparto-integrante"
+      ? repartoDe(modo)
+      : null;
+  const d = entregaDe(
+    modo === "reparto-capitan"
+      ? "capitan"
+      : modo === "reparto-integrante"
+        ? "no-capitan"
+        : modo,
+  );
   return (
     <>
       <Estados base={BASE} actual={modo} estados={ESTADOS} />
@@ -60,7 +84,7 @@ export default async function EntregaVista({
           puntos={d.puntos}
           entregada={d.entregada !== undefined}
         />
-        {d.premio ? <PrizeCard premio={d.premio} /> : null}
+        {d.premio ? <PrizeCard premio={d.premio} tipo={d.tipo} /> : null}
         {d.capitan && !d.entregada ? (
           <CaptainNotice capitan={d.capitan} />
         ) : null}
@@ -96,6 +120,30 @@ export default async function EntregaVista({
                 })}
               </ol>
             </section>
+          </>
+        ) : reparto?.modo === "reparto-integrante" ? (
+          <PartesIntegrante
+            tareaId={reparto.tareaId}
+            preguntas={reparto.preguntas}
+            partes={reparto.partes}
+            capitan={reparto.capitan}
+            autor={reparto.autor}
+            titular={reparto.titular}
+          />
+        ) : reparto?.modo === "reparto-capitan" ? (
+          <>
+            <RepartoPanel
+              tareaId={reparto.tareaId}
+              filas={reparto.filas}
+              integrantes={reparto.integrantes}
+            />
+            <TaskAnswerForm
+              tareaId={reparto.tareaId}
+              preguntas={reparto.preguntas}
+              bloqueos={reparto.bloqueos}
+              autor={reparto.autor}
+              entregadaHref={`${BASE}/entregada`}
+            />
           </>
         ) : (
           <TaskAnswerForm
