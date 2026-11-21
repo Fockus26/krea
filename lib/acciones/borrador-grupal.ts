@@ -4,8 +4,11 @@
 // y lo siguen por el sondeo de `/api/partes/version` (D547). Sin `refresh()`: lo que escribe no
 // cambia la página del capitán (su formulario ya lo tiene) y el integrante refresca por la huella
 // (excepción en tests/unit/cache-rutas.test.ts).
+import {
+  type ResultadoBorrador,
+  zGuardarBorrador,
+} from "@/lib/borrador-grupal";
 import { exigirSesion } from "@/lib/dal";
-import { type ResultadoBorrador, zGuardarBorrador } from "@/lib/borrador-grupal";
 import { guardarBorradorEnTransaccion } from "@/lib/data/borrador-grupal";
 import { baseDeDatos } from "@/lib/db";
 

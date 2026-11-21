@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { EmptyState } from "@/components/krea/empty-state";
 import { QuestionCardDetail } from "@/components/krea/question-card-detail";
 import { BackLink } from "@/components/sections/shared/back-link";
+import { AvisoBorradorCapitan } from "@/components/sections/tareas/borrador-capitan";
 import { CaptainNotice } from "@/components/sections/tareas/captain-notice";
 import {
   BotonEditarEntrega,
@@ -19,6 +20,7 @@ import { TaskDelivered } from "@/components/sections/tareas/task-delivered";
 import { TaskHeader } from "@/components/sections/tareas/task-header";
 import { Card } from "@/components/ui/card";
 import tareaSeed from "@/data/seed/tarea-identidad-marca.json";
+import { guardarBorradorGrupal } from "@/lib/acciones/borrador-grupal";
 import { enviarEntrega, subirImagenRespuesta } from "@/lib/acciones/entregas";
 import {
   aceptarParte,
@@ -27,9 +29,16 @@ import {
   entregarParte,
   tomarParte,
 } from "@/lib/acciones/partes";
+import {
+  borradorVista,
+  huellaConBorrador,
+  inicialDesdeBorrador,
+  rutasBorrador,
+} from "@/lib/borrador-grupal";
 import { verificarSesion } from "@/lib/dal";
 import {
   autorDeEnvio,
+  borradorDelEquipo,
   datosAlumno,
   entregaDelEquipo,
   integrantesDe,
@@ -128,6 +137,11 @@ export default async function TareaPage({ params }: Props) {
         ? await partesDelEquipo(id, datos.equipo.id)
         : [],
   };
+  // El borrador compartido del capitán (D544): el integrante lo ve, el capitán arranca con él
+  const borrador =
+    conReparto && datos.equipo
+      ? await borradorDelEquipo(id, datos.equipo.id)
+      : null;
 
   // Ya enviada y sin evaluar: quien la envía la puede editar (D395)
   const suEntrega = datos.entregas.find((e) => e.tareaId === id) ?? null;
@@ -156,9 +170,34 @@ export default async function TareaPage({ params }: Props) {
     ...partesEdicion.flatMap((p) =>
       p.estado === "aceptada" ? rutasImagen(p.respuesta) : [],
     ),
+    ...(borrador ? rutasBorrador(borrador.respuestas) : []),
     ...(d.premioFoto ? [d.premioFoto] : []),
   ]);
   const reparto = repartoVista({ ...entradaReparto, urls });
+  // Integrante: el borrador en solo lectura, solo las preguntas del capitán (D547)
+  const vistaBorrador =
+    d.estado === "lector" && datos.equipo
+      ? borradorVista({
+          preguntas: d.preguntas,
+          borrador,
+          partes: entradaReparto.partes,
+          miembros: companeros.map((c) => c.cedula),
+          capitanId: datos.equipo.capitanId,
+          companeros,
+          urls,
+        })
+      : null;
+  // Capitán: si en este teléfono no hay borrador, arranca con el del equipo (D548); el suyo gana
+  // sobre lo último que le entregó el integrante en las que tomó (D461)
+  const inicialCapitan =
+    reparto?.modo === "capitan"
+      ? {
+          ...reparto.inicial,
+          ...(borrador
+            ? inicialDesdeBorrador(d.preguntas, borrador.respuestas, urls)
+            : {}),
+        }
+      : undefined;
   const bloqueosEditar =
     partesEdicion.length > 0 && d.estado === "entregada"
       ? bloqueosEdicion({
@@ -208,10 +247,26 @@ export default async function TareaPage({ params }: Props) {
       {d.estado === "lector" && d.capitan ? (
         <CaptainNotice capitan={d.capitan} />
       ) : null}
+      {vistaBorrador ? (
+        <AvisoBorradorCapitan
+          nombre={vistaBorrador.nombre}
+          actualizadoEn={vistaBorrador.actualizadoEn}
+          ahora={ahora}
+        />
+      ) : null}
       {conReparto ? (
+        // El integrante también sigue el borrador del capitán (D547); el capitán no
         <RepartoEnVivo
           tareaId={id}
-          version={huellaDePartes(entradaReparto.partes)}
+          conBorrador={d.estado === "lector"}
+          version={
+            d.estado === "lector"
+              ? huellaConBorrador(
+                  huellaDePartes(entradaReparto.partes),
+                  borrador?.version ?? null,
+                )
+              : huellaDePartes(entradaReparto.partes)
+          }
         />
       ) : null}
 
@@ -317,6 +372,7 @@ export default async function TareaPage({ params }: Props) {
           autor={datos.usuario.nombres.trim().split(/\s+/)[0] ?? ""}
           titular={datos.usuario.cedula}
           acciones={ACCIONES_PARTE}
+          borrador={vistaBorrador?.respuestas}
         />
       ) : (
         <>
@@ -333,7 +389,7 @@ export default async function TareaPage({ params }: Props) {
             tareaId={id}
             titulo={d.titulo}
             preguntas={d.preguntas}
-            inicial={reparto?.modo === "capitan" ? reparto.inicial : undefined}
+            inicial={inicialCapitan}
             bloqueos={
               reparto?.modo === "capitan" ? reparto.bloqueos : undefined
             }
@@ -348,6 +404,16 @@ export default async function TareaPage({ params }: Props) {
             titular={datos.usuario.cedula}
             acciones={ACCIONES}
             entregadaHref="/tareas"
+            // Capitán: el borrador también va al equipo (D546); integrante: lo ve (D547)
+            equipo={
+              reparto?.modo === "capitan"
+                ? {
+                    guardar: guardarBorradorGrupal,
+                    version: borrador?.version ?? 0,
+                  }
+                : undefined
+            }
+            borradorCapitan={vistaBorrador?.respuestas}
           />
         </>
       )}

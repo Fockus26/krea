@@ -37,7 +37,9 @@ export function AvisoBorradorCapitan({
   useEffect(() => {
     setReloj(Date.now());
     if (actualizadoEn !== primero.current)
-      setAnuncio(BORRADOR_ACTUALIZADO(nombre, horaTexto(new Date(actualizadoEn))));
+      setAnuncio(
+        BORRADOR_ACTUALIZADO(nombre, horaTexto(new Date(actualizadoEn))),
+      );
     const t = setInterval(() => setReloj(Date.now()), RELOJ_MS);
     return () => clearInterval(t);
   }, [actualizadoEn, nombre]);
@@ -59,7 +61,11 @@ export function AvisoBorradorCapitan({
 }
 
 /** Dentro de la pregunta bloqueada del integrante: lo que el capitán tiene en el borrador. */
-export function RespuestaBorrador({ respuesta }: { respuesta: QuestionAnswer }) {
+export function RespuestaBorrador({
+  respuesta,
+}: {
+  respuesta: QuestionAnswer;
+}) {
   return (
     <div className="flex flex-col gap-2">
       {/* PROVISIONAL (CONTENT_CHECKLIST fila 299) */}

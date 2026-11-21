@@ -388,7 +388,8 @@ export function TaskAnswerForm({
       const local = leerBorrador(window.localStorage.getItem(clave));
       const [t, i, v] = desdeBorrador(local);
       // Capitán (D546): lo que quedó en el teléfono (quizá escrito sin red) también va al equipo
-      if (hayEquipo && Object.keys(local).length > 0) setEdiciones((n) => n + 1);
+      if (hayEquipo && Object.keys(local).length > 0)
+        setEdiciones((n) => n + 1);
       const formato = new Map(
         preguntas.map((p) => [
           p.id,
@@ -522,7 +523,10 @@ export function TaskAnswerForm({
         respuestas,
         version: versionEquipo.current,
       });
-    } catch {
+    } catch (fallo) {
+      equipoEnCurso.current = false;
+      // Build desfasado (D538): recarga; el borrador sigue en el teléfono
+      relanzarSiEsDeploy(fallo);
       r = { ok: false, error: "red" };
     }
     equipoEnCurso.current = false;
@@ -540,14 +544,15 @@ export function TaskAnswerForm({
   }
   const guardarEquipoRef = useRef(guardarEquipo);
   guardarEquipoRef.current = guardarEquipo;
+  // Cada cambio del alumno sube `ediciones` (textos, imágenes subidas o quitadas): rebota con él
   useEffect(() => {
-    if (!hayEquipo || bloqueadaPor || ediciones === 0) return;
+    if (!hayEquipo || ediciones === 0) return;
     const t = setTimeout(
       () => void guardarEquipoRef.current(),
       BORRADOR_EQUIPO_MS,
     );
     return () => clearTimeout(t);
-  }, [ediciones, textos, imagenes, varias, hayEquipo, bloqueadaPor]);
+  }, [ediciones, hayEquipo]);
   useEffect(() => {
     if (!hayEquipo) return;
     const alVolver = () => void guardarEquipoRef.current();
@@ -1075,9 +1080,12 @@ export function TaskAnswerForm({
                   {borradorEquipoTexto(horaTexto(equipoGuardado))}
                 </p>
               ) : null}
-              <p role="status" className="text-small-b text-text empty:hidden">
+              <output
+                aria-live="polite"
+                className="text-small-b text-text empty:hidden"
+              >
                 {equipoCambio ? BORRADOR_CAMBIO : null}
-              </p>
+              </output>
             </div>
             <div className="flex flex-col items-end gap-1">
               <Dialog

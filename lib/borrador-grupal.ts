@@ -15,7 +15,11 @@ import {
 } from "@/lib/entregas";
 import { limiteImagenes, type Parte, type Tarea } from "@/lib/modelo";
 import { partesVigentes } from "@/lib/partes";
-import { ANSWER_MAX_LENGTH, imagenesConAlt, respuestaFirmada } from "@/lib/question";
+import {
+  ANSWER_MAX_LENGTH,
+  imagenesConAlt,
+  respuestaFirmada,
+} from "@/lib/question";
 import { tiempoRelativo } from "@/lib/ranking-vista";
 import type { Borrador, ImagenBorrador } from "@/lib/tareas";
 import { normalizarUrl, URL_MAX_LENGTH } from "@/lib/url-respuesta";
@@ -220,7 +224,9 @@ export function borradorVista(e: {
         : { tipo: "texto", texto: v };
       return;
     }
-    const rutas = Array.isArray(v) ? v.map((x) => x.imagenPath) : [v.imagenPath];
+    const rutas = Array.isArray(v)
+      ? v.map((x) => x.imagenPath)
+      : [v.imagenPath];
     const firmada = respuestaFirmada(
       imagenesConAlt(rutas, nombre, i + 1),
       e.urls,
