@@ -175,7 +175,7 @@ export function Preguntas() {
               respuesta={{
                 tipo: "imagen",
                 src: IMAGEN_MUESTRA,
-                alt: answerImageAlt("María", 3),
+                alt: answerImageAlt("Juana", 3),
               }}
             />
             <QuestionCardDetail
@@ -242,7 +242,7 @@ export function Preguntas() {
               formato="texto"
               value=""
               onValueChange={NO_HACE_NADA}
-              bloqueadaPor="Jorge Quintero"
+              bloqueadaPor="Mateo Paredes"
             />
           </Lista>
         </Muestra>

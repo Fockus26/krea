@@ -33,10 +33,10 @@ export function misNotasDe(
   }));
 }
 
-/** Heymi Sierra (5A): sus puntajes reales de "Identidad de marca" son los del lienzo de Detalle. */
-export const CEDULA_DETALLE = "33282883";
-/** Angeles Mendez (5A): 8 en "Identidad de marca", para ver el caso Raspado con datos reales. */
-export const CEDULA_RASPADO = "34098906";
+/** Elsa Soto (5A): sus puntajes reales de "Identidad de marca" son los del lienzo de Detalle. */
+export const CEDULA_DETALLE = "45011133";
+/** Alejandra Montero (5A): 8 en "Identidad de marca", para ver el caso Raspado con datos reales. */
+export const CEDULA_RASPADO = "45050717";
 
 /**
  * Enunciados con tildes tal como los muestra el lienzo (el Excel del seed los trae sin tildes:
@@ -61,11 +61,11 @@ const RESPUESTAS_DEMO: Readonly<Record<string, string>> = {
   p4: "Estudiantes de 13 a 18 años que salen del liceo con hambre y con poco presupuesto.",
   p5: "Alegre, rápida y confiable: como un amigo que siempre te resuelve.",
   p6: "Que los muchachos no tengan que caminar hasta la avenida para comer: llevamos los combos a la puerta del liceo en 10 minutos.",
-  p7: "Las salsas son receta de la abuela de Franyer y cada combo trae un jugo natural incluido.",
+  p7: "Las salsas son receta de la abuela de Hernán y cada combo trae un jugo natural incluido.",
   p8: "Rapidez.",
 };
 
-/** PLACEHOLDER: comentarios del profe a Heymi Sierra (lienzo; CONTENT_CHECKLIST fila 62). */
+/** PLACEHOLDER: comentarios del profe a Elsa Soto (lienzo; CONTENT_CHECKLIST fila 62). */
 const COMENTARIOS_DEMO: Readonly<Record<string, string>> = {
   p6: "¡Excelente! Explicaste el problema con un ejemplo real del liceo. Así se hace.",
   p8: "Solo nombraste un valor. Te faltaron dos: piensa en cómo tratan al cliente y en la calidad de la comida.",

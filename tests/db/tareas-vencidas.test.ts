@@ -29,8 +29,8 @@ const caracas = (dia: number, h: number, m = 0) =>
 const ANTES = caracas(20, 15, 29);
 const VENCIDA = caracas(21, 9);
 const HOY = "2026-11-21";
-const PROFE = "30262232";
-const ANA = "39100001";
+const PROFE = "45001237";
+const ADELA = "39100001";
 const LUIS = "39100002";
 const EQ1 = "q4-g1";
 const EQ2 = "q4-g2";
@@ -82,10 +82,10 @@ const evaluada = (
   tipo,
   titularId,
   seccion: "5A",
-  integrantes: [tipo === "grupal" ? ANA : titularId],
+  integrantes: [tipo === "grupal" ? ADELA : titularId],
   estado: "evaluada",
   respuestas,
-  enviadaPor: ANA,
+  enviadaPor: ADELA,
   enviadaEn: 1,
   evaluacion: {
     puntos: null,
@@ -98,9 +98,9 @@ const evaluada = (
 
 beforeAll(async () => {
   base = await baseNueva();
-  await docs.ponerUsuario(db(), usuario(ANA, EQ1));
+  await docs.ponerUsuario(db(), usuario(ADELA, EQ1));
   await docs.ponerUsuario(db(), usuario(LUIS, EQ2));
-  await docs.ponerEquipo(db(), EQ1, equipo(ANA));
+  await docs.ponerEquipo(db(), EQ1, equipo(ADELA));
   await docs.ponerEquipo(db(), EQ2, equipo(LUIS));
 });
 
@@ -108,7 +108,7 @@ describe("enviar al vencer (D451, D452)", () => {
   test("antes de la hora entra; después, cerrada", async () => {
     await docs.ponerTarea(db(), "q4-env", tarea());
     const envio = { tareaId: "q4-env", respuestas };
-    expect(await enviarEnTransaccion(db(), ANA, envio, ANTES)).toEqual({
+    expect(await enviarEnTransaccion(db(), ADELA, envio, ANTES)).toEqual({
       ok: true,
     });
     expect(await enviarEnTransaccion(db(), LUIS, envio, VENCIDA)).toEqual({
@@ -127,7 +127,7 @@ describe("enviar al vencer (D451, D452)", () => {
     expect(await enviarEnTransaccion(db(), LUIS, envio, VENCIDA)).toEqual({
       ok: true,
     });
-    expect(await enviarEnTransaccion(db(), ANA, envio, VENCIDA)).toEqual({
+    expect(await enviarEnTransaccion(db(), ADELA, envio, VENCIDA)).toEqual({
       ok: false,
       error: "cerrada",
     });
@@ -168,7 +168,7 @@ describe("reabrir (D455, D456)", () => {
       para: "algunos" as const,
       fecha: "2026-11-23",
       hora: "10:00",
-      titulares: [ANA],
+      titulares: [ADELA],
     };
     expect(
       await reabrirTareaEnTransaccion(db(), algunos, HOY, VENCIDA),
@@ -176,7 +176,7 @@ describe("reabrir (D455, D456)", () => {
     let t = await docs.tarea(db(), "q4-re");
     expect(t?.estado).toBe("abierta");
     expect(t && "prorrogas" in t ? t.prorrogas : null).toEqual({
-      [ANA]: { fecha: "2026-11-23", hora: "10:00" },
+      [ADELA]: { fecha: "2026-11-23", hora: "10:00" },
     });
     // El reintento del mismo pedido no falla (ya con otro `actualizadoEn`)
     expect(
@@ -231,7 +231,7 @@ describe("reabrir (D455, D456)", () => {
     await docs.ponerTarea(
       db(),
       "q4-cer",
-      tarea({ prorrogas: { [ANA]: { fecha: "2026-11-23", hora: null } } }),
+      tarea({ prorrogas: { [ADELA]: { fecha: "2026-11-23", hora: null } } }),
     );
     expect(await cerrarTareaEnTransaccion(db(), "q4-cer", VENCIDA)).toEqual({
       ok: true,
@@ -289,10 +289,10 @@ describe("devolver al vencer (D411, D451)", () => {
     await docs.ponerTarea(db(), id, tarea());
     await docs.ponerEntrega(
       db(),
-      idEntrega(id, ANA),
-      evaluada(id, "individual", ANA, 15),
+      idEntrega(id, ADELA),
+      evaluada(id, "individual", ADELA, 15),
     );
-    const envio = { entregaId: idEntrega(id, ANA), evaluadaEn: 500 };
+    const envio = { entregaId: idEntrega(id, ADELA), evaluadaEn: 500 };
     expect(await devolverEnTransaccion(db(), envio, VENCIDA)).toEqual({
       ok: false,
       error: "tarea-cerrada",
@@ -300,11 +300,11 @@ describe("devolver al vencer (D411, D451)", () => {
     await docs.ponerTarea(
       db(),
       id,
-      tarea({ prorrogas: { [ANA]: { fecha: "2026-11-23", hora: null } } }),
+      tarea({ prorrogas: { [ADELA]: { fecha: "2026-11-23", hora: null } } }),
     );
     expect(await devolverEnTransaccion(db(), envio, VENCIDA)).toEqual({
       ok: true,
-      id: idEntrega(id, ANA),
+      id: idEntrega(id, ADELA),
     });
   });
 });

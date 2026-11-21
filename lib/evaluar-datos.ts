@@ -520,7 +520,7 @@ export function nombreGrupal(
   );
 }
 
-/** Nombre del titular: el equipo, o «Yeilin Duarte». */
+/** Nombre del titular: el equipo, o «Raquel Figueroa». */
 export function nombreTitular(e: Entrega, m: MapasEvaluar): string {
   if (e.tipo === "grupal") return nombreGrupal(e, m.equipos);
   const u = m.usuarios.get(e.titularId);
@@ -581,7 +581,7 @@ export const FILTRO_ESTADO_TEXTO: Record<EstadoCola, string> = {
   todas: "Todas",
 };
 
-/** «Evaluadas · Grupales · 5A · Identidad de marca · Yeilin Duarte»; `null` sin filtros. */
+/** «Evaluadas · Grupales · 5A · Identidad de marca · Raquel Figueroa»; `null` sin filtros. */
 export function resumenFiltros(
   f: FiltrosEvaluar,
   m: MapasEvaluar,
@@ -652,7 +652,7 @@ export const SIN_PARTE_MOTIVO = "No entregó ninguna parte";
 
 /**
  * «Solo ver» de una grupal evaluada: la base de cada integrante en esta tarea (D403), en el orden
- * de la entrega. «Bases en esta tarea: Ana Pérez 15 · Luis Díaz no participó». PROVISIONAL
+ * de la entrega. «Bases en esta tarea: Adela Pérez 15 · Luis Farías no participó». PROVISIONAL
  * (CONTENT_CHECKLIST fila 215).
  */
 export function basesIntegrantesTexto(

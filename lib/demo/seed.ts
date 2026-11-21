@@ -1,5 +1,5 @@
-// Datos de ejemplo de las vistas previas de secciones (fase 04, D066). Lo REAL sale del seed
-// (`data/seed/`, scripts/import-excel.py): nombres, cédulas, secciones, equipos, capitanes, temas,
+// Datos de ejemplo de las vistas previas de secciones (fase 04, D066). Salen del seed ANONIMIZADO
+// (`data/seed/`, D490; los reales van a `data/privado/`, fuera de git): nombres, cédulas, secciones, equipos, capitanes, temas,
 // notas individuales/grupales y puntajes de "Identidad de marca". Nada lee Firestore: la fase 07
 // cambia la fuente de estos datos, no las secciones que los reciben por props.
 import alumnosJson from "@/data/seed/alumnos.json";
@@ -101,8 +101,8 @@ export const TAREA_IDENTIDAD: DemoTareaSeed = {
   })),
 };
 
-/** Estudiante de las vistas previas: Yeilin Duarte, 5A, capitana de G2 (los 37,5 pts del lienzo). */
-export const CEDULA_DEMO = "33272397";
+/** Estudiante de las vistas previas: Raquel Figueroa, 5A, capitana de G2 (los 37,5 pts del lienzo). */
+export const CEDULA_DEMO = "45009896";
 
 export function alumnoPorCedula(cedula: string): DemoAlumno {
   const a = ALUMNOS.find((x) => x.cedula === cedula);
@@ -137,7 +137,7 @@ export function esCapitan(alumno: DemoAlumno): boolean {
   return e !== null && e.capitanCedula === alumno.cedula;
 }
 
-/** "Yeilin Marilyn" → "Yeilin". */
+/** "Raquel Leticia" → "Raquel". */
 export function primerNombre(alumno: Pick<DemoAlumno, "nombres">): string {
   return alumno.nombres.trim().split(/\s+/)[0] ?? "";
 }
@@ -149,7 +149,7 @@ export function nombreCompleto(
   return `${alumno.nombres} ${alumno.apellidos}`;
 }
 
-/** Nombre corto: primer nombre + primer apellido ("Yeilin Duarte"). */
+/** Nombre corto: primer nombre + primer apellido ("Raquel Figueroa"). */
 export function nombreCorto(
   alumno: Pick<DemoAlumno, "nombres" | "apellidos">,
 ): string {

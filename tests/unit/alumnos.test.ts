@@ -19,28 +19,28 @@ import {
 import { alumnosVista } from "@/lib/demo/alumnos";
 
 const lista = [
-  { cedula: "34099118", nombres: "María Gabriela", apellidos: "Méndez Chacón" },
+  { cedula: "45051954", nombres: "Juana Elena", apellidos: "Montero Córdoba" },
   {
-    cedula: "34098906",
-    nombres: "María de los Ángeles",
-    apellidos: "Méndez Chacón",
+    cedula: "45050717",
+    nombres: "Juana de las Mercedes",
+    apellidos: "Montero Córdoba",
   },
   {
-    cedula: "37575127",
-    nombres: "Jailyn Verónica",
-    apellidos: "Martínez Méndez",
+    cedula: "45087827",
+    nombres: "Fernanda Olga",
+    apellidos: "Miranda Montero",
   },
   {
-    cedula: "33456636",
-    nombres: "Gabriel Alejandro",
-    apellidos: "Gil Corredor",
+    cedula: "45019792",
+    nombres: "Hugo Alberto",
+    apellidos: "Iglesias Escobar",
   },
 ];
 
 describe("normalizar", () => {
   test("sin tildes, en minúsculas y con espacios colapsados", () => {
-    expect(normalizar("  MÉndez   Chacón ")).toBe("mendez chacon");
-    expect(normalizar("Ángeles")).toBe("angeles");
+    expect(normalizar("  MÓntero   Córdoba ")).toBe("montero cordoba");
+    expect(normalizar("Alejandra")).toBe("alejandra");
   });
 });
 
@@ -50,31 +50,33 @@ describe("filtrarAlumnos", () => {
     expect(filtrarAlumnos(lista, "   ")).toHaveLength(4);
   });
   test("insensible a tildes y mayúsculas", () => {
-    expect(filtrarAlumnos(lista, "maria").map((a) => a.cedula)).toEqual([
-      "34099118",
-      "34098906",
+    expect(filtrarAlumnos(lista, "juana").map((a) => a.cedula)).toEqual([
+      "45051954",
+      "45050717",
     ]);
-    expect(filtrarAlumnos(lista, "MÉ")).toHaveLength(3);
-    expect(filtrarAlumnos(lista, "mendez")).toHaveLength(3);
+    expect(filtrarAlumnos(lista, "MÓN")).toHaveLength(3);
+    expect(filtrarAlumnos(lista, "montero")).toHaveLength(3);
   });
   test("por nombre y por apellido", () => {
-    expect(filtrarAlumnos(lista, "gabriel").map((a) => a.cedula)).toEqual([
-      "34099118",
-      "33456636",
+    expect(filtrarAlumnos(lista, "hugo").map((a) => a.cedula)).toEqual([
+      "45019792",
     ]);
-    expect(filtrarAlumnos(lista, "corredor")).toHaveLength(1);
+    expect(filtrarAlumnos(lista, "elena").map((a) => a.cedula)).toEqual([
+      "45051954",
+    ]);
+    expect(filtrarAlumnos(lista, "escobar")).toHaveLength(1);
   });
   test("cédula con o sin puntos", () => {
-    const conPuntos = filtrarAlumnos(lista, "34.099");
-    const sinPuntos = filtrarAlumnos(lista, "34099");
+    const conPuntos = filtrarAlumnos(lista, "45.051");
+    const sinPuntos = filtrarAlumnos(lista, "45051");
     expect(conPuntos).toEqual(sinPuntos);
-    expect(conPuntos.map((a) => a.cedula)).toEqual(["34099118"]);
-    expect(filtrarAlumnos(lista, "34.099.118")).toHaveLength(1);
+    expect(conPuntos.map((a) => a.cedula)).toEqual(["45051954"]);
+    expect(filtrarAlumnos(lista, "45.051.954")).toHaveLength(1);
   });
   test("una consulta sin dígitos no mira la cédula", () => {
     expect(filtrarAlumnos(lista, "zzz")).toHaveLength(0);
   });
-  test("con el seed: los dos Méndez de 5A", () => {
+  test("con el seed: los dos Montero de 5A", () => {
     const filas = alumnosVista().filter((a) => a.seccion === "5A");
     expect(filas).toHaveLength(35);
     expect(filtrarAlumnos(filas, "mé").length).toBeGreaterThan(0);
@@ -84,7 +86,7 @@ describe("filtrarAlumnos", () => {
 describe("textos", () => {
   test("contador: 0, 1, n y sin consulta", () => {
     expect(contadorTexto(5, "mé")).toBe("5 resultados para «mé»");
-    expect(contadorTexto(1, "gil")).toBe("1 resultado para «gil»");
+    expect(contadorTexto(1, "iglesias")).toBe("1 resultado para «iglesias»");
     expect(contadorTexto(0, "x")).toBe("Sin resultados para «x»");
     expect(contadorTexto(35, "", "5A")).toBe("35 estudiantes en 5A");
     expect(contadorTexto(1, "  ", "5C")).toBe("1 estudiante en 5C");
@@ -96,21 +98,21 @@ describe("textos", () => {
     expect(tablaLabel("5C")).toBe("Tabla de alumnos de 5C");
   });
   test("cédula con puntos, subtítulo y botón", () => {
-    expect(cedulaConPuntos("34099118")).toBe("34.099.118");
+    expect(cedulaConPuntos("45051954")).toBe("45.051.954");
     const a = {
-      cedula: "37575127",
+      cedula: "45087827",
       seccion: "5A" as const,
-      nombres: "Jailyn Verónica",
-      apellidos: "Martínez Méndez",
+      nombres: "Fernanda Olga",
+      apellidos: "Miranda Montero",
     };
     expect(subtituloEdicion(a)).toBe(
-      "Jailyn Verónica Martínez Méndez · C.I. 37.575.127 · 5A",
+      "Fernanda Olga Miranda Montero · C.I. 45.087.827 · 5A",
     );
-    expect(editarLabel(a)).toBe("Editar a Jailyn Verónica Martínez Méndez");
+    expect(editarLabel(a)).toBe("Editar a Fernanda Olga Miranda Montero");
   });
   test("unirNombre", () => {
-    expect(unirNombre("Jailyn", " Verónica ")).toBe("Jailyn Verónica");
-    expect(unirNombre("Jailyn", "")).toBe("Jailyn");
+    expect(unirNombre("Fernanda", " Olga ")).toBe("Fernanda Olga");
+    expect(unirNombre("Fernanda", "")).toBe("Fernanda");
   });
 });
 
@@ -119,8 +121,8 @@ describe("validarEdicion", () => {
     baseAnterior: 20,
     baseNueva: 20,
     motivo: "",
-    nombres: "Jailyn Verónica",
-    apellidos: "Martínez Méndez",
+    nombres: "Fernanda Olga",
+    apellidos: "Miranda Montero",
   };
   test("base igual: sin motivo es válido", () => {
     expect(validarEdicion(ok)).toEqual({});
@@ -162,7 +164,7 @@ describe("validarEdicion", () => {
   test("primer nombre o primer apellido en blanco con segundo lleno → error (F-M2)", () => {
     const e = validarEdicion({
       ...ok,
-      nombres: "Julibeth",
+      nombres: "Gloria",
       apellidos: "Pérez",
       primerNombre: "   ",
       primerApellido: "",
@@ -172,7 +174,7 @@ describe("validarEdicion", () => {
     expect(
       validarEdicion({
         ...ok,
-        primerNombre: "Génesis",
+        primerNombre: "Elisa",
         primerApellido: "Pérez",
       }),
     ).toEqual({});
@@ -182,8 +184,8 @@ describe("validarEdicion", () => {
 describe("busquedaVacia (D170, D323)", () => {
   test("sugiere la otra sección si allí hay coincidencias", async () => {
     const { busquedaVacia } = await import("@/lib/alumnos");
-    expect(busquedaVacia("  Valentin   Gamez ", "5A", { "5C": 1 })).toEqual({
-      titulo: "Nadie con «Valentin Gamez» en 5A",
+    expect(busquedaVacia("  Valentin   Guzman ", "5A", { "5C": 1 })).toEqual({
+      titulo: "Nadie con «Valentin Guzman» en 5A",
       descripcion: "Revisa las tildes o busca por cédula. ¿Quizás está en 5C?",
       otra: "5C",
     });
@@ -196,7 +198,7 @@ describe("busquedaVacia (D170, D323)", () => {
   });
   test("con varias secciones, la que tiene más coincidencias", async () => {
     const { busquedaVacia } = await import("@/lib/alumnos");
-    const v = busquedaVacia("ana", "5A", { "4B": 1, "5C": 3, "6A": 2 });
+    const v = busquedaVacia("adela", "5A", { "4B": 1, "5C": 3, "6A": 2 });
     expect(v.otra).toBe("5C");
   });
   test("empate: la primera por año y letra; la actual nunca", async () => {

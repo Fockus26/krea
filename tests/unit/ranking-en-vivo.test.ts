@@ -25,14 +25,14 @@ const fila = (
 
 const ranking = (puntos: Record<string, number>): RankingSeccion => ({
   alumnos: {
-    "11111111": fila("Ana María", "Pérez Gil", puntos.a ?? 30, "g1", {
+    "11111111": fila("Adela Juana", "Pérez Iglesias", puntos.a ?? 30, "g1", {
       semilla: "11111111-1-2",
     }),
     "22222222": fila("Luis", "Bravo", puntos.b ?? 20, "g2", {
       estilo: "pixel-art",
     }),
     "33333333": fila("Eva", "Cano", puntos.c ?? 10, null),
-    "44444444": fila("Iris", "Díaz", puntos.d ?? 5, "g1"),
+    "44444444": fila("Iris", "Farías", puntos.d ?? 5, "g1"),
   },
   equipos: {
     g1: { nombre: "5A-G1 Barbería", logoPath: null, puntos: 17 },
@@ -56,9 +56,9 @@ describe("itemsDeRanking", () => {
       "33333333",
       "44444444",
     ]);
-    const [ana, luis, eva] = items;
-    expect(ana).toMatchObject({
-      nombre: "Ana Pérez",
+    const [adela, luis, eva] = items;
+    expect(adela).toMatchObject({
+      nombre: "Adela Pérez",
       subtitulo: "5A-G1 Barbería",
       seed: "11111111-1-2",
       esTu: false,
@@ -81,7 +81,7 @@ describe("itemsDeRanking", () => {
       tema: "5A-G2 Repostería",
     });
     expect(items[1]).toMatchObject({
-      subtitulo: "2 integrantes · capitán Ana Pérez",
+      subtitulo: "2 integrantes · capitán Adela Pérez",
       tema: "Barbería",
     });
   });
@@ -118,14 +118,14 @@ describe("movimientos y anuncios", () => {
       ["baja", "1000-22222222"],
       ["baja", "1000-33333333"],
     ]);
-    expect(m[0]).toMatchObject({ nombre: "Iris Díaz", puesto: 1, cambio: 3 });
+    expect(m[0]).toMatchObject({ nombre: "Iris Farías", puesto: 1, cambio: 3 });
     expect(movimientosEntre(antes, antes, 1)).toEqual([]);
   });
 
   test("anuncia quién entra al podio y quién cae a riesgo; no las bajadas sin más", () => {
     // Con 4 filas todas están en riesgo (zona de 5): ninguna «entra» a riesgo
     expect(eventosEntre(antes, despues)).toEqual([
-      { tipo: "podio", nombre: "Iris Díaz" },
+      { tipo: "podio", nombre: "Iris Farías" },
     ]);
   });
 });

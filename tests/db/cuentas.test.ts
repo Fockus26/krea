@@ -88,9 +88,9 @@ describe("crearCuentaCon (D232, D233)", () => {
       {
         rol: "profesor",
         cedula: NUEVO,
-        nombres: "Ana",
+        nombres: "Adela",
         apellidos: "Prueba W1",
-        email: "ana@example.com",
+        email: "adela@example.com",
       },
       AHORA,
     );
@@ -104,7 +104,7 @@ describe("crearCuentaCon (D232, D233)", () => {
       actualizadoEn: AHORA,
     });
     expect(u.admin).toBeUndefined();
-    expect(await docs.emailDe(db(), NUEVO)).toBe("ana@example.com");
+    expect(await docs.emailDe(db(), NUEVO)).toBe("adela@example.com");
     expect(await docs.existeCuenta(db(), NUEVO)).toBe(true);
     expect(await entra(NUEVO, temporal)).toBe(true);
     expect(await entra(NUEVO, "otra-cosa-123")).toBe(false);
@@ -244,7 +244,7 @@ describe("admin y edición de profesores (D231, D233, D234)", () => {
         db(),
         {
           cedula: NUEVO,
-          nombres: "Ana María",
+          nombres: "Adela Juana",
           apellidos: "Prueba Editada",
           email: "",
         },
@@ -252,7 +252,7 @@ describe("admin y edición de profesores (D231, D233, D234)", () => {
       ),
     ).toEqual({ ok: true });
     const u = await usuario(NUEVO);
-    expect(u.nombres).toBe("Ana María");
+    expect(u.nombres).toBe("Adela Juana");
     expect(u.actualizadoEn).toBe(AHORA + 5);
     expect(await docs.emailDe(db(), NUEVO)).toBeNull();
     expect(
@@ -299,7 +299,7 @@ describe("admin y edición de profesores (D231, D233, D234)", () => {
       AHORA,
     );
     expect(r).toEqual({ ok: false, error: "invalida" });
-    expect((await usuario(NUEVO)).nombres).toBe("Ana María");
+    expect((await usuario(NUEVO)).nombres).toBe("Adela Juana");
   });
 });
 

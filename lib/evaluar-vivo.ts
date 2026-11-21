@@ -33,7 +33,7 @@ export type EntregaVivo = {
   estado: "borrador" | "entregada" | "evaluada";
   /** `evaluadaEn` de la evaluación vigente (`null` = Pendiente). */
   evaluadaEn: number | null;
-  /** Nombre de quien la evaluó por última vez («Ana Pérez»); `null` si no se sabe. */
+  /** Nombre de quien la evaluó por última vez («Adela Pérez»); `null` si no se sabe. */
   por: string | null;
   /** ¿La evaluó quien pregunta? Entonces no se avisa. */
   porMi: boolean;

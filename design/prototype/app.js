@@ -346,7 +346,7 @@ function viewLogin() {
     <p class="muted" style="text-align:center">Entra con tu cédula y la contraseña que te dio tu profe.</p>
     <form class="stack" data-bind="loginForm" novalidate>
       <div class="field"><label for="ced">Cédula</label>
-        <input class="input" id="ced" name="ced" inputmode="numeric" autocomplete="username" placeholder="Ej. 33272397" aria-describedby="ced-err">
+        <input class="input" id="ced" name="ced" inputmode="numeric" autocomplete="username" placeholder="Ej. 45009896" aria-describedby="ced-err">
         <span id="ced-err" class="error-text" hidden></span></div>
       <div class="field"><label for="pw">Contraseña</label>
         <input class="input" id="pw" name="pw" type="password" autocomplete="current-password"></div>
@@ -354,9 +354,9 @@ function viewLogin() {
       <a href="#/recuperar" style="text-align:center;font-weight:700">Olvidé mi contraseña</a>
     </form>
     <div class="demo-hints"><span class="eyebrow">Cuentas de prueba (cualquier contraseña)</span>
-      <button data-fill="33272397">Yeilin Duarte · 5A · capitana de Repostería</button>
-      <button data-fill="33368217">Camila Flórez · 5A · tarea pendiente</button>
-      <button data-fill="34098906">María de los Ángeles Méndez · 5A · raspada</button>
+      <button data-fill="45009896">Raquel Figueroa · 5A · capitana de Repostería</button>
+      <button data-fill="45014844">Araceli Garrido · 5A · tarea pendiente</button>
+      <button data-fill="45050717">Juana de los Alejandra Montero · 5A · raspada</button>
       <button data-fill="${TEACHER.cedula}">Profesor demo</button>
     </div></div></div>`;
 }
@@ -834,7 +834,7 @@ const on = (el, ev, fn) => el.addEventListener(ev, fn);
 const rerender = () => render();
 const bindings = {
   resetProto: (el) => on(el, "click", () => { if (confirm("¿Reiniciar los datos del prototipo?")) { localStorage.removeItem(STORE_KEY); S = loadState(); save(); location.hash = "#/ingresar"; render(); } }),
-  switchRole: (el) => on(el, "click", () => { S.session = isTeacher() ? { cedula: "33272397", rol: "alumno" } : { ...TEACHER }; save(false); location.hash = isTeacher() ? "#/profe" : "#/inicio"; }),
+  switchRole: (el) => on(el, "click", () => { S.session = isTeacher() ? { cedula: "45009896", rol: "alumno" } : { ...TEACHER }; save(false); location.hash = isTeacher() ? "#/profe" : "#/inicio"; }),
   logout: (el) => on(el, "click", () => { S.session = null; save(false); }),
   loginForm: (form) => {
     $$("[data-fill]").forEach((b) => on(b, "click", () => { $("#ced").value = b.dataset.fill; $("#pw").value = "demo1234"; $("#pw").focus(); }));

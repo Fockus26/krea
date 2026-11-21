@@ -31,11 +31,11 @@ import {
   tarjetasPremios,
 } from "@/lib/tareas-profe-datos";
 
-const PROFE = "30262232";
-const ANA = "31000001";
+const PROFE = "45001237";
+const ADELA = "31000001";
 const LUIS = "31000002";
 const EVA = "31000003";
-const CARLOS = "31000004"; // de 5C
+const DARÍO = "31000004"; // de 5C
 const FOTO = "premios/t1/0b7e3c1a-9a41-4d1f-8f7a-2f0a3d1c9e55.jpg";
 
 const tarea = (o: Partial<Tarea> = {}): Tarea =>
@@ -60,10 +60,10 @@ const alumno = (
 ): AlumnoPremio => ({ cedula, rol: "estudiante", seccion, base });
 
 const ALUMNOS = [
-  alumno(ANA),
+  alumno(ADELA),
   alumno(LUIS),
   alumno(EVA, 15),
-  alumno(CARLOS, 20, "5C"),
+  alumno(DARÍO, 20, "5C"),
 ];
 
 const entrega = (
@@ -121,9 +121,9 @@ describe("modelo (D263, D265)", () => {
   });
 
   test("zDecisionPremio: «darAlumno» con cédula; «dar» y «compartir» de antes siguen", () => {
-    expect(zDecisionPremio.parse({ tipo: "darAlumno", alumnoId: ANA })).toEqual(
-      { tipo: "darAlumno", alumnoId: ANA },
-    );
+    expect(
+      zDecisionPremio.parse({ tipo: "darAlumno", alumnoId: ADELA }),
+    ).toEqual({ tipo: "darAlumno", alumnoId: ADELA });
     expect(
       zDecisionPremio.safeParse({ tipo: "darAlumno", alumnoId: "abc" }).success,
     ).toBe(false);
@@ -131,7 +131,7 @@ describe("modelo (D263, D265)", () => {
       zDecisionPremio.safeParse({ tipo: "dar", equipoId: "5a-g2" }).success,
     ).toBe(true);
     expect(zDecisionPremio.safeParse({ tipo: "compartir" }).success).toBe(true);
-    expect(idDeDecision({ tipo: "darAlumno", alumnoId: ANA })).toBe(ANA);
+    expect(idDeDecision({ tipo: "darAlumno", alumnoId: ADELA })).toBe(ADELA);
     expect(idDeDecision({ tipo: "dar", equipoId: "g" })).toBe("g");
     expect(idDeDecision({ tipo: "compartir" })).toBeNull();
   });
@@ -140,12 +140,12 @@ describe("modelo (D263, D265)", () => {
 describe("ganador individual (D264)", () => {
   test("compiten los alumnos de la sección con su nota final (con base)", () => {
     const notas = notasPremioIndividual("t1", "5A", ALUMNOS, [
-      entrega(ANA, 18),
+      entrega(ADELA, 18),
       entrega(EVA, 20), // base 15 → 15
-      entrega(CARLOS, 20, { seccion: "5C" }),
+      entrega(DARÍO, 20, { seccion: "5C" }),
     ]);
     expect(notas).toEqual([
-      { id: ANA, nota: 18 },
+      { id: ADELA, nota: 18 },
       { id: LUIS, nota: null },
       { id: EVA, nota: 15 },
     ]);
@@ -157,22 +157,22 @@ describe("ganador individual (D264)", () => {
         t1,
         "5A",
         [],
-        [entrega(ANA, 19), entrega(LUIS, 18)],
+        [entrega(ADELA, 19), entrega(LUIS, 18)],
         ALUMNOS,
       ),
     ).toEqual({
       tipo: "ganado",
-      titularId: ANA,
+      titularId: ADELA,
       nota: 19,
       fecha: "2026-11-03",
     });
   });
 
   test("empate en la mejor nota; con «darAlumno» o «compartir» se resuelve", () => {
-    const ents = [entrega(ANA, 18), entrega(LUIS, 18), entrega(EVA, 20)];
+    const ents = [entrega(ADELA, 18), entrega(LUIS, 18), entrega(EVA, 20)];
     expect(estadoPremioSeccion(t1, "5A", [], ents, ALUMNOS)).toEqual({
       tipo: "empate",
-      titularIds: [ANA, LUIS],
+      titularIds: [ADELA, LUIS],
       nota: 18,
       fecha: "2026-11-03",
     });
@@ -194,7 +194,7 @@ describe("ganador individual (D264)", () => {
       estadoPremioSeccion(compartida, "5A", [], ents, ALUMNOS),
     ).toMatchObject({
       tipo: "compartido",
-      titularIds: [ANA, LUIS],
+      titularIds: [ADELA, LUIS],
     });
     expect(
       ganadoresPremio(
@@ -209,7 +209,7 @@ describe("ganador individual (D264)", () => {
       { ...t1, estado: "abierta" },
       "5A",
       [],
-      [entrega(ANA, null)],
+      [entrega(ADELA, null)],
       ALUMNOS,
     );
     expect(e).toEqual({
@@ -227,7 +227,7 @@ describe("ganador individual (D264)", () => {
   });
 
   test("«darAlumno» a un alumno que ya no existe: la decisión no cuenta (no rompe)", () => {
-    const ents = [entrega(ANA, 18), entrega(LUIS, 18), entrega(EVA, 18)];
+    const ents = [entrega(ADELA, 18), entrega(LUIS, 18), entrega(EVA, 18)];
     const dada = {
       ...t1,
       decisionesPremio: {
@@ -242,14 +242,14 @@ describe("ganador individual (D264)", () => {
         alumno(EVA),
         ...sinLuis.slice(2),
       ]),
-    ).toMatchObject({ tipo: "empate", titularIds: [ANA, EVA] });
+    ).toMatchObject({ tipo: "empate", titularIds: [ADELA, EVA] });
     // Solo queda uno con la mejor nota: lo gana él
     expect(
-      estadoPremioSeccion(dada, "5A", [], ents, [alumno(ANA)]),
-    ).toMatchObject({ tipo: "ganado", titularId: ANA });
+      estadoPremioSeccion(dada, "5A", [], ents, [alumno(ADELA)]),
+    ).toMatchObject({ tipo: "ganado", titularId: ADELA });
     expect(
       resolverEmpate(
-        { tipo: "empate", titularIds: [ANA, EVA], nota: 18, fecha: "x" },
+        { tipo: "empate", titularIds: [ADELA, EVA], nota: 18, fecha: "x" },
         { tipo: "darAlumno", alumnoId: LUIS },
       ).tipo,
     ).toBe("empate");
@@ -257,18 +257,18 @@ describe("ganador individual (D264)", () => {
 
   test("decisionEncaja y decisionDar según el tipo de tarea", () => {
     expect(
-      decisionEncaja("individual", { tipo: "darAlumno", alumnoId: ANA }),
+      decisionEncaja("individual", { tipo: "darAlumno", alumnoId: ADELA }),
     ).toBe(true);
     expect(decisionEncaja("individual", { tipo: "dar", equipoId: "g" })).toBe(
       false,
     );
-    expect(decisionEncaja("grupal", { tipo: "darAlumno", alumnoId: ANA })).toBe(
-      false,
-    );
+    expect(
+      decisionEncaja("grupal", { tipo: "darAlumno", alumnoId: ADELA }),
+    ).toBe(false);
     expect(decisionEncaja("grupal", { tipo: "compartir" })).toBe(true);
-    expect(decisionDar("individual", ANA)).toEqual({
+    expect(decisionDar("individual", ADELA)).toEqual({
       tipo: "darAlumno",
-      alumnoId: ANA,
+      alumnoId: ADELA,
     });
     expect(decisionDar("grupal", "g")).toEqual({ tipo: "dar", equipoId: "g" });
     expect(premioParaTexto("individual")).toBe(
@@ -285,7 +285,7 @@ describe("tarjetas y «Crear premio» (D263, D266)", () => {
         { id: "t2", ...tarea({ premio: null, estado: "abierta" }) },
       ],
       [],
-      [entrega(ANA, 19)],
+      [entrega(ADELA, 19)],
       ALUMNOS,
     );
     expect(t.map((x) => x.id)).toEqual(["t1__5A", "t1__5C"]);
@@ -293,7 +293,7 @@ describe("tarjetas y «Crear premio» (D263, D266)", () => {
       tipoTarea: "individual",
       premioFoto: FOTO,
       editable: false,
-      estado: { tipo: "ganado", titularId: ANA },
+      estado: { tipo: "ganado", titularId: ADELA },
     });
   });
 

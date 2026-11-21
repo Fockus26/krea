@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 
 describe("textos", () => {
   test("cédula con puntos de miles solo para mostrar", () => {
-    expect(cedulaTexto("33272397")).toBe("C.I. 33.272.397");
+    expect(cedulaTexto("45009896")).toBe("C.I. 45.009.896");
     expect(cedulaTexto("9876543")).toBe("C.I. 9.876.543");
   });
   test("capitán y base", () => {
@@ -29,12 +29,12 @@ describe("textos", () => {
     expect(baseChipTexto(15)).toBe("Base 15");
   });
   test("partirNombre: primera palabra + el resto", () => {
-    expect(partirNombre("Yeilin Marilyn")).toEqual(["Yeilin", "Marilyn"]);
-    expect(partirNombre("María de los Ángeles")).toEqual([
-      "María",
-      "de los Ángeles",
+    expect(partirNombre("Raquel Leticia")).toEqual(["Raquel", "Leticia"]);
+    expect(partirNombre("Juana de los Alejandra")).toEqual([
+      "Juana",
+      "de los Alejandra",
     ]);
-    expect(partirNombre("Jesús")).toEqual(["Jesús", ""]);
+    expect(partirNombre("Lucas")).toEqual(["Lucas", ""]);
   });
 });
 
@@ -48,15 +48,15 @@ describe("avatar", () => {
     ]);
   });
   test("tanda 0 empieza por la semilla actual; las tandas no se repiten", () => {
-    const t0 = semillasAvatar("33272397", 0);
-    const t1 = semillasAvatar("33272397", 1);
+    const t0 = semillasAvatar("45009896", 0);
+    const t1 = semillasAvatar("45009896", 1);
     expect(t0).toHaveLength(OPCIONES_POR_TANDA);
-    expect(t0[0]).toBe("33272397");
+    expect(t0[0]).toBe("45009896");
     expect(new Set([...t0, ...t1]).size).toBe(OPCIONES_POR_TANDA * 2);
-    expect(semillasAvatar("33272397", 1)).toEqual(t1);
+    expect(semillasAvatar("45009896", 1)).toEqual(t1);
   });
   test("semilla nueva (D388): 32 hex al azar, sin la cédula, distinta cada vez", () => {
-    const CI = "33272397";
+    const CI = "45009896";
     const vistas = new Set<string>();
     for (let i = 0; i < 200; i++) {
       const s = semillaAvatarNueva(CI);
@@ -67,7 +67,7 @@ describe("avatar", () => {
     expect(vistas.size).toBe(200);
     // Si el azar trae la cédula, vuelve a sortear
     const salidas = [
-      Uint8Array.from([0x33, 0x27, 0x23, 0x97, ...Array(12).fill(0)]),
+      Uint8Array.from([0x45, 0x00, 0x98, 0x96, ...Array(12).fill(0)]),
       Uint8Array.from(Array(16).fill(0xab)),
     ];
     let n = 0;
@@ -80,17 +80,17 @@ describe("avatar", () => {
     const R = "0a1b2c3d4e5f60718293a4b5c6d7e8f9";
     expect(raizSemilla(R)).toBe(R);
     expect(raizSemilla(`${R}-4-7`)).toBe(R);
-    expect(raizSemilla("33272397-12-0")).toBe("33272397");
-    expect(baseSelectorAvatar(`${R}-2-3`, "33272397")).toBe(R);
-    expect(baseSelectorAvatar("33272397", "33272397", () => R)).toBe(R);
-    expect(baseSelectorAvatar("33272397-1-1", "33272397", () => R)).toBe(R);
-    expect(baseSelectorAvatar("33272397", "33272397")).not.toContain(
-      "33272397",
+    expect(raizSemilla("45009896-12-0")).toBe("45009896");
+    expect(baseSelectorAvatar(`${R}-2-3`, "45009896")).toBe(R);
+    expect(baseSelectorAvatar("45009896", "45009896", () => R)).toBe(R);
+    expect(baseSelectorAvatar("45009896-1-1", "45009896", () => R)).toBe(R);
+    expect(baseSelectorAvatar("45009896", "45009896")).not.toContain(
+      "45009896",
     );
   });
 
   test("zAvatarElegido: solo opciones de la raíz guardada y nunca con la cédula", () => {
-    const CI = "33272397";
+    const CI = "45009896";
     const R = "0a1b2c3d4e5f60718293a4b5c6d7e8f9";
     const otra = "ffffffffffffffffffffffffffffffff";
     const ok = (actual: string, semilla: string) =>
@@ -128,19 +128,19 @@ describe("avatar", () => {
 });
 
 describe("datos de ejemplo (seed)", () => {
-  test("Yeilin: 4 campos del lienzo, capitana de 5A-G2, sin base", () => {
+  test("Raquel: 4 campos del lienzo, capitana de 5A-G2, sin base", () => {
     const p = perfilDe();
-    expect(p.nombre).toBe("Yeilin Marilyn Duarte Moncayo");
+    expect(p.nombre).toBe("Raquel Leticia Figueroa Montes");
     expect(p.campos.map((c) => c.valor)).toEqual([
-      "Yeilin",
-      "Marilyn",
-      "Duarte",
-      "Moncayo",
+      "Raquel",
+      "Leticia",
+      "Figueroa",
+      "Montes",
     ]);
     expect(p.capitan).toBe("Capitán · 5A-G2");
     expect(p.base).toBeNull();
   });
   test("quien no es capitán no lleva el chip", () => {
-    expect(perfilDe(alumnoPorCedula("33498239")).capitan).toBeUndefined();
+    expect(perfilDe(alumnoPorCedula("45021029")).capitan).toBeUndefined();
   });
 });

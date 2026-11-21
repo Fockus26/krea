@@ -10,7 +10,7 @@ import {
 import type { Sesion } from "@/lib/sesion";
 
 const alumno5A: Sesion = {
-  uid: "33272397",
+  uid: "45009896",
   rol: "estudiante",
   seccion: "5A",
   equipoId: null,

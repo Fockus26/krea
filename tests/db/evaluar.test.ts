@@ -38,7 +38,7 @@ let base: Db;
 const db = () => base;
 
 const AHORA = Date.UTC(2026, 10, 5, 15);
-const PROFE = "30262232";
+const PROFE = "45001237";
 const PROFE_2 = "30262233";
 const A1 = "39700001"; // base 15
 const A2 = "39700002"; // base 20
@@ -677,14 +677,14 @@ describe("comentario general (D445) y quién evaluó (D447)", () => {
     await ponerUsuario(db(), {
       ...alumno(PROFE, 20),
       rol: "profesor",
-      nombres: "Ana María",
-      apellidos: "Pérez Gil",
+      nombres: "Adela Juana",
+      apellidos: "Pérez Iglesias",
       seccion: null,
       equipoId: null,
     });
     const m = await nombresDeProfes(db(), [PROFE, PROFE, A1, "30999999"]);
     expect([...m.entries()]).toEqual([
-      [PROFE, { nombres: "Ana María", apellidos: "Pérez Gil" }],
+      [PROFE, { nombres: "Adela Juana", apellidos: "Pérez Iglesias" }],
     ]);
     expect(await nombresDeProfes(db(), [])).toEqual(new Map());
   });

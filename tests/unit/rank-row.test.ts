@@ -54,29 +54,29 @@ describe("rankRowLabel", () => {
     expect(
       rankRowLabel({
         puesto: 4,
-        nombre: "María Méndez",
+        nombre: "Juana Montero",
         puntos: 30.5,
         delta: 2,
       }),
-    ).toBe("Puesto 4, María Méndez, 30,5 puntos, subió 2 puestos");
+    ).toBe("Puesto 4, Juana Montero, 30,5 puntos, subió 2 puestos");
   });
 
   test("sin delta no lo menciona; empate y tú se añaden", () => {
     expect(
       rankRowLabel({
         puesto: 3,
-        nombre: "Camila Duarte",
+        nombre: "Araceli Figueroa",
         puntos: 38,
         empate: true,
         esTu: true,
       }),
-    ).toBe("Puesto 3, Camila Duarte, 38 puntos, empatado, eres tú");
+    ).toBe("Puesto 3, Araceli Figueroa, 38 puntos, empatado, eres tú");
   });
 
   test("podio", () => {
-    expect(
-      podiumLabel({ puesto: 1, nombre: "Valentina Rojas", puntos: 42 }),
-    ).toBe("Puesto 1, Valentina Rojas, 42 puntos");
+    expect(podiumLabel({ puesto: 1, nombre: "Noemí Rojas", puntos: 42 })).toBe(
+      "Puesto 1, Noemí Rojas, 42 puntos",
+    );
   });
 });
 
@@ -194,30 +194,30 @@ describe("separador y duelo VS (D256, D288)", () => {
 
 describe("anuncios (§6)", () => {
   test("frases individuales", () => {
-    expect(anuncioTexto({ tipo: "sube", nombre: "Ana", puesto: 4 })).toBe(
-      "Ana subió al puesto 4",
+    expect(anuncioTexto({ tipo: "sube", nombre: "Adela", puesto: 4 })).toBe(
+      "Adela subió al puesto 4",
     );
-    expect(anuncioTexto({ tipo: "podio", nombre: "Ana" })).toBe(
-      "Ana entró al podio",
+    expect(anuncioTexto({ tipo: "podio", nombre: "Adela" })).toBe(
+      "Adela entró al podio",
     );
-    expect(anuncioTexto({ tipo: "riesgo", nombre: "Ana" })).toBe(
-      "Ana bajó a la zona de riesgo",
+    expect(anuncioTexto({ tipo: "riesgo", nombre: "Adela" })).toBe(
+      "Adela bajó a la zona de riesgo",
     );
   });
 
   test("uno solo, varios agrupados y ninguno", () => {
     expect(agruparAnuncios([])).toBe("");
-    expect(agruparAnuncios([{ tipo: "podio", nombre: "Ana" }])).toBe(
-      "Ana entró al podio",
+    expect(agruparAnuncios([{ tipo: "podio", nombre: "Adela" }])).toBe(
+      "Adela entró al podio",
     );
     expect(
       agruparAnuncios([
-        { tipo: "sube", nombre: "Ana", puesto: 4 },
+        { tipo: "sube", nombre: "Adela", puesto: 4 },
         { tipo: "podio", nombre: "Luis" },
         { tipo: "riesgo", nombre: "Eva" },
       ]),
     ).toBe(
-      "3 cambios en el ranking: Ana subió al puesto 4; Luis entró al podio; Eva bajó a la zona de riesgo",
+      "3 cambios en el ranking: Adela subió al puesto 4; Luis entró al podio; Eva bajó a la zona de riesgo",
     );
   });
 });

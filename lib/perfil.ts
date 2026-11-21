@@ -5,13 +5,13 @@ import { PASSWORD_MIN, validarPassword } from "@/lib/auth";
 import { DICEBEAR_ESTILOS, type DicebearEstilo } from "@/lib/dicebear";
 import { formatNota } from "@/lib/grades";
 
-/** "33272397" → "C.I. 33.272.397": puntos de miles solo para mostrar (la cédula se guarda sin ellos). */
+/** "45009896" → "C.I. 45.009.896": puntos de miles solo para mostrar (la cédula se guarda sin ellos). */
 export function cedulaTexto(cedula: string): string {
   const conPuntos = cedula.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   return `C.I. ${conPuntos}`;
 }
 
-/** "Capitán · 5A-G2" (el lienzo dice "Capitana" para Yeilin: el género va por prop, D075). */
+/** "Capitán · 5A-G2" (el lienzo dice "Capitana" para Raquel: el género va por prop, D075). */
 export function capitanChipTexto(equipoId: string, femenino = false): string {
   const corto = equipoId.toUpperCase();
   return `${femenino ? "Capitana" : "Capitán"} · ${corto}`;
@@ -24,7 +24,7 @@ export function baseChipTexto(base: number): string | null {
 
 /**
  * Nombres y apellidos en los 4 campos del lienzo: el primero es la primera palabra y el
- * segundo, el resto ("María de los Ángeles" → "María" + "de los Ángeles"). Vacío si no hay.
+ * segundo, el resto ("Juana de los Alejandra" → "Juana" + "de los Alejandra"). Vacío si no hay.
  */
 export function partirNombre(completo: string): [string, string] {
   const [primero = "", ...resto] = completo.trim().split(/\s+/);

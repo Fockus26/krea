@@ -44,7 +44,7 @@ const equipo = (
 
 const USUARIOS = [
   usuario("1000001", "Carla", "g1"),
-  usuario("1000002", "Ana", "g1"),
+  usuario("1000002", "Adela", "g1"),
   usuario("1000003", "Beto", "g2"),
   usuario("1000004", "Dani", null),
   usuario("1000005", "Eva", "g-borrado"),
@@ -163,7 +163,7 @@ describe("equiposProfeDatos", () => {
     ]);
     expect(d.alumnos["1000002"]).toEqual({
       cedula: "1000002",
-      nombre: "Ana Prueba",
+      nombre: "Adela Prueba",
       seed: "s-1000002",
       estilo: "lorelei",
     });

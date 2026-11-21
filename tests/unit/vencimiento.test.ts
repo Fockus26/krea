@@ -189,14 +189,14 @@ describe("textos con «vence» / «venció»", () => {
     premio: null,
     preguntas: [{ id: "p1", enunciado: "Uno", formato: "texto", valor: 20 }],
     importada: false,
-    autorId: "30262232",
+    autorId: "45001237",
     actualizadoEn: 1,
   });
   const datos = {
     usuario: {
       cedula: "39000010",
       rol: "estudiante",
-      nombres: "Ana",
+      nombres: "Adela",
       apellidos: "Pérez",
       seccion: "5A",
       base: 15,

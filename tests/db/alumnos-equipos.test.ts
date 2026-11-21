@@ -28,7 +28,7 @@ let base: Db;
 const db = () => base;
 
 const AHORA = Date.UTC(2026, 11, 1, 15);
-const PROFE = "30262232";
+const PROFE = "45001237";
 const A1 = "39800001"; // capitán de G1
 const A2 = "39800002"; // G1
 const A3 = "39800003"; // G2 (capitán)

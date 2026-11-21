@@ -1,5 +1,5 @@
 # D231 · Auth · Profesor admin: marca `admin` en `usuarios` y en las claims; `exigirAdmin()` en el DAL · Implemented
 
 **Decision:** `usuarios.admin` (`z.boolean().optional()`, ausente = false) y `Claims.admin?: true`. `claimsDe` solo la copia si el rol es profesor y vale `true`; `sesionDeClaims` igual (un estudiante nunca es admin). `exigirAdmin()` (`lib/dal.ts`) = `exigirSesion("profesor")` + claim `admin`; un profe que no lo es vuelve a `/profe`. La marca solo la pone `scripts/admin-profesor.ts --hacer-admin` (perfil + claims + revocación de tokens, idempotente): la pantalla Profesores no da ni quita el admin, así el admin no puede quitárselo a sí mismo ni dárselo a otro por error. El seed del emulador marca admin al profesor de prueba `10000000` para el QA.
-**Why:** pedido 2 de César (30262232 gestiona a los demás profes). Las claims evitan una lectura de Firestore por request (D174) y el proxy/DAL ya las leen.
+**Why:** pedido 2 de César (45001237 gestiona a los demás profes). Las claims evitan una lectura de Firestore por request (D174) y el proxy/DAL ya las leen.
 **Discarded alternative:** lista de cédulas admin en una variable de entorno — cambiarla exige redeploy y no viaja con la cuenta. Leer `usuarios/{uid}.admin` en cada `exigirAdmin` — una lectura más por request para un dato que cambia una vez.

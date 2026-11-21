@@ -69,8 +69,8 @@ export function barWidth(fraction: number): string {
 }
 
 /**
- * Texto alternativo de una respuesta en imagen: "Respuesta de María a la pregunta 3". Con varias
- * (D373): "Respuesta de María a la pregunta 3, imagen 1 de 2".
+ * Texto alternativo de una respuesta en imagen: "Respuesta de Juana a la pregunta 3". Con varias
+ * (D373): "Respuesta de Juana a la pregunta 3, imagen 1 de 2".
  */
 export function answerImageAlt(
   nombre: string,

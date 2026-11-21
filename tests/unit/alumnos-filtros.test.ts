@@ -18,8 +18,8 @@ describe("rutaAlumnos (D252)", () => {
     expect(
       rutaAlumnos({ tarea: "t1", estado: "raspados", seccion: "5C" }),
     ).toBe("/profe/alumnos?seccion=5C&estado=raspados&tarea=t1");
-    expect(rutaAlumnos({ alumno: "37575127" })).toBe(
-      "/profe/alumnos?alumno=37575127",
+    expect(rutaAlumnos({ alumno: "45087827" })).toBe(
+      "/profe/alumnos?alumno=45087827",
     );
   });
   test("codifica el id de la tarea", () => {
@@ -35,7 +35,7 @@ describe("leerFiltrosAlumnos", () => {
       seccion: "5A",
       estado: "evaluados",
       tarea: "t1",
-      alumno: "37575127",
+      alumno: "45087827",
     } as const;
     expect(leerFiltrosAlumnos(f)).toEqual(f);
     expect(
@@ -158,7 +158,7 @@ describe("notasPorTarea", () => {
       evaluacion:
         puntaje === null
           ? null
-          : { puntaje, evaluadaEn: en, evaluadaPor: "30262232" },
+          : { puntaje, evaluadaEn: en, evaluadaPor: "45001237" },
     }) as unknown as Entrega;
   test("cuenta individuales y grupales evaluadas, con la base del alumno", () => {
     const n = notasPorTarea({ cedula: "1", base: 10 }, [

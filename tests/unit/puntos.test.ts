@@ -103,13 +103,13 @@ describe("motivos", () => {
 
 describe("filtrarCandidatos", () => {
   const lista = [
-    { nombre: "María Méndez" },
-    { nombre: "Jorge Quintero" },
+    { nombre: "Juana Montero" },
+    { nombre: "Mateo Paredes" },
     { nombre: "5A-G3 Ropa" },
   ];
   test("sin tildes ni mayúsculas", () => {
-    expect(filtrarCandidatos(lista, "MENDEZ")).toEqual([lista[0]]);
-    expect(filtrarCandidatos(lista, "  maría ")).toEqual([lista[0]]);
+    expect(filtrarCandidatos(lista, "MONTERO")).toEqual([lista[0]]);
+    expect(filtrarCandidatos(lista, "  juana ")).toEqual([lista[0]]);
     expect(filtrarCandidatos(lista, "ropa")).toEqual([lista[2]]);
   });
   test("consulta vacía devuelve todos; sin coincidencias, vacío", () => {
@@ -120,13 +120,13 @@ describe("filtrarCandidatos", () => {
 });
 
 describe("vistaPrevia", () => {
-  test("el ejemplo del lienzo: Jorge Quintero 17 → 19, puesto 16 → 11", () => {
+  test("el ejemplo del lienzo: Mateo Paredes 17 → 19, puesto 16 → 11", () => {
     const c = candidatosPuntos().alumno["5A"];
-    const jorge = c.find((x) => x.id === AJUSTE_INICIAL.destinoId);
-    if (!jorge) throw new Error("falta Jorge");
-    const v = vistaPrevia({ destino: jorge, valor: 2, ranking: c });
+    const mateo = c.find((x) => x.id === AJUSTE_INICIAL.destinoId);
+    if (!mateo) throw new Error("falta Mateo");
+    const v = vistaPrevia({ destino: mateo, valor: 2, ranking: c });
     expect(v.frase).toBe(
-      "Jorge Quintero pasa de 17 a 19 pts y sube del puesto 16 al 11. Su nota no cambia.",
+      "Mateo Paredes pasa de 17 a 19 pts y sube del puesto 16 al 11. Su nota no cambia.",
     );
     expect(v.variante).toBe("ok");
     expect(v.movimiento).toBe("sube");
@@ -213,7 +213,7 @@ const fila = (over: Partial<FilaHistorial> = {}): FilaHistorial => ({
   tipo: "alumno",
   destinoId: "1",
   seccion: "5A",
-  nombre: "Jorge Quintero",
+  nombre: "Mateo Paredes",
   valor: 2,
   motivo: "Participación destacada",
   fecha: "2026-10-25T10:15",
@@ -258,10 +258,10 @@ describe("anular", () => {
   });
   test("textos de los toasts", () => {
     expect(ajusteAplicadoTexto(fila())).toBe(
-      "Ajuste aplicado: +2 pts a Jorge Quintero",
+      "Ajuste aplicado: +2 pts a Mateo Paredes",
     );
     expect(ajusteAnuladoTexto(fila())).toBe(
-      "Ajuste anulado: −2 pts a Jorge Quintero",
+      "Ajuste anulado: −2 pts a Mateo Paredes",
     );
   });
 });
@@ -308,10 +308,10 @@ describe("historial", () => {
     expect(AJUSTES_HISTORIAL).toHaveLength(5);
     const h = historialPuntos();
     expect(h.map((f) => f.nombre)).toEqual([
-      "Jorge Quintero",
-      "Klenyerber Corredor",
+      "Mateo Paredes",
+      "Pablo Escobar",
       "Equipo 5A-G3 Ropa",
-      "Gabriel Gil",
+      "Hugo Iglesias",
       "Equipo 5C-G1",
     ]);
     expect(motivoTexto(h[4])).toBe('Otro: "Entregaron la maqueta sin nombres"');
@@ -333,9 +333,9 @@ describe("historial", () => {
     };
     const r = filtrarHistorial(h, f);
     expect(r.map((x) => x.nombre)).toEqual([
-      "Jorge Quintero",
-      "Klenyerber Corredor",
-      "Gabriel Gil",
+      "Mateo Paredes",
+      "Pablo Escobar",
+      "Hugo Iglesias",
     ]);
     expect(filtroHistorialTexto(f, r.length, h.length)).toBe(
       "Mostrando 3 de 5 ajustes · 5A · Alumnos",
@@ -345,8 +345,8 @@ describe("historial", () => {
     expect(filtrarHistorial(h, otro).map((x) => x.id)).toEqual(["aj-4"]);
   });
   test("nombre accesible del menú de fila", () => {
-    expect(opcionesAjusteLabel("Jorge Quintero")).toBe(
-      "Opciones del ajuste de Jorge Quintero",
+    expect(opcionesAjusteLabel("Mateo Paredes")).toBe(
+      "Opciones del ajuste de Mateo Paredes",
     );
   });
 });

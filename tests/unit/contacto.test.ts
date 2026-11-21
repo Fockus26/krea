@@ -17,7 +17,7 @@ import {
 import { estiloDe } from "@/lib/vistas-estudiante";
 
 describe("avatarVisibleProfe (D389)", () => {
-  const CI = "30262232";
+  const CI = "45001237";
   test("semilla con la cédula (sola o con sufijo de tanda) → null: iniciales", () => {
     expect(
       avatarVisibleProfe({ estilo: "fun-emoji", semilla: CI }, CI),
@@ -163,7 +163,7 @@ describe("tarjetasProfes", () => {
 
   test("avatar del profe (D389): estilo válido y su semilla, o null → iniciales", () => {
     const [con, sin, raro] = tarjetasProfes([
-      fila("Ana", "Díaz", "584241112233", null, {
+      fila("Adela", "Farías", "584241112233", null, {
         estilo: "bottts-neutral",
         semilla: "9f2c4e7a1b3d5f6081a2b3c4d5e6f708",
       }),
@@ -183,16 +183,16 @@ describe("tarjetasProfes", () => {
 
   test("todos los profes: con contacto primero, luego por nombre corto; sin contacto marcados (D459)", () => {
     const t = tarjetasProfes([
-      fila("Yolanda María", "Pérez Gil", null, "yolanda@gmail.com"),
-      fila("Carlos", "Ruiz", null, null),
-      fila("Ana", "Díaz", "584241112233", null),
+      fila("Yolanda Juana", "Pérez Iglesias", null, "yolanda@gmail.com"),
+      fila("Darío", "Rubio", null, null),
+      fila("Adela", "Farías", "584241112233", null),
       fila("Beto", "Luna", "basura", "no-es-correo"),
     ]);
     expect(t.map((x) => x.nombre)).toEqual([
-      "Ana Díaz",
+      "Adela Farías",
       "Yolanda Pérez",
       "Beto Luna",
-      "Carlos Ruiz",
+      "Darío Rubio",
     ]);
     expect(t.map((x) => x.sinContacto)).toEqual([false, false, true, true]);
     expect(JSON.stringify(t)).not.toContain("cedula");
@@ -211,7 +211,7 @@ describe("tarjetasProfes", () => {
 
   test("sin profes: lista vacía (la tarjeta no se muestra); un profe sin contacto sí sale", () => {
     expect(tarjetasProfes([])).toEqual([]);
-    const [t] = tarjetasProfes([fila("Carlos", "Ruiz", null, null)]);
+    const [t] = tarjetasProfes([fila("Darío", "Rubio", null, null)]);
     expect(t?.sinContacto).toBe(true);
     expect(t?.whatsapp).toBeNull();
     expect(t?.correo).toBeNull();

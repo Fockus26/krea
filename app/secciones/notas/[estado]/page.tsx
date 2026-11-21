@@ -32,8 +32,8 @@ export function generateStaticParams() {
 /** PLACEHOLDER: la base 15 del lienzo es de ejemplo; en el seed todos tienen base 20. */
 const BASE_EJEMPLO = 15;
 
-// Ruta final (fase 05): /notas/[tarea]. Datos: "Identidad de marca" del seed (Heymi Sierra;
-// Angeles Mendez para el raspado).
+// Ruta final (fase 05): /notas/[tarea]. Datos: "Identidad de marca" del seed (Elsa Soto;
+// Alejandra Montero para el raspado).
 export default async function DetalleNotaVista({
   params,
 }: PageProps<"/secciones/notas/[estado]">) {

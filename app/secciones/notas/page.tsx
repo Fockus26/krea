@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-// Ruta final (fase 05): /notas. Datos: Yeilin Duarte del seed (D069).
+// Ruta final (fase 05): /notas. Datos: Raquel Figueroa del seed (D069).
 export default function NotasVista() {
   const alumno = alumnoPorCedula(CEDULA_DEMO);
   return (

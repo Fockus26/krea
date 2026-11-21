@@ -45,14 +45,14 @@ beforeAll(async () => {
 
 describe("presencia (D275)", () => {
   test("marcar crea la entrada, latir la renueva sin mover `desde`, quitar la borra", async () => {
-    await marcarPresencia(db(), ALUMNO, PROFE_A, "Ana Pérez", AHORA);
-    await marcarPresencia(db(), ALUMNO, PROFE_A, "Ana Pérez", AHORA + 20_000);
+    await marcarPresencia(db(), ALUMNO, PROFE_A, "Adela Pérez", AHORA);
+    await marcarPresencia(db(), ALUMNO, PROFE_A, "Adela Pérez", AHORA + 20_000);
     const [e] = await leerPresencia(db(), AHORA + 20_000);
     expect(e).toEqual({
       alumnoId: ALUMNO,
       entrada: {
         profeId: PROFE_A,
-        nombre: "Ana Pérez",
+        nombre: "Adela Pérez",
         desde: AHORA,
         latido: AHORA + 20_000,
       },
@@ -62,31 +62,31 @@ describe("presencia (D275)", () => {
   });
 
   test("quitar solo borra la entrada propia", async () => {
-    await marcarPresencia(db(), ALUMNO, PROFE_A, "Ana Pérez", AHORA);
-    await marcarPresencia(db(), ALUMNO, PROFE_B, "Beto Díaz", AHORA);
+    await marcarPresencia(db(), ALUMNO, PROFE_A, "Adela Pérez", AHORA);
+    await marcarPresencia(db(), ALUMNO, PROFE_B, "Beto Farías", AHORA);
     await quitarPresencia(db(), ALUMNO, PROFE_B);
-    const vivas = await leerPresencia(db(), AHORA);
-    expect(vivas.map((v) => v.entrada.profeId)).toEqual([PROFE_A]);
+    const vega = await leerPresencia(db(), AHORA);
+    expect(vega.map((v) => v.entrada.profeId)).toEqual([PROFE_A]);
     await quitarPresencia(db(), ALUMNO, PROFE_A);
   });
 
   test("las vencidas no se leen (pestaña cerrada sin `pagehide`)", async () => {
-    await marcarPresencia(db(), ALUMNO, PROFE_A, "Ana Pérez", AHORA);
+    await marcarPresencia(db(), ALUMNO, PROFE_A, "Adela Pérez", AHORA);
     expect(await leerPresencia(db(), AHORA + VIGENCIA_MS + 1)).toEqual([]);
     await quitarPresencia(db(), ALUMNO, PROFE_A);
   });
 
   test("eliminar alumno borra todas sus entradas, ninguna de otro (D277)", async () => {
-    await marcarPresencia(db(), ALUMNO_BORRAR, PROFE_A, "Ana Pérez", AHORA);
-    await marcarPresencia(db(), ALUMNO_BORRAR, PROFE_B, "Beto Díaz", AHORA);
-    await marcarPresencia(db(), ALUMNO, PROFE_A, "Ana Pérez", AHORA);
+    await marcarPresencia(db(), ALUMNO_BORRAR, PROFE_A, "Adela Pérez", AHORA);
+    await marcarPresencia(db(), ALUMNO_BORRAR, PROFE_B, "Beto Farías", AHORA);
+    await marcarPresencia(db(), ALUMNO, PROFE_A, "Adela Pérez", AHORA);
     expect(await borrarPresenciaAlumno(db(), ALUMNO_BORRAR)).toBe(2);
     expect(await docs.presenciaDe(db(), ALUMNO_BORRAR)).toEqual([]);
     expect(await docs.presenciaDe(db(), ALUMNO)).toHaveLength(1);
     expect(await borrarPresenciaAlumno(db(), ALUMNO_BORRAR)).toBe(0);
 
     // Y la transacción del borrado también la limpia
-    await marcarPresencia(db(), ALUMNO_BORRAR, PROFE_A, "Ana Pérez", AHORA);
+    await marcarPresencia(db(), ALUMNO_BORRAR, PROFE_A, "Adela Pérez", AHORA);
     expect(
       (await eliminarAlumnoEnTransaccion(db(), ALUMNO_BORRAR, AHORA)).ok,
     ).toBe(true);
@@ -111,7 +111,7 @@ describe("«el último gana» (D276)", () => {
     const a = await editarAlumnoEnTransaccion(
       db(),
       PROFE_A,
-      { ...entrada, nombres: "Luis Ana", version: abierto },
+      { ...entrada, nombres: "Luis Adela", version: abierto },
       AHORA,
     );
     expect(a).toEqual({ ok: true });
@@ -126,13 +126,13 @@ describe("«el último gana» (D276)", () => {
       ok: false,
       error: "conflicto",
       actual: {
-        nombres: "Luis Ana",
+        nombres: "Luis Adela",
         apellidos: "Prueba W14",
         base: 20,
         email: null,
       },
     });
-    expect((await docs.usuario(db(), ALUMNO))?.nombres).toBe("Luis Ana");
+    expect((await docs.usuario(db(), ALUMNO))?.nombres).toBe("Luis Adela");
 
     // Con la versión nueva (lo que vio tras el aviso), el último gana
     if (b.ok || b.error !== "conflicto") throw new Error("sin conflicto");

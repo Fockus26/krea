@@ -1,5 +1,5 @@
 // Presencia al editar un alumno (W14, D275–D277). Puro (sin Firebase ni reloj): qué entradas de
-// `presencia/{cedulaAlumno}/editores/{cedulaProfe}` siguen vivas y qué texto ven los demás profes.
+// `presencia/{cedulaAlumno}/editores/{cedulaProfe}` siguen vega y qué texto ven los demás profes.
 // La escribe el navegador del profe (única excepción a D175, D275); un latido cada LATIDO_MS y,
 // si el último tiene más de VIGENCIA_MS, la pestaña se da por muerta y la entrada se ignora.
 import { z } from "zod";
@@ -44,7 +44,7 @@ export function editoresVigentes(
 }
 
 /**
- * «Ana Pérez está editando» · «Ana Pérez y Luis Díaz están editando» · «Ana Pérez y 2 más están
+ * «Adela Pérez está editando» · «Adela Pérez y Luis Farías están editando» · «Adela Pérez y 2 más están
  * editando». Vacío si no hay nadie. PROVISIONAL (fila 154).
  */
 export function presenciaTexto(
@@ -53,7 +53,7 @@ export function presenciaTexto(
   return quienes(editores, "editando");
 }
 
-/** «Ana Pérez está <verbo>» · «Ana Pérez y Luis Díaz están <verbo>» · «… y 2 más están <verbo>». */
+/** «Adela Pérez está <verbo>» · «Adela Pérez y Luis Farías están <verbo>» · «… y 2 más están <verbo>». */
 function quienes(
   editores: ReadonlyArray<Pick<EntradaPresencia, "nombre">>,
   verbo: string,
@@ -67,7 +67,7 @@ function quienes(
 }
 
 /**
- * El aviso del diálogo: no bloquea, avisa. «Ana Pérez está editando a este alumno. Si guarda antes
+ * El aviso del diálogo: no bloquea, avisa. «Adela Pérez está editando a este alumno. Si guarda antes
  * que tú, te avisaremos.» PROVISIONAL (fila 154).
  */
 export function avisoPresencia(texto: string): string {
@@ -119,7 +119,7 @@ export function claveDePedido(p: PedidoPresencia): string {
 }
 
 /**
- * «Ana Pérez está evaluando» · «Ana Pérez y Luis Díaz están evaluando» · «Ana Pérez y 2 más están
+ * «Adela Pérez está evaluando» · «Adela Pérez y Luis Farías están evaluando» · «Adela Pérez y 2 más están
  * evaluando». Vacío si no hay nadie. PROVISIONAL (fila 217).
  */
 export function presenciaEvaluarTexto(
@@ -129,7 +129,7 @@ export function presenciaEvaluarTexto(
 }
 
 /**
- * El aviso de Evaluar: no bloquea, avisa (D410). «Ana Pérez está evaluando esta entrega. Si guarda
+ * El aviso de Evaluar: no bloquea, avisa (D410). «Adela Pérez está evaluando esta entrega. Si guarda
  * antes que tú, te avisaremos.» El «te avisaremos» es el error `cambio` de Guardar (D224).
  * PROVISIONAL (fila 217).
  */
@@ -158,7 +158,7 @@ export function llegadasPresencia<T extends Pick<EntradaPresencia, "profeId">>(
   return [...nuevos.values()];
 }
 
-/** Cómo se ve el profe en la presencia: primer nombre + primer apellido («Ana Pérez»). */
+/** Cómo se ve el profe en la presencia: primer nombre + primer apellido («Adela Pérez»). */
 export function nombrePresencia(
   u: { nombres: string; apellidos: string } | null,
 ): string {

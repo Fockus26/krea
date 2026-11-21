@@ -132,7 +132,7 @@ function aFilaAjuste(a: (typeof AJUSTES)[number]): FilaAjuste {
   };
 }
 
-/** "María de los Ángeles Méndez": nombres + primer apellido (el lienzo no pone el segundo). */
+/** "Juana de los Alejandra Montero": nombres + primer apellido (el lienzo no pone el segundo). */
 function nombreRaspado(a: DemoAlumno): string {
   return `${a.nombres} ${primerApellido(a.apellidos)}`;
 }

@@ -18,7 +18,7 @@ let base: Db;
 const db = () => base;
 
 const AHORA = Date.UTC(2026, 10, 13, 15);
-const PROFE = "30262232";
+const PROFE = "45001237";
 const ALUMNO = "39800001";
 
 const operar = (op: OperacionMotivos, ahora = AHORA) =>

@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import type { RankEvento } from "@/lib/rank-row";
 import { estudiantesOrdenados, filaEstudiante } from "./ranking-datos";
 
-const TU = "e06"; // María Méndez
-const MUEVE = "e02"; // Jorge Quintero: pasa de 28 a 36 puntos y sube del 8.º al 5.º
+const TU = "e06"; // Juana Montero
+const MUEVE = "e02"; // Mateo Paredes: pasa de 28 a 36 puntos y sube del 8.º al 5.º
 const PUNTOS_NUEVOS = 36;
 const CAMBIO = { [MUEVE]: PUNTOS_NUEVOS };
 const MOVING_MS = 600; // --d-rank

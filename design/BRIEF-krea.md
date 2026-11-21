@@ -145,7 +145,7 @@ Aplican a **todo** lo que diseñes. Un diseño que las rompe no se puede impleme
   contenedor, nunca la página.
 - **Estados de foco visibles y diseñados**, no el contorno por defecto ni su ausencia.
 - **Movimiento reducido:** con `prefers-reduced-motion` no hay confeti, temblores ni
-  deslizamientos; los cambios de puesto se anuncian por texto ("Heymi subió al puesto 2").
+  deslizamientos; los cambios de puesto se anuncian por texto ("Elsa subió al puesto 2").
 - **Se implementa con Tailwind + shadcn/ui (Radix).** Usa la escala de espaciado de Tailwind.
   Puedes proponer tratamientos visuales propios: el componente se escribe a la medida.
 - **El acento es una variable**: ningún componente puede depender de que el acento sea azul.
@@ -174,7 +174,7 @@ con Panel · Evaluar · Alumnos · Puntos · Ranking).
 ### Inicio del estudiante (`/`)
 | # | Sección | Propósito | Contenido | CTA |
 |---|---|---|---|---|
-| 1 | Saludo | Contexto | "¡Hola, Yeilin!", sección 5A | — |
+| 1 | Saludo | Contexto | "¡Hola, Raquel!", sección 5A | — |
 | 2 | Tarjeta de puntos | Orgullo / motivación | Puntos totales (37,5), puesto (#1 de 35) | "Ver ranking" |
 | 3 | Mis notas | Ver la nota en 3 segundos | Nota individual y grupal (píldoras), chip de base si aplica | toca → detalle |
 | 4 | Por entregar | No olvidar tareas | Lista: título, tipo, fecha, premio, estado | toca → entregar |
@@ -298,7 +298,7 @@ con Panel · Evaluar · Alumnos · Puntos · Ranking).
       y una columna; tipografía que funcione con `Arial, Helvetica, sans-serif` (Gmail y
       Outlook no cargan fuentes web); entendible con imágenes bloqueadas; el logo se lee si
       el cliente invierte a oscuro; botón HTML ≥ 44 px de alto; contraste AA.
-- [x] Contenido extremo: un nombre de 40 caracteres ("Valentina Consolación Gámez Rodríguez"),
+- [x] Contenido extremo: un nombre de 40 caracteres ("Noemí Bárbara Guzmán Rojas"),
       una pregunta de 3 líneas, un equipo de 1 integrante y de 7, una tarea de 1 y de 10 preguntas,
       un ranking de 35 alumnos con empates
 - [x] **Momentos del ranking:** subir de puesto (top 10), entrar al podio (celebración),
@@ -313,9 +313,9 @@ con Panel · Evaluar · Alumnos · Puntos · Ranking).
 12 equipos con capitán y tema (Barbería, Repostería, Ropa, Mascotas, Celulares, Comida Rápida,
 Veterinaria, Tienda de celulares, Cafetería), la tarea "Identidad de marca" con sus 8
 preguntas y los puntajes reales de 12 alumnos. Ejemplos reales para los mockups:
-- Yeilin Marilyn Duarte Moncayo · 5A · capitana de "5A-G2 Repostería" · individual 18,5 · grupal 19
-- Heymi Gabriela Sierra Pabón · 5A · "5A-G6 Comida Rápida" · individual 18,5 · grupal 14
-- María de los Ángeles Méndez Chacón · 5A · "5A-G4 Mascotas" · individual 8 (raspada) · grupal 15
+- Raquel Leticia Figueroa Montes · 5A · capitana de "5A-G2 Repostería" · individual 18,5 · grupal 19
+- Elsa Elena Soto Ochoa · 5A · "5A-G6 Comida Rápida" · individual 18,5 · grupal 14
+- Juana de los Alejandra Montero Córdoba · 5A · "5A-G4 Mascotas" · individual 8 (raspada) · grupal 15
 - Preguntas de "Identidad de marca" (valor): ¿Cómo se llama la marca? (1) · ¿Por qué nació
   esta marca? (1) · ¿Qué producto o servicio vende? (3) · ¿Cuál es el cliente ideal? (3) ·
   ¿Cuál es la personalidad de la marca? (2) · ¿Qué problema resuelven? (4) · ¿Cuál es el

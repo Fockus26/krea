@@ -106,7 +106,7 @@ export const BASES_INTEGRANTES_AYUDA = `Cada integrante tiene su base en esta ta
 /** PROVISIONAL (fila 213): etiqueta visible junto al control de cada integrante. */
 export const BASE_INTEGRANTE_ETIQUETA = "Base";
 
-/** Nombre accesible del control de base de un integrante: «Base de Yeilin Duarte» (fila 213). */
+/** Nombre accesible del control de base de un integrante: «Base de Raquel Figueroa» (fila 213). */
 export function baseIntegranteLabel(nombre: string): string {
   return `Base de ${nombre}`;
 }
@@ -166,7 +166,7 @@ export function notaGuardadaTexto(nota: number | null): string {
 export type SiguienteEntrega = { nombre: string; tarea: string } | null;
 
 /**
- * Bajo el botón de escritorio: "Se activa al puntuar las 5. Sigue: Jorge Quintero · Identidad
+ * Bajo el botón de escritorio: "Se activa al puntuar las 5. Sigue: Mateo Paredes · Identidad
  * de marca". Completa: solo "Sigue: …".
  */
 export function activaTexto(
@@ -193,7 +193,7 @@ export function faltanCortoTexto(faltan: number): string {
   return faltan === 1 ? "Falta 1 por puntuar" : `Faltan ${faltan} por puntuar`;
 }
 
-/** Barra de acción móvil, línea 2: "Sigue: Jorge Quintero". */
+/** Barra de acción móvil, línea 2: "Sigue: Mateo Paredes". */
 export function sigueCortoTexto(siguiente: SiguienteEntrega): string {
   // PROVISIONAL (CONTENT_CHECKLIST 81)
   return siguiente ? `Sigue: ${siguiente.nombre}` : "Es la última entrega";

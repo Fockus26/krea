@@ -4,7 +4,7 @@
     "nombre": "5A-G1 Barbería",
     "seccion": "5A",
     "tema": "Barbería",
-    "capitanCedula": "33696102",
+    "capitanCedula": "45025977",
     "ajusteCapitan": 0,
     "notaGrupal": 17.0
   },
@@ -13,7 +13,7 @@
     "nombre": "5A-G2 Repostería",
     "seccion": "5A",
     "tema": "Repostería",
-    "capitanCedula": "33272397",
+    "capitanCedula": "45009896",
     "ajusteCapitan": 0,
     "notaGrupal": 19.0
   },
@@ -22,7 +22,7 @@
     "nombre": "5A-G3 Ropa",
     "seccion": "5A",
     "tema": "Ropa",
-    "capitanCedula": "34126088",
+    "capitanCedula": "45058139",
     "ajusteCapitan": 0,
     "notaGrupal": 18.0
   },
@@ -31,7 +31,7 @@
     "nombre": "5A-G4 Mascotas",
     "seccion": "5A",
     "tema": "Mascotas",
-    "capitanCedula": "33988608",
+    "capitanCedula": "45043295",
     "ajusteCapitan": 0,
     "notaGrupal": 15.0
   },
@@ -40,7 +40,7 @@
     "nombre": "5A-G5 Celulares",
     "seccion": "5A",
     "tema": "Celulares",
-    "capitanCedula": "34125601",
+    "capitanCedula": "45054428",
     "ajusteCapitan": 0,
     "notaGrupal": 17.0
   },
@@ -49,7 +49,7 @@
     "nombre": "5A-G6 Comida Rápida",
     "seccion": "5A",
     "tema": "Comida Rápida",
-    "capitanCedula": "33282883",
+    "capitanCedula": "45011133",
     "ajusteCapitan": 0,
     "notaGrupal": 14.0
   },
@@ -58,7 +58,7 @@
     "nombre": "5C-G1",
     "seccion": "5C",
     "tema": null,
-    "capitanCedula": "33844862",
+    "capitanCedula": "45034636",
     "ajusteCapitan": -1.0,
     "notaGrupal": null
   },
@@ -67,7 +67,7 @@
     "nombre": "5C-G2",
     "seccion": "5C",
     "tema": null,
-    "capitanCedula": "34132735",
+    "capitanCedula": "45059376",
     "ajusteCapitan": 0,
     "notaGrupal": null
   },
@@ -76,7 +76,7 @@
     "nombre": "5C-G3 Repostería",
     "seccion": "5C",
     "tema": "Repostería",
-    "capitanCedula": "36902901",
+    "capitanCedula": "45086590",
     "ajusteCapitan": 0,
     "notaGrupal": null
   },
@@ -85,7 +85,7 @@
     "nombre": "5C-G4 Veterinaria",
     "seccion": "5C",
     "tema": "Veterinaria",
-    "capitanCedula": "33776128",
+    "capitanCedula": "45033399",
     "ajusteCapitan": -1.0,
     "notaGrupal": null
   },
@@ -94,7 +94,7 @@
     "nombre": "5C-G5 Tienda de celulares",
     "seccion": "5C",
     "tema": "Tienda de celulares",
-    "capitanCedula": "34125706",
+    "capitanCedula": "45055665",
     "ajusteCapitan": 0,
     "notaGrupal": null
   },
@@ -103,7 +103,7 @@
     "nombre": "5C-G6 Cafetería",
     "seccion": "5C",
     "tema": "Cafetería",
-    "capitanCedula": "34181045",
+    "capitanCedula": "45066798",
     "ajusteCapitan": -1.0,
     "notaGrupal": null
   }

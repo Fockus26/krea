@@ -58,7 +58,7 @@ export default async function IngresarVista({
         ) : null}
         {estado === "enviado" ? (
           // PLACEHOLDER: correo de ejemplo (CONTENT_CHECKLIST fila 3: faltan los reales)
-          <RecoverSent email="yeilin@gmail.com" volverHref={`${BASE}/login`} />
+          <RecoverSent email="raquel@gmail.com" volverHref={`${BASE}/login`} />
         ) : null}
         {estado === "nueva" || estado === "vencido" ? (
           <NewPasswordForm

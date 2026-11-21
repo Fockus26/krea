@@ -1,4 +1,4 @@
-"""Extrae alumnos, grupos y la tarea individual de Notas.xlsx a data/seed/*.json.
+"""Extrae alumnos, grupos y la tarea individual de Notas.xlsx a data/privado/*.json (datos reales, fuera de git; data/seed/ es la copia anonimizada, D490).
 
 Uso: python -I scripts/import-excel.py <ruta a Notas.xlsx> [carpeta de salida]
 Sin dependencias (lee el XML del .xlsx). Ignora la hoja "Sheet1" (no es del liceo).
@@ -62,7 +62,7 @@ def rows(cells, first, last_col):
 
 def main():
     src = Path(sys.argv[1])
-    out = Path(sys.argv[2] if len(sys.argv) > 2 else "data/seed")
+    out = Path(sys.argv[2] if len(sys.argv) > 2 else "data/privado")
     out.mkdir(parents=True, exist_ok=True)
     sh = read_sheets(src)
     al = sh["Alumnos"]
