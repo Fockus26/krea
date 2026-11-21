@@ -4,7 +4,10 @@
 // tocan entregas, notas ni ranking.
 import { refresh } from "next/cache";
 import { exigirSesion } from "@/lib/dal";
-import { guardarIdealEnTransaccion, quitarIdeal } from "@/lib/data/ideales";
+import {
+  guardarIdealEnTransaccion,
+  quitarIdealEnTransaccion,
+} from "@/lib/data/ideales";
 import { baseDeDatos } from "@/lib/db";
 import { type ResultadoIdeal, zGuardarIdeal, zQuitarIdeal } from "@/lib/ideal";
 
@@ -35,7 +38,7 @@ export async function guardarIdeal(entrada: unknown): Promise<ResultadoIdeal> {
   }
 }
 
-/** Quita la ideal: los alumnos dejan de verla. */
+/** Quita la ideal: los alumnos dejan de verla. Con la versión de la lista: si otro la cambió, `cambio` (D551). */
 export async function quitarIdealTarea(
   entrada: unknown,
 ): Promise<ResultadoIdeal> {
@@ -45,9 +48,14 @@ export async function quitarIdealTarea(
   const d = zQuitarIdeal.safeParse(entrada);
   if (!d.success) return { ok: false, error: "invalida" };
   try {
-    await quitarIdeal(db, d.data.tareaId);
-    refresh();
-    return { ok: true };
+    const r = await quitarIdealEnTransaccion(
+      db,
+      d.data.tareaId,
+      d.data.version,
+    );
+    // `cambio`: la lista pasa a lo de ahora y el siguiente «Quitar» ya lleva la versión nueva
+    if (r.ok || r.error === "cambio") refresh();
+    return r;
   } catch (e) {
     registrar("quitarIdeal", e);
     return { ok: false, error: "red" };
