@@ -21,8 +21,8 @@ import {
 } from "@/lib/offline/cola";
 import { operacionPrevia, registroOperacion } from "@/lib/offline/operacion";
 
-const ALUMNO = "33272397";
-const OTRO = "32828381";
+const ALUMNO = "45009896";
+const OTRO = "45003711";
 
 function almacen(inicial: OpCola[] = []): AlmacenCola & {
   datos: Map<string, OpCola>;

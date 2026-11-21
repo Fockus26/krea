@@ -3,7 +3,7 @@
  * «Notas» antes de la web. Crea la tarea publicada para 5A y 5C (cierra el viernes 13/11 a las
  * 17:00, individual, premio «Ir al Cine») y deja a los 12 alumnos de la hoja como entregados y
  * evaluados con su puntaje por pregunta, SIN respuestas (las pasa el profe desde Alumnos → Editar).
- * Los datos salen de `data/seed/tarea-identidad-marca.json` (lo genera `scripts/import-excel.py`).
+ * Los datos salen de `data/privado/tarea-identidad-marca.json` (lo genera `scripts/import-excel.py`).
  *
  *   bun scripts/importar-tarea-historica.ts --autor <cédula del profe> [--ensayo]
  *
@@ -56,7 +56,7 @@ if (!profe) {
 }
 
 const seed = JSON.parse(
-  readFileSync("data/seed/tarea-identidad-marca.json", "utf8"),
+  readFileSync("data/privado/tarea-identidad-marca.json", "utf8"),
 ) as Omit<TareaSeed, "evaluaciones"> & {
   evaluaciones: ReadonlyArray<
     TareaSeed["evaluaciones"][number] & { alumno: string }

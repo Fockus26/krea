@@ -224,7 +224,7 @@ y textos pequeños, 24 en barra superior/inferior, 32 en estados vacíos).
 - **11–30:** sin fondo.
 - **Zona de riesgo (5 últimos):** separador "Zona de riesgo · 5 últimos" (12 px 700 MAYÚSCULAS `--error` + TriangleAlert 16 + línea punteada 2 px) y filas con fondo `--surface-2`, avatar en gris (`grayscale(1)` + opacidad .75 **solo en la imagen**), puesto y puntos `--text-2`.
 - **Delta:** 22 px, radio 999, Poppins 700 12. Sube: `--success` sobre success 10 % + ChevronUp; baja: `--error` sobre error 12 % + ChevronDown; igual: "=" `--text-2`. Texto accesible "subió 2 puestos". Empate (top 10): chip neutro "Empate".
-- **A11y:** lista ordenada `<ol>`; cada `<li>` con nombre accesible "Puesto 4, María Méndez, 30,5 puntos, subió 2".
+- **A11y:** lista ordenada `<ol>`; cada `<li>` con nombre accesible "Puesto 4, Juana Montero, 30,5 puntos, subió 2".
 
 ### 2.10 Podio — `Podium` (propio)
 
@@ -300,7 +300,7 @@ por debajo, una columna en el orden del DOM.
 - `wrap-narrow`. Móvil: topbar con volver + título. Escritorio: migas "‹ Mis notas".
 - **Resumen** (card hero padding 24): eyebrow tipo + fecha; h1 título; fila envolvente gap 24: `GradePill xl` con la nota final + `<dl>` (mín. 220): "Puntaje 18,5 / 20" (h3 tabular) · si base ≠ 20: chip "Base 15" + fórmula "18,5 × 15 / 20 = 13,9" · "Aporta al ranking +13,9 pts" (`--success` + ChevronUp; si la nota < 10: "Aporta 0 pts" `--text-2` + chip Raspado). Si hay base: alerta info "Por acuerdo de conducta tu nota se calcula sobre 15. Lo que lograste en cada pregunta no cambia."
 - **Preguntas:** h2 "Pregunta por pregunta" + "8 preguntas · 2 con comentario"; `<ol>` de `QuestionCard` detalle, gap 16.
-- Contenido real del lienzo: los puntajes de Heymi Sierra en "Identidad de marca" (seed). Las respuestas son **placeholder** (§8).
+- Contenido real del lienzo: los puntajes de Elsa Soto en "Identidad de marca" (seed). Las respuestas son **placeholder** (§8).
 
 ### Tareas y entrega (`/tareas`, `/tareas/[tarea]`)
 - `/tareas` (no tiene tablero propio): misma plantilla que Mis notas con dos tarjetas: "Por entregar" (filas de Inicio §4) y "Entregadas" (filas con chip Entregada y fecha).
@@ -325,7 +325,7 @@ por debajo, una columna en el orden del DOM.
 - **Equipos:** mismo layout con TeamLogo; subtítulo "n integrantes · capitán {nombre}".
 
 ### Perfil (`/perfil`)
-- `wrap-narrow`, una columna en todos los anchos (orden del brief). 1) Identidad: card hero; avatar 96 con anillo; eyebrow; h2 nombre completo (envuelve); chips "C.I. 33.272.397" (con puntos de miles solo para mostrar), "Sección 5A", Capitán si aplica, Base si ≠ 20. 2) Tus datos: h3 + "Solo tu profe puede cambiarlos" con candado; grid 2 col (≥ 768) de 4 campos solo lectura. 3) Avatar: h3 + "Otros 8" (secondary sm, Dices); pestañas de línea (Aventurero · Emoji · Robot · Retrato); grilla 4 × 2 (8 × 1 desde 768) de botones radio redondos (borde-anillo 3+3 px `--accent` y check sobre círculo 24 `--accent` en el elegido); "Se guarda al tocarlo. Avatares de DiceBear." 4) Apariencia: "Color de acento" 4 círculos 48 (colores claros fijos: #295AC3 · #EE0400 · #115445 · #734AD1, check blanco + anillo `--text` en el elegido, nombre debajo); "Tema" segmentado block Claro (Sun) · Oscuro (Moon) · Sistema (Monitor). Cambia en vivo y se guarda en el perfil (y `localStorage` para evitar parpadeo). 5) Seguridad: "Cambiar contraseña" secondary (abre diálogo: actual + nueva + repetir) y "Cerrar sesión" ghost `--error` (confirmación en diálogo).
+- `wrap-narrow`, una columna en todos los anchos (orden del brief). 1) Identidad: card hero; avatar 96 con anillo; eyebrow; h2 nombre completo (envuelve); chips "C.I. 45.009.896" (con puntos de miles solo para mostrar), "Sección 5A", Capitán si aplica, Base si ≠ 20. 2) Tus datos: h3 + "Solo tu profe puede cambiarlos" con candado; grid 2 col (≥ 768) de 4 campos solo lectura. 3) Avatar: h3 + "Otros 8" (secondary sm, Dices); pestañas de línea (Aventurero · Emoji · Robot · Retrato); grilla 4 × 2 (8 × 1 desde 768) de botones radio redondos (borde-anillo 3+3 px `--accent` y check sobre círculo 24 `--accent` en el elegido); "Se guarda al tocarlo. Avatares de DiceBear." 4) Apariencia: "Color de acento" 4 círculos 48 (colores claros fijos: #295AC3 · #EE0400 · #115445 · #734AD1, check blanco + anillo `--text` en el elegido, nombre debajo); "Tema" segmentado block Claro (Sun) · Oscuro (Moon) · Sistema (Monitor). Cambia en vivo y se guarda en el perfil (y `localStorage` para evitar parpadeo). 5) Seguridad: "Cambiar contraseña" secondary (abre diálogo: actual + nueva + repetir) y "Cerrar sesión" ghost `--error` (confirmación en diálogo).
 
 ### Panel del profesor (`/profe`)
 - `wrap-wide` (1280). 1) Encabezado h1 "Buenos días, profe" (según hora: días/tardes/noches) + segmentado 5A · 5C · Ambas. 2) Métricas `g3` (1 col < 768, 2 col 768–1023 con la 3.ª abajo, 3 col ≥ 1024): tarjetas enlace con título small 700 + ícono, display, detalle; "Raspados" con título `--error` + TriangleAlert. 3) `g-home`: "Por evaluar" (filas: avatar/TeamLogo 40, nombre h4, "{tarea} · {tipo} · {fecha}", botón "Evaluar" secondary sm; encabezado con "Evaluar la primera →" primary sm; pie "Ver las 7") | "Últimos ajustes" (chip ±valor ok/err con Plus/Minus, nombre h4, motivo + fecha small; "Nuevo ajuste" secondary sm).
@@ -335,7 +335,7 @@ por debajo, una columna en el orden del DOM.
 - **Cabecera:** eyebrow "Por evaluar · entrega 1 de 7" + Anterior/Saltar (≥ 1024); TeamLogo/avatar 56 + h1 alumno o equipo + línea "{tarea} · entregó {nombre} el …"; chips (tipo, sección, Base, premio).
 - **Medidor fijo:** móvil — `SumMeter` con píldora, sticky a 64 px bajo la topbar; escritorio — tarjeta en el aside sticky (top 24): eyebrow "Total en vivo", píldora lg 88 × 64 + "9 / 20" h2 + "Nota resultante con Base 20", barra de preguntas puntuadas, aviso "Faltan 3 preguntas por puntuar".
 - **Preguntas:** `<ol>` gap 24 de `QuestionCard` evaluar. Desde 6 preguntas, índice de chips 1…n bajo el medidor (Contenido extremo).
-- **Acción:** escritorio en el aside: "Guardar nota y seguir" primary lg block + texto "Se activa al puntuar las 5. Sigue: {siguiente}" + atajos (`0–9`, `,`, `Ctrl+Enter`). Móvil: barra de acción sobre la barra inferior "Faltan 3 por puntuar · Sigue: Jorge Quintero" + "Guardar y seguir". Al guardar: toast "Nota guardada · 18,5" con "Deshacer" (5 s) y se carga la siguiente entrega con el scroll arriba.
+- **Acción:** escritorio en el aside: "Guardar nota y seguir" primary lg block + texto "Se activa al puntuar las 5. Sigue: {siguiente}" + atajos (`0–9`, `,`, `Ctrl+Enter`). Móvil: barra de acción sobre la barra inferior "Faltan 3 por puntuar · Sigue: Mateo Paredes" + "Guardar y seguir". Al guardar: toast "Nota guardada · 18,5" con "Deshacer" (5 s) y se carga la siguiente entrega con el scroll arriba.
 
 ### Alumnos (`/profe/alumnos`)
 - Encabezado; filtros (segmentado "5A · 35 / 5C · 34", búsqueda mín. 240 máx. 420 con Search, contador "5 resultados para «mé»" en `role="status"`); tabla (§2.15) columnas Alumno (avatar 36 + nombre completo 14 700) · Cédula (tabular, con puntos) · Equipo (o chip warn "Sin equipo") · Base (número; chip-base si ≠ 20) · Nota individual (GradePill sm; Raspado = ícono) · Puntos · "Editar" (ghost sm con Pencil + nombre en `sr-only`).
@@ -353,7 +353,7 @@ por debajo, una columna en el orden del DOM.
 - Eliminar pregunta: sin diálogo; toast "Pregunta eliminada" + "Deshacer".
 
 ### Ajustes de puntos (`/profe/puntos`)
-- `g-home`: **Formulario** (card gap 24): "Ajustar a" Alumno/Equipo + "Sección" 5A/5C (segmentados, envuelven) · "¿A quién?" combobox con avatar y puntos actuales · **Motivo** fieldset, grilla 2 col (1 col < 768) de 8 opciones radio 52 px (borde 1 px `--input`, radio 12; elegida: fondo `--accent-soft`, borde+anillo `--accent`, Check) con valor en chip ok/err ("+2", "−3"; "Otro" con "± escribe") · Puntos stepper con signo (color `--success`/`--error` + signo explícito) "Propuesto por el motivo. Pasos de 0,5." · Detalle (obligatorio en Otro) · vista previa alert-ok/err con TrendingUp: "**Jorge Quintero** pasa de 17 a **19 pts** y sube del puesto 16 al 11. Su nota no cambia." · "Aplicar ajuste" primary lg.
+- `g-home`: **Formulario** (card gap 24): "Ajustar a" Alumno/Equipo + "Sección" 5A/5C (segmentados, envuelven) · "¿A quién?" combobox con avatar y puntos actuales · **Motivo** fieldset, grilla 2 col (1 col < 768) de 8 opciones radio 52 px (borde 1 px `--input`, radio 12; elegida: fondo `--accent-soft`, borde+anillo `--accent`, Check) con valor en chip ok/err ("+2", "−3"; "Otro" con "± escribe") · Puntos stepper con signo (color `--success`/`--error` + signo explícito) "Propuesto por el motivo. Pasos de 0,5." · Detalle (obligatorio en Otro) · vista previa alert-ok/err con TrendingUp: "**Mateo Paredes** pasa de 17 a **19 pts** y sube del puesto 16 al 11. Su nota no cambia." · "Aplicar ajuste" primary lg.
 - **Historial** (card): filas con chip ±, a quién (h4), motivo (+ detalle entre comillas en Otro), fecha + profe; "Filtrar" ghost sm (por sección, alumno/equipo, motivo). Cada ajuste se puede **anular** (no borrar) desde un menú de la fila: crea el ajuste inverso con motivo "Anulación".
 - Motivos y valores (fijos): Participación destacada +2 · Ayudó a un compañero +1 · Trabajo extra +2 · No estuvo en clase −2 · No prestó atención −1 · Uso del celular −1 · Falta de respeto −3 · Otro (valor libre ±, detalle obligatorio).
 
@@ -376,7 +376,7 @@ por debajo, una columna en el orden del DOM.
 - En < 1024 el contenido deja 72 px + `safe-area-inset-bottom` libres al final por la barra inferior.
 - **Barra de acción** (entregar, guardar nota, publicar): < 1024 `position: sticky; bottom: 72px` (0 si la pantalla no tiene barra inferior), fondo `--bg` 94 %, borde superior, padding 12 16, márgenes −16 para tocar los bordes. ≥ 1024 estática.
 - Sin scroll horizontal de página a 320 px: todo envuelve (`flex-wrap`), las tablas y los segmentados largos tienen scroll propio, los nombres largos usan elipsis solo en filas del ranking y podio.
-- Los breakpoints se implementan con media queries de Tailwind (`md` 768, `lg` 1024, `xl` 1440, `3xl` 1920). En el lienzo se usaron container queries con los mismos cortes.
+- Los breakpoints se implementan con media queries de Tailwind (`md` 768, `lg` 1024, `xl` 1440, `3xl` 1920). En el lienzo se usaron container queries con los mismos esquivel.
 
 ---
 
@@ -432,7 +432,7 @@ Lo envía Firebase Auth con plantilla personalizada (o Trigger Email si Firebase
 
 - **Asunto:** Restablece tu contraseña de KREA
 - **Preheader:** El enlace vence en 1 hora. Si no lo pediste, ignora este correo.
-- **Variables:** `{nombre}` (primer nombre), `{cedulaEnmascarada}` (`33•••397`: 2 primeros + 3 puntos + 3 últimos), `{enlace}` (acción de Firebase con `oobCode`, apunta a `/recuperar/nueva`).
+- **Variables:** `{nombre}` (primer nombre), `{cedulaEnmascarada}` (`45•••896`: 2 primeros + 3 puntos + 3 últimos), `{enlace}` (acción de Firebase con `oobCode`, apunta a `/recuperar/nueva`).
 - **Copy completo:** "Hola, {nombre}" / "Recibimos un pedido para cambiar la contraseña de tu cuenta de KREA (C.I. {cedulaEnmascarada}). Toca el botón para crear una nueva. El enlace vence en **1 hora** y sirve una sola vez." / [Crear nueva contraseña] / "¿El botón no funciona? Copia este enlace en tu navegador:" + `{enlace}` / "Si no pediste el cambio, ignora este correo: tu contraseña sigue igual." / Pie: "Recibes este correo porque tienes una cuenta en KREA, el portal de notas de la Escuela Creativa del liceo. ¿Dudas? Escríbele a tu profe o a [correo de contacto del liceo]." (placeholder §9).
 - **Plantilla base:** tabla de una columna, ancho 600 (contenido 560 con fondo exterior #F6F4FA y padding 24 0). Tarjeta #FFFFFF radio 16 (Outlook: esquinas rectas). Fuente `Arial, Helvetica, sans-serif` en todo.
   - Cabecera: banda #295AC3, padding 24 32, logo PNG **blanco** con gotas #00E5F5, 120 × 66 (2× para retina), `alt="KREA · Escuela Creativa"` con estilo de alt blanco 22/28 bold — así el correo se entiende con imágenes bloqueadas y el logo sigue claro sobre banda oscura al invertir colores.
@@ -520,9 +520,9 @@ puesto {n}", "{Nombre} entró al podio", "{Nombre} bajó a la zona de riesgo", a
 - Segmentado de ancho completo (Tema en Perfil, Tipo en Constructor): por debajo de 400 px de ancho se ocultan los íconos y queda solo el texto, para no desbordar a 320.
 - En oscuro las tarjetas pierden la sombra y ganan borde 1 px; no dejar ambas.
 - El acento es variable: ningún componente puede tener `#295AC3` escrito (salvo íconos de instalación, OG y correo).
-- Avatar del alumno "(tú)" en el ranking: el chip "tú" se agrega al nombre accesible ("Jorge Quintero, tú").
+- Avatar del alumno "(tú)" en el ranking: el chip "tú" se agrega al nombre accesible ("Mateo Paredes, tú").
 
-**Contenido placeholder (registrar en `CONTENT_CHECKLIST.md`):** respuestas de los alumnos (Brasa Express, repostería…), tareas "Presentación de la marca", "Logo y paleta del emprendimiento", "Moodboard de la marca", "Plan de redes sociales" y sus preguntas, premios (los dos del brief se usan como ejemplo), nombre del profe `[Nombre del profe]`, correo remitente y de contacto, fechas de entrega, ajustes de puntos del historial, la base 15 de Jailyn Martínez en Alumnos (ejemplo), logos de equipo (degradados de placeholder), código `KR-500-7F3A9C`, deltas del ranking. Reales: nombres, cédulas, secciones, equipos, capitanes, temas, notas individuales/grupales y puntajes por pregunta de "Identidad de marca" (seed).
+**Contenido placeholder (registrar en `CONTENT_CHECKLIST.md`):** respuestas de los alumnos (Brasa Express, repostería…), tareas "Presentación de la marca", "Logo y paleta del emprendimiento", "Moodboard de la marca", "Plan de redes sociales" y sus preguntas, premios (los dos del brief se usan como ejemplo), nombre del profe `[Nombre del profe]`, correo remitente y de contacto, fechas de entrega, ajustes de puntos del historial, la base 15 de Fernanda Miranda en Alumnos (ejemplo), logos de equipo (degradados de placeholder), código `KR-500-7F3A9C`, deltas del ranking. Reales: nombres, cédulas, secciones, equipos, capitanes, temas, notas individuales/grupales y puntajes por pregunta de "Identidad de marca" (seed).
 
 ---
 

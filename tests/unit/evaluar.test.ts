@@ -47,19 +47,19 @@ describe("cabecera (lienzo Evaluar)", () => {
       entregaLinea({
         tarea: "Logo y paleta del emprendimiento",
         tipo: "grupal",
-        autor: "Yeilin Duarte",
+        autor: "Raquel Figueroa",
         femenino: true,
         fecha: "2026-10-25",
         hora: "16:12",
       }),
     ).toBe(
-      "Logo y paleta del emprendimiento · entregó Yeilin Duarte (capitana) el 25/10/2026, 4:12 p. m.",
+      "Logo y paleta del emprendimiento · entregó Raquel Figueroa (capitana) el 25/10/2026, 4:12 p. m.",
     );
     expect(
       entregaLinea({
         tarea: "Plan",
         tipo: "grupal",
-        autor: "Zaida Carrero",
+        autor: "Yolanda Calderón",
         fecha: "2026-10-23",
         hora: "17:00",
       }),
@@ -110,14 +110,14 @@ describe("completitud y nota", () => {
 });
 
 describe("textos de la acción", () => {
-  const sig = { nombre: "Jorge Quintero", tarea: "Identidad de marca" };
+  const sig = { nombre: "Mateo Paredes", tarea: "Identidad de marca" };
 
   test("escritorio: motivo y siguiente", () => {
     expect(activaTexto(5, false, sig)).toBe(
-      "Se activa al puntuar las 5. Sigue: Jorge Quintero · Identidad de marca",
+      "Se activa al puntuar las 5. Sigue: Mateo Paredes · Identidad de marca",
     );
     expect(activaTexto(5, true, sig)).toBe(
-      "Sigue: Jorge Quintero · Identidad de marca",
+      "Sigue: Mateo Paredes · Identidad de marca",
     );
     expect(activaTexto(1, false, null)).toBe(
       "Se activa al puntuar la pregunta. Es la última entrega por evaluar.",
@@ -128,7 +128,7 @@ describe("textos de la acción", () => {
     expect(faltanCortoTexto(3)).toBe("Faltan 3 por puntuar");
     expect(faltanCortoTexto(1)).toBe("Falta 1 por puntuar");
     expect(faltanCortoTexto(0)).toBe("Todo puntuado");
-    expect(sigueCortoTexto(sig)).toBe("Sigue: Jorge Quintero");
+    expect(sigueCortoTexto(sig)).toBe("Sigue: Mateo Paredes");
     expect(sigueCortoTexto(null)).toBe("Es la última entrega");
   });
 });
@@ -205,22 +205,22 @@ describe("cola de ejemplo (brief: 7 entregas, 4 individuales · 3 grupales)", ()
     const v = evaluarVista(0);
     expect(v.titulo).toBe("5A-G2 Repostería");
     expect(v.linea).toBe(
-      "Logo y paleta del emprendimiento · entregó Yeilin Duarte (capitana) el 25/10/2026, 4:12 p. m.",
+      "Logo y paleta del emprendimiento · entregó Raquel Figueroa (capitana) el 25/10/2026, 4:12 p. m.",
     );
     expect(v.chips.tipoTexto).toBe("Grupal · 4 integrantes");
     expect(v.chips.base).toBe("Base 20 · todos");
     expect(v.chips.premio).toBe("Salida al cine con todo pago");
     expect(v.siguiente).toEqual({
-      nombre: "Jorge Quintero",
+      nombre: "Mateo Paredes",
       tarea: "Identidad de marca",
     });
     const puntajes = v.entrega.preguntas.map((p) => p.puntaje ?? null);
     expect(puntajes.filter((p) => p !== null)).toEqual([5.5, 3.5]);
   });
 
-  test("2.ª: Jorge Quintero · Identidad de marca, individual", () => {
+  test("2.ª: Mateo Paredes · Identidad de marca, individual", () => {
     const v = evaluarVista(1);
-    expect(v.titulo).toBe("Jorge Quintero");
+    expect(v.titulo).toBe("Mateo Paredes");
     expect(v.entrega.tipo).toBe("individual");
     expect(v.chips.tipoTexto).toBe("Individual");
   });

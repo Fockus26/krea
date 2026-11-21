@@ -48,7 +48,7 @@ describe("avisoEntrega", () => {
   const e = (o: Partial<EntregaVivo>): EntregaVivo => ({
     estado: "evaluada",
     evaluadaEn: 500,
-    por: "Ana Pérez",
+    por: "Adela Pérez",
     porMi: false,
     ...o,
   });
@@ -67,10 +67,10 @@ describe("avisoEntrega", () => {
 
   test("otro la evaluó, la corrigió o la deshizo", () => {
     expect(avisoEntrega(null, e({}))?.texto).toBe(
-      "Ana Pérez acaba de evaluar esta entrega.",
+      "Adela Pérez acaba de evaluar esta entrega.",
     );
     expect(avisoEntrega(300, e({}))?.texto).toBe(
-      "Ana Pérez cambió la nota de esta entrega.",
+      "Adela Pérez cambió la nota de esta entrega.",
     );
     expect(avisoEntrega(300, e({ por: null }))?.texto).toBe(
       "Otra persona cambió la nota de esta entrega.",

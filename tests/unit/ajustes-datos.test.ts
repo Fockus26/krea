@@ -15,8 +15,8 @@ import { anular, deltasSesion } from "@/lib/puntos";
 const usuario = (cedula: string, o: Partial<Usuario> = {}): Usuario => ({
   cedula,
   rol: "estudiante",
-  nombres: "Jorge Luis",
-  apellidos: "Quintero Rojas",
+  nombres: "Mateo Luis",
+  apellidos: "Paredes Rojas",
   seccion: "5A",
   equipoId: null,
   base: 20,
@@ -33,13 +33,13 @@ const ajuste = (
 ): { id: string } & Ajuste => ({
   id,
   destino: "alumno",
-  destinoId: "32828381",
+  destinoId: "45003711",
   seccion: "5A",
   motivoId: "participacion",
   motivo: "Participación destacada",
   valor: 2,
   nota: null,
-  autorId: "30262232",
+  autorId: "45001237",
   en: EN,
   anulaA: null,
   ...o,
@@ -49,7 +49,7 @@ describe("armarAjuste", () => {
   const entrada = (o = {}) =>
     zAplicarAjuste.parse({
       destino: "alumno",
-      destinoId: "32828381",
+      destinoId: "45003711",
       motivoId: "celular",
       valor: -1,
       nota: "  ",
@@ -62,20 +62,20 @@ describe("armarAjuste", () => {
         entrada: entrada(),
         motivos: MOTIVOS_INICIALES,
         seccion: "5C",
-        autorId: "30262232",
+        autorId: "45001237",
         ahora: 9,
       }),
     ).toEqual({
       ok: true,
       ajuste: {
         destino: "alumno",
-        destinoId: "32828381",
+        destinoId: "45003711",
         seccion: "5C",
         motivoId: "celular",
         motivo: "Uso del celular",
         valor: -1,
         nota: null,
-        autorId: "30262232",
+        autorId: "45001237",
         en: 9,
         anulaA: null,
       },
@@ -145,7 +145,7 @@ describe("anulación (D121)", () => {
       ok: true,
       ajuste: {
         destino: "alumno",
-        destinoId: "32828381",
+        destinoId: "45003711",
         seccion: "5A",
         motivoId: MOTIVO_ID_ANULACION,
         motivo: "Anulación",
@@ -170,11 +170,11 @@ describe("anulación (D121)", () => {
 
 describe("historial y destinatarios", () => {
   const usuarios = [
-    usuario("32828381"),
-    usuario("30262232", {
+    usuario("45003711"),
+    usuario("45001237", {
       rol: "profesor",
       seccion: null,
-      nombres: "Ana",
+      nombres: "Adela",
       apellidos: "Pérez",
     }),
   ];
@@ -220,9 +220,9 @@ describe("historial y destinatarios", () => {
     );
     expect(filas.map((f) => f.id)).toEqual(["a1__anulacion", "a1", "a2"]);
     expect(filas[1]).toMatchObject({
-      nombre: "Jorge Quintero",
+      nombre: "Mateo Paredes",
       anulado: true,
-      profe: "Ana Pérez",
+      profe: "Adela Pérez",
       fecha: "2026-10-25T10:15",
       nuevo: false,
     });
@@ -238,7 +238,7 @@ describe("historial y destinatarios", () => {
       anular(filas, "a1", {
         nuevoId: "n",
         fecha: "2026-10-25T10:20",
-        profe: "Ana",
+        profe: "Adela",
       }),
     ).toThrow();
   });
@@ -250,7 +250,7 @@ describe("historial y destinatarios", () => {
       rankings: {
         "5A": {
           alumnos: {
-            "32828381": {
+            "45003711": {
               nombres: "",
               apellidos: "",
               equipoId: null,
@@ -266,10 +266,10 @@ describe("historial y destinatarios", () => {
     });
     expect(c.alumno["5A"]).toHaveLength(1);
     expect(c.alumno["5A"][0]).toMatchObject({
-      id: "32828381",
-      nombre: "Jorge Quintero",
+      id: "45003711",
+      nombre: "Mateo Paredes",
       puntos: 31.5,
-      primerApellido: "Quintero",
+      primerApellido: "Paredes",
     });
     expect(c.equipo["5A"][0]).toMatchObject({ id: "5a-g3", puntos: 12 });
     expect(c.alumno["5C"]).toEqual([]);

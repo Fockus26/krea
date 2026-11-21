@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 
 /** Datos de ejemplo, no de un alumno real: nombre, cédula y código inventados. */
 const EJEMPLO = {
-  nombre: "Ana",
+  nombre: "Adela",
   cedula: "12345678",
   enlace:
     "https://krea.test/recuperar/nueva?mode=resetPassword&oobCode=codigo-de-ejemplo",

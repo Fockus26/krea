@@ -131,8 +131,8 @@ describe("variantes × acento × tema (D341)", () => {
           const c = COLORES_CORREO_POR_ACENTO[tema][acento];
           const correo = correoRestablecer(
             {
-              nombre: "<Ana>",
-              cedula: "33272397",
+              nombre: "<Adela>",
+              cedula: "45009896",
               enlace: ENLACE,
               apariencia: { tema: TEMA_PERFIL[tema], acento },
             },
@@ -143,10 +143,10 @@ describe("variantes × acento × tema (D341)", () => {
           expect(html).toContain(`<title>${ASUNTO_RESTABLECER}</title>`);
           expect(html).toContain(`href="${escaparHtml(ENLACE)}"`);
           expect(html).not.toContain(ENLACE);
-          expect(html).toContain("Hola, &lt;Ana&gt;");
-          expect(html).not.toContain("<Ana>");
-          expect(html).toContain("33•••397");
-          expect(html).not.toContain("33272397");
+          expect(html).toContain("Hola, &lt;Adela&gt;");
+          expect(html).not.toContain("<Adela>");
+          expect(html).toContain("45•••896");
+          expect(html).not.toContain("45009896");
           expect(html).toContain("Crear nueva contraseña");
           expect(html).toContain("v:roundrect");
           expect(html).toContain(`fillcolor="${c.marca}"`);
@@ -154,9 +154,9 @@ describe("variantes × acento × tema (D341)", () => {
           expect(html).toContain(`color:${c.sobreMarca}`);
           expect(html).not.toContain("[correo");
           // El texto plano es el mismo en las cuatro presentaciones.
-          expect(texto).toContain("Hola, <Ana>");
+          expect(texto).toContain("Hola, <Adela>");
           expect(texto).toContain(ENLACE);
-          expect(texto).not.toContain("33272397");
+          expect(texto).not.toContain("45009896");
           // Claro: media query para los clientes que la leen; oscuro: colores fijos.
           if (tema === "claro") {
             expect(html).toContain("prefers-color-scheme: dark");
@@ -173,7 +173,7 @@ describe("variantes × acento × tema (D341)", () => {
 
   test("la galería puede quitar la media query oscura (el claro queda fijo)", () => {
     const { html } = correoRestablecer(
-      { nombre: "Ana", cedula: "33272397", enlace: ENLACE },
+      { nombre: "Adela", cedula: "45009896", enlace: ENLACE },
       "banda",
       { modoOscuroDelCliente: false },
     );
@@ -182,7 +182,7 @@ describe("variantes × acento × tema (D341)", () => {
   });
 
   test("el texto plano no cambia entre presentaciones", () => {
-    const datos = { nombre: "Ana", cedula: "33272397", enlace: ENLACE };
+    const datos = { nombre: "Adela", cedula: "45009896", enlace: ENLACE };
     const textos = new Set(
       VARIANTES_CORREO.map(({ id }) => correoRestablecer(datos, id).texto),
     );
@@ -190,7 +190,7 @@ describe("variantes × acento × tema (D341)", () => {
   });
 
   test("las cuatro presentaciones son distintas", () => {
-    const datos = { nombre: "Ana", cedula: "33272397", enlace: ENLACE };
+    const datos = { nombre: "Adela", cedula: "45009896", enlace: ENLACE };
     const htmls = new Set(
       VARIANTES_CORREO.map(({ id }) => correoRestablecer(datos, id).html),
     );

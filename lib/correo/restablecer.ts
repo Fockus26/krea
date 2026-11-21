@@ -79,7 +79,7 @@ export function escaparHtml(s: string): string {
     .replace(/'/g, "&#39;");
 }
 
-/** «Yeilin Andreína» → «Yeilin». */
+/** «Raquel Andreína» → «Raquel». */
 export function primerNombre(nombres: string | null | undefined): string {
   return (nombres ?? "").trim().split(/\s+/)[0] ?? "";
 }

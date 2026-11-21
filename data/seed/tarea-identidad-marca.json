@@ -54,76 +54,76 @@
   ],
   "evaluaciones": [
     {
-      "alumno": "Angeles Mendez",
+      "alumno": "Alejandra Montero",
       "puntos": [0.5, 0.5, 1.5, 1.0, 0.5, 2.0, 1.0, 1.0],
       "nota": 8.0,
-      "cedula": "34098906"
+      "cedula": "45050717"
     },
     {
-      "alumno": "Genesis Díaz",
+      "alumno": "Elisa Farías",
       "puntos": [1.0, 1.0, 1.5, 1.0, 2.0, 2.0, 1.0, 2.0],
       "nota": 11.5,
-      "cedula": "34125858"
+      "cedula": "45056902"
     },
     {
-      "alumno": "David Carvajal",
+      "alumno": "Felipe Cano",
       "puntos": [1.0, 1.0, 2.0, 2.5, 1.0, 2.0, 0, 0.5],
       "nota": 10.0,
-      "cedula": "33737154"
+      "cedula": "45027214"
     },
     {
-      "alumno": "Angel Pernia",
+      "alumno": "Armando Osorio",
       "puntos": [1.0, 1.0, 2.0, 1.0, 2.0, 1.0, 2.5, 1.5],
       "nota": 12.0,
-      "cedula": "33775395"
+      "cedula": "45029688"
     },
     {
-      "alumno": "Maria Gabriela",
+      "alumno": "Juana Elena",
       "puntos": [0.5, 1.0, 2.0, 2.0, 2.0, 1.0, 1.0, 2.0],
       "nota": 11.5,
-      "cedula": "34099118"
+      "cedula": "45051954"
     },
     {
-      "alumno": "Eider Becerra",
+      "alumno": "Francisco Blanco",
       "puntos": [1.0, 1.0, 3.0, 2.5, 0.5, 2.0, 2.5, 1.5],
       "nota": 14.0,
-      "cedula": "33975264"
+      "cedula": "45039584"
     },
     {
-      "alumno": "Heymi Sierra",
+      "alumno": "Elsa Soto",
       "puntos": [1.0, 1.0, 3.0, 3.0, 2.0, 4.0, 4.0, 0.5],
       "nota": 18.5,
-      "cedula": "33282883"
+      "cedula": "45011133"
     },
     {
-      "alumno": "Kleinyerver Corredor",
+      "alumno": "Kleinyerver Escobar",
       "puntos": [1.0, 1.0, 0, 1.0, 1.0, 2.0, 3.5, 1.0],
       "nota": 10.5,
-      "cedula": "33987614"
+      "cedula": "45040821"
     },
     {
-      "alumno": "Yulianie Ramirez",
+      "alumno": "Susana Pastor",
       "puntos": [1.0, 1.0, 3.0, 2.0, 1.0, 1.0, 2.5, 1.5],
       "nota": 13.0,
-      "cedula": "34469487"
+      "cedula": "45070509"
     },
     {
-      "alumno": "Yeilin Duarte",
+      "alumno": "Raquel Figueroa",
       "puntos": [1.0, 1.0, 2.0, 3.0, 2.0, 3.5, 4.0, 2.0],
       "nota": 18.5,
-      "cedula": "33272397"
+      "cedula": "45009896"
     },
     {
-      "alumno": "Franyerth Jesus",
+      "alumno": "Franyerth Lucas",
       "puntos": [0.5, 1.0, 3.0, 3.0, 2.0, 4.0, 4.0, 0.5],
       "nota": 18.0,
-      "cedula": "33272371"
+      "cedula": "45008659"
     },
     {
-      "alumno": "Wendoly Ponce",
+      "alumno": "Paola Padilla",
       "puntos": [1.0, 0.5, 2.0, 1.5, 1.0, 1.0, 2.0, 1.0],
       "nota": 10.0,
-      "cedula": "33498239"
+      "cedula": "45021029"
     }
   ]
 }

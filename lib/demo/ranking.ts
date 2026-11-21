@@ -121,7 +121,7 @@ export function itemsEquipos(
   });
 }
 
-/** Equipo de Yeilin (la estudiante de la vista previa). */
+/** Equipo de Raquel (la estudiante de la vista previa). */
 export function equipoIdDemo(): string | null {
   return alumnoPorCedula(CEDULA_DEMO).equipoId;
 }

@@ -26,15 +26,15 @@ import { Familia, Muestra } from "./familia";
 // Nombres y equipos: data/seed (contenido real). Notas, textos de tareas y avisos: provisionales
 // (CONTENT_CHECKLIST filas 35-37).
 const ALUMNOS = [
-  ["Jorge Enrique Quintero Arenas", "5A", "Barbería", null],
-  ["Luniel Alessandro Morón Hernández", "5A", "Mascotas", null],
-  ["Franyer Jesús Hernández Suárez", "5A", "Comida Rápida", "18,0"],
-  ["Yeilin Marilyn Duarte Moncayo", "5A", "Repostería", "18,5"],
-  ["Heymi Gabriela Sierra Pabón", "5A", "Comida Rápida", "18,5"],
-  ["Camila Anahí Flórez Gutiérrez", "5A", "Comida Rápida", null],
-  ["Gabriel Alejandro Gil Corredor", "5A", "Sin equipo", null],
-  ["Wendoly Tatiana Ponce Suárez", "5A", "Repostería", "10,0"],
-  ["Ángela Yisell Huerfano Bohórquez", "5A", "Comida Rápida", null],
+  ["Mateo Guillermo Paredes Aranda", "5A", "Barbería", null],
+  ["Ramón Alfonso Nieto Lucena", "5A", "Mascotas", null],
+  ["Hernán Lucas Lucena Tapia", "5A", "Comida Rápida", "18,0"],
+  ["Raquel Leticia Figueroa Montes", "5A", "Repostería", "18,5"],
+  ["Elsa Elena Soto Ochoa", "5A", "Comida Rápida", "18,5"],
+  ["Araceli Adriana Garrido Lozano", "5A", "Comida Rápida", null],
+  ["Hugo Alberto Iglesias Escobar", "5A", "Sin equipo", null],
+  ["Paola Natalia Padilla Tapia", "5A", "Repostería", "10,0"],
+  ["Alba Regina Luna Bustos", "5A", "Comida Rápida", null],
 ] as const;
 
 const TAREAS = [

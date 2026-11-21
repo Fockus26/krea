@@ -8,7 +8,7 @@ type RankAnnouncerProps = {
 /*
  * Región viva de anuncios del ranking — HANDOFF §6. Debe haber UNA por página (no una por fila);
  * la página decide cuándo vaciar `eventos`. Se anuncia también con el movimiento normal.
- * Siempre montada y vacía al principio: las regiones vivas que aparecen con texto no se leen.
+ * Siempre montada y vacía al principio: las regiones vega que aparecen con texto no se leen.
  */
 export function RankAnnouncer({ eventos }: RankAnnouncerProps) {
   return (

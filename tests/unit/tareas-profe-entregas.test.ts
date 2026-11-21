@@ -12,12 +12,12 @@ import {
   seccionesDeFilas,
 } from "@/lib/tareas-profe-entregas";
 
-const PROFE = "30262232";
+const PROFE = "45001237";
 
 const alumno = (cedula: string, o: Partial<Usuario> = {}): Usuario => ({
   cedula,
   rol: "estudiante",
-  nombres: "Ana",
+  nombres: "Adela",
   apellidos: `Pérez ${cedula}`,
   seccion: "5A",
   equipoId: null,
@@ -82,7 +82,7 @@ describe("rutas (D398)", () => {
 describe("filasEntregasTarea · individual", () => {
   const usuarios = [
     alumno("1111111", { nombres: "Zoe", base: 15 }),
-    alumno("2222222", { nombres: "Ana" }),
+    alumno("2222222", { nombres: "Adela" }),
     alumno("3333333", { nombres: "Bea" }),
     alumno("4444444", { nombres: "Cris", seccion: "5C" }),
     alumno("5555555", { nombres: "Fuera", seccion: "5C" }),
@@ -146,7 +146,7 @@ describe("filasEntregasTarea · individual", () => {
 
   test("orden por sección y nombre; solo alumnos de las secciones de la tarea", () => {
     expect(filas.map((f) => f.nombre.split(" ")[0])).toEqual([
-      "Ana",
+      "Adela",
       "Bea",
       "Zoe",
       "Cris",
@@ -174,9 +174,9 @@ describe("filasEntregasTarea · individual", () => {
 
 describe("filasEntregasTarea · grupal", () => {
   const usuarios = [
-    alumno("1111111", { nombres: "Ana", base: 15, equipoId: "eq-2" }), // se mudó de equipo
+    alumno("1111111", { nombres: "Adela", base: 15, equipoId: "eq-2" }), // se mudó de equipo
     alumno("2222222", { nombres: "Beto" }),
-    alumno("3333333", { nombres: "Caro", base: 18 }),
+    alumno("3333333", { nombres: "Cabrera", base: 18 }),
   ];
   const tarea = { id: "g1", tipo: "grupal" as const, secciones: ["5A"] };
   const grupal = entrega(
@@ -291,8 +291,8 @@ describe("selector de sección y textos", () => {
   test("puntaje con coma y nombre accesible con el titular", () => {
     expect(puntajeTexto(17.5)).toBe("17,5 / 20");
     expect(puntajeTexto(null)).toBe("—");
-    expect(accionLabel("corregir", "Ana Pérez")).toBe(
-      "Corregir la entrega de Ana Pérez",
+    expect(accionLabel("corregir", "Adela Pérez")).toBe(
+      "Corregir la entrega de Adela Pérez",
     );
   });
 });

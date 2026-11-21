@@ -55,7 +55,7 @@ export type RankRowLabelInput = {
   esTu?: boolean;
 };
 
-/** Nombre accesible del `<li>`: "Puesto 4, María Méndez, 30,5 puntos, subió 2 puestos". */
+/** Nombre accesible del `<li>`: "Puesto 4, Juana Montero, 30,5 puntos, subió 2 puestos". */
 export function rankRowLabel({
   puesto,
   nombre,
@@ -71,7 +71,7 @@ export function rankRowLabel({
   return partes.join(", ");
 }
 
-/** Nombre accesible de una columna del podio: "Puesto 1, María Méndez, 42 puntos". */
+/** Nombre accesible de una columna del podio: "Puesto 1, Juana Montero, 42 puntos". */
 export function podiumLabel(
   entrada: Pick<RankRowLabelInput, "puesto" | "nombre" | "puntos">,
 ): string {

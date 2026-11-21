@@ -125,11 +125,11 @@ export type InicialAjuste = {
   detalle: string;
 };
 
-/** Ejemplo inicial del lienzo: Jorge Quintero (5A) + Participación destacada. */
+/** Ejemplo inicial del lienzo: Mateo Paredes (5A) + Participación destacada. */
 export const AJUSTE_INICIAL: InicialAjuste = {
   tipo: "alumno",
   seccion: "5A",
-  destinoId: "32828381", // Jorge Quintero
+  destinoId: "45003711", // Mateo Paredes
   motivo: "participacion",
   // PLACEHOLDER (fila 93): el detalle del lienzo
   detalle: "Explicó su moodboard a toda la clase",

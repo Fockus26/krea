@@ -68,11 +68,11 @@ describe("hora y borrador", () => {
 
 describe("aviso de capitán", () => {
   test("por defecto «capitán» (D075); femenino como el lienzo", () => {
-    expect(avisoCapitanTexto("Yeilin Duarte").titulo).toBe(
-      "La entrega Yeilin Duarte, capitán de tu equipo.",
+    expect(avisoCapitanTexto("Raquel Figueroa").titulo).toBe(
+      "La entrega Raquel Figueroa, capitán de tu equipo.",
     );
-    expect(avisoCapitanTexto("Yeilin Duarte", true)).toEqual({
-      titulo: "La entrega Yeilin Duarte, capitana de tu equipo.",
+    expect(avisoCapitanTexto("Raquel Figueroa", true)).toEqual({
+      titulo: "La entrega Raquel Figueroa, capitana de tu equipo.",
       texto:
         "Puedes ver las preguntas. Las respuestas aparecen aquí cuando ella las envíe.",
     });
@@ -83,7 +83,7 @@ describe("datos de ejemplo", () => {
   test("la capitana responde; la integrante solo lee", () => {
     expect(entregaDe("capitan").capitan).toBeUndefined();
     const lector = entregaDe("no-capitan");
-    expect(lector.capitan?.corto).toBe("Yeilin");
+    expect(lector.capitan?.corto).toBe("Raquel");
     expect(lector.premio).toBeTruthy();
   });
   test("individual sin premio ni capitán", () => {

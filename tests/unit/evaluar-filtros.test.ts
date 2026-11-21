@@ -56,7 +56,7 @@ const usuario = (cedula: string, nombres: string): Usuario => ({
   cedula,
   rol: "estudiante",
   nombres,
-  apellidos: "Duarte Pérez",
+  apellidos: "Figueroa Pérez",
   seccion: "5A",
   equipoId: null,
   base: 20,
@@ -64,7 +64,7 @@ const usuario = (cedula: string, nombres: string): Usuario => ({
   actualizadoEn: 1,
 });
 
-// Cola: i1 (5A, t1, ind., Yeilin) · g1 (5A, t2, grupal con Yeilin y Marta) · i2 (5C, t1, Marta)
+// Cola: i1 (5A, t1, ind., Raquel) · g1 (5A, t2, grupal con Raquel y Marta) · i2 (5C, t1, Marta)
 const cola = colaPorEvaluar([
   ent({ id: "i1", enviadaEn: 10 }),
   ent({
@@ -197,7 +197,7 @@ describe("rutas", () => {
 
 describe("vistaEvaluar con la cola filtrada", () => {
   const mapas = mapasEvaluar({
-    usuarios: [usuario("30000001", "Yeilin"), usuario("30000002", "Marta")],
+    usuarios: [usuario("30000001", "Raquel"), usuario("30000002", "Marta")],
     equipos: [],
     tareas: [tarea("t1", "Identidad"), tarea("t2", "Logo")],
   });
@@ -217,7 +217,7 @@ describe("vistaEvaluar con la cola filtrada", () => {
     expect(v.saltarHref).toBe(`${RUTA_EVALUAR}/i2?alumno=30000002`);
     expect(v.guardarHref).toBe(`${RUTA_EVALUAR}/i2?alumno=30000002`);
     expect(v.colaHref).toBe(`${RUTA_EVALUAR}?alumno=30000002`);
-    expect(v.filtroTexto).toBe("Marta Duarte");
+    expect(v.filtroTexto).toBe("Marta Figueroa");
   });
 
   test("la última de la cola filtrada guarda hacia la cola con los filtros", () => {
@@ -250,7 +250,7 @@ describe("vistaEvaluar con la cola filtrada", () => {
 
 describe("resumen y opciones", () => {
   const mapas = mapasEvaluar({
-    usuarios: [usuario("30000001", "Yeilin"), usuario("30000002", "Marta")],
+    usuarios: [usuario("30000001", "Raquel"), usuario("30000002", "Marta")],
     equipos: [],
     tareas: [tarea("t1", "Identidad"), tarea("t2", "Logo")],
   });
@@ -274,7 +274,7 @@ describe("estado de la cola (D439)", () => {
     puntos: { p1: 18 },
     comentarios: {},
     puntaje: 18,
-    evaluadaPor: "30262232",
+    evaluadaPor: "45001237",
     evaluadaEn,
   });
   const entregas = [
@@ -290,7 +290,7 @@ describe("estado de la cola (D439)", () => {
   ];
   const evaluadas = colaEvaluadas(entregas);
   const mapas = mapasEvaluar({
-    usuarios: [usuario("30000001", "Yeilin"), usuario("30000002", "Marta")],
+    usuarios: [usuario("30000001", "Raquel"), usuario("30000002", "Marta")],
     equipos: [],
     tareas: [tarea("t1", "Identidad"), tarea("t2", "Logo")],
   });

@@ -39,7 +39,7 @@ export function generateStaticParams() {
 
 const href = (e: EstadoRanking) => `${BASE}/${estadoSlug(e)}`;
 
-// Ruta final (fase 05): /ranking. Datos: seed de 5A/5C; Yeilin Duarte = «tú» (D069).
+// Ruta final (fase 05): /ranking. Datos: seed de 5A/5C; Raquel Figueroa = «tú» (D069).
 export default async function RankingVista({
   params,
 }: PageProps<"/secciones/ranking/[estado]">) {

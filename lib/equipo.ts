@@ -109,7 +109,7 @@ export function notasPremioIndividual(
     });
 }
 
-/** Nombre accesible de la fila de integrante cuando es quien mira: "Yeilin Duarte, tú" (§8). */
+/** Nombre accesible de la fila de integrante cuando es quien mira: "Raquel Figueroa, tú" (§8). */
 export function nombreIntegranteTexto(nombre: string, esTu: boolean): string {
   return esTu ? `${nombre}, tú` : nombre;
 }

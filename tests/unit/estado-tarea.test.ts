@@ -284,8 +284,8 @@ describe("titulares del diálogo", () => {
       cedula: "1",
       rol: "estudiante",
       seccion: "5A",
-      nombres: "Ana",
-      apellidos: "Ríos",
+      nombres: "Adela",
+      apellidos: "Quiroga",
     },
     {
       cedula: "3",
@@ -321,7 +321,7 @@ describe("titulares del diálogo", () => {
     expect(filas).toEqual([
       {
         id: "1",
-        nombre: "Ana Ríos",
+        nombre: "Adela Quiroga",
         seccion: "5A",
         entrego: false,
         prorroga: { fecha: "2026-11-24", hora: null },

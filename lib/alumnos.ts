@@ -94,7 +94,7 @@ export type FilaAlumno = {
   email?: string | null;
 };
 
-/** Minúsculas, sin diacríticos y con los espacios colapsados: "  MÉndez  " → "mendez". */
+/** Minúsculas, sin diacríticos y con los espacios colapsados: "  MÉndez  " → "montero". */
 export function normalizar(texto: string): string {
   return texto
     .normalize("NFD")
@@ -104,7 +104,7 @@ export function normalizar(texto: string): string {
     .trim();
 }
 
-/** Nombre completo para filas y botones: "Jailyn Verónica Martínez Méndez". */
+/** Nombre completo para filas y botones: "Fernanda Olga Miranda Montero". */
 export function nombreAlumno(
   a: Pick<FilaAlumno, "nombres" | "apellidos">,
 ): string {
@@ -162,12 +162,12 @@ export function tablaLabel(seccion: SeccionId): string {
   return `Tabla de alumnos de ${seccion}`;
 }
 
-/** "34099118" → "34.099.118": puntos de miles solo para mostrar (reutiliza el de Perfil). */
+/** "45051954" → "45.051.954": puntos de miles solo para mostrar (reutiliza el de Perfil). */
 export function cedulaConPuntos(cedula: string): string {
   return cedulaTexto(cedula).replace(/^C\.I\. /, "");
 }
 
-/** Subtítulo del diálogo Editar: "Jailyn Verónica Martínez Méndez · C.I. 37.575.127 · 5A". */
+/** Subtítulo del diálogo Editar: "Fernanda Olga Miranda Montero · C.I. 45.087.827 · 5A". */
 export function subtituloEdicion(
   a: Pick<FilaAlumno, "nombres" | "apellidos" | "cedula" | "seccion">,
 ): string {
@@ -202,7 +202,7 @@ export type EdicionAlumno = {
   apellidos: string;
   /**
    * Campos «Primer nombre» y «Primer apellido» del diálogo, si los hay: no pueden quedar en blanco
-   * aunque el segundo tenga texto (QA versión 1, F-M2: «Génesis Julibeth» pasaba a «Julibeth»).
+   * aunque el segundo tenga texto (QA versión 1, F-M2: «Elisa Gloria» pasaba a «Gloria»).
    */
   primerNombre?: string;
   primerApellido?: string;
@@ -248,7 +248,7 @@ export function validarEdicion(e: EdicionAlumno): ErroresEdicion {
   return errores;
 }
 
-/** Une primer y segundo nombre (o apellido) sin dobles espacios: ("Jailyn", " Verónica") → "Jailyn Verónica". */
+/** Une primer y segundo nombre (o apellido) sin dobles espacios: ("Fernanda", " Olga") → "Fernanda Olga". */
 export function unirNombre(primero: string, segundo: string): string {
   return `${primero} ${segundo}`.replace(/\s+/g, " ").trim();
 }

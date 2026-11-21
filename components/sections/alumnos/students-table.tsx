@@ -42,7 +42,7 @@ import type { Presencia } from "./use-presencia";
 
 const COLUMNAS = 8;
 
-/** «Ana Pérez está editando» bajo el nombre (texto vacío: nada). */
+/** «Adela Pérez está editando» bajo el nombre (texto vacío: nada). */
 function EditandoChip({ texto }: { texto: string }) {
   if (!texto) return null;
   return (

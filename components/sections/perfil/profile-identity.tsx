@@ -21,7 +21,7 @@ export function ProfileIdentity({
   nombre: string;
   estilo: DicebearEstilo;
   seed: string;
-  /** "C.I. 33.272.397". */
+  /** "C.I. 45.009.896". */
   cedula: string;
   /** "Sección 5A". */
   seccion: string;

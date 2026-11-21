@@ -21,14 +21,14 @@ export type DemoAjuste = {
 export const AJUSTES: readonly DemoAjuste[] = [
   {
     id: "aj-1",
-    destino: { tipo: "alumno", cedula: "32828381" }, // Jorge Quintero
+    destino: { tipo: "alumno", cedula: "45003711" }, // Mateo Paredes
     valor: 2,
     motivo: "Participación destacada",
     fecha: "2026-10-25T10:15",
   },
   {
     id: "aj-2",
-    destino: { tipo: "alumno", cedula: "33987614" }, // Klenyerber Corredor
+    destino: { tipo: "alumno", cedula: "45040821" }, // Pablo Escobar
     valor: -1,
     motivo: "Uso del celular",
     fecha: "2026-10-25T09:40",
@@ -50,7 +50,7 @@ export const AJUSTES: readonly DemoAjuste[] = [
 ];
 
 /**
- * Historial de Ajustes de puntos (`Puntos.dc.html`): los 4 del Panel + Gabriel Gil, que el lienzo pinta 4.º.
+ * Historial de Ajustes de puntos (`Puntos.dc.html`): los 4 del Panel + Hugo Iglesias, que el lienzo pinta 4.º.
  * PLACEHOLDER (HANDOFF §8, CONTENT_CHECKLIST fila 92): motivo y fecha de ejemplo; alumno real del seed.
  * Va aparte de `AJUSTES` para que el Panel siga mostrando sus 4 filas.
  */
@@ -58,7 +58,7 @@ export const AJUSTES_HISTORIAL: readonly DemoAjuste[] = [
   ...AJUSTES.slice(0, 3),
   {
     id: "aj-5",
-    destino: { tipo: "alumno", cedula: "33456636" }, // Gabriel Gil
+    destino: { tipo: "alumno", cedula: "45019792" }, // Hugo Iglesias
     valor: -2,
     motivo: "No estuvo en clase",
     fecha: "2026-10-23T07:30",

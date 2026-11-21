@@ -68,7 +68,7 @@ export function deltaSemanaTexto(delta: number): string | null {
 }
 
 /**
- * "Capitana: tú" / "Capitán: Jorge Quintero". El género no está en el seed: lo da quien llama
+ * "Capitana: tú" / "Capitán: Mateo Paredes". El género no está en el seed: lo da quien llama
  * (`femenino`, como `CaptainBadge`, D012); por defecto "Capitán".
  */
 export function capitanTexto(

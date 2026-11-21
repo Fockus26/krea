@@ -54,7 +54,7 @@ const ev = (o: Partial<Evaluacion> = {}): Evaluacion => ({
   puntos: { p1: 10, p2: 6 },
   comentarios: {},
   puntaje: 16,
-  evaluadaPor: "30262232",
+  evaluadaPor: "45001237",
   evaluadaEn: 100,
   ...o,
 });
@@ -88,8 +88,8 @@ const grupal = (o: Partial<Entrega> = {}) =>
 const usuario = (cedula: string, base = 15): Usuario => ({
   cedula,
   rol: "estudiante",
-  nombres: "Yeilin Andrea",
-  apellidos: "Duarte Pérez",
+  nombres: "Raquel Andrea",
+  apellidos: "Figueroa Pérez",
   seccion: "5A",
   equipoId: null,
   base,
@@ -177,7 +177,7 @@ describe("armarEvaluacion: de dónde sale cada base (D403)", () => {
       tarea: { ...tarea, tipo: e.tipo },
       envio: envio({ version: e.evaluacion?.evaluadaEn ?? null, ...o }),
       basesVigentes: vigentes,
-      autorId: "30262232",
+      autorId: "45001237",
       ahora: 200,
     });
 
@@ -298,13 +298,13 @@ describe("«Deshacer» devuelve las bases anteriores (D205)", () => {
       tarea,
       envio: envio({ version: 100, bases: { [A]: 18 } }),
       basesVigentes: { [A]: 15 },
-      autorId: "30262232",
+      autorId: "45001237",
       ahora: 300,
     });
     if (!r.ok) throw new Error("no armó");
     const segunda = entregaEvaluada(primera, r.evaluacion);
     expect(segunda.evaluacion?.bases).toEqual({ [A]: 18 });
-    const d = deshacerEvaluacion(segunda, 300, "30262232");
+    const d = deshacerEvaluacion(segunda, 300, "45001237");
     expect(d.ok && d.entrega.evaluacion?.bases).toEqual({ [A]: 11 });
   });
 });
@@ -349,13 +349,13 @@ describe("vistaEvaluar con la base de la entrega (D403)", () => {
     expect(
       basesIntegrantesTexto(
         [
-          { cedula: A, nombre: "Ana Pérez" },
-          { cedula: B, nombre: "Luis Díaz" },
+          { cedula: A, nombre: "Adela Pérez" },
+          { cedula: B, nombre: "Luis Farías" },
         ],
         { [A]: 17.5, [B]: 15 },
         [B],
       ),
-    ).toBe("Bases en esta tarea: Ana Pérez 17,5 · Luis Díaz no participó");
+    ).toBe("Bases en esta tarea: Adela Pérez 17,5 · Luis Farías no participó");
   });
 });
 
@@ -368,7 +368,7 @@ describe("formulario: base normalizada y nombre accesible", () => {
       [A]: 12,
       [B]: 15,
     });
-    expect(baseIntegranteLabel("Ana Pérez")).toBe("Base de Ana Pérez");
+    expect(baseIntegranteLabel("Adela Pérez")).toBe("Base de Adela Pérez");
   });
 });
 

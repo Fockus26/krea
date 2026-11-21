@@ -13,7 +13,7 @@
  *       Marca a ese profesor como admin (perfil) y cierra sus sesiones: la próxima vez
  *       que entre ve «Profesores».
  *
- * Se pueden combinar: `--crear-profesor 30262232 --nombres … --apellidos … --hacer-admin 30262232`.
+ * Se pueden combinar: `--crear-profesor 45001237 --nombres … --apellidos … --hacer-admin 45001237`.
  */
 
 import { existsSync } from "node:fs";

@@ -109,7 +109,7 @@ export function hayConflicto(
 }
 
 /**
- * Lo que quedó guardado, para el aviso de conflicto: «Ahora está guardado: Luis Díaz · base 15 ·
+ * Lo que quedó guardado, para el aviso de conflicto: «Ahora está guardado: Luis Farías · base 15 ·
  * sin email de recuperación.» PROVISIONAL (fila 154).
  */
 export function conflictoDetalle(actual: VersionAlumno): string {

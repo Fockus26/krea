@@ -34,15 +34,15 @@ describe("seed tipado", () => {
 });
 
 describe("estudiante de la vista previa (lienzo de Inicio)", () => {
-  const yeilin = alumnoPorCedula(CEDULA_DEMO);
-  test("Yeilin Duarte, capitana de 5A-G2", () => {
-    expect(primerNombre(yeilin)).toBe("Yeilin");
-    expect(nombreCorto(yeilin)).toBe("Yeilin Duarte");
-    expect(equipoDe(yeilin)?.id).toBe("5a-g2");
-    expect(esCapitan(yeilin)).toBe(true);
+  const raquel = alumnoPorCedula(CEDULA_DEMO);
+  test("Raquel Figueroa, capitana de 5A-G2", () => {
+    expect(primerNombre(raquel)).toBe("Raquel");
+    expect(nombreCorto(raquel)).toBe("Raquel Figueroa");
+    expect(equipoDe(raquel)?.id).toBe("5a-g2");
+    expect(esCapitan(raquel)).toBe(true);
   });
   test("37,5 pts = 18,5 individual + 19 grupal, #1 de 35 en 5A", () => {
-    expect(puntosAlumno(yeilin)).toBe(37.5);
+    expect(puntosAlumno(raquel)).toBe(37.5);
     const ranking = rankingAlumnos("5A");
     expect(ranking).toHaveLength(35);
     expect(ranking.find((f) => f.cedula === CEDULA_DEMO)?.puesto).toBe(1);

@@ -12,14 +12,14 @@ import * as docs from "./docs";
 
 let base: Db;
 let auth: AuthKrea;
-const ALUMNO = "33272397";
+const ALUMNO = "45009896";
 const SIN_PERFIL = "33272398";
 const PW = "clave-de-prueba-1";
 
 const alumno: Usuario = {
   cedula: ALUMNO,
   rol: "estudiante",
-  nombres: "Yeilin",
+  nombres: "Raquel",
   apellidos: "Prueba",
   seccion: "5A",
   equipoId: "g2",

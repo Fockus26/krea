@@ -26,7 +26,7 @@ const db = () => base;
 
 const HOY = "2026-11-05";
 const AHORA = Date.UTC(2026, 10, 5, 15);
-const PROFE = "30262232";
+const PROFE = "45001237";
 const G1 = "w6-g1";
 const G2 = "w6-g2";
 const CON_PREMIO = "w6-premio";

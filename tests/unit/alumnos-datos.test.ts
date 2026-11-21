@@ -22,8 +22,8 @@ import type { Entrega, Equipo, Usuario } from "@/lib/modelo";
 const usuario = (cedula: string, o: Partial<Usuario> = {}): Usuario => ({
   cedula,
   rol: "estudiante",
-  nombres: "Jailyn Verónica",
-  apellidos: "Martínez Méndez",
+  nombres: "Fernanda Olga",
+  apellidos: "Miranda Montero",
   seccion: "5A",
   equipoId: null,
   base: 20,
@@ -33,26 +33,26 @@ const usuario = (cedula: string, o: Partial<Usuario> = {}): Usuario => ({
 });
 
 const entrada = (o: Partial<EditarAlumno> = {}): EditarAlumno => ({
-  cedula: "37575127",
-  nombres: "Jailyn Verónica",
-  apellidos: "Martínez Méndez",
+  cedula: "45087827",
+  nombres: "Fernanda Olga",
+  apellidos: "Miranda Montero",
   base: 20,
   motivo: "",
   ...o,
 });
 
 const AHORA = Date.UTC(2026, 10, 5, 15);
-const PROFE = "30262232";
+const PROFE = "45001237";
 
 describe("zEditarAlumno", () => {
   test("recorta nombres y pasa el email a minúsculas", () => {
     const r = zEditarAlumno.parse({
       ...entrada(),
-      nombres: "  Jailyn  ",
-      email: " Jailyn@Gmail.COM ",
+      nombres: "  Fernanda  ",
+      email: " Fernanda@Gmail.COM ",
     });
-    expect(r.nombres).toBe("Jailyn");
-    expect(r.email).toBe("jailyn@gmail.com");
+    expect(r.nombres).toBe("Fernanda");
+    expect(r.email).toBe("fernanda@gmail.com");
   });
 
   test("email vacío vale (quitarlo); uno mal escrito no", () => {
@@ -80,7 +80,7 @@ describe("zEditarAlumno", () => {
 });
 
 describe("armarEdicion", () => {
-  const actual = usuario("37575127");
+  const actual = usuario("45087827");
 
   test("sin cambios: no escribe nada", () => {
     const r = armarEdicion({
@@ -119,7 +119,7 @@ describe("armarEdicion", () => {
     expect(r.edicion.usuario?.base).toBe(15);
     expect(r.edicion.usuario?.actualizadoEn).toBe(AHORA);
     expect(r.edicion.cambioBase).toEqual({
-      alumnoId: "37575127",
+      alumnoId: "45087827",
       de: 20,
       a: 15,
       motivo: "Acuerdo de conducta",
@@ -132,12 +132,12 @@ describe("armarEdicion", () => {
     const r = armarEdicion({
       actual,
       emailActual: null,
-      entrada: entrada({ nombres: "Jailyn" }),
+      entrada: entrada({ nombres: "Fernanda" }),
       autorId: PROFE,
       ahora: AHORA,
     });
     if (!r.ok) throw new Error("debía valer");
-    expect(r.edicion.usuario?.nombres).toBe("Jailyn");
+    expect(r.edicion.usuario?.nombres).toBe("Fernanda");
     expect(r.edicion.cambioBase).toBeNull();
     // Sección, equipo y avatar no cambian
     expect(r.edicion.usuario?.seccion).toBe("5A");
@@ -153,11 +153,11 @@ describe("armarEdicion", () => {
         autorId: PROFE,
         ahora: AHORA,
       });
-    const nuevo = con("jailyn@gmail.com", null);
-    expect(nuevo.ok && nuevo.edicion.email).toBe("jailyn@gmail.com");
-    const igual = con("jailyn@gmail.com", "jailyn@gmail.com");
+    const nuevo = con("fernanda@gmail.com", null);
+    expect(nuevo.ok && nuevo.edicion.email).toBe("fernanda@gmail.com");
+    const igual = con("fernanda@gmail.com", "fernanda@gmail.com");
     expect(igual.ok && igual.edicion.email).toBeUndefined();
-    const quitar = con("", "jailyn@gmail.com");
+    const quitar = con("", "fernanda@gmail.com");
     expect(quitar.ok && quitar.edicion.email).toBeNull();
   });
 
@@ -309,8 +309,8 @@ describe("filasAlumnos", () => {
     const filas = filasAlumnos({
       usuarios: [
         usuario("3333333", { nombres: "Zoe", seccion: "5C" }),
-        usuario("1111111", { nombres: "María", equipoId: "5a-g2" }),
-        usuario("2222222", { nombres: "Ana", base: 15 }),
+        usuario("1111111", { nombres: "Juana", equipoId: "5a-g2" }),
+        usuario("2222222", { nombres: "Adela", base: 15 }),
         usuario(PROFE, { rol: "profesor", seccion: null }),
       ],
       equipos,
@@ -319,7 +319,7 @@ describe("filasAlumnos", () => {
         "5A": {
           alumnos: {
             "1111111": {
-              nombres: "María",
+              nombres: "Juana",
               apellidos: "X",
               equipoId: "5a-g2",
               estilo: "lorelei",
@@ -331,7 +331,7 @@ describe("filasAlumnos", () => {
         },
         "5C": null,
       },
-      emails: new Map([["2222222", "ana@gmail.com"]]),
+      emails: new Map([["2222222", "adela@gmail.com"]]),
     });
     expect(filas.map((f) => f.cedula)).toEqual([
       "2222222",
@@ -341,7 +341,7 @@ describe("filasAlumnos", () => {
     expect(filas[0]).toMatchObject({
       base: 15,
       equipo: null,
-      email: "ana@gmail.com",
+      email: "adela@gmail.com",
       puntos: 0,
       nota: null,
       semilla: "s-2222222",
@@ -451,7 +451,7 @@ describe("puntajeFinalDe", () => {
         puntos: null,
         comentarios: {},
         puntaje: 17.5,
-        evaluadaPor: "30262232",
+        evaluadaPor: "45001237",
         evaluadaEn: 1,
       },
     } satisfies Entrega;

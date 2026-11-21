@@ -254,7 +254,7 @@ export type EstadoIdealProfe =
   | { tipo: "ninguna" }
   | {
       tipo: "vigente";
-      /** «de Ana Pérez», «del equipo Los Pixel» o «de los profesores». */
+      /** «de Adela Pérez», «del equipo Los Pixel» o «de los profesores». */
       deQuien: string;
       entregaId: string | null;
     }

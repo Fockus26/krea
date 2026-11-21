@@ -1,5 +1,5 @@
 /**
- * Alta en lote de alumnos y sus equipos desde el seed del Excel (`data/seed/alumnos.json` y
+ * Alta en lote de alumnos y sus equipos desde el seed del Excel (`data/privado/alumnos.json` y
  * `grupos.json`, los genera `scripts/import-excel.py` de la hoja «Alumnos»). SIN notas: solo
  * cuentas, equipos, capitanes y ranking (los alumnos entran con 0 puntos).
  *
@@ -57,8 +57,8 @@ console.log(
 
 const leer = <T>(ruta: string): T =>
   JSON.parse(readFileSync(ruta, "utf8")) as T;
-const alumnos = leer<AlumnoSeed[]>("data/seed/alumnos.json");
-const grupos = leer<GrupoSeed[]>("data/seed/grupos.json");
+const alumnos = leer<AlumnoSeed[]>("data/privado/alumnos.json");
+const grupos = leer<GrupoSeed[]>("data/privado/grupos.json");
 
 // Las secciones tienen que existir en el catálogo (D323)
 const [doc] = await db

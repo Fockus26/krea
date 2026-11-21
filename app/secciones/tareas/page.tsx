@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 // Ruta final (fase 05): /tareas. Misma plantilla que Mis notas (HANDOFF §3): Por entregar
-// (las filas de Inicio) y Entregadas. Datos: Yeilin Duarte del seed (D069).
+// (las filas de Inicio) y Entregadas. Datos: Raquel Figueroa del seed (D069).
 export default function TareasVista() {
   const alumno = alumnoPorCedula(CEDULA_DEMO);
   const d = tareasDe(alumno);

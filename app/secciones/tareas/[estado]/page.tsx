@@ -34,7 +34,7 @@ export function generateStaticParams() {
 }
 
 // Ruta final (fase 05): /tareas/[tarea]. Datos: tareas de ejemplo (fila 53) con el equipo real
-// 5A-G2 (capitana Yeilin Duarte; Wendoly Ponce como integrante).
+// 5A-G2 (capitana Raquel Figueroa; Paola Padilla como integrante).
 export default async function EntregaVista({
   params,
 }: PageProps<"/secciones/tareas/[estado]">) {

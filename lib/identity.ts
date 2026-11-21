@@ -32,7 +32,7 @@ export function teamInitial(texto: string): string {
   return (letra ?? lista[0] ?? "").toLocaleUpperCase("es");
 }
 
-/** Hasta dos iniciales del nombre para el respaldo del avatar: "Jorge Enrique" → "JE". */
+/** Hasta dos iniciales del nombre para el respaldo del avatar: "Mateo Guillermo" → "JE". */
 export function initials(nombre: string): string {
   const palabras = nombre.trim().split(/\s+/).filter(Boolean);
   return palabras

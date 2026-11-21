@@ -10,8 +10,8 @@ import {
 const alumno = (cedula: string, seccion: "5A" | "5C", base = 20): Usuario => ({
   cedula,
   rol: "estudiante",
-  nombres: "María de los Ángeles",
-  apellidos: "Méndez Rivas",
+  nombres: "Juana de los Alejandra",
+  apellidos: "Montero Rivas",
   seccion,
   equipoId: null,
   base,
@@ -91,12 +91,12 @@ describe("panelDatosDe", () => {
     });
     // 18 × 10 / 20 = 9 → raspado
     expect(d.raspados).toEqual([
-      { seccion: "5A", nombre: "María de los Ángeles Méndez", nota: 9 },
+      { seccion: "5A", nombre: "Juana de los Alejandra Montero", nota: 9 },
     ]);
     expect(d.entregas).toHaveLength(1);
     expect(d.entregas[0]).toMatchObject({
       id: "t1__30000003",
-      nombre: "María Méndez · 5A",
+      nombre: "Juana Montero · 5A",
       meta: "Identidad de marca · Individual · 24/10/2026",
     });
   });

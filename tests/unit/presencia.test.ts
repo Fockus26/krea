@@ -42,10 +42,10 @@ describe("vigencia del latido (D277)", () => {
   test("sin la entrada propia ni las vencidas, en orden de llegada", () => {
     const r = editoresVigentes(
       [
-        e("3", "Carla Ruiz", AHORA, AHORA - 1000),
+        e("3", "Carla Rubio", AHORA, AHORA - 1000),
         e("yo", "Yo Mismo"),
-        e("2", "Luis Díaz", AHORA - 50_000),
-        e("1", "Ana Pérez", AHORA - 5000, AHORA - 9000),
+        e("2", "Luis Farías", AHORA - 50_000),
+        e("1", "Adela Pérez", AHORA - 5000, AHORA - 9000),
       ],
       AHORA,
       "yo",
@@ -57,25 +57,28 @@ describe("vigencia del latido (D277)", () => {
 describe("texto de presencia", () => {
   test("uno, dos y más", () => {
     expect(presenciaTexto([])).toBe("");
-    expect(presenciaTexto([e("1", "Ana Pérez")])).toBe(
-      "Ana Pérez está editando",
+    expect(presenciaTexto([e("1", "Adela Pérez")])).toBe(
+      "Adela Pérez está editando",
     );
-    expect(presenciaTexto([e("1", "Ana Pérez"), e("2", "Luis Díaz")])).toBe(
-      "Ana Pérez y Luis Díaz están editando",
+    expect(presenciaTexto([e("1", "Adela Pérez"), e("2", "Luis Farías")])).toBe(
+      "Adela Pérez y Luis Farías están editando",
     );
     expect(
       presenciaTexto([
-        e("1", "Ana Pérez"),
-        e("2", "Luis Díaz"),
-        e("3", "Carla Ruiz"),
+        e("1", "Adela Pérez"),
+        e("2", "Luis Farías"),
+        e("3", "Carla Rubio"),
       ]),
-    ).toBe("Ana Pérez y 2 más están editando");
+    ).toBe("Adela Pérez y 2 más están editando");
   });
 
   test("nombre del profe: primer nombre y primer apellido, nunca vacío", () => {
     expect(
-      nombrePresencia({ nombres: " Ana  María ", apellidos: "Pérez Gil" }),
-    ).toBe("Ana Pérez");
+      nombrePresencia({
+        nombres: " Adela  Juana ",
+        apellidos: "Pérez Iglesias",
+      }),
+    ).toBe("Adela Pérez");
     expect(nombrePresencia(null)).toBe("Otro profe");
     expect(nombrePresencia({ nombres: "", apellidos: "" })).toBe("Otro profe");
     expect(
@@ -85,9 +88,9 @@ describe("texto de presencia", () => {
 
   test("agrupa por alumno", () => {
     const m = porAlumno([
-      { alumnoId: "a", entrada: e("1", "Ana Pérez") },
-      { alumnoId: "b", entrada: e("2", "Luis Díaz") },
-      { alumnoId: "a", entrada: e("3", "Carla Ruiz") },
+      { alumnoId: "a", entrada: e("1", "Adela Pérez") },
+      { alumnoId: "b", entrada: e("2", "Luis Farías") },
+      { alumnoId: "a", entrada: e("3", "Carla Rubio") },
     ]);
     expect(m.get("a")?.map((x) => x.profeId)).toEqual(["1", "3"]);
     expect(m.get("b")?.length).toBe(1);
@@ -96,7 +99,7 @@ describe("texto de presencia", () => {
 
 describe("conflicto al guardar (D276)", () => {
   const abierto = versionDe(
-    { nombres: "Luis", apellidos: "Díaz", base: 20 },
+    { nombres: "Luis", apellidos: "Farías", base: 20 },
     null,
   );
 
@@ -109,7 +112,9 @@ describe("conflicto al guardar (D276)", () => {
   test("igual: no hay; nombre, apellido, base o email distintos: sí", () => {
     expect(hayConflicto(abierto, { ...abierto })).toBe(false);
     expect(hayConflicto(abierto, { ...abierto, nombres: "Luisa" })).toBe(true);
-    expect(hayConflicto(abierto, { ...abierto, apellidos: "Gil" })).toBe(true);
+    expect(hayConflicto(abierto, { ...abierto, apellidos: "Iglesias" })).toBe(
+      true,
+    );
     expect(hayConflicto(abierto, { ...abierto, base: 15 })).toBe(true);
     expect(hayConflicto(abierto, { ...abierto, email: "l@gmail.com" })).toBe(
       true,
@@ -119,7 +124,7 @@ describe("conflicto al guardar (D276)", () => {
   test("sin email en la versión, el email no se compara", () => {
     const sinEmail = versionDe({
       nombres: "Luis",
-      apellidos: "Díaz",
+      apellidos: "Farías",
       base: 20,
     });
     expect("email" in sinEmail).toBe(false);
@@ -130,9 +135,9 @@ describe("conflicto al guardar (D276)", () => {
 
   test("la entrada acepta la versión y sigue valiendo sin ella", () => {
     const sin = {
-      cedula: "33272397",
+      cedula: "45009896",
       nombres: "Luis",
-      apellidos: "Díaz",
+      apellidos: "Farías",
       base: 20,
       motivo: "",
     };
@@ -150,24 +155,24 @@ describe("conflicto al guardar (D276)", () => {
     expect(
       conflictoDetalle({
         nombres: "Luis",
-        apellidos: "Díaz",
+        apellidos: "Farías",
         base: 15.5,
         email: null,
       }),
     ).toBe(
-      "Ahora está guardado: Luis Díaz · base 15,5 · sin email de recuperación.",
+      "Ahora está guardado: Luis Farías · base 15,5 · sin email de recuperación.",
     );
     expect(
-      conflictoDetalle({ nombres: "Luis", apellidos: "Díaz", base: 20 }),
-    ).toBe("Ahora está guardado: Luis Díaz · base 20.");
+      conflictoDetalle({ nombres: "Luis", apellidos: "Farías", base: 20 }),
+    ).toBe("Ahora está guardado: Luis Farías · base 20.");
   });
 });
 
 describe("aviso del diálogo", () => {
   test("no bloquea: avisa y dice qué pasa si el otro guarda antes", () => {
     expect(avisoPresencia("")).toBe("");
-    expect(avisoPresencia("Ana Pérez está editando")).toBe(
-      "Ana Pérez está editando a este alumno. Si guarda antes que tú, te avisaremos.",
+    expect(avisoPresencia("Adela Pérez está editando")).toBe(
+      "Adela Pérez está editando a este alumno. Si guarda antes que tú, te avisaremos.",
     );
   });
 });

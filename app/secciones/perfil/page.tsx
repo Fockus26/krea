@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 };
 
 // Ruta final (fase 05): /perfil. Una columna en todos los anchos (HANDOFF §3 Perfil).
-// Datos: Yeilin Duarte del seed (D069).
+// Datos: Raquel Figueroa del seed (D069).
 export default function PerfilVista() {
   const p = perfilDe();
   return (

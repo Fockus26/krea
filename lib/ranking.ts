@@ -25,7 +25,7 @@ export interface RankingPuesto {
   enRiesgo: boolean;
 }
 
-/** Primera palabra de los apellidos: "Quintero Arenas" → "Quintero". */
+/** Primera palabra de los apellidos: "Paredes Aranda" → "Paredes". */
 export function primerApellido(apellidos: string): string {
   return apellidos.trim().split(/\s+/)[0] ?? "";
 }
