@@ -70,3 +70,6 @@ storage-debug.log
 
 # capturas de PR (bun run shots)
 .pr-shots
+
+# datos reales de alumnos (import-excel.py): nunca en git; data/seed/ es su copia anonimizada (D490)
+data/privado/

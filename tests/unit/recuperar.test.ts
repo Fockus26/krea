@@ -28,7 +28,7 @@ import {
 
 const config = { apiKey: "xkeysib-prueba", remitente: "krea@liceo.test" };
 const correo: Correo = {
-  para: { email: "alumno@correo.test", nombre: "Yeilin" },
+  para: { email: "alumno@correo.test", nombre: "Raquel" },
   asunto: "Asunto",
   html: "<p>Hola</p>",
   texto: "Hola",
@@ -61,7 +61,7 @@ describe("Brevo (D185)", () => {
     );
     expect(JSON.parse(init?.body as string)).toEqual({
       sender: { name: REMITENTE_NOMBRE, email: config.remitente },
-      to: [{ email: "alumno@correo.test", name: "Yeilin" }],
+      to: [{ email: "alumno@correo.test", name: "Raquel" }],
       subject: "Asunto",
       htmlContent: "<p>Hola</p>",
       textContent: "Hola",
@@ -101,30 +101,30 @@ describe("correo de restablecer (HANDOFF §5c)", () => {
 
   test("asunto, saludo, cédula enmascarada y enlace en HTML y texto", () => {
     const c = correoRestablecer({
-      nombre: "Yeilin",
-      cedula: "33272397",
+      nombre: "Raquel",
+      cedula: "45009896",
       enlace,
     });
     expect(c.asunto).toBe(ASUNTO_RESTABLECER);
-    expect(c.html).toContain("Hola, Yeilin");
-    expect(c.html).toContain("33•••397");
-    expect(c.html).not.toContain("33272397");
+    expect(c.html).toContain("Hola, Raquel");
+    expect(c.html).toContain("45•••896");
+    expect(c.html).not.toContain("45009896");
     expect(c.html).toContain(escaparHtml(enlace));
     expect(c.html).toContain("Crear nueva contraseña");
-    expect(c.texto).toContain("Hola, Yeilin");
+    expect(c.texto).toContain("Hola, Raquel");
     expect(c.texto).toContain(enlace);
-    expect(c.texto).not.toContain("33272397");
+    expect(c.texto).not.toContain("45009896");
     // El pie no deja un placeholder literal mientras no haya correo del liceo.
     expect(c.html).not.toContain("[correo");
   });
 
   test("sin nombre: «Hola»; el nombre se escapa", () => {
     expect(
-      correoRestablecer({ nombre: "", cedula: "33272397", enlace }).texto,
+      correoRestablecer({ nombre: "", cedula: "45009896", enlace }).texto,
     ).toMatch(/^Hola\n/);
     const c = correoRestablecer({
       nombre: "<b>x</b>",
-      cedula: "33272397",
+      cedula: "45009896",
       enlace,
     });
     expect(c.html).not.toContain("<b>x</b>");
@@ -132,7 +132,7 @@ describe("correo de restablecer (HANDOFF §5c)", () => {
   });
 
   test("primer nombre", () => {
-    expect(primerNombre("  Yeilin Andreína ")).toBe("Yeilin");
+    expect(primerNombre("  Raquel Andreína ")).toBe("Raquel");
     expect(primerNombre(null)).toBe("");
   });
 });
@@ -190,7 +190,7 @@ describe("procesarRecuperacion (D186)", () => {
     const d: DepsRecuperacion = {
       leerEmail: async () => "alumno@correo.test",
       leerPerfil: async () => ({
-        nombres: "Yeilin Andreína",
+        nombres: "Raquel Andreína",
         apariencia: null,
       }),
       reservar: async () => {
@@ -214,11 +214,11 @@ describe("procesarRecuperacion (D186)", () => {
 
   test("con email: envía al email real con el enlace de la app y el primer nombre", async () => {
     const { d, enviados } = deps();
-    expect(await procesarRecuperacion("33272397", d)).toBe("enviado");
+    expect(await procesarRecuperacion("45009896", d)).toBe("enviado");
     expect(enviados).toHaveLength(1);
     expect(enviados[0].para).toEqual({
       email: "alumno@correo.test",
-      nombre: "Yeilin",
+      nombre: "Raquel",
     });
     expect(enviados[0].html).toContain(
       "https://krea.test/recuperar/nueva?mode=resetPassword&amp;oobCode=XYZ",
@@ -227,11 +227,11 @@ describe("procesarRecuperacion (D186)", () => {
 
   test("sin apariencia: el correo sale en azul y claro (la presentación original)", async () => {
     const { d, enviados } = deps();
-    await procesarRecuperacion("33272397", d);
+    await procesarRecuperacion("45009896", d);
     expect(enviados[0].html).toBe(
       correoRestablecer({
-        nombre: "Yeilin",
-        cedula: "33272397",
+        nombre: "Raquel",
+        cedula: "45009896",
         enlace:
           "https://krea.test/recuperar/nueva?mode=resetPassword&oobCode=XYZ",
       }).html,
@@ -242,11 +242,11 @@ describe("procesarRecuperacion (D186)", () => {
   test("pasa la apariencia del perfil al correo (D343)", async () => {
     const { d, enviados } = deps({
       leerPerfil: async () => ({
-        nombres: "Yeilin",
+        nombres: "Raquel",
         apariencia: { tema: "dark", acento: "verde" },
       }),
     });
-    expect(await procesarRecuperacion("33272397", d)).toBe("enviado");
+    expect(await procesarRecuperacion("45009896", d)).toBe("enviado");
     const verdeOscuro = COLORES_CORREO_POR_ACENTO.oscuro.verde;
     expect(enviados[0].html).toContain(`background:${verdeOscuro.marca}`);
     expect(enviados[0].html).toContain(`background:${verdeOscuro.fondo}`);
@@ -255,27 +255,27 @@ describe("procesarRecuperacion (D186)", () => {
 
   test("sin email: no reserva, no genera enlace, no envía", async () => {
     const { d, enviados, llamadas } = deps({ leerEmail: async () => null });
-    expect(await procesarRecuperacion("33272397", d)).toBe("sin-email");
+    expect(await procesarRecuperacion("45009896", d)).toBe("sin-email");
     expect(enviados).toHaveLength(0);
     expect(llamadas).toEqual([]);
   });
 
   test("en el límite: no genera enlace ni envía", async () => {
     const { d, enviados, llamadas } = deps({ reservar: async () => false });
-    expect(await procesarRecuperacion("33272397", d)).toBe("limite");
+    expect(await procesarRecuperacion("45009896", d)).toBe("limite");
     expect(enviados).toHaveLength(0);
     expect(llamadas).toEqual([]);
   });
 
   test("Brevo falla → error-envio (el usuario no lo ve)", async () => {
     const { d } = deps({ enviar: async () => ({ ok: false, error: "red" }) });
-    expect(await procesarRecuperacion("33272397", d)).toBe("error-envio");
+    expect(await procesarRecuperacion("45009896", d)).toBe("error-envio");
   });
 });
 
 describe("contraseña nueva (D188)", () => {
   test("esquemas", () => {
-    expect(zPedidoEnlace.safeParse({ cedula: " 33272397 " }).success).toBe(
+    expect(zPedidoEnlace.safeParse({ cedula: " 45009896 " }).success).toBe(
       true,
     );
     expect(zPedidoEnlace.safeParse({ cedula: "12" }).success).toBe(false);

@@ -9,14 +9,14 @@ import { MenuDemo } from "./navegacion-menu";
 // Ítems por rol, lateral con tarjeta de usuario, topbar, barra inferior, hoja Menú (§2.7).
 // Nombres, contador y título de ejemplo: provisionales (CONTENT_CHECKLIST 50–52).
 const ESTUDIANTE: NavUsuario = {
-  nombre: "María Méndez",
+  nombre: "Juana Montero",
   estilo: "adventurer-neutral",
-  seed: "maria-mendez",
+  seed: "juana-montero",
 };
 const PROFESOR: NavUsuario = {
-  nombre: "Carlos Ramírez",
+  nombre: "Darío Pastor",
   estilo: "bottts-neutral",
-  seed: "carlos-ramirez",
+  seed: "darío-pastor",
 };
 
 // Marcos de ancho fijo para verlas fuera de su breakpoint. No usan AppShell: los landmarks

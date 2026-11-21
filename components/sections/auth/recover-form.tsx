@@ -63,7 +63,7 @@ export function RecoverForm({
         <Field label="Cédula" error={errorCedula} announce={false}>
           <CedulaInput
             name="cedula"
-            placeholder="Ej. 33272397"
+            placeholder="Ej. 45009896"
             value={cedula}
             onChange={(e) => setCedula(e.currentTarget.value)}
           />

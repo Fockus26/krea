@@ -25,8 +25,8 @@ import {
   venceTexto,
 } from "@/lib/tareas";
 
-/** Wendoly Ponce (5A-G2): integrante que no es capitana, para el aviso de capitán (lienzo Tarea). */
-export const CEDULA_NO_CAPITAN = "33498239";
+/** Paola Padilla (5A-G2): integrante que no es capitana, para el aviso de capitán (lienzo Tarea). */
+export const CEDULA_NO_CAPITAN = "45021029";
 
 /**
  * PLACEHOLDER: imagen de respuesta (el degradado `.imgans` del lienzo). Las fotos reales llegan
@@ -71,7 +71,7 @@ const RESPUESTAS_PRESENTACION: RespuestasIniciales = {
 /** PLACEHOLDER: respuestas completas de la vista "Entregada". */
 const RESPUESTAS_ENTREGADAS: Readonly<Record<string, string>> = {
   p2: RESPUESTAS_PRESENTACION.p2 as string,
-  p3: "¡Hola! Somos Dulce Rincón. Hacemos cupcakes caseros con recetas de nuestras abuelas y los traemos al liceo todos los viernes.",
+  p3: "¡Hola! Somos Dulce Prieto. Hacemos cupcakes caseros con recetas de nuestras abuelas y los traemos al liceo todos los viernes.",
 };
 
 /** PLACEHOLDER: fecha y hora de la entrega de ejemplo (lienzo: 25/10/2026, 4:12 p. m.). */

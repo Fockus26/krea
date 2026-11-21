@@ -23,7 +23,7 @@ import { ponerEntrega, ponerEquipo, ponerTarea, ponerUsuario } from "./docs";
 let base: Db;
 const db = () => base;
 
-const PROFE = "30262232";
+const PROFE = "45001237";
 const A1 = "39712001";
 const A2 = "39712002";
 const EQ = "z2-g1";

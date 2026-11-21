@@ -64,8 +64,8 @@ const ent = (
 const usuario = (cedula: string, base = 15): Usuario => ({
   cedula,
   rol: "estudiante",
-  nombres: "Yeilin Andrea",
-  apellidos: "Duarte Pérez",
+  nombres: "Raquel Andrea",
+  apellidos: "Figueroa Pérez",
   seccion: "5A",
   equipoId: null,
   base,
@@ -87,7 +87,7 @@ describe("armarEvaluacion", () => {
       tarea,
       envio: envio(puntos, { p1: "  Bien ", p2: " ", x: "fuera" }),
       basesVigentes: { "30000001": 15 },
-      autorId: "30262232",
+      autorId: "45001237",
       ahora: 5,
     });
 
@@ -98,7 +98,7 @@ describe("armarEvaluacion", () => {
         puntos: { p1: 11.5, p2: 7 },
         comentarios: { p1: "Bien" },
         puntaje: 18.5,
-        evaluadaPor: "30262232",
+        evaluadaPor: "45001237",
         evaluadaEn: 5,
         bases: { "30000001": 15 },
       },
@@ -142,7 +142,7 @@ describe("armarEvaluacion", () => {
         puntos: { p1: 12, p2: 8 },
         comentarios: {},
         puntaje: 20,
-        evaluadaPor: "30262232",
+        evaluadaPor: "45001237",
         evaluadaEn: 100,
       },
     });
@@ -152,7 +152,7 @@ describe("armarEvaluacion", () => {
         tarea,
         envio: envio({ p1: 4, p2: 4 }, {}, version),
         basesVigentes: {},
-        autorId: "30262232",
+        autorId: "45001237",
         ahora: 200,
       });
     // Abierta Pendiente, pero otro ya la evaluó
@@ -190,7 +190,7 @@ describe("comentario general y 300 caracteres (D445, D446)", () => {
       tarea,
       envio: p.data,
       basesVigentes: { "30000001": 15 },
-      autorId: "30262232",
+      autorId: "45001237",
       ahora: 5,
     });
   };
@@ -242,21 +242,21 @@ describe("deshacer (D205)", () => {
     puntos: null,
     comentarios: {},
     puntaje,
-    evaluadaPor: "30262232",
+    evaluadaPor: "45001237",
     evaluadaEn: en,
   });
 
   test("vuelve a Pendiente o a la anterior, solo la del mismo autor e instante", () => {
     const primera = entregaEvaluada(ent({ id: "e1" }), ev(18, 10));
-    expect(deshacerEvaluacion(primera, 10, "30262232")).toMatchObject({
+    expect(deshacerEvaluacion(primera, 10, "45001237")).toMatchObject({
       ok: true,
       entrega: { estado: "entregada", evaluacion: null },
     });
     const segunda = entregaEvaluada(primera, ev(12, 20));
-    const r = deshacerEvaluacion(segunda, 20, "30262232");
+    const r = deshacerEvaluacion(segunda, 20, "45001237");
     expect(r.ok && r.entrega.evaluacion?.puntaje).toBe(18);
     expect(r.ok && "evaluacionAnterior" in r.entrega).toBe(false);
-    expect(deshacerEvaluacion(segunda, 10, "30262232")).toEqual({
+    expect(deshacerEvaluacion(segunda, 10, "45001237")).toEqual({
       ok: false,
       error: "cambio",
     });
@@ -293,7 +293,7 @@ describe("cola y vista", () => {
       mapas,
     });
     expect(v.eyebrow).toBe("Por evaluar · entrega 2 de 3");
-    expect(v.titulo).toBe("Yeilin Duarte");
+    expect(v.titulo).toBe("Raquel Figueroa");
     expect(v.anteriorHref).toBe(`${RUTA_EVALUAR}/c`);
     expect(v.saltarHref).toBe(`${RUTA_EVALUAR}/b`);
     expect(v.guardarHref).toBe(`${RUTA_EVALUAR}/b`);
@@ -303,7 +303,7 @@ describe("cola y vista", () => {
       tipo: "alumno",
       estilo: "fun-emoji",
       seed: "s-30000001",
-      nombre: "Yeilin Duarte",
+      nombre: "Raquel Figueroa",
     });
     expect(v.linea).toBe(
       "Identidad de marca · entregó el 25/10/2026, 4:12 p. m.",
@@ -315,7 +315,7 @@ describe("cola y vista", () => {
         imagenes: [
           {
             ruta: "entregas/x.jpg",
-            alt: "Respuesta de Yeilin Duarte a la pregunta 2",
+            alt: "Respuesta de Raquel Figueroa a la pregunta 2",
           },
         ],
       },
@@ -399,11 +399,11 @@ describe("cola y vista", () => {
       base: BASE_GRUPAL_CHIP,
       premio: "Cine",
     });
-    expect(v.linea).toContain("entregó Yeilin Duarte (capitán)");
+    expect(v.linea).toContain("entregó Raquel Figueroa (capitán)");
     expect(v.guardarHref).toBe(RUTA_EVALUAR);
     // Bloque «No participó» (D366): los de la entrega; sin documento, «Sin nombre»
     expect(v.integrantes).toEqual([
-      { cedula: "30000001", nombre: "Yeilin Duarte" },
+      { cedula: "30000001", nombre: "Raquel Figueroa" },
       { cedula: "30000002", nombre: TITULAR_DESCONOCIDO },
     ]);
     expect(v.inicial.noParticiparon).toEqual([]);
@@ -455,7 +455,7 @@ describe("«No participó» al guardar (D364)", () => {
         noParticiparon,
       }),
       basesVigentes: {},
-      autorId: "30262232",
+      autorId: "45001237",
       ahora: 5,
     });
 
@@ -532,13 +532,13 @@ describe("«No participó» al guardar (D364)", () => {
         version: 5,
       }),
       basesVigentes: {},
-      autorId: "30262232",
+      autorId: "45001237",
       ahora: 9,
     });
     if (!r2.ok) throw new Error("no armó");
     const segunda = entregaEvaluada(primera, r2.evaluacion);
     expect(segunda.evaluacion?.noParticiparon).toBeUndefined();
-    const d = deshacerEvaluacion(segunda, 9, "30262232");
+    const d = deshacerEvaluacion(segunda, 9, "45001237");
     expect(d.ok && d.entrega.evaluacion?.noParticiparon).toEqual(["30000002"]);
   });
 });

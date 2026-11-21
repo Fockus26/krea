@@ -24,7 +24,7 @@ import {
 } from "@/lib/panel";
 
 describe("saludoPorHora", () => {
-  test("cortes: 4/5, 11/12 y 18/19", () => {
+  test("esquivel: 4/5, 11/12 y 18/19", () => {
     expect(saludoPorHora(4)).toBe("Buenas noches");
     expect(saludoPorHora(5)).toBe("Buenos días");
     expect(saludoPorHora(11)).toBe("Buenos días");
@@ -41,7 +41,7 @@ describe("saludoPorHora", () => {
   });
   test("texto del h1", () => {
     expect(saludoTexto(9)).toBe("Buenos días, profe");
-    expect(saludoTexto(15, "Ana")).toBe("Buenas tardes, Ana");
+    expect(saludoTexto(15, "Adela")).toBe("Buenas tardes, Adela");
     expect(saludoTexto(9, nombreSaludoProfe("César Augusto Pérez"))).toBe(
       "Buenos días, profe César",
     );
@@ -108,20 +108,20 @@ describe("métricas", () => {
   test("raspados", () => {
     expect(detalleRaspados([])).toBe("Nadie por debajo de 10");
     expect(
-      detalleRaspados([{ nombre: "María de los Ángeles Méndez", nota: 8 }]),
-    ).toBe("María de los Ángeles Méndez · 8");
+      detalleRaspados([{ nombre: "Juana de los Alejandra Montero", nota: 8 }]),
+    ).toBe("Juana de los Alejandra Montero · 8");
     expect(
       detalleRaspados([
-        { nombre: "Ana Pérez", nota: 7.5 },
-        { nombre: "Luis Gil", nota: 9 },
+        { nombre: "Adela Pérez", nota: 7.5 },
+        { nombre: "Luis Iglesias", nota: 9 },
         { nombre: "Eva Rojas", nota: 3 },
       ]),
-    ).toBe("Ana Pérez · 7,5 y 2 más");
+    ).toBe("Adela Pérez · 7,5 y 2 más");
   });
   test("pie y botón", () => {
     expect(verTodasTexto(7)).toBe("Ver las 7");
     expect(verTodasTexto(1)).toBe("Ver la 1");
-    expect(evaluarAriaLabel("Jorge Quintero")).toBe("Evaluar a Jorge Quintero");
+    expect(evaluarAriaLabel("Mateo Paredes")).toBe("Evaluar a Mateo Paredes");
   });
 });
 
@@ -174,9 +174,9 @@ describe("entregaMetaTexto", () => {
         tarea: "Logo y paleta",
         tipo: "grupal",
         fecha: "25/10/2026",
-        entrego: "Yeilin",
+        entrego: "Raquel",
       }),
-    ).toBe("Logo y paleta · Grupal · entregó Yeilin el 25/10/2026");
+    ).toBe("Logo y paleta · Grupal · entregó Raquel el 25/10/2026");
     expect(
       entregaMetaTexto({
         tarea: "Identidad de marca",
@@ -204,22 +204,22 @@ describe("datos de ejemplo", () => {
     const d = panelDe();
     expect(d.entregas[0]?.nombre).toBe("5A-G2 Repostería");
     expect(d.entregas[0]?.meta).toBe(
-      "Logo y paleta del emprendimiento · Grupal · entregó Yeilin el 25/10/2026",
+      "Logo y paleta del emprendimiento · Grupal · entregó Raquel el 25/10/2026",
     );
-    expect(d.entregas[1]?.nombre).toBe("Jorge Quintero · 5A");
+    expect(d.entregas[1]?.nombre).toBe("Mateo Paredes · 5A");
   });
   test("métricas reales del seed: 12 / 69 evaluados y 1 raspado", () => {
     const d = panelDe();
     expect(d.avance["5A"].evaluados + d.avance["5C"].evaluados).toBe(12);
     expect(d.avance["5A"].total + d.avance["5C"].total).toBe(69);
     expect(d.raspados).toEqual([
-      { seccion: "5A", nombre: "María de los Ángeles Méndez", nota: 8 },
+      { seccion: "5A", nombre: "Juana de los Alejandra Montero", nota: 8 },
     ]);
   });
   test("ajustes con nombres del seed", () => {
     expect(panelDe().ajustes.map((a) => a.nombre)).toEqual([
-      "Jorge Quintero",
-      "Klenyerber Corredor",
+      "Mateo Paredes",
+      "Pablo Escobar",
       "Equipo 5A-G3 Ropa",
       "Equipo 5C-G1",
     ]);

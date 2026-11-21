@@ -501,7 +501,7 @@ export function TaskBuilder({
     </Dialog>
   );
 
-  // Eliminar (una tarea ya guardada, cualquier modo; D243): un diálogo para los dos cortes. Al
+  // Eliminar (una tarea ya guardada, cualquier modo; D243): un diálogo para los dos esquivel. Al
   // cancelar, el foco vuelve al botón; al eliminar, la página cambia a la lista.
   const eliminarTarea = acciones?.eliminar;
   const abrioEliminar = React.useRef<HTMLButtonElement | null>(null);

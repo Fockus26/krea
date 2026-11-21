@@ -13,8 +13,8 @@ import {
 
 const valido = {
   cedula: "31234567",
-  nombres: "Ana María",
-  apellidos: "Pérez Gil",
+  nombres: "Adela Juana",
+  apellidos: "Pérez Iglesias",
   seccion: "5A",
   email: "",
   equipoId: null,
@@ -22,8 +22,8 @@ const valido = {
 
 describe("zCrearAlumno (D267)", () => {
   test("acepta el formulario y deja el email en minúsculas", () => {
-    const d = zCrearAlumno.parse({ ...valido, email: " Ana@Gmail.COM " });
-    expect(d.email).toBe("ana@gmail.com");
+    const d = zCrearAlumno.parse({ ...valido, email: " Adela@Gmail.COM " });
+    expect(d.email).toBe("adela@gmail.com");
     expect(d.equipoId).toBeNull();
   });
 
@@ -62,7 +62,7 @@ describe("zCrearAlumno (D267)", () => {
     expect(
       validarAlumnoNuevo({
         cedula: "31234567",
-        primerNombre: "Ana",
+        primerNombre: "Adela",
         primerApellido: "Pérez",
         email: "",
       }),

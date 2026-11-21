@@ -25,9 +25,9 @@ import {
 } from "@/lib/vistas-estudiante";
 
 const CAP = "30000001";
-const ANA = "30000002";
+const ADELA = "30000002";
 const LUIS = "30000003";
-const MIEMBROS = [CAP, ANA, LUIS];
+const MIEMBROS = [CAP, ADELA, LUIS];
 const CLAVE = {
   entregaId: "t1__eq",
   preguntaId: "p1",
@@ -37,7 +37,7 @@ const CLAVE = {
 
 const parte = (o: Partial<Parte> = {}): Parte => ({
   ...CLAVE,
-  asignado: ANA,
+  asignado: ADELA,
   estado: "asignada",
   respuesta: null,
   entregadaEn: null,
@@ -82,13 +82,13 @@ describe("permisoParte", () => {
       ok: true,
       permiso: { entregaId: "t1__eq", equipoId: "eq", capitan: true },
     });
-    expect(permisoParte(u(ANA), tarea, "t1", equipo, AHORA)).toMatchObject({
+    expect(permisoParte(u(ADELA), tarea, "t1", equipo, AHORA)).toMatchObject({
       ok: true,
       permiso: { entregaId: "t1__eq", capitan: false },
     });
     expect(
       permisoParte(
-        u(ANA),
+        u(ADELA),
         { ...tarea, tipo: "individual" },
         "t1",
         equipo,
@@ -96,11 +96,17 @@ describe("permisoParte", () => {
       ),
     ).toEqual({ ok: false, error: "no-existe" });
     expect(
-      permisoParte({ ...u(ANA), equipoId: "otro" }, tarea, "t1", equipo, AHORA),
+      permisoParte(
+        { ...u(ADELA), equipoId: "otro" },
+        tarea,
+        "t1",
+        equipo,
+        AHORA,
+      ),
     ).toEqual({ ok: false, error: "sin-equipo" });
     expect(
       permisoParte(
-        u(ANA),
+        u(ADELA),
         { ...tarea, estado: "evaluada" },
         "t1",
         equipo,
@@ -111,7 +117,7 @@ describe("permisoParte", () => {
 
   test("vencida, cerrada para el reparto; con prórroga del equipo, abierta (D451, D452)", () => {
     const despues = Date.UTC(2026, 10, 21, 15);
-    expect(permisoParte(u(ANA), tarea, "t1", equipo, despues)).toEqual({
+    expect(permisoParte(u(ADELA), tarea, "t1", equipo, despues)).toEqual({
       ok: false,
       error: "cerrada",
     });
@@ -120,14 +126,14 @@ describe("permisoParte", () => {
       prorrogas: { eq: { fecha: "2026-11-23", hora: null } },
     };
     expect(
-      permisoParte(u(ANA), conProrroga, "t1", equipo, despues),
+      permisoParte(u(ADELA), conProrroga, "t1", equipo, despues),
     ).toMatchObject({ ok: true, permiso: { capitan: false } });
   });
 });
 
 describe("aplicarParte (D417)", () => {
   test("asignar crea la parte; al mismo no cambia nada; reasignar descarta la respuesta", () => {
-    expect(aplicar(null, { tipo: "asignar", asignado: ANA })).toEqual({
+    expect(aplicar(null, { tipo: "asignar", asignado: ADELA })).toEqual({
       ok: true,
       parte: parte({ actualizadoEn: 9 }),
       sinUso: [],
@@ -136,7 +142,7 @@ describe("aplicarParte (D417)", () => {
       estado: "entregada",
       respuesta: { imagenPath: "entregas/t1/c/a.jpg" },
     });
-    expect(aplicar(conImagen, { tipo: "asignar", asignado: ANA })).toEqual({
+    expect(aplicar(conImagen, { tipo: "asignar", asignado: ADELA })).toEqual({
       ok: true,
       parte: conImagen,
       sinUso: [],
@@ -167,7 +173,7 @@ describe("aplicarParte (D417)", () => {
         null,
         { tipo: "asignar", asignado: LUIS },
         {
-          cedula: ANA,
+          cedula: ADELA,
           capitan: false,
         },
       ),
@@ -175,11 +181,11 @@ describe("aplicarParte (D417)", () => {
   });
 
   test("entregar: solo el asignado y mientras no esté aceptada; la imagen vieja queda sin uso", () => {
-    const ana = { cedula: ANA, capitan: false };
+    const adela = { cedula: ADELA, capitan: false };
     const r = aplicar(
       parte({ estado: "devuelta", respuesta: { imagenPath: "vieja.jpg" } }),
       { tipo: "entregar", respuesta: { imagenPath: "nueva.jpg" } },
-      ana,
+      adela,
     );
     expect(r).toEqual({
       ok: true,
@@ -205,7 +211,7 @@ describe("aplicarParte (D417)", () => {
       aplicar(
         parte({ estado: "aceptada" }),
         { tipo: "entregar", respuesta: { texto: "x" } },
-        ana,
+        adela,
       ),
     ).toEqual({ ok: false, error: "estado" });
   });
@@ -238,7 +244,7 @@ describe("aplicarParte (D417)", () => {
     const devuelta = parte({ estado: "devuelta", respuesta: { texto: "a" } });
     expect(aplicar(devuelta, { tipo: "tomar" })).toMatchObject({
       ok: true,
-      parte: { estado: "tomada", asignado: ANA, respuesta: { texto: "a" } },
+      parte: { estado: "tomada", asignado: ADELA, respuesta: { texto: "a" } },
     });
     for (const estado of ["entregada", "aceptada", "tomada"] as const)
       expect(aplicar(parte({ estado }), { tipo: "tomar" })).toEqual({
@@ -250,23 +256,26 @@ describe("aplicarParte (D417)", () => {
       error: "estado",
     });
     expect(
-      aplicar(parte(), { tipo: "tomar" }, { cedula: ANA, capitan: false }),
+      aplicar(parte(), { tipo: "tomar" }, { cedula: ADELA, capitan: false }),
     ).toEqual({ ok: false, error: "no-capitan" });
   });
 
   test("tomada: el integrante ya no entrega; asignarla al mismo se la devuelve; a otro, como siempre", () => {
-    const ana = { cedula: ANA, capitan: false };
+    const adela = { cedula: ADELA, capitan: false };
     const tomada = parte({ estado: "tomada", respuesta: { texto: "a" } });
     expect(
-      aplicar(tomada, { tipo: "entregar", respuesta: { texto: "x" } }, ana),
+      aplicar(tomada, { tipo: "entregar", respuesta: { texto: "x" } }, adela),
     ).toEqual({ ok: false, error: "no-asignada" });
-    expect(aplicar(tomada, { tipo: "asignar", asignado: ANA })).toEqual({
+    expect(aplicar(tomada, { tipo: "asignar", asignado: ADELA })).toEqual({
       ok: true,
       parte: { ...tomada, estado: "devuelta", actualizadoEn: 9 },
       sinUso: [],
     });
     expect(
-      aplicar(parte({ estado: "tomada" }), { tipo: "asignar", asignado: ANA }),
+      aplicar(parte({ estado: "tomada" }), {
+        tipo: "asignar",
+        asignado: ADELA,
+      }),
     ).toMatchObject({ ok: true, parte: { estado: "asignada" } });
     expect(aplicar(tomada, { tipo: "asignar", asignado: LUIS })).toEqual({
       ok: true,
@@ -299,16 +308,16 @@ describe("sinParteDe (D420)", () => {
   });
 
   test("tomada (D461): no cuenta como entregada; si entregó otra, no queda marcado", () => {
-    expect(sinParteDe([p(ANA, "tomada")], MIEMBROS, CAP)).toEqual([ANA]);
+    expect(sinParteDe([p(ADELA, "tomada")], MIEMBROS, CAP)).toEqual([ADELA]);
     expect(
-      sinParteDe([p(ANA, "tomada"), p(ANA, "aceptada")], MIEMBROS, CAP),
+      sinParteDe([p(ADELA, "tomada"), p(ADELA, "aceptada")], MIEMBROS, CAP),
     ).toEqual([]);
   });
 
   test("tenía pregunta y no entregó ninguna; la entregada sin aceptar cuenta", () => {
     expect(
       sinParteDe(
-        [p(ANA, "entregada"), p(ANA, "asignada"), p(LUIS, "devuelta")],
+        [p(ADELA, "entregada"), p(ADELA, "asignada"), p(LUIS, "devuelta")],
         MIEMBROS,
         CAP,
       ),
@@ -317,7 +326,7 @@ describe("sinParteDe (D420)", () => {
 
   test("sin reparto o sin pregunta: nadie; quien envía nunca", () => {
     expect(sinParteDe([], MIEMBROS, CAP)).toEqual([]);
-    expect(sinParteDe([p(ANA, "aceptada")], MIEMBROS, CAP)).toEqual([]);
+    expect(sinParteDe([p(ADELA, "aceptada")], MIEMBROS, CAP)).toEqual([]);
     expect(sinParteDe([p(CAP, "asignada")], MIEMBROS, CAP)).toEqual([]);
     // Fuera de los integrantes de la entrega, no cuenta
     expect(sinParteDe([p("39999999", "asignada")], MIEMBROS, CAP)).toEqual([]);
@@ -341,16 +350,18 @@ describe("vistas del reparto", () => {
   ];
 
   test("el integrante ve solo su respuesta; sin preguntas, null", () => {
-    expect(partesDeIntegrante(preguntas, partes, MIEMBROS, CAP, ANA)).toEqual([
-      {
-        mia: true,
-        estado: "aceptada",
-        respuesta: { tipo: "texto", texto: "Hecha" },
-      },
-      { mia: false, asignado: LUIS },
-      { mia: false, asignado: null },
-    ]);
-    expect(partesDeIntegrante(preguntas, [], MIEMBROS, CAP, ANA)).toBeNull();
+    expect(partesDeIntegrante(preguntas, partes, MIEMBROS, CAP, ADELA)).toEqual(
+      [
+        {
+          mia: true,
+          estado: "aceptada",
+          respuesta: { tipo: "texto", texto: "Hecha" },
+        },
+        { mia: false, asignado: LUIS },
+        { mia: false, asignado: null },
+      ],
+    );
+    expect(partesDeIntegrante(preguntas, [], MIEMBROS, CAP, ADELA)).toBeNull();
   });
 
   test("tomada (D461): deja de ser del integrante, con aviso; la de otro también la responde el capitán", () => {
@@ -360,7 +371,7 @@ describe("vistas del reparto", () => {
     ];
     // Todas las suyas tomadas: sigue viendo el reparto (como lector, con el aviso)
     expect(
-      partesDeIntegrante(preguntas, conTomadas, MIEMBROS, CAP, ANA),
+      partesDeIntegrante(preguntas, conTomadas, MIEMBROS, CAP, ADELA),
     ).toEqual([
       { mia: false, asignado: null, tomada: true },
       { mia: false, asignado: null },
@@ -372,7 +383,7 @@ describe("vistas del reparto", () => {
     const qs = [{ id: "p1" }, { id: "p2" }, { id: "p3" }];
     const aceptada = parte({
       estado: "aceptada",
-      respuesta: { texto: "De Ana" },
+      respuesta: { texto: "De Adela" },
     });
     const tomada = parte({
       preguntaId: "p2",
@@ -381,7 +392,7 @@ describe("vistas del reparto", () => {
     });
     expect(repartoParaEnviar(qs, [aceptada, tomada], MIEMBROS, CAP)).toEqual({
       ok: true,
-      respuestas: { p1: { texto: "De Ana" } },
+      respuestas: { p1: { texto: "De Adela" } },
     });
     for (const estado of ["asignada", "entregada", "devuelta"] as const)
       expect(
@@ -427,7 +438,7 @@ describe("vistas del reparto", () => {
 
   test("la ruta en vivo (D465): solo un alumno con equipo y sin contraseña temporal", () => {
     const alumno = {
-      uid: ANA,
+      uid: ADELA,
       rol: "estudiante" as const,
       seccion: "5A" as const,
       equipoId: "eq",
@@ -442,32 +453,32 @@ describe("vistas del reparto", () => {
   });
 
   test("copy del capitán (D462): candado por estado y lo que falta aceptar", () => {
-    expect(bloqueoTexto("asignada", "Ana")).toBe(
-      "Asignada a Ana: aún no te la entrega.",
+    expect(bloqueoTexto("asignada", "Adela")).toBe(
+      "Asignada a Adela: aún no te la entrega.",
     );
-    expect(bloqueoTexto("aceptada", "Ana")).toBe(
-      "Aceptada: es la respuesta de Ana.",
+    expect(bloqueoTexto("aceptada", "Adela")).toBe(
+      "Aceptada: es la respuesta de Adela.",
     );
     expect(faltaAceptarTexto([])).toBeNull();
-    expect(faltaAceptarTexto([{ numero: 2, nombre: "Ana" }])).toBe(
-      "Falta aceptar la pregunta 2 (Ana)",
+    expect(faltaAceptarTexto([{ numero: 2, nombre: "Adela" }])).toBe(
+      "Falta aceptar la pregunta 2 (Adela)",
     );
     expect(
       faltaAceptarTexto([
-        { numero: 1, nombre: "Ana" },
+        { numero: 1, nombre: "Adela" },
         { numero: 2, nombre: "Luis" },
         { numero: 4, nombre: "Eva" },
       ]),
-    ).toBe("Falta aceptar las preguntas 1 (Ana), 2 (Luis) y 4 (Eva)");
+    ).toBe("Falta aceptar las preguntas 1 (Adela), 2 (Luis) y 4 (Eva)");
   });
 
   test("aviso al entregar: singular, plural y nadie", () => {
     expect(avisoSinParteTexto([])).toBeNull();
-    expect(avisoSinParteTexto(["Ana"])).toBe(
-      "Ana quedará como “No participó”: tenía preguntas y no entregó ninguna.",
+    expect(avisoSinParteTexto(["Adela"])).toBe(
+      "Adela quedará como “No participó”: tenía preguntas y no entregó ninguna.",
     );
-    expect(avisoSinParteTexto(["Ana", "Luis", "Eva"])).toBe(
-      "Ana, Luis y Eva quedarán como “No participó”: tenían preguntas y no entregaron ninguna.",
+    expect(avisoSinParteTexto(["Adela", "Luis", "Eva"])).toBe(
+      "Adela, Luis y Eva quedarán como “No participó”: tenían preguntas y no entregaron ninguna.",
     );
   });
 });
@@ -478,7 +489,7 @@ describe("zEntrega.sinParte", () => {
     tipo: "grupal",
     titularId: "eq",
     seccion: "5A",
-    integrantes: [CAP, ANA],
+    integrantes: [CAP, ADELA],
     estado: "entregada",
     respuestas: {},
     enviadaPor: CAP,
@@ -488,7 +499,7 @@ describe("zEntrega.sinParte", () => {
 
   test("opcional; solo en grupales y entre sus integrantes", () => {
     expect(zEntrega.safeParse(grupal).success).toBe(true);
-    expect(zEntrega.safeParse({ ...grupal, sinParte: [ANA] }).success).toBe(
+    expect(zEntrega.safeParse({ ...grupal, sinParte: [ADELA] }).success).toBe(
       true,
     );
     expect(zEntrega.safeParse({ ...grupal, sinParte: [LUIS] }).success).toBe(
@@ -527,7 +538,7 @@ describe("vistaEvaluar con reparto (D420)", () => {
     tipo: "grupal",
     titularId: "eq",
     seccion: "5A",
-    integrantes: [CAP, ANA, LUIS],
+    integrantes: [CAP, ADELA, LUIS],
     estado: "entregada",
     respuestas: { p1: { texto: "Hola" } },
     enviadaPor: CAP,
@@ -601,7 +612,7 @@ describe("repartoVista (D422)", () => {
   });
   const companeros = [
     persona(CAP, "Carla"),
-    persona(ANA, "Ana"),
+    persona(ADELA, "Adela"),
     persona(LUIS, "Luis"),
   ];
   const partes = [
@@ -638,9 +649,9 @@ describe("repartoVista (D422)", () => {
     const r = repartoVista({ ...e, urls });
     expect(r?.modo).toBe("capitan");
     if (r?.modo !== "capitan") return;
-    expect(r.integrantes.map((m) => m.cedula)).toEqual([ANA, LUIS]);
+    expect(r.integrantes.map((m) => m.cedula)).toEqual([ADELA, LUIS]);
     expect(r.filas.map((f) => [f.asignado, f.nombre, f.estado])).toEqual([
-      [ANA, "Ana Pérez", "aceptada"],
+      [ADELA, "Adela Pérez", "aceptada"],
       [LUIS, "Luis Pérez", "entregada"],
     ]);
     expect(r.filas[1]?.respuesta).toMatchObject({
@@ -650,10 +661,10 @@ describe("repartoVista (D422)", () => {
     // Lo aceptado ya no precarga un campo: va en solo lectura y entra desde el servidor (D463)
     expect(r.inicial).toEqual({});
     expect(r.bloqueos.p1).toEqual({
-      texto: "Aceptada: es la respuesta de Ana Pérez.",
+      texto: "Aceptada: es la respuesta de Adela Pérez.",
       respuesta: { tipo: "texto", texto: "Hecha" },
       aceptada: true,
-      nombre: "Ana Pérez",
+      nombre: "Adela Pérez",
       tomable: false,
     });
     expect(r.bloqueos.p2).toMatchObject({
@@ -674,7 +685,7 @@ describe("repartoVista (D422)", () => {
     const r = repartoVista({
       ...e,
       partes: [
-        parte({ estado: "tomada", respuesta: { texto: "De Ana" } }),
+        parte({ estado: "tomada", respuesta: { texto: "De Adela" } }),
         parte({ preguntaId: "p2", asignado: LUIS, estado: "asignada" }),
       ],
       urls,
@@ -686,14 +697,14 @@ describe("repartoVista (D422)", () => {
       aceptada: false,
       tomable: true,
     });
-    expect(r.inicial).toEqual({ p1: "De Ana" });
+    expect(r.inicial).toEqual({ p1: "De Adela" });
     expect(r.aviso).toBe(
-      "Ana Pérez y Luis Pérez quedarán como “No participó”: tenían preguntas y no entregaron ninguna.",
+      "Adela Pérez y Luis Pérez quedarán como “No participó”: tenían preguntas y no entregaron ninguna.",
     );
   });
 
   test("integrante: la tomada lleva el aviso del capitán (D461)", () => {
-    const e = entrada({ ...cabecera, estado: "lector", capitan: null }, ANA);
+    const e = entrada({ ...cabecera, estado: "lector", capitan: null }, ADELA);
     const r = repartoVista({
       ...e,
       partes: [parte({ estado: "tomada" })],
@@ -714,7 +725,7 @@ describe("repartoVista (D422)", () => {
   });
 
   test("integrante: solo su parte y su imagen; la otra, bloqueada con el nombre de quien la tiene", () => {
-    const e = entrada({ ...cabecera, estado: "lector", capitan: null }, ANA);
+    const e = entrada({ ...cabecera, estado: "lector", capitan: null }, ADELA);
     expect(rutasReparto(e)).toEqual([]);
     const r = repartoVista({ ...e, urls });
     expect(r).toEqual({
@@ -733,7 +744,7 @@ describe("repartoVista (D422)", () => {
   });
 
   test("sin preguntas asignadas o con la tarea entregada: nada", () => {
-    const e = entrada({ ...cabecera, estado: "lector", capitan: null }, ANA);
+    const e = entrada({ ...cabecera, estado: "lector", capitan: null }, ADELA);
     expect(repartoVista({ ...e, partes: [], urls })).toBeNull();
     expect(
       repartoVista({

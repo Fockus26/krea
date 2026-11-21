@@ -65,7 +65,7 @@ export function eyebrowRanking(
   return `Sección ${seccion} · ${cantidad} ${unidad}`;
 }
 
-/** Subtítulo de la fila de equipo: "5 integrantes · capitán Christian Sepúlveda" (D075). */
+/** Subtítulo de la fila de equipo: "5 integrantes · capitán Diego Soler" (D075). */
 export function subtituloEquipo(
   integrantes: number,
   capitan: string,
@@ -127,7 +127,7 @@ export type Movimiento = { id: string; hace: number /* epoch ms */ } & (
   | { tipo: "puntos"; nombre: string; valor: number; motivo: string }
 );
 
-/** "María Méndez subió al puesto 4" / "Jorge Quintero · Participación destacada". */
+/** "Juana Montero subió al puesto 4" / "Mateo Paredes · Participación destacada". */
 export function movimientoTexto(m: Movimiento): string {
   if (m.tipo === "puntos") return `${m.nombre} · ${m.motivo}`;
   return `${m.nombre} ${m.tipo === "sube" ? "subió" : "bajó"} al puesto ${m.puesto}`;

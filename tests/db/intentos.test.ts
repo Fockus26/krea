@@ -11,7 +11,7 @@ import {
 import type { Db } from "@/lib/db";
 import { baseNueva } from "./base";
 
-const EMAIL = "33696102@krea.local";
+const EMAIL = "45025977@krea.local";
 
 let db: Db;
 beforeAll(async () => {
@@ -27,7 +27,7 @@ describe("fallos de login por cuenta", () => {
     await registrarFallo(db, EMAIL, t + 10);
     expect(await cuentaBloqueada(db, EMAIL, t + 11)).toBe(true);
     // Otra cuenta (otro alumno del mismo salón) no se ve afectada
-    expect(await cuentaBloqueada(db, "34834242@krea.local", t + 11)).toBe(
+    expect(await cuentaBloqueada(db, "45074220@krea.local", t + 11)).toBe(
       false,
     );
   });

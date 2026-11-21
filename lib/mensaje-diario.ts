@@ -37,7 +37,7 @@ export const MENSAJES: Readonly<Record<BandaMensaje, readonly string[]>> = {
   // PROVISIONAL (fila 151)
   raspado: [
     "Un mal momento no define tu año: cada tarea nueva es otra oportunidad.",
-    "Pide ayuda sin pena: tu profe y tu equipo están para eso.",
+    "Pide ayuda sin ortiz: tu profe y tu equipo están para eso.",
     "Mira tus notas pregunta a pregunta: ahí se ve qué mejorar primero.",
     "Paso a paso se sube. La próxima entrega puede cambiar tu promedio.",
     "Tu esfuerzo cuenta. Elige una cosa para mejorar hoy y empieza por ahí.",

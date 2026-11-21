@@ -12,14 +12,14 @@ import {
 
 describe("contraseña temporal y admin (D231, D232)", () => {
   const temporalEst: Sesion = {
-    uid: "33272397",
+    uid: "45009896",
     rol: "estudiante",
     seccion: "5A",
     equipoId: null,
     debeCambiarPassword: true,
   };
   const temporalProfe: Sesion = {
-    uid: "32888687",
+    uid: "45004948",
     rol: "profesor",
     seccion: null,
     equipoId: null,
@@ -55,20 +55,20 @@ describe("contraseña temporal y admin (D231, D232)", () => {
 
   test("claims → marcas; admin solo en un profesor", () => {
     expect(
-      sesionDeClaims("30262232", { rol: "profesor", admin: true }),
-    ).toEqual({ ...profe, uid: "30262232", admin: true });
+      sesionDeClaims("45001237", { rol: "profesor", admin: true }),
+    ).toEqual({ ...profe, uid: "45001237", admin: true });
     expect(
-      sesionDeClaims("33272397", {
+      sesionDeClaims("45009896", {
         rol: "estudiante",
         seccion: "5A",
         admin: true,
       })?.admin,
     ).toBeUndefined();
     expect(
-      sesionDeClaims("30262232", { rol: "profesor", admin: "true" })?.admin,
+      sesionDeClaims("45001237", { rol: "profesor", admin: "true" })?.admin,
     ).toBeUndefined();
     expect(
-      sesionDeClaims("32888687", {
+      sesionDeClaims("45004948", {
         rol: "profesor",
         debeCambiarPassword: true,
       })?.debeCambiarPassword,
@@ -77,7 +77,7 @@ describe("contraseña temporal y admin (D231, D232)", () => {
 });
 
 const est: Sesion = {
-  uid: "33272397",
+  uid: "45009896",
   rol: "estudiante",
   seccion: "5A",
   equipoId: "5a-g2",
@@ -138,7 +138,7 @@ describe("redireccion", () => {
 describe("sesionDeClaims", () => {
   test("claims válidos", () => {
     expect(
-      sesionDeClaims("33272397", {
+      sesionDeClaims("45009896", {
         rol: "estudiante",
         seccion: "5A",
         equipoId: "5a-g2",
@@ -147,21 +147,21 @@ describe("sesionDeClaims", () => {
     expect(sesionDeClaims("10000000", { rol: "profesor" })).toEqual(profe);
   });
   test("sin rol, rol desconocido, estudiante sin sección o uid que no es cédula → null", () => {
-    expect(sesionDeClaims("33272397", {})).toBeNull();
-    expect(sesionDeClaims("33272397", { rol: "admin" })).toBeNull();
-    expect(sesionDeClaims("33272397", { rol: "estudiante" })).toBeNull();
+    expect(sesionDeClaims("45009896", {})).toBeNull();
+    expect(sesionDeClaims("45009896", { rol: "admin" })).toBeNull();
+    expect(sesionDeClaims("45009896", { rol: "estudiante" })).toBeNull();
     expect(sesionDeClaims("abc", { rol: "profesor" })).toBeNull();
   });
   test("la sección es cualquier código año + letra del catálogo (D317); lo demás no", () => {
     expect(
-      sesionDeClaims("33272397", { rol: "estudiante", seccion: "4B" })?.seccion,
+      sesionDeClaims("45009896", { rol: "estudiante", seccion: "4B" })?.seccion,
     ).toBe("4B");
     expect(
       sesionDeClaims("10000000", { rol: "profesor", seccion: "1A" })?.seccion,
     ).toBe("1A");
     for (const mala of ["5a", "0A", "AA", "5", 5]) {
       expect(
-        sesionDeClaims("33272397", { rol: "estudiante", seccion: mala }),
+        sesionDeClaims("45009896", { rol: "estudiante", seccion: mala }),
       ).toBeNull();
       expect(
         sesionDeClaims("10000000", { rol: "profesor", seccion: mala })?.seccion,
@@ -170,14 +170,14 @@ describe("sesionDeClaims", () => {
   });
   test("equipoId vacío o raro → null", () => {
     expect(
-      sesionDeClaims("33272397", {
+      sesionDeClaims("45009896", {
         rol: "estudiante",
         seccion: "5C",
         equipoId: "",
       })?.equipoId,
     ).toBeNull();
     expect(
-      sesionDeClaims("33272397", {
+      sesionDeClaims("45009896", {
         rol: "estudiante",
         seccion: "5C",
         equipoId: 3,

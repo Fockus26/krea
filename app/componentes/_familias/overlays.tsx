@@ -123,7 +123,7 @@ function Dialogos() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>¿Quitar a Wendoly Ponce del equipo?</DialogTitle>
+              <DialogTitle>¿Quitar a Paola Padilla del equipo?</DialogTitle>
               <DialogDescription>5A-G2 Repostería</DialogDescription>
             </DialogHeader>
             <p className="text-body">
@@ -202,14 +202,14 @@ function Menus() {
   return (
     <Muestra title="Menú contextual">
       <div className="flex flex-wrap items-center gap-3">
-        <span className="text-body-strong">Wendoly Ponce</span>
+        <span className="text-body-strong">Paola Padilla</span>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
               size="sm"
               icon
-              aria-label="Mover a Wendoly Ponce a otro equipo"
+              aria-label="Mover a Paola Padilla a otro equipo"
             >
               <ArrowRightLeft aria-hidden="true" />
             </Button>

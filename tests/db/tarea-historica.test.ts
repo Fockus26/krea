@@ -19,7 +19,7 @@ let base: Db;
 const db = () => base;
 
 const AHORA = Date.UTC(2026, 10, 10, 15);
-const PROFE = "30262232";
+const PROFE = "45001237";
 const A1 = "39800001";
 const A2 = "39800002";
 const C1 = "39800003"; // 5C

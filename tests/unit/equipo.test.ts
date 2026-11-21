@@ -18,8 +18,8 @@ describe("textos", () => {
     expect(premioGanadoTexto("Presentación de la marca", 19)).toBe(
       "Mejor nota en Presentación de la marca · 19",
     );
-    expect(nombreIntegranteTexto("Yeilin Duarte", true)).toBe(
-      "Yeilin Duarte, tú",
+    expect(nombreIntegranteTexto("Raquel Figueroa", true)).toBe(
+      "Raquel Figueroa, tú",
     );
   });
 });

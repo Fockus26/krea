@@ -38,8 +38,8 @@ const UUID = "0b5c3a52-7d0e-4f53-9d0b-0f1e2d3c4b5a";
 const usuario = (cedula: string, extra: Partial<Usuario> = {}): Usuario => ({
   cedula,
   rol: "estudiante",
-  nombres: "Ana María",
-  apellidos: "Pérez Gil",
+  nombres: "Adela Juana",
+  apellidos: "Pérez Iglesias",
   seccion: "5A",
   equipoId: "5a-g2",
   base: 20,
@@ -48,12 +48,15 @@ const usuario = (cedula: string, extra: Partial<Usuario> = {}): Usuario => ({
   ...extra,
 });
 
-const CAPITAN = usuario("33272397", { nombres: "Yeilin", apellidos: "Duarte" });
-const INTEGRANTE = usuario("33498239", {
-  nombres: "Wendoly",
-  apellidos: "Ponce",
+const CAPITAN = usuario("45009896", {
+  nombres: "Raquel",
+  apellidos: "Figueroa",
 });
-const SIN_EQUIPO = usuario("33456636", { equipoId: null });
+const INTEGRANTE = usuario("45021029", {
+  nombres: "Paola",
+  apellidos: "Padilla",
+});
+const SIN_EQUIPO = usuario("45019792", { equipoId: null });
 const EQUIPO: ConId<Equipo> = {
   id: "5a-g2",
   nombre: "5A-G2 Repostería",
@@ -217,7 +220,7 @@ describe("claves de imagen (D195)", () => {
   });
 
   test("claveImagen / esImagenDe", async () => {
-    const c = await carpetaEntrega("competencia__33272397");
+    const c = await carpetaEntrega("competencia__45009896");
     const k = claveImagen("competencia", c, UUID);
     expect(k).toBe(`entregas/competencia/${c}/${UUID}.jpg`);
     expect(esImagenDe(k, "competencia", c)).toBe(true);
@@ -517,8 +520,8 @@ describe("borrador del dispositivo (D196)", () => {
   });
 
   test("clave por alumno", () => {
-    expect(claveBorrador("competencia", "33272397")).toBe(
-      "krea-borrador-competencia-33272397",
+    expect(claveBorrador("competencia", "45009896")).toBe(
+      "krea-borrador-competencia-45009896",
     );
   });
 });
@@ -572,7 +575,7 @@ describe("entregaVista", () => {
     const c = entregaVista(datos(CAPITAN, [GRUPAL]), GRUPAL.id, companeros);
     expect(c).toMatchObject({
       estado: "responder",
-      autor: "Yeilin",
+      autor: "Raquel",
       eyebrow: "Grupal · 5A-G2 Repostería",
       vence: "Vence 07/11/2026",
       puntos: "20 pts · 2 preguntas",
@@ -581,7 +584,7 @@ describe("entregaVista", () => {
     const l = entregaVista(datos(INTEGRANTE, [GRUPAL]), GRUPAL.id, companeros);
     expect(l).toMatchObject({
       estado: "lector",
-      capitan: { nombre: "Yeilin Duarte", corto: "Yeilin" },
+      capitan: { nombre: "Raquel Figueroa", corto: "Raquel" },
     });
   });
 
@@ -613,8 +616,8 @@ describe("entregaVista", () => {
     );
     expect(v).toMatchObject({
       estado: "entregada",
-      quien: "Yeilin Duarte",
-      autor: "Yeilin",
+      quien: "Raquel Figueroa",
+      autor: "Raquel",
       fecha: "05/11/2026",
       hora: "4:12 p. m.",
       evaluada: false,
@@ -687,7 +690,7 @@ describe("entregaVista grupal por persona (D248)", () => {
       ["Sube una foto", "imagen", 12],
       ["¿A qué precio?", "texto", 8],
     ]);
-    expect(v.capitan).toMatchObject({ corto: "Yeilin" });
+    expect(v.capitan).toMatchObject({ corto: "Raquel" });
   });
 
   test("enviada: el integrante ve las respuestas del capitán, no el formulario", () => {
@@ -698,8 +701,8 @@ describe("entregaVista grupal por persona (D248)", () => {
     );
     if (v.estado !== "entregada") throw new Error(v.estado);
     expect(v).toMatchObject({
-      quien: "Yeilin Duarte",
-      autor: "Yeilin",
+      quien: "Raquel Figueroa",
+      autor: "Raquel",
       evaluada: false,
       notaHref: null,
     });

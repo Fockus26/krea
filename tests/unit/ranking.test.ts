@@ -19,8 +19,8 @@ const e = (id: string, puntos: number, apellido = id) => ({
 
 describe("primerApellido", () => {
   test("primera palabra", () => {
-    expect(primerApellido("Quintero Arenas")).toBe("Quintero");
-    expect(primerApellido("  Morón  Hernández ")).toBe("Morón");
+    expect(primerApellido("Paredes Aranda")).toBe("Paredes");
+    expect(primerApellido("  Nieto  Lucena ")).toBe("Nieto");
     expect(primerApellido("")).toBe("");
   });
 });
@@ -38,7 +38,7 @@ describe("rankCompetition", () => {
 
   test("desempata por primer apellido, con tildes en español", () => {
     const r = rankCompetition([
-      e("1", 12, "Zambrano"),
+      e("1", 12, "Zapata"),
       e("2", 12, "Álvarez"),
       e("3", 12, "Blanco"),
       e("4", 12, "Ávila"),
@@ -47,7 +47,7 @@ describe("rankCompetition", () => {
       "Álvarez",
       "Ávila",
       "Blanco",
-      "Zambrano",
+      "Zapata",
     ]);
     expect(r.every((x) => x.puesto === 1 && x.empate)).toBe(true);
   });

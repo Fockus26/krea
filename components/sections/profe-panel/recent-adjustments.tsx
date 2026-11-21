@@ -16,7 +16,7 @@ import { ajusteMetaTexto, chipAjuste } from "@/lib/panel";
 export type FilaAjuste = {
   id: string;
   seccion: SeccionId;
-  /** "Jorge Quintero" o "Equipo 5A-G3 Ropa". */
+  /** "Mateo Paredes" o "Equipo 5A-G3 Ropa". */
   nombre: string;
   valor: number;
   motivo: string;

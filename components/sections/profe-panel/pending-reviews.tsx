@@ -28,7 +28,7 @@ export type FilaEvaluar = {
   id: string;
   seccion: SeccionId;
   tipo: "individual" | "grupal";
-  /** Lo que se lee en la fila: "5A-G2 Repostería" o "Jorge Quintero · 5A". */
+  /** Lo que se lee en la fila: "5A-G2 Repostería" o "Mateo Paredes · 5A". */
   nombre: string;
   /** Nombre para el botón: "Evaluar a {nombreCorto}". */
   nombreCorto: string;

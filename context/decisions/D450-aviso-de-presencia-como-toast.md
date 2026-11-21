@@ -1,4 +1,4 @@
-# D450 · Components · «Ana Pérez está evaluando esta entrega» sale como toast (8 s), uno por llegada · Implemented
+# D450 · Components · «Adela Pérez está evaluando esta entrega» sale como toast (8 s), uno por llegada · Implemented
 
 **Decision:** pedido de César (2026-11-20). `PresenciaEvaluar` ya no pinta la franja ni el `<output aria-live>` de D410 (sustituye esa parte de D410): cuando aparece un profe nuevo en la entrega, `toast(avisoPresenciaEntrega(presenciaEvaluarTexto(nuevos)), { duration: AVISO_PRESENCIA_MS (8 s), icon: UserPen })`. `llegadasPresencia(vistos, actuales)` devuelve los que no se habían visto en esta visita (el montaje lleva `key={entregaId}`). Los dos lo ven: el que llega ve al que estaba en su primer sondeo; el que estaba ve al que llega en el siguiente. Sin toast en cada sondeo ni cuando se van todos; quien se va y vuelve en la misma visita no se repite. El Toaster es la región viva (D131): no se anuncia dos veces. El texto y el «no bloquea» de D410 siguen igual.
 **Why:** la franja solo la veía quien llegaba de segundo si el otro ya estaba; el toast se ve sin importar el scroll y avisa a los dos.

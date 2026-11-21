@@ -549,7 +549,7 @@ export const PARTE_DEVUELTA_TOAST = "Parte devuelta para que la rehagan";
 
 /**
  * Confirmación de «Entregar» del capitán (D420): a quién se premarcará «No participó». Fila 227.
- * «Ana y Luis quedarán como “No participó”: tenían preguntas y no entregaron ninguna.»
+ * «Adela y Luis quedarán como “No participó”: tenían preguntas y no entregaron ninguna.»
  */
 export function avisoSinParteTexto(nombres: readonly string[]): string | null {
   if (nombres.length === 0) return null;

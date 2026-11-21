@@ -293,7 +293,7 @@ export function estiloDe(estilo: string): DicebearEstilo {
 
 const primerNombre = (nombres: string) => nombres.trim().split(/\s+/)[0] ?? "";
 
-/** "Yeilin Duarte": primer nombre + primer apellido. */
+/** "Raquel Figueroa": primer nombre + primer apellido. */
 export function nombreCorto(u: Pick<Usuario, "nombres" | "apellidos">): string {
   return `${primerNombre(u.nombres)} ${primerApellido(u.apellidos)}`;
 }
@@ -507,7 +507,7 @@ export function detalleNota(
   const tipo = tarea.tipo === "grupal" ? "Grupal" : "Individual";
   const puntos = ev.puntos;
   const profe = ev.evaluadaPor ? profes.get(ev.evaluadaPor) : undefined;
-  // PROVISIONAL (CONTENT_CHECKLIST fila 251): «… por Ana Pérez»
+  // PROVISIONAL (CONTENT_CHECKLIST fila 251): «… por Adela Pérez»
   const por = profe ? ` por ${nombreCorto(profe)}` : "";
   const general = ev.comentarioGeneral?.trim();
   return {

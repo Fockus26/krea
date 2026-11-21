@@ -103,7 +103,7 @@ export function evaluadosTexto(evaluados: number, total: number): string {
 
 export type Raspado = { nombre: string; nota: number };
 
-/** Detalle de la tarjeta Raspados: "María de los Ángeles Méndez · 8", "Ana · 7 y 2 más" o "Nadie por debajo de 10". */
+/** Detalle de la tarjeta Raspados: "Juana de los Alejandra Montero · 8", "Adela · 7 y 2 más" o "Nadie por debajo de 10". */
 export function detalleRaspados(raspados: readonly Raspado[]): string {
   const [primero, ...resto] = raspados;
   if (!primero) return "Nadie por debajo de 10";
@@ -116,7 +116,7 @@ export function verTodasTexto(n: number): string {
   return n === 1 ? "Ver la 1" : `Ver las ${n}`;
 }
 
-/** Nombre accesible del botón de la fila: "Evaluar a Jorge Quintero". */
+/** Nombre accesible del botón de la fila: "Evaluar a Mateo Paredes". */
 export function evaluarAriaLabel(nombre: string): string {
   return `Evaluar a ${nombre}`;
 }
@@ -180,7 +180,7 @@ export function ajusteMetaTexto(motivo: string, iso: string): string {
   return `${motivo} · ${fechaAjusteTexto(iso)}`;
 }
 
-/** Línea secundaria de una entrega: grupal "Tarea · Grupal · entregó Yeilin el 25/10/2026"; individual "Tarea · Individual · 24/10/2026". */
+/** Línea secundaria de una entrega: grupal "Tarea · Grupal · entregó Raquel el 25/10/2026"; individual "Tarea · Individual · 24/10/2026". */
 export function entregaMetaTexto(e: {
   tarea: string;
   tipo: TipoEntrega;

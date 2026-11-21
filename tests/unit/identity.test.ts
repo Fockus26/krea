@@ -82,10 +82,10 @@ describe("teamInitial / initials", () => {
   });
 
   test("iniciales del nombre: máximo dos", () => {
-    expect(initials("Jorge Enrique")).toBe("JE");
-    expect(initials("Ana")).toBe("A");
+    expect(initials("Mateo Guillermo")).toBe("MG");
+    expect(initials("Adela")).toBe("A");
     expect(initials("  ")).toBe("");
-    expect(initials("Luniel Alessandro Morón")).toBe("LA");
+    expect(initials("Ramón Alfonso Nieto")).toBe("RA");
   });
 });
 

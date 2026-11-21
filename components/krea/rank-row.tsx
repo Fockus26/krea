@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 export type RankRowProps = RankingPuesto & {
   nombre: string;
   puntos: number;
-  /** Estudiante: su equipo. Equipo: "5 integrantes · capitán Christian Sepúlveda". */
+  /** Estudiante: su equipo. Equipo: "5 integrantes · capitán Diego Soler". */
   subtitulo?: string;
   /**
    * El avatar del estudiante (`UserAvatar size={40}`) o el logo del equipo (`TeamLogo size={40}`).
@@ -46,7 +46,7 @@ export type RankRowProps = RankingPuesto & {
  * La fila propia suma fondo `--accent-soft` + borde interior 2 px + chip "tú".
  *
  * El `<li>` lleva el nombre accesible completo y el contenido visual va `aria-hidden`, así el
- * lector dice "Puesto 4, María Méndez, 30,5 puntos, subió 2 puestos" una vez. El `<li>` es el
+ * lector dice "Puesto 4, Juana Montero, 30,5 puntos, subió 2 puestos" una vez. El `<li>` es el
  * objeto del FLIP (transform) y la caja visual va dentro: así el temblor, el brillo y la
  * elevación no pelean con el translateY del FLIP.
  */

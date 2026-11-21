@@ -53,11 +53,11 @@ describe("textos", () => {
     expect(logoLabel("Subir logo", "5A-G2 Repostería")).toBe(
       "Subir logo de 5A-G2 Repostería",
     );
-    expect(movidoTexto("Yeilin Duarte", "5A-G1 Barbería")).toBe(
-      "Yeilin Duarte pasó a 5A-G1 Barbería",
+    expect(movidoTexto("Raquel Figueroa", "5A-G1 Barbería")).toBe(
+      "Raquel Figueroa pasó a 5A-G1 Barbería",
     );
-    expect(capitanTexto("Lidny Rico", "5A-G2 Repostería")).toBe(
-      "Lidny Rico es el capitán de 5A-G2 Repostería",
+    expect(capitanTexto("Jimena Pérez", "5A-G2 Repostería")).toBe(
+      "Jimena Pérez es el capitán de 5A-G2 Repostería",
     );
   });
 });

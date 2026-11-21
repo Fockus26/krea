@@ -19,7 +19,7 @@ const evaluacion: Evaluacion = {
   puntos: { p1: 18 },
   comentarios: {},
   puntaje: 18,
-  evaluadaPor: "30262232",
+  evaluadaPor: "45001237",
   evaluadaEn: 500,
   bases: { "39711001": 15 },
 };
@@ -173,27 +173,27 @@ describe("entrada de las acciones", () => {
 
 describe("textos (filas 218–222)", () => {
   test("botones y nombre accesible", () => {
-    expect(masAccionesLabel("Ana Pérez")).toBe("Más acciones de Ana Pérez");
+    expect(masAccionesLabel("Adela Pérez")).toBe("Más acciones de Adela Pérez");
     expect(devolverTextoBoton("individual")).toBe("Devolver al alumno");
     expect(devolverTextoBoton("grupal")).toBe("Devolver al equipo");
   });
   test("qué se pierde: nombra al equipo y a todos sus integrantes", () => {
     expect(
-      devolverDescripcion({ nombre: "Ana Pérez", tipo: "individual" }),
+      devolverDescripcion({ nombre: "Adela Pérez", tipo: "individual" }),
     ).toBe(
-      "Se borra la nota de Ana Pérez en esta tarea y su puntaje sale del ranking; podrá editar y volver a entregar.",
+      "Se borra la nota de Adela Pérez en esta tarea y su puntaje sale del ranking; podrá editar y volver a entregar.",
     );
     expect(
       devolverDescripcion({ nombre: "Los Pixel", tipo: "grupal" }),
     ).toContain("equipo Los Pixel");
     expect(
       eliminarDescripcion({
-        nombre: "Ana Pérez",
+        nombre: "Adela Pérez",
         tipo: "individual",
         evaluada: true,
       }),
     ).toBe(
-      "Se borran las respuestas, las imágenes y la nota de Ana Pérez y su puntaje sale del ranking. No se puede deshacer.",
+      "Se borran las respuestas, las imágenes y la nota de Adela Pérez y su puntaje sale del ranking. No se puede deshacer.",
     );
     expect(
       eliminarDescripcion({

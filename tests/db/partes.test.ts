@@ -23,7 +23,7 @@ const db = () => base;
 
 const AHORA = Date.UTC(2026, 10, 14, 15);
 const CAPITAN = "39160001";
-const ANA = "39160002";
+const ADELA = "39160002";
 const LUIS = "39160003";
 const OTRO = "39160004";
 const EQUIPO = "x2-g1";
@@ -110,7 +110,7 @@ beforeAll(async () => {
 beforeEach(async () => {
   await db().delete(partes);
   await db().delete(entregas);
-  for (const c of [CAPITAN, ANA, LUIS])
+  for (const c of [CAPITAN, ADELA, LUIS])
     await docs.ponerDoc(db(), "usuarios", c, usuario(c, EQUIPO));
   await docs.ponerDoc(db(), "usuarios", OTRO, usuario(OTRO, EQUIPO_OTRO));
   await docs.ponerDoc(db(), "equipos", EQUIPO, equipo(CAPITAN));
@@ -120,7 +120,7 @@ beforeEach(async () => {
 
 describe("reparto (D417)", () => {
   test("asignar, reasignar y quitar: solo el capitán y solo a integrantes", async () => {
-    expect(await asignar(ANA, "p1", LUIS)).toEqual({
+    expect(await asignar(ADELA, "p1", LUIS)).toEqual({
       ok: false,
       error: "no-capitan",
     });
@@ -132,8 +132,8 @@ describe("reparto (D417)", () => {
       ok: false,
       error: "integrante",
     });
-    expect(await asignar(CAPITAN, "p1", ANA)).toEqual({ ok: true });
-    expect(await entregarTexto(ANA, "p1", "  Mi parte  ")).toEqual({
+    expect(await asignar(CAPITAN, "p1", ADELA)).toEqual({ ok: true });
+    expect(await entregarTexto(ADELA, "p1", "  Mi parte  ")).toEqual({
       ok: true,
     });
     // Reasignar descarta lo que entregó la anterior
@@ -149,12 +149,12 @@ describe("reparto (D417)", () => {
   });
 
   test("entregar: solo el asignado; aceptar y devolver: solo el capitán", async () => {
-    await asignar(CAPITAN, "p1", ANA);
+    await asignar(CAPITAN, "p1", ADELA);
     expect(await entregarTexto(LUIS, "p1", "No es mía")).toEqual({
       ok: false,
       error: "no-asignada",
     });
-    expect(await entregarTexto(ANA, "p1", "   ")).toEqual({
+    expect(await entregarTexto(ADELA, "p1", "   ")).toEqual({
       ok: false,
       error: "incompleta",
     });
@@ -162,7 +162,7 @@ describe("reparto (D417)", () => {
       ok: false,
       error: "estado",
     });
-    expect(await entregarTexto(ANA, "p1", "  Mi parte  ")).toEqual({
+    expect(await entregarTexto(ADELA, "p1", "  Mi parte  ")).toEqual({
       ok: true,
     });
     expect((await leerPartes(db(), ENTREGA))[0]).toMatchObject({
@@ -170,7 +170,7 @@ describe("reparto (D417)", () => {
       respuesta: { texto: "Mi parte" },
       entregadaEn: AHORA,
     });
-    expect(await accion(ANA, "p1", { tipo: "aceptar" })).toEqual({
+    expect(await accion(ADELA, "p1", { tipo: "aceptar" })).toEqual({
       ok: false,
       error: "no-capitan",
     });
@@ -178,7 +178,7 @@ describe("reparto (D417)", () => {
       ok: true,
     });
     // Aceptada: ya no se vuelve a entregar
-    expect(await entregarTexto(ANA, "p1", "Otra")).toEqual({
+    expect(await entregarTexto(ADELA, "p1", "Otra")).toEqual({
       ok: false,
       error: "estado",
     });
@@ -186,36 +186,38 @@ describe("reparto (D417)", () => {
       ok: true,
     });
     expect((await leerPartes(db(), ENTREGA))[0]?.estado).toBe("devuelta");
-    expect(await entregarTexto(ANA, "p1", "Corregida")).toEqual({ ok: true });
+    expect(await entregarTexto(ADELA, "p1", "Corregida")).toEqual({ ok: true });
     expect((await leerPartes(db(), ENTREGA))[0]?.estado).toBe("entregada");
   });
 
   test("imagen: el asignado sube a la carpeta del equipo; re-entregar con otra deja la vieja sin uso", async () => {
-    expect(await permisoSubida(db(), ANA, TAREA, "p2", AHORA)).toEqual({
+    expect(await permisoSubida(db(), ADELA, TAREA, "p2", AHORA)).toEqual({
       ok: false,
       error: "no-capitan",
     });
-    await asignar(CAPITAN, "p2", ANA);
-    const p = await permisoSubida(db(), ANA, TAREA, "p2", AHORA);
+    await asignar(CAPITAN, "p2", ADELA);
+    const p = await permisoSubida(db(), ADELA, TAREA, "p2", AHORA);
     expect(p.ok && p.permiso.entregaId).toBe(ENTREGA);
     // Otra pregunta, no
-    expect((await permisoSubida(db(), ANA, TAREA, "p1", AHORA)).ok).toBe(false);
+    expect((await permisoSubida(db(), ADELA, TAREA, "p1", AHORA)).ok).toBe(
+      false,
+    );
     const vieja = await imagen(UUID_1);
     expect(
-      await accion(ANA, "p2", {
+      await accion(ADELA, "p2", {
         tipo: "entregar",
         respuesta: { imagenPath: vieja },
       }),
     ).toEqual({ ok: true });
     expect(
-      await accion(ANA, "p2", {
+      await accion(ADELA, "p2", {
         tipo: "entregar",
         respuesta: { imagenPath: await imagen(UUID_2) },
       }),
     ).toEqual({ ok: true, sinUso: [vieja] });
     // Una imagen de otra carpeta no entra
     expect(
-      await accion(ANA, "p2", {
+      await accion(ADELA, "p2", {
         tipo: "entregar",
         respuesta: {
           imagenPath: claveImagen(TAREA, await carpetaEntrega("otra"), UUID_1),
@@ -225,8 +227,8 @@ describe("reparto (D417)", () => {
   });
 
   test("con la entrega enviada o la tarea cerrada, todo queda congelado (D419)", async () => {
-    await asignar(CAPITAN, "p1", ANA);
-    await entregarTexto(ANA, "p1", "Mía");
+    await asignar(CAPITAN, "p1", ADELA);
+    await entregarTexto(ADELA, "p1", "Mía");
     // Para enviar, la parte no puede quedar pendiente (D463): la devuelve y la toma
     await accion(CAPITAN, "p1", { tipo: "devolver" });
     await accion(CAPITAN, "p1", { tipo: "tomar" });
@@ -237,7 +239,7 @@ describe("reparto (D417)", () => {
       ok: false,
       error: "enviada",
     });
-    expect(await entregarTexto(ANA, "p1", "Otra")).toEqual({
+    expect(await entregarTexto(ADELA, "p1", "Otra")).toEqual({
       ok: false,
       error: "enviada",
     });
@@ -245,10 +247,12 @@ describe("reparto (D417)", () => {
       ok: false,
       error: "enviada",
     });
-    expect((await permisoSubida(db(), ANA, TAREA, "p2", AHORA)).ok).toBe(false);
+    expect((await permisoSubida(db(), ADELA, TAREA, "p2", AHORA)).ok).toBe(
+      false,
+    );
     // Si el profe elimina la entrega (X1), el reparto vuelve tal cual: tomada, se la devuelve
     await docs.borrarDoc(db(), "entregas", ENTREGA);
-    expect(await asignar(CAPITAN, "p1", ANA)).toEqual({ ok: true });
+    expect(await asignar(CAPITAN, "p1", ADELA)).toEqual({ ok: true });
     expect((await leerPartes(db(), ENTREGA))[0]).toMatchObject({
       estado: "devuelta",
       respuesta: { texto: "Mía" },
@@ -259,7 +263,7 @@ describe("reparto (D417)", () => {
       ok: false,
       error: "cerrada",
     });
-    expect(await entregarTexto(ANA, "p1", "Tarde")).toEqual({
+    expect(await entregarTexto(ADELA, "p1", "Tarde")).toEqual({
       ok: false,
       error: "cerrada",
     });
@@ -272,16 +276,16 @@ describe("envío del capitán: sinParte (D420)", () => {
       await enviarEnTransaccion(db(), CAPITAN, await envio(), AHORA),
     ).toEqual({ ok: true });
     const e = await docs.entrega(db(), ENTREGA);
-    expect(e?.integrantes).toEqual([CAPITAN, ANA, LUIS]);
+    expect(e?.integrantes).toEqual([CAPITAN, ADELA, LUIS]);
     expect(e && "sinParte" in e).toBe(false);
   });
 
   test("tomada y no entregó otra → marcado; con otra aceptada → no (D461)", async () => {
-    await asignar(CAPITAN, "p1", ANA);
-    await asignar(CAPITAN, "p3", ANA);
-    await entregarTexto(ANA, "p1", "Mía");
+    await asignar(CAPITAN, "p1", ADELA);
+    await asignar(CAPITAN, "p3", ADELA);
+    await entregarTexto(ADELA, "p1", "Mía");
     await accion(CAPITAN, "p1", { tipo: "aceptar" });
-    await accion(CAPITAN, "p3", { tipo: "tomar" }); // Ana entregó otra: participó
+    await accion(CAPITAN, "p3", { tipo: "tomar" }); // Adela entregó otra: participó
     await asignar(CAPITAN, "p2", LUIS);
     expect(await accion(CAPITAN, "p2", { tipo: "tomar" })).toEqual({
       ok: true,
@@ -301,19 +305,19 @@ describe("envío del capitán: sinParte (D420)", () => {
     ).toEqual({ ok: true });
     const e = await docs.entrega(db(), ENTREGA);
     expect(e?.sinParte).toEqual([LUIS]);
-    // La aceptada es la de Ana (la del cliente se ignora, D463); la tomada, la del capitán
+    // La aceptada es la de Adela (la del cliente se ignora, D463); la tomada, la del capitán
     expect(e?.respuestas.p1).toEqual({ texto: "Mía" });
     expect(e?.respuestas.p2).toEqual({ imagenPath: await imagen(UUID_2) });
     expect(e?.respuestas.p3).toEqual({ texto: "Tres" });
   });
 
   test("devuelta y tomada cuenta como no entregada; el reenvío conserva sinParte", async () => {
-    await asignar(CAPITAN, "p1", ANA);
-    await entregarTexto(ANA, "p1", "Mía");
+    await asignar(CAPITAN, "p1", ADELA);
+    await entregarTexto(ADELA, "p1", "Mía");
     await accion(CAPITAN, "p1", { tipo: "devolver" });
     await accion(CAPITAN, "p1", { tipo: "tomar" });
     await enviarEnTransaccion(db(), CAPITAN, await envio(), AHORA);
-    expect((await docs.entrega(db(), ENTREGA))?.sinParte).toEqual([ANA]);
+    expect((await docs.entrega(db(), ENTREGA))?.sinParte).toEqual([ADELA]);
     // Editar la entrega enviada (D395): mismas personas y mismo sinParte
     const otra = await envio();
     otra.respuestas.p1 = { texto: "Uno editado" };
@@ -321,14 +325,14 @@ describe("envío del capitán: sinParte (D420)", () => {
       ok: true,
     });
     const e = await docs.entrega(db(), ENTREGA);
-    expect(e?.sinParte).toEqual([ANA]);
+    expect(e?.sinParte).toEqual([ADELA]);
     expect(e?.respuestas.p1).toEqual({ texto: "Uno editado" });
   });
 
   test("con una parte sin aceptar no se envía (D463); aceptada, entra aunque el cliente no la mande", async () => {
-    await asignar(CAPITAN, "p1", ANA);
+    await asignar(CAPITAN, "p1", ADELA);
     for (const paso of ["asignada", "entregada", "devuelta"] as const) {
-      if (paso === "entregada") await entregarTexto(ANA, "p1", "Mía");
+      if (paso === "entregada") await entregarTexto(ADELA, "p1", "Mía");
       if (paso === "devuelta")
         await accion(CAPITAN, "p1", { tipo: "devolver" });
       expect(
@@ -336,7 +340,7 @@ describe("envío del capitán: sinParte (D420)", () => {
       ).toEqual({ ok: false, error: "partes-pendientes" });
     }
     expect(await docs.entrega(db(), ENTREGA)).toBeNull();
-    await entregarTexto(ANA, "p1", "Corregida");
+    await entregarTexto(ADELA, "p1", "Corregida");
     await accion(CAPITAN, "p1", { tipo: "aceptar" });
     const { p1: _, ...sinP1 } = (await envio()).respuestas;
     expect(
@@ -353,9 +357,9 @@ describe("envío del capitán: sinParte (D420)", () => {
   });
 
   test("la imagen de una parte aceptada entra desde el reparto (de la carpeta de la entrega)", async () => {
-    await asignar(CAPITAN, "p2", ANA);
+    await asignar(CAPITAN, "p2", ADELA);
     const deParte = await imagen(UUID_1);
-    await accion(ANA, "p2", {
+    await accion(ADELA, "p2", {
       tipo: "entregar",
       respuesta: { imagenPath: deParte },
     });
@@ -371,16 +375,16 @@ describe("envío del capitán: sinParte (D420)", () => {
 
   test("concurrencia: tomar y entregar a la vez; la tarea bloqueada decide el orden", async () => {
     // Integrante primero: ya entregó, tomar no cabe
-    await asignar(CAPITAN, "p1", ANA);
-    await entregarTexto(ANA, "p1", "Primero");
+    await asignar(CAPITAN, "p1", ADELA);
+    await entregarTexto(ADELA, "p1", "Primero");
     expect(await accion(CAPITAN, "p1", { tipo: "tomar" })).toEqual({
       ok: false,
       error: "estado",
     });
     // Capitán primero: tomada, entregar ya no cabe
-    await asignar(CAPITAN, "p3", ANA);
+    await asignar(CAPITAN, "p3", ADELA);
     await accion(CAPITAN, "p3", { tipo: "tomar" });
-    expect(await entregarTexto(ANA, "p3", "Tarde")).toEqual({
+    expect(await entregarTexto(ADELA, "p3", "Tarde")).toEqual({
       ok: false,
       error: "no-asignada",
     });
@@ -410,7 +414,7 @@ describe("envío del capitán: sinParte (D420)", () => {
     });
     await enviarEnTransaccion(db(), CAPITAN, await envio(), AHORA);
     const e = await docs.entrega(db(), ENTREGA);
-    expect(e?.integrantes).toEqual([CAPITAN, ANA]);
+    expect(e?.integrantes).toEqual([CAPITAN, ADELA]);
     expect(e && "sinParte" in e).toBe(false);
   });
 });
@@ -424,7 +428,7 @@ describe("reparto en vivo (D465)", () => {
     // Sin cambios: la misma (la ruta responde 204)
     expect(await leerVersionPartes(db(), ENTREGA)).toBe(vacia);
 
-    await asignar(CAPITAN, "p1", ANA);
+    await asignar(CAPITAN, "p1", ADELA);
     const asignada = await leerVersionPartes(db(), ENTREGA);
     expect(asignada).toBe(`1.${AHORA}.0`);
     await accion(CAPITAN, "p1", { tipo: "tomar" }, AHORA + 1);
@@ -439,7 +443,7 @@ describe("reparto en vivo (D465)", () => {
   });
 
   test("la página calcula la misma huella con las partes que ya leyó", async () => {
-    await asignar(CAPITAN, "p1", ANA);
+    await asignar(CAPITAN, "p1", ADELA);
     await asignar(CAPITAN, "p2", LUIS);
     expect(huellaDePartes(await leerPartes(db(), ENTREGA))).toBe(
       await leerVersionPartes(db(), ENTREGA),
@@ -449,9 +453,9 @@ describe("reparto en vivo (D465)", () => {
 
 describe("limpieza (D421)", () => {
   test("eliminar la tarea borra sus partes y devuelve sus imágenes", async () => {
-    await asignar(CAPITAN, "p2", ANA);
+    await asignar(CAPITAN, "p2", ADELA);
     const ruta = await imagen(UUID_1);
-    await accion(ANA, "p2", {
+    await accion(ADELA, "p2", {
       tipo: "entregar",
       respuesta: { imagenPath: ruta },
     });
@@ -462,14 +466,14 @@ describe("limpieza (D421)", () => {
   });
 
   test("eliminar la entrega borra sus partes y suma sus imágenes, sin repetir", async () => {
-    // p2: Ana entrega una imagen, el capitán se la devuelve y la toma (D461): envía la suya y la
-    // de Ana queda en la parte; p1: texto aceptado, sin imagen
+    // p2: Adela entrega una imagen, el capitán se la devuelve y la toma (D461): envía la suya y la
+    // de Adela queda en la parte; p1: texto aceptado, sin imagen
     await asignar(CAPITAN, "p1", LUIS);
     await entregarTexto(LUIS, "p1", "Mi parte");
     await accion(CAPITAN, "p1", { tipo: "aceptar" });
-    await asignar(CAPITAN, "p2", ANA);
+    await asignar(CAPITAN, "p2", ADELA);
     const deParte = await imagen(UUID_1);
-    await accion(ANA, "p2", {
+    await accion(ADELA, "p2", {
       tipo: "entregar",
       respuesta: { imagenPath: deParte },
     });
@@ -509,9 +513,9 @@ describe("limpieza (D421)", () => {
   });
 
   test("eliminar la entrega: la imagen de una parte aceptada que el capitán envió va una sola vez", async () => {
-    await asignar(CAPITAN, "p2", ANA);
+    await asignar(CAPITAN, "p2", ADELA);
     const ruta = await imagen(UUID_2);
-    await accion(ANA, "p2", {
+    await accion(ADELA, "p2", {
       tipo: "entregar",
       respuesta: { imagenPath: ruta },
     });

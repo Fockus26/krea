@@ -19,15 +19,15 @@ import { Familia, Muestra } from "./familia";
 
 // Avatar, TeamLogo, Logo/Isotipo con acento (§2.5). Seeds y equipos de data/seed (provisional: CONTENT_CHECKLIST 38–40)
 const ESTUDIANTES = [
-  { id: "e1", nombre: "Jorge Quintero", seed: "jorge-quintero" },
-  { id: "e2", nombre: "Luniel Morón", seed: "luniel-moron" },
-  { id: "e3", nombre: "Franyer Hernández", seed: "franyer-hernandez" },
-  { id: "e4", nombre: "Valentina Rojas", seed: "valentina-rojas" },
-  { id: "e5", nombre: "Ángel Ñáñez", seed: "angel-nanez" },
-  { id: "e6", nombre: "Camila Duarte", seed: "camila-duarte" },
-  { id: "e7", nombre: "Sofía Pérez", seed: "sofia-perez" },
+  { id: "e1", nombre: "Mateo Paredes", seed: "mateo-paredes" },
+  { id: "e2", nombre: "Ramón Nieto", seed: "ramón-nieto" },
+  { id: "e3", nombre: "Hernán Lucena", seed: "hernán-lucena" },
+  { id: "e4", nombre: "Noemí Rojas", seed: "noemí-rojas" },
+  { id: "e5", nombre: "Armando Ñáñez", seed: "armando-nanez" },
+  { id: "e6", nombre: "Araceli Figueroa", seed: "araceli-figueroa" },
+  { id: "e7", nombre: "Milagros Pérez", seed: "milagros-perez" },
   { id: "e8", nombre: "Diego Salazar", seed: "diego-salazar" },
-  { id: "e9", nombre: "Mariana Linares", seed: "mariana-linares" },
+  { id: "e9", nombre: "Julia Linares", seed: "julia-linares" },
 ] as const;
 
 const EQUIPOS = [
@@ -51,7 +51,7 @@ function pila(n: number) {
 }
 
 export function Identidad() {
-  const [jorge] = ESTUDIANTES;
+  const [mateo] = ESTUDIANTES;
   return (
     <Familia
       id="identidad"
@@ -80,8 +80,8 @@ export function Identidad() {
             <div key={estilo} className="flex items-center gap-3">
               <UserAvatar
                 estilo={estilo}
-                seed={jorge.seed}
-                nombre={jorge.nombre}
+                seed={mateo.seed}
+                nombre={mateo.nombre}
                 size={56}
               />
               <span className="text-small text-text-2">{estilo}</span>

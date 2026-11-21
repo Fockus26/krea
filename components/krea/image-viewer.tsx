@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 
 type ImageViewerProps = {
   src: string;
-  /** Texto alternativo real: "Respuesta de María a la pregunta 3". */
+  /** Texto alternativo real: "Respuesta de Juana a la pregunta 3". */
   alt: string;
   /** Enunciado de la pregunta: título accesible del visor (no se ve). */
   enunciado: string;
