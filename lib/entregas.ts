@@ -52,7 +52,9 @@ export type ErrorEntrega =
   /** El profe ya la evaluó: no se edita (D395). */
   | "ya-evaluada"
   /** Falta una respuesta, sobra una o no es del formato de la pregunta. */
-  | "incompleta";
+  | "incompleta"
+  /** Grupal por partes (D463): una pregunta asignada a otro integrante aún no está aceptada. */
+  | "partes-pendientes";
 
 export type PermisoEntrega = {
   tipo: Tarea["tipo"];
@@ -478,6 +480,9 @@ export function mensajeErrorEntrega(error: ErrorSubida | ErrorEnvio): string {
       return "Ya fue evaluada: tu profe ya le puso nota y no se puede cambiar.";
     case "incompleta":
       return "Revisa tus respuestas: falta alguna o hay una imagen que no se subió.";
+    // PROVISIONAL (CONTENT_CHECKLIST fila 270)
+    case "partes-pendientes":
+      return "Falta aceptar alguna parte de tu equipo: revisa el Reparto. Lo que ya respondiste no se perdió.";
     case "imagen-tipo":
       return "Solo se aceptan imágenes JPG o PNG.";
     case "imagen-peso":

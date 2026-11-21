@@ -1,9 +1,9 @@
 "use server";
-// Server Actions de la grupal por partes (D416–D421). La cédula sale SIEMPRE de la sesión
+// Server Actions de la grupal por partes (D416–D421, D461). La cédula sale SIEMPRE de la sesión
 // (`exigirSesion`), nunca del body. Solo en línea (D424): sin red, el cliente avisa con `red` y no
 // encola nada; el envío de la tarea del capitán sigue yendo por la cola de siempre. Tras el commit
 // se borran de B2 las imágenes que la parte dejó de usar (D396) y se refresca la página: el
-// servidor es la fuente de lo aceptado (D418).
+// servidor es la fuente de lo aceptado (D463).
 import { refresh } from "next/cache";
 import { almacenB2 } from "@/lib/almacen/b2";
 import type { Almacen } from "@/lib/almacen/s3";
@@ -50,6 +50,20 @@ export async function devolverParte(entrada: unknown): Promise<ResultadoParte> {
   if (!e.success) return { ok: false, error: "incompleta" };
   const r = await ejecutar(e.data.tareaId, e.data.preguntaId, {
     tipo: "devolver",
+  });
+  if (r.ok) refresh();
+  return r;
+}
+
+/**
+ * Capitán: «La respondo yo» (D461) con una parte asignada o devuelta. Sigue a nombre del
+ * integrante, que queda premarcado «No participó» si no entregó ninguna otra (D420).
+ */
+export async function tomarParte(entrada: unknown): Promise<ResultadoParte> {
+  const e = zDecidirParte.safeParse(entrada);
+  if (!e.success) return { ok: false, error: "incompleta" };
+  const r = await ejecutar(e.data.tareaId, e.data.preguntaId, {
+    tipo: "tomar",
   });
   if (r.ok) refresh();
   return r;

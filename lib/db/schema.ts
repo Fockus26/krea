@@ -249,7 +249,8 @@ export const partes = pgTable(
     equipoId: text("equipo_id").notNull(),
     asignado: text("asignado").notNull(),
     estado: text("estado", {
-      enum: ["asignada", "entregada", "aceptada", "devuelta"],
+      // Solo TypeScript: sin CHECK en la base, `tomada` (D461) no pide migración
+      enum: ["asignada", "entregada", "aceptada", "devuelta", "tomada"],
     }).notNull(),
     respuesta: jsonb("respuesta").$type<Respuesta>(),
     entregadaEn: ms("entregada_en"),

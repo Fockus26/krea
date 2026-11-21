@@ -18,6 +18,15 @@ export function accesoRanking(
 }
 
 /**
+ * Reparto en vivo (D465): solo un alumno con equipo. Lee la huella del reparto de SU equipo actual
+ * (el de la sesión, D221): nunca la de otro equipo, así que no hace falta más control.
+ */
+export function accesoPartes(sesion: Sesion | null): Acceso {
+  if (!sesion || sesion.debeCambiarPassword) return "sin-sesion";
+  return sesion.rol === "estudiante" && sesion.equipoId ? "ok" : "prohibido";
+}
+
+/**
  * Presencia en «Editar alumno» (D275) y en «Evaluar entrega» (D408): solo profesores; un alumno ni
  * lee ni escribe.
  */
