@@ -70,16 +70,17 @@ una red social ruidosa.
 - Email: API de Brevo desde la app (restablecer contraseña, D185, D327). Sin otros correos en v1 (D009).
 - Storage: **Backblaze B2** por su API S3 (D194; Firebase Storage exige el plan Blaze): bucket privado, subida por Server Action, lectura con URLs firmadas de vida corta (`lib/almacen/`)
 - Avatares: DiceBear HTTP API 9.x (`https://api.dicebear.com/9.x/<estilo>/svg?seed=<semilla>`)
-- Deployment: Vercel
+- Deployment: **kit-deploy** en el VPS de César (D580, `deploy/README.md`); Vercel queda una semana de respaldo
 - Domain: PENDING
 
 ## Repo and deployment
 
 - Repo: https://github.com/Fockus26/krea (private) · `main` sin protección (403 en plan gratuito)
 - Versioning: no versioning (portal interno)
-- Vercel: proyecto `Fockus26/krea` en la cuenta de César, conectado a GitHub
-- Production: PENDING (URL `*.vercel.app` tras el primer merge a `main`) · Previews: one per PR
-- DNS managed by: PENDING
+- kit-deploy: proyecto `krea` (`.github/workflows/deploy-vps.yml`, encendido con la variable `KIT_DEPLOY_ENABLED`); bases `krea` / `krea_preview` adoptadas
+- Vercel (respaldo hasta que César lo apague): proyecto `Fockus26/krea`, conectado a GitHub
+- Production: `https://krea.fockus.dev` · Previews: `https://krea-pr-<n>.preview.fockus.dev`, uno por PR
+- DNS managed by: Cloudflare de César (comodín `*.fockus.dev`)
 - Maintenance: does not apply en v1
 - Local `context/` backup: branch `context-state` (private repo)
 

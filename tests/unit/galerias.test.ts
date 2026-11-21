@@ -35,6 +35,15 @@ describe("galerías ocultas en producción (D-A4)", () => {
     expect(galeriaVisible({ NODE_ENV: "production" })).toBe(false);
   });
 
+  test("preview de kit-deploy: NEXT_PUBLIC_GALERIAS=1 en su build (D580)", () => {
+    expect(
+      galeriaVisible({ NODE_ENV: "production", NEXT_PUBLIC_GALERIAS: "1" }),
+    ).toBe(true);
+    expect(
+      galeriaVisible({ NODE_ENV: "production", NEXT_PUBLIC_GALERIAS: "" }),
+    ).toBe(false);
+  });
+
   for (const galeria of GALERIAS) {
     test(`/${galeria} responde 404 en producción`, async () => {
       const Layout = await layoutDe(galeria);

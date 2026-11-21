@@ -7,7 +7,7 @@ Portal de notas de la Escuela Creativa del liceo: estudiantes ven notas detallad
 **Type:** app (dos roles: estudiante y profesor) · **Client:** liceo (5.º año, secciones A y C)
 **Phase track:** Product · **Git mode:** pr (see `context/GIT_STATE.md`)
 **Kit:** web-agent-kit, version in `.kit-version` (updated with `/kit-update`) ·
-**Deployment:** Vercel · preview per PR (ver `context/PROJECT_CONTEXT.md`)
+**Deployment:** kit-deploy (VPS) · preview per PR; Vercel de respaldo (D580, `deploy/README.md`)
 
 **Language:** talk to César in Spanish — questions, reports, PR titles and bodies, commit
 descriptions. Site copy in Spanish (es-VE, decimales con coma). Code and comments: like the code around them.
@@ -101,7 +101,8 @@ In git: `.kit-version`, `drizzle/` (migrations), `data/seed/` and the fixed docu
 of `context/`: PROJECT_CONTEXT, DESIGN_RULES, COLORS, DESIGN_TOKENS, TYPOGRAPHY, decisions/.
 Local (gitignored): CURRENT_PHASE, CONTENT_CHECKLIST, KIT_FEEDBACK, GIT_STATE, inventories, PHASE_LOG/,
 plans/ — backed up to `context-state` with `bun run context:backup`. `.env.local` is
-pulled from Vercel, never hand-edited (`vercel env pull`; kit `tech/vercel.md` §2c).
+pulled from Vercel, never hand-edited (`vercel env pull`; kit `tech/vercel.md` §2c) — tras el
+corte de D580, `ssh kit-vps kit-deploy env pull krea > .env.local`.
 Pool slots and worktrees get the `.env*` files but **not** the local `context/`: read it in
 the main folder (first line of `git worktree list`); if you cannot write there, return the
 `context/` changes in your report.

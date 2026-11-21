@@ -58,6 +58,20 @@ export async function verificarHash({
  */
 const tokens = new Map<string, string>();
 
+/**
+ * Origen de la sesión: `BETTER_AUTH_URL` en producción; en un preview de kit-deploy (D580), su
+ * propia URL (`https://krea-pr-<n>.preview.fockus.dev`, la pone kit-agent), que cambia en cada PR.
+ */
+export function urlBaseAuth(
+  env: Record<string, string | undefined> = process.env,
+): string | undefined {
+  return (
+    env.BETTER_AUTH_URL?.trim() ||
+    env.KIT_DEPLOY_PREVIEW_URL?.trim() ||
+    undefined
+  );
+}
+
 /** Better Auth sobre una base dada (la del VPS en la app, PGlite en las pruebas). */
 export function crearAuth(
   db: Db,
@@ -66,7 +80,7 @@ export function crearAuth(
   return betterAuth({
     database: drizzleAdapter(db, { provider: "pg", schema }),
     secret: opciones.secret ?? process.env.BETTER_AUTH_SECRET,
-    baseURL: opciones.baseURL ?? process.env.BETTER_AUTH_URL,
+    baseURL: opciones.baseURL ?? urlBaseAuth(),
     emailAndPassword: {
       enabled: true,
       disableSignUp: true,

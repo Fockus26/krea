@@ -1,0 +1,12 @@
+# D580 · Deploy · Hosting en kit-deploy (VPS de César): `main` → producción, cada PR → su preview; Vercel una semana de respaldo · Implementado (sin encender)
+
+**Decisión:** KREA pasa de Vercel a **kit-deploy**, la plataforma de César en su VPS (kit `tech/vps-hosting.md`, `kit-deploy/templates/MIGRATING.md`), igual que maranatha (su D093). `Dockerfile`, `.dockerignore`, `.github/workflows/deploy-vps.yml` y `app/api/health/route.ts` son las plantillas de kit-deploy con dos cambios: `NEXT_OUTPUT=standalone` en el Dockerfile (`next.config.ts` solo activa `output: "standalone"` con esa variable, para no tocar el build de Vercel mientras sea el respaldo) y líneas propias en `.dockerignore` (`data/privado` con los alumnos reales, D490; `.qa`, `design`, `tests`…). El workflow corre solo con la variable del repo `KIT_DEPLOY_ENABLED=true`: mergear esto no cambia producción.
+- **Base:** las mismas `krea` (producción) y `krea_preview` (previews) de kit-db (D327). kit-deploy pone `DATABASE_URL` cuando César las adopta (`kit-deploy db adopt krea`). `DIRECT_URL` no va en el contenedor.
+- **Sesión en el preview:** `baseURL` de Better Auth = `BETTER_AUTH_URL` o, sin ella, `KIT_DEPLOY_PREVIEW_URL`, que kit-agent pone en cada preview (`lib/better-auth.ts` › `urlBaseAuth`). El set «preview» va sin `BETTER_AUTH_URL`.
+- **Galerías en el preview:** los layouts se prerenderizan en el build, que solo ve las `NEXT_PUBLIC_*` del entorno: el set «preview» lleva `NEXT_PUBLIC_GALERIAS=1` (`lib/galerias.ts`).
+- **Skew Protection (D438):** la reemplaza `NEXT_DEPLOYMENT_ID` = commit (Dockerfile). La recarga única de `lib/recarga-deploy.ts` sigue.
+- **`after()`** (push, correo de recuperar) sigue igual: en `next start` el servidor espera las tareas antes de responder al apagado.
+- **Vercel:** sigue publicando `main` una semana como vuelta atrás; `vercel.json`, `VERCEL_*` en `lib/site.ts` y `lib/galerias.ts` se van cuando César lo apague.
+
+**Por qué:** César (2026-11-21): mudar el hosting al VPS — costo fijo, la base en la misma máquina, y los secretos «sensitive» de Vercel no se pueden bajar (las tareas con secretos se harán en el VPS).
+**Alternativa descartada:** workflow propio (el de kit-deploy trae las variables de build por entorno); `output: "standalone"` siempre (cambia el build de Vercel mientras es el sitio en vivo); galerías por `KIT_DEPLOY_PREVIEW_URL` (solo existe en tiempo de ejecución y los layouts son estáticos).
