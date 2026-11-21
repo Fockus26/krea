@@ -25,6 +25,8 @@ import { Separator } from "@/components/ui/separator";
 import { unirNombre } from "@/lib/alumnos";
 import {
   type CrearProfesor,
+  cambioProfesorTexto,
+  type EditarProfesor,
   type ErrorProfesor,
   errorProfesorTexto,
   type FilaProfesor,
@@ -32,13 +34,14 @@ import {
   type ResultadoCrearProfesor,
   type ResultadoProfesor,
   validarProfesor,
+  versionProfesor,
 } from "@/lib/cuentas-datos";
 import type { ResultadoLote } from "@/lib/lote";
 import { cedulaTexto, partirNombre } from "@/lib/perfil";
 
 export type AccionesProfesores = {
   crear: (entrada: CrearProfesor) => Promise<ResultadoCrearProfesor>;
-  editar: (entrada: CrearProfesor) => Promise<ResultadoProfesor>;
+  editar: (entrada: EditarProfesor) => Promise<ResultadoProfesor>;
   eliminar: (cedula: string) => Promise<ResultadoProfesor>;
   /** En lote (W22, D298); sin ella, la lista no ofrece casillas. */
   eliminarVarios?: (cedulas: string[]) => Promise<ResultadoLote<ErrorProfesor>>;
@@ -109,9 +112,17 @@ export function EditarProfesorDialog({
   editar: AccionesProfesores["editar"];
 }) {
   const [abierto, setAbierto] = useState(false);
+  // Lo que se vio al abrir (D532): si alguien guarda en medio, `cambio` trae la versión nueva
+  const [version, setVersion] = useState(() => versionProfesor(profesor));
   const nombre = nombreProfesor(profesor);
   return (
-    <Dialog open={abierto} onOpenChange={setAbierto}>
+    <Dialog
+      open={abierto}
+      onOpenChange={(v) => {
+        if (v) setVersion(versionProfesor(profesor));
+        setAbierto(v);
+      }}
+    >
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm">
           <Pencil aria-hidden="true" />
@@ -129,11 +140,11 @@ export function EditarProfesorDialog({
         <ProfesorForm
           inicial={profesor}
           enviar={async (entrada) => {
-            const r = await editar(entrada);
+            const r = await editar({ ...entrada, version });
             if (r.ok) {
               setAbierto(false);
               toast("Cambios guardados");
-            }
+            } else if (r.error === "cambio") setVersion(r.version);
             return r;
           }}
           textoBoton="Guardar cambios"
@@ -215,7 +226,13 @@ function ProfesorForm({
     }).catch((): ResultadoProfesor => ({ ok: false, error: "red" }));
     enviando.current = false;
     setGuardando(false);
-    if (!r.ok) setErrorServidor(errorProfesorTexto(r.error));
+    // `cambio` (D532): lo escrito se queda y el aviso dice lo que está guardado ahora
+    if (!r.ok)
+      setErrorServidor(
+        r.error === "cambio"
+          ? cambioProfesorTexto(r.actual)
+          : errorProfesorTexto(r.error),
+      );
   }
 
   return (

@@ -1,7 +1,7 @@
 // % orientativo de IA sobre Postgres (D425–D429). Sin `server-only` para que las pruebas la corran
 // sobre PGlite; la app la usa solo desde lib/acciones/analisis-ia.ts y lib/datos/analisis-ia.ts,
 // después de `exigirSesion("profesor")` (el `autorId` sale de la sesión).
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { entregaDeFila } from "@/lib/data/filas";
 import type { Tx } from "@/lib/db";
 import { analisisIa, entregas } from "@/lib/db/schema";
@@ -59,8 +59,23 @@ export async function guardarAnalisis(db: Tx, a: FilaAnalisis): Promise<void> {
 }
 
 /**
+ * Al eliminar entregas (una, o las de una tarea): sus análisis se van con ellas (D531), en la
+ * misma transacción. Sin claves foráneas: quien borra la entrega llama aquí.
+ */
+export async function borrarAnalisisDe(
+  tx: Tx,
+  entregaIds: readonly string[],
+): Promise<void> {
+  if (entregaIds.length === 0) return;
+  await tx
+    .delete(analisisIa)
+    .where(inArray(analisisIa.entregaId, [...entregaIds]));
+}
+
+/**
  * Los análisis de una entrega por pregunta. Una fila con un porcentaje fuera de 0–100 no se
- * muestra. Si la entrega se eliminó, sus filas quedan huérfanas y nadie las pide (sin cascada).
+ * muestra. Eliminar la entrega los borra (D531); las filas de antes de eso quedan huérfanas y
+ * nadie las pide.
  */
 export async function leerAnalisis(
   db: Tx,

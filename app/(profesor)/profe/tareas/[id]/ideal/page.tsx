@@ -25,6 +25,7 @@ import {
   esElegible,
   respuestasDeEntrega,
   rutaIdealProfe,
+  VERSION_IDEAL_SIN_FILA,
 } from "@/lib/ideal";
 import { rutasImagen } from "@/lib/modelo";
 import { TAREA_GRUPAL_SEED } from "@/lib/seed-firestore";
@@ -148,6 +149,8 @@ export default async function IdealTareaPage({ params, searchParams }: Props) {
         urls={urls}
         logoUrl={logoUrl}
         guardar={guardarIdeal}
+        // La de la fila guardada, sea cual sea su forma: hay una por tarea (D532)
+        version={ideal?.actualizadoEn ?? VERSION_IDEAL_SIN_FILA}
         volverHref={volverHref}
       />
     </>

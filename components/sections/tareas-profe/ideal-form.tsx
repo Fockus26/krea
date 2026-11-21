@@ -72,6 +72,7 @@ export function IdealForm({
   urls,
   logoUrl,
   guardar,
+  version: versionInicial,
   volverHref,
 }: {
   tareaId: string;
@@ -88,9 +89,13 @@ export function IdealForm({
   logoUrl: string | null;
   /** Server Action; sin ella (galería) solo se muestra el toast. */
   guardar?: (e: GuardarIdeal) => Promise<ResultadoIdeal>;
+  /** Versión de la ideal guardada al abrir (D532); sin ella (galería) no se compara. */
+  version?: number;
   volverHref: string;
 }) {
   const router = useRouter();
+  // Se fija al abrir: un `refresh()` no la mueve. Solo `cambio` trae la nueva (D532)
+  const [version, setVersion] = useState(versionInicial);
   const [nota, setNota] = useState(inicial.nota);
   const [notas, setNotas] = useState<Record<string, string>>({
     ...inicial.notas,
@@ -113,6 +118,7 @@ export function IdealForm({
         : { tipo: "profe", respuestas },
     nota,
     notas,
+    ...(version !== undefined ? { version } : {}),
   });
 
   async function enviar() {
@@ -128,6 +134,8 @@ export function IdealForm({
     ocupado.current = false;
     setEnviando(false);
     if (!r.ok) {
+      // Otro profe guardó en medio: lo escrito se queda y el siguiente «Guardar» reemplaza
+      if (r.error === "cambio") setVersion(r.version);
       mostrarError(r.error);
       return;
     }

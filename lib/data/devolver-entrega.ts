@@ -6,7 +6,9 @@
 // (D175), con la sección bloqueada y la entrega releída con `FOR UPDATE` (como Evaluar, D397: si el
 // alumno la está editando, se espera a su commit y se compara con la versión nueva).
 import { eq } from "drizzle-orm";
+import { borrarAnalisisDe } from "@/lib/data/analisis-ia";
 import { entregaDeFila, filaDeEntrega, tareaDeFila } from "@/lib/data/filas";
+import { borrarIdealesDeEntrega } from "@/lib/data/ideales";
 import { borrarPartesDeEntrega } from "@/lib/data/partes";
 import {
   conEntrega,
@@ -97,7 +99,8 @@ export async function devolverEnTransaccion(
 }
 
 /**
- * Elimina la entrega (D413): borra la fila, las partes de su reparto (D421) y recalcula el ranking
+ * Elimina la entrega (D413): borra la fila, las partes de su reparto (D421), su % de IA y la ideal
+ * que la elegía (D531) y recalcula el ranking
  * de su sección, en cualquier estado de la tarea. Devuelve las rutas de sus imágenes (las de la
  * entrega y las de sus partes) para borrarlas de B2 DESPUÉS del commit.
  */
@@ -118,6 +121,9 @@ export async function eliminarEntregaEnTransaccion(
     // Grupal por partes (D421): el reparto se va con la entrega. Una parte aceptada comparte la
     // imagen con la respuesta del capitán: cada ruta va una sola vez
     const dePartes = await borrarPartesDeEntrega(tx, id);
+    // Los experimentales que cuelgan de ella también (D531): su % de IA y la ideal que la elegía
+    await borrarAnalisisDe(tx, [id]);
+    await borrarIdealesDeEntrega(tx, id);
     await escribirRanking(tx, entrega.seccion, sinEntrega(datos, id), ahora);
     const deEntrega = Object.values(entrega.respuestas).flatMap(rutasImagen);
     return {

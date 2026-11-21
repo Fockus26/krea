@@ -125,9 +125,34 @@ export const zCrearProfesor = z.object({
 });
 export type CrearProfesor = z.input<typeof zCrearProfesor>;
 
-/** Editar profesor: la cédula identifica (es el uid, D174) y no cambia. */
-export const zEditarProfesor = zCrearProfesor;
-export type EditarProfesor = CrearProfesor;
+/**
+ * Editar profesor: la cédula identifica (es el uid, D174) y no cambia. `version` = la huella de lo
+ * que se vio al abrir el diálogo (`versionProfesor`, D532); sin ella no se compara.
+ */
+export const zEditarProfesor = zCrearProfesor.extend({
+  version: z.string().max(1000).optional(),
+});
+export type EditarProfesor = z.input<typeof zEditarProfesor>;
+
+/**
+ * Versión de lo que edita «Editar profesor» (D532): la huella de nombres, apellidos y email de
+ * recuperación. No `actualizadoEn`: el avatar, la apariencia o la contraseña también lo mueven y
+ * no pisan nada de este formulario (como D276). Sin email cuenta como vacío.
+ */
+export function versionProfesor(p: {
+  nombres: string;
+  apellidos: string;
+  email: string | null;
+}): string {
+  return JSON.stringify([p.nombres, p.apellidos, p.email ?? ""]);
+}
+
+/** Lo que está guardado ahora, para el aviso de `cambio`. */
+export type ProfesorVigente = {
+  nombres: string;
+  apellidos: string;
+  email: string | null;
+};
 
 /** Sus propios nombres y apellidos en Perfil (solo el profesor; el alumno los ve de solo lectura). */
 export const zMisDatos = z.object({
@@ -170,14 +195,18 @@ export type ErrorProfesor =
   | "no-existe"
   | "no-profesor"
   | "tu-cuenta"
+  /** Otro admin (o el propio profe en Perfil) guardó desde que se abrió «Editar» (D532). */
+  | "cambio"
   | "red";
 
 export type ResultadoCrearProfesor =
   | { ok: true; passwordTemporal: string }
-  | { ok: false; error: ErrorProfesor };
+  | { ok: false; error: Exclude<ErrorProfesor, "cambio"> };
+/** `cambio` trae lo guardado ahora y su versión: con ella, el siguiente «Guardar» gana (D532). */
 export type ResultadoProfesor =
   | { ok: true }
-  | { ok: false; error: ErrorProfesor };
+  | { ok: false; error: "cambio"; actual: ProfesorVigente; version: string }
+  | { ok: false; error: Exclude<ErrorProfesor, "cambio"> };
 
 /** Mensaje del servidor bajo el formulario o en el diálogo. PROVISIONAL (fila 137). */
 export function errorProfesorTexto(e: ErrorProfesor): string {
@@ -190,11 +219,26 @@ export function errorProfesorTexto(e: ErrorProfesor): string {
       return "Esa cédula es de un alumno: aquí solo se gestionan profesores.";
     case "tu-cuenta":
       return "No puedes eliminar tu propia cuenta.";
+    case "cambio":
+      return CAMBIO_PROFESOR_TEXTO;
     case "invalida":
       return "Revisa los datos: algo no se pudo guardar así.";
     case "red":
       return "Se perdió la conexión. No cambiamos nada: vuelve a intentarlo.";
   }
+}
+
+// PROVISIONAL (fila 292, D532)
+export const CAMBIO_PROFESOR_TEXTO =
+  "Alguien cambió los datos de este profesor mientras editabas. No guardamos nada: lo tuyo sigue aquí. Revisa y vuelve a guardar.";
+
+/** El aviso con lo guardado ahora: «Ahora está guardado: Nombres Apellidos · email.» */
+export function cambioProfesorTexto(actual: ProfesorVigente): string {
+  const nombre = `${actual.nombres} ${actual.apellidos}`
+    .replace(/\s+/g, " ")
+    .trim();
+  const email = actual.email ? actual.email : "sin email de recuperación";
+  return `${CAMBIO_PROFESOR_TEXTO} Ahora está guardado: ${nombre} · ${email}.`;
 }
 
 export type FilaProfesor = {

@@ -43,7 +43,10 @@ export async function crearProfesor(
   }
 }
 
-/** Nombres, apellidos y email de recuperación de un profesor (la cédula no cambia, D174). */
+/**
+ * Nombres, apellidos y email de recuperación de un profesor (la cédula no cambia, D174). Con la
+ * versión del diálogo: si alguien guardó en medio, `cambio` con lo de ahora (D532).
+ */
 export async function editarProfesor(
   entrada: unknown,
 ): Promise<ResultadoProfesor> {
@@ -54,7 +57,8 @@ export async function editarProfesor(
   if (!d.success) return { ok: false, error: "invalida" };
   try {
     const r = await editarProfesorEnTransaccion(db, d.data, Date.now());
-    if (r.ok) refresh();
+    // `cambio`: la lista también pasa a lo de ahora; el diálogo conserva lo escrito
+    if (r.ok || r.error === "cambio") refresh();
     return r;
   } catch (e) {
     log("[editarProfesor]", e);

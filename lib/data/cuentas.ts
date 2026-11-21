@@ -11,10 +11,11 @@ import {
   type CuentaNueva,
   type EditarProfesor,
   ErrorCuenta,
-  type ErrorProfesor,
   generarPasswordTemporal,
   type MisDatos,
+  type ResultadoProfesor,
   usuarioNuevo,
+  versionProfesor,
 } from "@/lib/cuentas-datos";
 import { filaDeUsuario, leerUsuarioParaActualizar } from "@/lib/data/usuarios";
 import type { Db, Tx } from "@/lib/db";
@@ -168,18 +169,34 @@ export async function hacerAdminCon(
 
 /**
  * El admin edita a un profesor: nombres, apellidos y email de recuperación (la cédula es el id y
- * no cambia, D174). Un destino que no es profesor se rechaza: esta pantalla no toca alumnos.
+ * no cambia, D174). Un destino que no es profesor se rechaza: esta pantalla no toca alumnos. Con
+ * `version` (D532), si alguien guardó esos campos desde que se abrió el diálogo, no escribe y
+ * responde `cambio` con lo de ahora.
  */
 export async function editarProfesorEnTransaccion(
   db: Db,
   entrada: EditarProfesor,
   ahora: number,
-): Promise<{ ok: true } | { ok: false; error: ErrorProfesor }> {
-  return db.transaction(async (tx) => {
+): Promise<ResultadoProfesor> {
+  return db.transaction(async (tx): Promise<ResultadoProfesor> => {
     const u = await leerUsuarioParaActualizar(tx, entrada.cedula);
-    if (!u) return { ok: false, error: "no-existe" } as const;
-    if (u.rol !== "profesor")
-      return { ok: false, error: "no-profesor" } as const;
+    if (!u) return { ok: false, error: "no-existe" };
+    if (u.rol !== "profesor") return { ok: false, error: "no-profesor" };
+    if (entrada.version !== undefined) {
+      // La fila ya está bloqueada: el email vive en ella, fuera del modelo `Usuario`
+      const [f] = await tx
+        .select({ email: usuarios.emailRecuperacion })
+        .from(usuarios)
+        .where(eq(usuarios.cedula, entrada.cedula));
+      const actual = {
+        nombres: u.nombres,
+        apellidos: u.apellidos,
+        email: f?.email ?? null,
+      };
+      const version = versionProfesor(actual);
+      if (entrada.version !== version)
+        return { ok: false, error: "cambio", actual, version };
+    }
     await tx
       .update(usuarios)
       .set({

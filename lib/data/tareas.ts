@@ -7,6 +7,7 @@
 // misma transacción (D206, D242). Cada operación bloquea la fila de la tarea (`FOR UPDATE`).
 import { eq, inArray, sql } from "drizzle-orm";
 import { idNuevo } from "@/lib/data/ajustes";
+import { borrarAnalisisDe } from "@/lib/data/analisis-ia";
 import {
   entregaDeFila,
   equipoDeFila,
@@ -18,6 +19,7 @@ import {
   leerOperacionEnTx,
   registrarOperacionEnTx,
 } from "@/lib/data/operaciones";
+import { quitarIdeal } from "@/lib/data/ideales";
 import { borrarPartesDeTarea } from "@/lib/data/partes";
 import { escribirRanking, leerSeccion } from "@/lib/data/ranking";
 import { usuarioDeFila } from "@/lib/data/usuarios";
@@ -132,7 +134,8 @@ export async function guardarTareaEnTransaccion(
 /**
  * Elimina una tarea con todas sus entregas (y con ellas sus notas) en UNA transacción, y
  * recalcula el ranking de cada sección que tenía entregas sin ellas (D206, D242). Los ajustes
- * no se tocan (D007): solo desaparecen las notas. Devuelve las claves de B2 de las imágenes para
+ * no se tocan (D007): solo desaparecen las notas; su ideal y el % de IA de sus entregas se van
+ * con ella (D531). Devuelve las claves de B2 de las imágenes para
  * borrarlas después del commit (D229).
  */
 export async function eliminarTareaEnTransaccion(
@@ -160,6 +163,12 @@ export async function eliminarTareaEnTransaccion(
     for (const s of plan.secciones) datos.push(await leerSeccion(tx, s));
     // El reparto de sus grupales se va con ella (D421), y con él sus imágenes
     const dePartes = await borrarPartesDeTarea(tx, id);
+    // Los experimentales también (D531): el % de IA de sus entregas y su ideal
+    await borrarAnalisisDe(
+      tx,
+      ents.map((e) => e.id),
+    );
+    await quitarIdeal(tx, id);
     await tx.delete(entregas).where(eq(entregas.tareaId, id));
     await tx.delete(tareas).where(eq(tareas.id, id));
     for (const [i, s] of plan.secciones.entries()) {

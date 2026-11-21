@@ -266,7 +266,8 @@ export const partes = pgTable(
  * Entrega ideal de una tarea (D430): una por tarea. O es la entrega de un alumno o equipo
  * (`entregaId`, con 20 / 20) o la respuesta que escribe el profe (`respuestas`, un texto por
  * pregunta); nunca las dos. `nota` = por qué es ideal (obligatoria); `notas` = por pregunta. Sin
- * cascada (D434): si la entrega o la tarea ya no existen, la lectura no la muestra.
+ * claves foráneas: eliminar la entrega o la tarea la borra en su transacción (D531) y la lectura
+ * tolera las que quedaron de antes (D434). `actualizadoEn` es su versión al guardar (D532).
  */
 export const ideales = pgTable(
   "ideales",
@@ -368,7 +369,8 @@ export const config = pgTable("config", {
 /**
  * % orientativo de uso de IA de una respuesta de texto (D425–D429): uno por respuesta, se
  * sobrescribe. `huella` = SHA-256 del texto analizado (si el alumno lo edita, queda desactualizado).
- * Sin claves foráneas ni borrado en cascada: quien lee tolera que la entrega ya no exista.
+ * Sin claves foráneas: eliminar la entrega o su tarea borra sus filas en esa transacción (D531) y
+ * quien lee tolera las que quedaron de antes.
  */
 export const analisisIa = pgTable(
   "analisis_ia",

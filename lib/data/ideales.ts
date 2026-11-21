@@ -20,7 +20,9 @@ import {
   type GuardarIdeal,
   type Ideal,
   type ResultadoIdeal,
+  VERSION_IDEAL_SIN_FILA,
   validarIdeal,
+  versionIdealNueva,
   vigencia,
   zIdeal,
 } from "@/lib/ideal";
@@ -50,9 +52,22 @@ async function leerEntrega(db: Tx, id: string, paraActualizar = false) {
   return f ? entregaDeFila(f) : null;
 }
 
+/** La versión de la ideal guardada de la tarea (D532), con la fila bloqueada si existe. */
+async function versionGuardada(tx: Tx, tareaId: string): Promise<number> {
+  const [f] = await tx
+    .select({ actualizadoEn: ideales.actualizadoEn })
+    .from(ideales)
+    .where(eq(ideales.tareaId, tareaId))
+    .for("update");
+  return f?.actualizadoEn ?? VERSION_IDEAL_SIN_FILA;
+}
+
 /**
  * Guarda (o reemplaza: una por tarea) la ideal en UNA transacción: relee la tarea y, si parte de
  * una entrega, la bloquea (`FOR UPDATE`) para que nadie la corrija a menos de 20 mientras tanto.
+ * Con `version` (D532), si otro profe guardó o quitó la ideal desde que se abrió el formulario, no
+ * se escribe nada y vuelve `cambio` con la versión de ahora. Dos primeros guardados a la vez: la
+ * fila aún no existe y no hay qué bloquear, así que el segundo `INSERT` no inserta y es `cambio`.
  */
 export async function guardarIdealEnTransaccion(
   db: Db,
@@ -61,6 +76,9 @@ export async function guardarIdealEnTransaccion(
   ahora: number,
 ): Promise<ResultadoIdeal> {
   return db.transaction(async (tx): Promise<ResultadoIdeal> => {
+    const actual = await versionGuardada(tx, entrada.tareaId);
+    if (entrada.version !== undefined && entrada.version !== actual)
+      return { ok: false, error: "cambio", version: actual };
     const [ft] = await tx
       .select()
       .from(tareas)
@@ -73,7 +91,24 @@ export async function guardarIdealEnTransaccion(
         : null;
     const r = validarIdeal(entrada, tarea, entrega, autorId, ahora);
     if (!r.ok) return r;
-    const fila: FilaIdeal = { ...r.ideal };
+    const fila: FilaIdeal = {
+      ...r.ideal,
+      actualizadoEn: versionIdealNueva(actual, ahora),
+    };
+    if (entrada.version === VERSION_IDEAL_SIN_FILA) {
+      const nueva = await tx
+        .insert(ideales)
+        .values(fila)
+        .onConflictDoNothing()
+        .returning({ tareaId: ideales.tareaId });
+      if (nueva.length > 0) return { ok: true };
+      // Otro profe la creó entre la lectura y el INSERT
+      return {
+        ok: false,
+        error: "cambio",
+        version: await versionGuardada(tx, entrada.tareaId),
+      };
+    }
     await tx
       .insert(ideales)
       .values(fila)
@@ -85,6 +120,17 @@ export async function guardarIdealEnTransaccion(
 /** Quita la ideal de la tarea. Sin ideal también es éxito (otro profe ya la quitó). */
 export async function quitarIdeal(db: Tx, tareaId: string): Promise<void> {
   await db.delete(ideales).where(eq(ideales.tareaId, tareaId));
+}
+
+/**
+ * Al eliminar una entrega: la ideal que la elegía se va con ella (D531), en la misma transacción.
+ * La del profe (sin `entregaId`) no se toca.
+ */
+export async function borrarIdealesDeEntrega(
+  tx: Tx,
+  entregaId: string,
+): Promise<void> {
+  await tx.delete(ideales).where(eq(ideales.entregaId, entregaId));
 }
 
 /** Lo que necesita la página de la ideal del alumno. */
