@@ -35,6 +35,8 @@ describe("fila del ranking abrible (D506, WCAG 2.5.3)", () => {
         nombre="Juana Montero"
         puntos={30.5}
         media={null}
+        empate={false}
+        enRiesgo={false}
         onAbrir={() => {}}
       />,
     );
