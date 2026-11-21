@@ -5,7 +5,7 @@ import { useId, useState } from "react";
 import { UserAvatar } from "@/components/krea/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { type DicebearEstilo, esEstiloDicebear } from "@/lib/dicebear";
 import {
@@ -81,41 +81,44 @@ export function AvatarPicker({
             </TabsTrigger>
           ))}
         </TabsList>
+        {/* La cuadrícula es el panel de la pestaña: así `aria-controls` apunta a un id real (D507) */}
+        <TabsContent value={pestana} tabIndex={-1}>
+          <p id={gridLabel} className="sr-only">
+            Elige tu avatar
+          </p>
+          <ToggleGroup
+            indicador={false}
+            aria-labelledby={gridLabel}
+            value={valor}
+            onValueChange={elegir}
+            className="grid w-full grid-cols-4 justify-items-center gap-3 bg-transparent p-0 md:grid-cols-8"
+          >
+            {semillas.map((seed, i) => {
+              const activo = valor === seed;
+              return (
+                <ToggleGroupItem
+                  key={seed}
+                  value={seed}
+                  aria-label={opcionAvatarTexto(i + 1)}
+                  className="relative size-16 rounded-full p-0 data-[state=on]:bg-transparent data-[state=on]:shadow-avatar-opt"
+                >
+                  <UserAvatar
+                    estilo={pestana}
+                    seed={seed}
+                    nombre={nombre}
+                    size={64}
+                  />
+                  {activo ? (
+                    <span className="absolute -right-1 -bottom-1 grid size-6 place-items-center rounded-full bg-accent text-on-accent">
+                      <Check aria-hidden="true" className="size-4" />
+                    </span>
+                  ) : null}
+                </ToggleGroupItem>
+              );
+            })}
+          </ToggleGroup>
+        </TabsContent>
       </Tabs>
-      <p id={gridLabel} className="sr-only">
-        Elige tu avatar
-      </p>
-      <ToggleGroup
-        indicador={false}
-        aria-labelledby={gridLabel}
-        value={valor}
-        onValueChange={elegir}
-        className="grid w-full grid-cols-4 justify-items-center gap-3 bg-transparent p-0 md:grid-cols-8"
-      >
-        {semillas.map((seed, i) => {
-          const activo = valor === seed;
-          return (
-            <ToggleGroupItem
-              key={seed}
-              value={seed}
-              aria-label={opcionAvatarTexto(i + 1)}
-              className="relative size-16 rounded-full p-0 data-[state=on]:bg-transparent data-[state=on]:shadow-avatar-opt"
-            >
-              <UserAvatar
-                estilo={pestana}
-                seed={seed}
-                nombre={nombre}
-                size={64}
-              />
-              {activo ? (
-                <span className="absolute -right-1 -bottom-1 grid size-6 place-items-center rounded-full bg-accent text-on-accent">
-                  <Check aria-hidden="true" className="size-4" />
-                </span>
-              ) : null}
-            </ToggleGroupItem>
-          );
-        })}
-      </ToggleGroup>
     </Card>
   );
 }

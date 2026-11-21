@@ -150,6 +150,13 @@ export default async function TareaPage({ params }: Props) {
         })
       : undefined;
 
+  // Evaluada: cada pregunta muestra lo obtenido (como /notas); «Pendiente» solo sin evaluación (D003, D505)
+  const entregaDelAlumno = datos.entregas.find((e) => e.tareaId === id);
+  const puntosEvaluados =
+    entregaDelAlumno?.estado === "evaluada"
+      ? (entregaDelAlumno.evaluacion?.puntos ?? null)
+      : null;
+
   // Entrega ideal (D433): con la tarea cerrada para todos (D453); `idealAlumno` vuelve a
   // comprobar sección, cierre y vigencia
   const tareaDoc = datos.tareas.find((t) => t.id === id);
@@ -236,7 +243,9 @@ export default async function TareaPage({ params }: Props) {
                       numero={i + 1}
                       enunciado={p.enunciado}
                       valor={p.valor}
-                      obtenido={null}
+                      obtenido={
+                        puntosEvaluados ? (puntosEvaluados[p.id] ?? 0) : null
+                      }
                       respuesta={
                         r.tipo === "texto" || r.tipo === "url"
                           ? r
