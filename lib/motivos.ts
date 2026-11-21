@@ -125,7 +125,7 @@ function errorEtiqueta(
   catalogo: CatalogoMotivos,
   etiqueta: string,
   excepto?: string,
-): ErrorMotivos | null {
+): Exclude<ErrorMotivos, "cambio"> | null {
   if (etiqueta.length === 0 || etiqueta.length > ETIQUETA_MAX)
     return "etiqueta";
   const clave = normalizar(etiqueta);

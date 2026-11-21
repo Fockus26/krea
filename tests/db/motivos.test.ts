@@ -173,7 +173,7 @@ describe("config/motivos (D375)", () => {
     expect(p2).toEqual({
       ok: false,
       error: "cambio",
-      motivos: lista(p1),
+      motivos: p1.ok ? p1.motivos : [],
       version: AHORA,
     });
     expect(
