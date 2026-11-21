@@ -356,6 +356,40 @@ describe("envío del capitán: sinParte (D420)", () => {
     expect(e && "sinParte" in e).toBe(false);
   });
 
+  test("al editar o reenviar, lo aceptado se queda (D508); la tomada sí la edita el capitán", async () => {
+    await asignar(CAPITAN, "p1", ADELA);
+    await entregarTexto(ADELA, "p1", "Mía");
+    await accion(CAPITAN, "p1", { tipo: "aceptar" });
+    await asignar(CAPITAN, "p3", LUIS);
+    await accion(CAPITAN, "p3", { tipo: "tomar" });
+    expect(
+      await enviarEnTransaccion(db(), CAPITAN, await envio(), AHORA),
+    ).toEqual({ ok: true });
+    // Editar (D395) o un segundo envío que llega tarde, con otro texto en la aceptada
+    const otra = await envio();
+    otra.respuestas.p1 = { texto: "Pisada por el capitán" };
+    otra.respuestas.p3 = { texto: "Tres editada" };
+    expect(await enviarEnTransaccion(db(), CAPITAN, otra, AHORA + 1)).toEqual({
+      ok: true,
+    });
+    const e = await docs.entrega(db(), ENTREGA);
+    expect(e?.respuestas.p1).toEqual({ texto: "Mía" });
+    expect(e?.respuestas.p3).toEqual({ texto: "Tres editada" });
+    // Sin mandarla (el formulario de edición la deja en solo lectura), también entra
+    const { p1: _, ...sinP1 } = (await envio()).respuestas;
+    expect(
+      await enviarEnTransaccion(
+        db(),
+        CAPITAN,
+        { tareaId: TAREA, respuestas: sinP1 },
+        AHORA + 2,
+      ),
+    ).toEqual({ ok: true });
+    expect((await docs.entrega(db(), ENTREGA))?.respuestas.p1).toEqual({
+      texto: "Mía",
+    });
+  });
+
   test("la imagen de una parte aceptada entra desde el reparto (de la carpeta de la entrega)", async () => {
     await asignar(CAPITAN, "p2", ADELA);
     const deParte = await imagen(UUID_1);

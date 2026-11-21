@@ -270,6 +270,38 @@ export function repartoVista(
   };
 }
 
+/**
+ * «Editar entrega» de una grupal ya enviada (D508): las preguntas con parte aceptada de otro
+ * integrante van en solo lectura, como antes de enviar (D462), con lo que entregó. El servidor las
+ * vuelve a poner desde el reparto. `integrantes`: los de la entrega (D396), como en el servidor.
+ */
+export function bloqueosEdicion(e: {
+  preguntas: ReadonlyArray<{ id: string }>;
+  partes: readonly Parte[];
+  integrantes: readonly string[];
+  capitanId: string | null;
+  companeros: readonly Companero[];
+  urls: ReadonlyMap<string, string>;
+}): Record<string, BloqueoPregunta> {
+  const persona = new Map(e.companeros.map((c) => [c.cedula, c]));
+  const bloqueos: Record<string, BloqueoPregunta> = {};
+  repartoCapitan(e.preguntas, e.partes, e.integrantes, e.capitanId).forEach(
+    (f, i) => {
+      if (f.estado !== "aceptada" || !f.asignado || !f.respuesta) return;
+      const c = persona.get(f.asignado);
+      const nombre = c ? nombreCorto(c) : PARTE_SIN_NOMBRE;
+      bloqueos[f.preguntaId] = {
+        texto: bloqueoTexto("aceptada", nombre),
+        respuesta: parteFirmada(f.respuesta, nombre, i + 1, e.urls),
+        aceptada: true,
+        nombre,
+        tomable: false,
+      };
+    },
+  );
+  return bloqueos;
+}
+
 /** Lo que el servidor lee para un estudiante (todo de su sección y lo suyo). */
 export type DatosAlumno = {
   usuario: Usuario;

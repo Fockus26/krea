@@ -38,10 +38,12 @@ import { urlsFirmadas } from "@/lib/datos/imagenes";
 import { inicialEdicion, puedeEditar } from "@/lib/entregas";
 import { cerradaParaTodos } from "@/lib/estado-tarea";
 import { rutaIdealAlumno } from "@/lib/ideal";
+import { rutasImagen } from "@/lib/modelo";
 import { huellaDePartes } from "@/lib/partes";
 import { imagenesConAlt, respuestaFirmada } from "@/lib/question";
 import { TAREA_GRUPAL_SEED } from "@/lib/seed-firestore";
 import {
+  bloqueosEdicion,
   entregaVista,
   RESPUESTA_IMAGEN,
   repartoVista,
@@ -103,15 +105,47 @@ export default async function TareaPage({ params }: Props) {
         : [],
   };
 
+  // Ya enviada y sin evaluar: quien la envía la puede editar (D395)
+  const suEntrega = datos.entregas.find((e) => e.tareaId === id) ?? null;
+  const editable =
+    d.estado === "entregada" &&
+    puedeEditar(
+      datos.usuario,
+      datos.tareas.find((t) => t.id === id) ?? null,
+      id,
+      datos.equipo,
+      suEntrega,
+      ahora,
+    );
+  // Grupal: al editar, las partes aceptadas de otros siguen en solo lectura (D508)
+  const partesEdicion =
+    editable && d.tipo === "grupal" && datos.equipo
+      ? await partesDelEquipo(id, datos.equipo.id)
+      : [];
+
   // Respuestas en imagen (ya enviada o del reparto) y la foto del premio (D265), en una pasada
   const urls = await urlsFirmadas([
     ...(d.estado === "entregada"
       ? d.respuestas.flatMap((r) => (r?.tipo === "imagen" ? r.imagenPaths : []))
       : []),
     ...rutasReparto(entradaReparto),
+    ...partesEdicion.flatMap((p) =>
+      p.estado === "aceptada" ? rutasImagen(p.respuesta) : [],
+    ),
     ...(d.premioFoto ? [d.premioFoto] : []),
   ]);
   const reparto = repartoVista({ ...entradaReparto, urls });
+  const bloqueosEditar =
+    partesEdicion.length > 0 && d.estado === "entregada"
+      ? bloqueosEdicion({
+          preguntas: d.preguntas,
+          partes: partesEdicion,
+          integrantes: suEntrega?.integrantes ?? [],
+          capitanId: datos.equipo?.capitanId ?? null,
+          companeros,
+          urls,
+        })
+      : undefined;
 
   // Entrega ideal (D433): con la tarea cerrada para todos (D453); `idealAlumno` vuelve a
   // comprobar sección, cierre y vigencia
@@ -152,19 +186,13 @@ export default async function TareaPage({ params }: Props) {
 
       {d.estado === "entregada" ? (
         <EntregaEditable
-          editable={puedeEditar(
-            datos.usuario,
-            datos.tareas.find((t) => t.id === id) ?? null,
-            id,
-            datos.equipo,
-            datos.entregas.find((e) => e.tareaId === id) ?? null,
-            ahora,
-          )}
+          editable={editable}
           formulario={{
             tareaId: id,
             titulo: d.titulo,
             preguntas: d.preguntas,
             inicial: inicialEdicion(d.preguntas, d.respuestas, urls),
+            bloqueos: bloqueosEditar,
             autor: datos.usuario.nombres.trim().split(/\s+/)[0] ?? "",
             titular: datos.usuario.cedula,
             acciones: ACCIONES,

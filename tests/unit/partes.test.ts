@@ -5,6 +5,7 @@ import { accesoPartes } from "@/lib/acceso";
 import { mapasEvaluar, vistaEvaluar } from "@/lib/evaluar-datos";
 import { type Entrega, type Parte, type Tarea, zEntrega } from "@/lib/modelo";
 import {
+  aceptadasParaReenviar,
   aplicarParte,
   avisoSinParteTexto,
   bloqueoTexto,
@@ -19,6 +20,7 @@ import {
   sinParteDe,
 } from "@/lib/partes";
 import {
+  bloqueosEdicion,
   type EntregaVista,
   repartoVista,
   rutasReparto,
@@ -752,5 +754,69 @@ describe("repartoVista (D422)", () => {
         urls,
       }),
     ).toBeNull();
+  });
+});
+
+describe("editar una grupal ya enviada (D508)", () => {
+  const qs = [{ id: "p1" }, { id: "p2" }, { id: "p3" }];
+  const persona = (cedula: string, nombres: string) => ({
+    cedula,
+    nombres,
+    apellidos: "Pérez",
+    avatar: { estilo: "fun-emoji", semilla: cedula },
+  });
+  const companeros = [persona(CAP, "Carla"), persona(ADELA, "Adela")];
+  const partes = [
+    parte({ estado: "aceptada", respuesta: { texto: "De Adela" } }),
+    parte({
+      preguntaId: "p2",
+      asignado: LUIS,
+      estado: "aceptada",
+      respuesta: { imagenPath: "entregas/t1/c/l.jpg" },
+    }),
+    parte({ preguntaId: "p3", asignado: LUIS, estado: "tomada" }),
+  ];
+
+  test("lo aceptado vuelve desde el reparto; tomada, pendiente o de quien no está en la entrega, no", () => {
+    expect(aceptadasParaReenviar(qs, partes, MIEMBROS, CAP)).toEqual({
+      p1: { texto: "De Adela" },
+      p2: { imagenPath: "entregas/t1/c/l.jpg" },
+    });
+    // Sin aceptar no frena (ya salió): solo no se impone
+    expect(
+      aceptadasParaReenviar(
+        qs,
+        [parte({ estado: "devuelta", respuesta: { texto: "Vieja" } })],
+        MIEMBROS,
+        CAP,
+      ),
+    ).toEqual({});
+    // Luis no está entre los integrantes de la entrega (D396); Adela pasó a capitana
+    expect(aceptadasParaReenviar(qs, partes, [CAP, ADELA], ADELA)).toEqual({});
+  });
+
+  test("el formulario de edición deja en solo lectura lo aceptado, con lo que entregó", () => {
+    const b = bloqueosEdicion({
+      preguntas: qs,
+      partes,
+      integrantes: MIEMBROS,
+      capitanId: CAP,
+      companeros,
+      urls: new Map([["entregas/t1/c/l.jpg", "https://firmada/l"]]),
+    });
+    expect(Object.keys(b)).toEqual(["p1", "p2"]);
+    expect(b.p1).toEqual({
+      texto: "Aceptada: es la respuesta de Adela Pérez.",
+      respuesta: { tipo: "texto", texto: "De Adela" },
+      aceptada: true,
+      nombre: "Adela Pérez",
+      tomable: false,
+    });
+    // Luis ya no está en el equipo, pero sí en la entrega: su parte sigue suya, sin nombre
+    expect(b.p2).toMatchObject({
+      texto: "Aceptada: es la respuesta de Alguien del equipo.",
+      respuesta: { tipo: "imagen", src: "https://firmada/l" },
+      tomable: false,
+    });
   });
 });
