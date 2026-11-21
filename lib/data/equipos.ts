@@ -282,7 +282,7 @@ export async function eliminarEquipoEnTransaccion(
   equipoId: string,
   ahora: number,
 ): Promise<Eliminado> {
-  const fallo = (error: ErrorGestionEquipo): Eliminado => ({
+  const fallo = (error: Exclude<ErrorGestionEquipo, "cambio">): Eliminado => ({
     resultado: { ok: false, error },
     logo: null,
     afectados: [],

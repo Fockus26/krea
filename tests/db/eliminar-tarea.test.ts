@@ -5,6 +5,7 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 import { eliminarTareaEnTransaccion } from "@/lib/data/tareas";
 import type { Db } from "@/lib/db";
+import { analisisIa, ideales } from "@/lib/db/schema";
 import {
   type Ajuste,
   COL,
@@ -125,6 +126,42 @@ beforeAll(async () => {
     evaluada(T_QUEDA, A1, 15),
   );
   await docs.ponerDoc(db(), "ajustes", AJUSTE, ajuste);
+  // Los experimentales (D531): la ideal y el % de IA de cada tarea
+  await db()
+    .insert(ideales)
+    .values([
+      {
+        tareaId: T_BORRAR,
+        entregaId: null,
+        respuestas: { p1: "La del profe" },
+        nota: "Porque sí",
+        notas: {},
+        autorId: PROFE,
+        actualizadoEn: 1,
+      },
+      {
+        tareaId: T_QUEDA,
+        entregaId: idEntrega(T_QUEDA, A1),
+        respuestas: null,
+        nota: "Porque sí",
+        notas: {},
+        autorId: PROFE,
+        actualizadoEn: 1,
+      },
+    ]);
+  await db()
+    .insert(analisisIa)
+    .values(
+      [idEntrega(T_BORRAR, A1), idEntrega(T_QUEDA, A1)].map((entregaId) => ({
+        entregaId,
+        preguntaId: "p1",
+        porcentaje: 10,
+        huella: "h",
+        modelo: "m",
+        autorId: PROFE,
+        analizadoEn: 1,
+      })),
+    );
   // El primer archivo paga el arranque en frío del emulador
 }, 30_000);
 
@@ -148,6 +185,16 @@ describe("eliminar una tarea (Postgres)", () => {
     // 15 de la tarea que queda + 2 del ajuste; los 18 de la borrada ya no cuentan
     expect(await puntosDe(A1)).toBe(17);
     expect(await puntosDe(A2)).toBe(0);
+
+    // Su ideal y el % de IA de sus entregas se van con ella; los de la otra tarea, no (D531)
+    const idealesQuedan = await db()
+      .select({ tareaId: ideales.tareaId })
+      .from(ideales);
+    expect(idealesQuedan).toEqual([{ tareaId: T_QUEDA }]);
+    const analisisQuedan = await db()
+      .select({ entregaId: analisisIa.entregaId })
+      .from(analisisIa);
+    expect(analisisQuedan).toEqual([{ entregaId: idEntrega(T_QUEDA, A1) }]);
   });
 
   test("una tarea que ya no existe: no-existe, sin tocar nada", async () => {

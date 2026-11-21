@@ -15,11 +15,11 @@ import {
   tareaDeFila,
   validas,
 } from "@/lib/data/filas";
+import { quitarIdeal } from "@/lib/data/ideales";
 import {
   leerOperacionEnTx,
   registrarOperacionEnTx,
 } from "@/lib/data/operaciones";
-import { quitarIdeal } from "@/lib/data/ideales";
 import { borrarPartesDeTarea } from "@/lib/data/partes";
 import { escribirRanking, leerSeccion } from "@/lib/data/ranking";
 import { usuarioDeFila } from "@/lib/data/usuarios";

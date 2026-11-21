@@ -1,0 +1,5 @@
+# D531 · Data · Eliminar entrega o tarea borra en su transacción la ideal y el % de IA que cuelgan de ellas · Implemented
+
+**Decision:** `eliminarEntregaEnTransaccion` borra las filas de `analisis_ia` de esa entrega (`borrarAnalisisDe`) y la de `ideales` que la elegía (`borrarIdealesDeEntrega`; la ideal escrita por el profe no se toca). `eliminarTareaEnTransaccion` borra el % de IA de todas sus entregas (también las que no validan) y su ideal (`quitarIdeal`). Todo en la misma transacción, sin claves foráneas ni migración. Reemplaza la parte «sin cascada al eliminar» de D434: devolver la entrega o corregirla a menos de 20 sigue dejando la ideal guardada y caducada al leer (el profe ve el aviso).
+**Why:** los experimentales de la ola 4 (Z1, Z2) se quedan, y sus filas huérfanas se acumulaban (backlog L54); la lectura ya las toleraba, así que las que quedaron de antes siguen sin mostrarse.
+**Discarded alternative:** claves foráneas con `ON DELETE CASCADE` — pide migración (`0008`) y `ideales.entrega_id` admite `null` con una regla de forma (`ideales_una_forma`) que habría que revisar; el borrado explícito ya vive junto al de las partes (D421).
