@@ -70,3 +70,25 @@ export function recargarSiEsDeploy(error: unknown): boolean {
   window.location.reload();
   return true;
 }
+
+/**
+ * Para el `catch` de una Server Action en un cliente (D538, L57): un error de deploy (pestaña con
+ * el build anterior → `UnrecognizedActionError`) NO es «sin red»: se intenta la recarga y se
+ * re-lanza para que llegue a `app/error.tsx` (que sale si la marca anti-bucle impidió recargar).
+ * Cualquier otro fallo devuelve `red`, el resultado que el formulario ya sabe pintar.
+ *
+ * `.catch(siNoEsDeploy<ResultadoX>({ ok: false, error: "red" }))`
+ */
+export function siNoEsDeploy<T>(red: T): (e: unknown) => T {
+  return (e) => {
+    relanzarSiEsDeploy(e);
+    return red;
+  };
+}
+
+/** Variante para `try { … } catch (e) { relanzarSiEsDeploy(e); … }`. Si no es de deploy, no hace nada. */
+export function relanzarSiEsDeploy(error: unknown): void {
+  if (!esErrorDeDeploy(error)) return;
+  recargarSiEsDeploy(error);
+  throw error;
+}

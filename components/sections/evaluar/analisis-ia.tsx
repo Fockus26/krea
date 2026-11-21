@@ -2,8 +2,8 @@
 
 import { Sparkles } from "lucide-react";
 import * as React from "react";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   type AnalizarTexto,
   type EstadoAnalisisIA,
@@ -22,6 +22,7 @@ import {
   porcentajeTexto,
   type ResultadoAnalisisIA,
 } from "@/lib/ia-texto";
+import { siNoEsDeploy } from "@/lib/recarga-deploy";
 
 export type AnalizarIA = (e: AnalizarTexto) => Promise<ResultadoAnalisisIA>;
 
@@ -58,7 +59,9 @@ export function AnalisisIA({
   const pedir = () => {
     setError(null);
     iniciar(async () => {
-      const r = await analizar({ entregaId, preguntaId });
+      const r = await analizar({ entregaId, preguntaId }).catch(
+        siNoEsDeploy<ResultadoAnalisisIA>({ ok: false, error: "red" }),
+      );
       if (r.ok) setNuevo(r.porcentaje);
       else setError(errorAnalisisTexto(r.error));
     });
@@ -96,7 +99,7 @@ export function AnalisisIA({
       ) : null}
       {estado.tipo === "corto" ? null : (
         <div>
-          <Button
+          <BotonEnLinea
             type="button"
             variant="secondary"
             size="sm"
@@ -110,7 +113,7 @@ export function AnalisisIA({
           >
             <Sparkles aria-hidden="true" />
             {pendiente ? IA_ANALIZANDO : deNuevo ? IA_BOTON_DE_NUEVO : IA_BOTON}
-          </Button>
+          </BotonEnLinea>
         </div>
       )}
       {error ? (

@@ -4,13 +4,15 @@ import { Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { ErrorGuardarNota } from "@/components/estados/errores";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
 import { ComentarioCampo } from "@/components/krea/comentario-campo";
 import { LiveTotal } from "@/components/krea/live-total";
 import type { QuestionAnswer } from "@/components/krea/question-card-detail";
 import { QuestionCardReview } from "@/components/krea/question-card-review";
 import { ScorePicker } from "@/components/krea/score-picker";
+import { hayRed } from "@/components/krea/use-en-linea";
 import { ActionBar } from "@/components/sections/shared/action-bar";
-import { BOTON_LARGO, Button } from "@/components/ui/button";
+import { BOTON_LARGO } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { toast } from "@/components/ui/sonner";
@@ -40,6 +42,7 @@ import {
 } from "@/lib/evaluar-datos";
 import type { EstadoAnalisisIA } from "@/lib/ia-texto";
 import { COMMENT_MAX_LENGTH } from "@/lib/question";
+import { siNoEsDeploy } from "@/lib/recarga-deploy";
 import { AnalisisIA, type AnalizarIA } from "./analisis-ia";
 import { ReviewBase, usePublicarBaseChip } from "./review-base";
 import { ReviewIndex } from "./review-index";
@@ -219,7 +222,7 @@ export function ReviewForm({
   }, [tituloId]);
 
   const guardar = async () => {
-    if (!completo || guardando.current) return;
+    if (!completo || guardando.current || !hayRed()) return;
     const valores = preguntas.map((p) => p.valor);
     const finales = normalizarPuntajes(puntajes, valores);
     const basesFinales = normalizarBases(bases);
@@ -250,7 +253,7 @@ export function ReviewForm({
             ? { enviadaEn: inicial.enviadaEn }
             : {}),
         })
-        .catch((): ResultadoEvaluar => ({ ok: false, error: "red" }));
+        .catch(siNoEsDeploy<ResultadoEvaluar>({ ok: false, error: "red" }));
       guardando.current = false;
       if (!r.ok) {
         // Sin red: el error en pantalla con «Reintentar guardar» (D171); lo demás, el toast
@@ -270,7 +273,9 @@ export function ReviewForm({
           if (acciones && evaluadaEn !== null) {
             const d = await acciones
               .deshacer({ entregaId, evaluadaEn })
-              .catch((): ResultadoEvaluar => ({ ok: false, error: "red" }));
+              .catch(
+                siNoEsDeploy<ResultadoEvaluar>({ ok: false, error: "red" }),
+              );
             if (!d.ok) {
               toast.error(errorEvaluarTexto(d.error));
               return;
@@ -447,7 +452,7 @@ export function ReviewForm({
           />
           {indice ? <ReviewIndex scores={puntajes} actual={actual} /> : null}
           <div className="flex flex-col gap-2">
-            <Button
+            <BotonEnLinea
               type="button"
               size="lg"
               block
@@ -457,7 +462,7 @@ export function ReviewForm({
             >
               <Check aria-hidden="true" />
               Guardar nota y seguir
-            </Button>
+            </BotonEnLinea>
             <p id={motivoId} className="text-center text-small text-text-2">
               {activaTexto(preguntas.length, completo, siguiente)}
             </p>
@@ -494,7 +499,7 @@ export function ReviewForm({
           <p className="text-small-b text-text">{faltanCortoTexto(faltan)}</p>
           <p className="text-small text-text-2">{sigueCortoTexto(siguiente)}</p>
         </div>
-        <Button
+        <BotonEnLinea
           type="button"
           disabled={!completo}
           aria-describedby={motivoMovilId}
@@ -503,7 +508,7 @@ export function ReviewForm({
         >
           <Check aria-hidden="true" />
           Guardar y seguir
-        </Button>
+        </BotonEnLinea>
       </ActionBar>
     </div>
   );

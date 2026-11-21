@@ -1,18 +1,20 @@
 "use client";
-// «Tus datos» del profesor (D234, pedido 4 de César): sus nombres y apellidos son suyos y los
-// edita aquí; la cédula no (es su usuario para entrar y el uid, D174). Mismos 4 campos que el
-// «Tus datos» del alumno (`ProfileData`, solo lectura para él), en la grilla `g2`.
 import { useRouter } from "next/navigation";
 import { type FormEvent, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ErrorEnPantalla } from "@/components/estados/errores";
-import { Button } from "@/components/ui/button";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
+// «Tus datos» del profesor (D234, pedido 4 de César): sus nombres y apellidos son suyos y los
+// edita aquí; la cédula no (es su usuario para entrar y el uid, D174). Mismos 4 campos que el
+// «Tus datos» del alumno (`ProfileData`, solo lectura para él), en la grilla `g2`.
+import { hayRed } from "@/components/krea/use-en-linea";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { guardarMisDatos } from "@/lib/acciones/perfil";
 import { APELLIDOS_VACIO, NOMBRES_VACIO, unirNombre } from "@/lib/alumnos";
 import { cedulaTexto, partirNombre } from "@/lib/perfil";
+import { siNoEsDeploy } from "@/lib/recarga-deploy";
 
 // PROVISIONAL (CONTENT_CHECKLIST fila 137): no están en el lienzo
 const AYUDA_CEDULA = "Es tu usuario para entrar: no se cambia.";
@@ -52,6 +54,7 @@ export function ProfileDataEditable({
 
   async function enviar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!hayRed()) return;
     if (enviando.current) return;
     const primero = errores.nombres
       ? ids.nombre1
@@ -69,7 +72,7 @@ export function ProfileDataEditable({
     const r = await guardarMisDatos({
       nombres: unirNombre(nombre1, nombre2),
       apellidos: unirNombre(apellido1, apellido2),
-    }).catch(() => ({ ok: false as const }));
+    }).catch(siNoEsDeploy({ ok: false as const }));
     enviando.current = false;
     setGuardando(false);
     if (!r.ok) {
@@ -141,9 +144,13 @@ export function ProfileDataEditable({
           </ErrorEnPantalla>
         ) : null}
         <div className="flex flex-wrap gap-3">
-          <Button type="submit" loading={guardando} loadingLabel="Guardando…">
+          <BotonEnLinea
+            type="submit"
+            loading={guardando}
+            loadingLabel="Guardando…"
+          >
             Guardar cambios
-          </Button>
+          </BotonEnLinea>
         </div>
       </form>
     </Card>

@@ -17,6 +17,7 @@ import {
   resolverEmpate,
   type TarjetaPremio,
 } from "@/lib/premios";
+import { relanzarSiEsDeploy } from "@/lib/recarga-deploy";
 import { mensajeErrorTarea } from "@/lib/tareas-profe";
 import type { ResultadoTarea } from "@/lib/tareas-profe-datos";
 import { PrizeCardTeacher } from "./prize-card-teacher";
@@ -109,7 +110,8 @@ export function PrizesBoard({
           seccion: seccionId,
           decision,
         });
-      } catch {
+      } catch (fallo) {
+        relanzarSiEsDeploy(fallo);
         r = { ok: false, error: "red" };
       }
       if (r.ok) aplicar();

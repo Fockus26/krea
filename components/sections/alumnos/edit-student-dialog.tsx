@@ -4,8 +4,10 @@ import { Pencil, UserPen } from "lucide-react";
 import Link from "next/link";
 import { type ReactNode, useId, useRef, useState } from "react";
 import { ErrorEnPantalla } from "@/components/estados/errores";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
 import { GradePill } from "@/components/krea/grade-pill";
 import { NumberStepper } from "@/components/krea/number-stepper";
+import { hayRed } from "@/components/krea/use-en-linea";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -53,6 +55,7 @@ import {
   errorPuntajeFinalTexto,
   type ResultadoPuntajeFinal,
 } from "@/lib/puntaje-final";
+import { siNoEsDeploy } from "@/lib/recarga-deploy";
 import { puntajeTexto } from "@/lib/tareas-profe-entregas";
 import { type Presencia, useMarcarPresencia } from "./use-presencia";
 
@@ -226,6 +229,7 @@ function EditForm({
 
   const enviar = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!hayRed()) return;
     if (enviando.current) return;
     const primero = errores.nombres
       ? ids.nombre1
@@ -267,7 +271,7 @@ function EditForm({
       motivo: cambioBase ? motivo.trim() : "",
       ...(conEmail ? { email: emailLimpio } : {}),
       version,
-    }).catch((): ResultadoAlumno => ({ ok: false, error: "red" }));
+    }).catch(siNoEsDeploy<ResultadoAlumno>({ ok: false, error: "red" }));
     enviando.current = false;
     setGuardando(false);
     if (r.ok) onListo(cambios);
@@ -433,9 +437,13 @@ function EditForm({
             Cancelar
           </Button>
         </DialogClose>
-        <Button type="submit" loading={guardando} loadingLabel="Guardando…">
+        <BotonEnLinea
+          type="submit"
+          loading={guardando}
+          loadingLabel="Guardando…"
+        >
           Guardar cambios
-        </Button>
+        </BotonEnLinea>
       </DialogFooter>
     </form>
   );
@@ -466,7 +474,7 @@ function PuntajeFinal({
     setGuardando(true);
     setError(null);
     const r = await ponerPuntajeFinal({ cedula, puntaje }).catch(
-      (): ResultadoPuntajeFinal => ({ ok: false, error: "red" }),
+      siNoEsDeploy<ResultadoPuntajeFinal>({ ok: false, error: "red" }),
     );
     enviando.current = false;
     setGuardando(false);
@@ -502,7 +510,7 @@ function PuntajeFinal({
             )}
             emptyText="Sin nota"
           />
-          <Button
+          <BotonEnLinea
             type="button"
             variant="secondary"
             onClick={guardar}
@@ -511,7 +519,7 @@ function PuntajeFinal({
             loadingLabel="Guardando…"
           >
             Guardar puntaje
-          </Button>
+          </BotonEnLinea>
         </div>
         {error ? (
           <div id={`${uid}-error`}>

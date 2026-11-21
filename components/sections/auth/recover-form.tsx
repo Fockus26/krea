@@ -2,9 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
 import { CedulaInput } from "@/components/krea/cedula-input";
+import { hayRed } from "@/components/krea/use-en-linea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { validateCedula } from "@/lib/cedula";
 import { AuthHeading } from "./auth-heading";
@@ -38,6 +39,7 @@ export function RecoverForm({
 
   function enviar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!hayRed()) return;
     setEnviado(true);
     if (validateCedula(cedula)) {
       focusPrimerInvalido(e.currentTarget);
@@ -73,7 +75,7 @@ export function RecoverForm({
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         ) : null}
-        <Button
+        <BotonEnLinea
           type="submit"
           size="lg"
           block
@@ -81,7 +83,7 @@ export function RecoverForm({
           loadingLabel="Enviando…"
         >
           Enviar enlace
-        </Button>
+        </BotonEnLinea>
       </form>
     </div>
   );

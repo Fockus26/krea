@@ -55,6 +55,7 @@ import {
 } from "@/lib/equipos-profe";
 import { EQUIPOS } from "@/lib/lote";
 import type { SeccionId } from "@/lib/modelo";
+import { siNoEsDeploy } from "@/lib/recarga-deploy";
 import { CLAVE_VISTA_EQUIPOS } from "@/lib/vista";
 import { estiloDe } from "@/lib/vistas-estudiante";
 
@@ -154,13 +155,11 @@ export function TeamsBoard({
     pedido: Promise<ResultadoEquipos> | undefined,
   ) {
     if (!pedido) return;
-    void pedido
-      .catch(() => RED)
-      .then((r) => {
-        if (r.ok) return;
-        if (r.error !== "sesiones") setEstado(anterior);
-        toast.error(errorEquiposTexto(r.error));
-      });
+    void pedido.catch(siNoEsDeploy(RED)).then((r) => {
+      if (r.ok) return;
+      if (r.error !== "sesiones") setEstado(anterior);
+      toast.error(errorEquiposTexto(r.error));
+    });
   }
   const nombreEquipo = (id: string) =>
     equipos.find((e) => e.id === id)?.nombre ?? id;
@@ -208,7 +207,7 @@ export function TeamsBoard({
           );
           const r = await acciones
             .logo(form)
-            .catch((): ResultadoLogo => ({ ok: false, error: "red" }));
+            .catch(siNoEsDeploy<ResultadoLogo>({ ok: false, error: "red" }));
           if (!r.ok) {
             fallo(errorEquiposTexto(r.error));
             return;

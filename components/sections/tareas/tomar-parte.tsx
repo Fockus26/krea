@@ -2,6 +2,7 @@
 
 import { Hand } from "lucide-react";
 import { useState, useTransition } from "react";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
 import { BOTON_LARGO_SM, Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,6 +23,7 @@ import {
   TOMAR_PARTE_TITULO,
   tomarParteAviso,
 } from "@/lib/partes";
+import { relanzarSiEsDeploy } from "@/lib/recarga-deploy";
 
 /** Server Action «La respondo yo» (D461). */
 export type AccionTomar = (e: {
@@ -72,7 +74,8 @@ export function TomarParte({
       let r: ResultadoParte;
       try {
         r = await accion({ tareaId, preguntaId });
-      } catch {
+      } catch (fallo) {
+        relanzarSiEsDeploy(fallo);
         r = { ok: false, error: "red" };
       }
       setAbierto(false);
@@ -114,10 +117,14 @@ export function TomarParte({
               Cancelar
             </Button>
           </DialogClose>
-          <Button onClick={tomar} loading={pendiente} loadingLabel="Tomándola…">
+          <BotonEnLinea
+            onClick={tomar}
+            loading={pendiente}
+            loadingLabel="Tomándola…"
+          >
             <Hand aria-hidden="true" />
             {TOMAR_PARTE}
-          </Button>
+          </BotonEnLinea>
         </DialogFooter>
       </DialogContent>
     </Dialog>

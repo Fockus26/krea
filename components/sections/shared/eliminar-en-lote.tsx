@@ -1,13 +1,14 @@
 "use client";
+import { Trash2, X } from "lucide-react";
+import { type ReactNode, useRef, useState } from "react";
+import { ErrorEnPantalla } from "@/components/estados/errores";
 // Eliminar en lote (W22, D298–D300): la barra «N seleccionados · Eliminar» y su confirmación.
 // Alumnos, Profesores, Tareas y Equipos la comparten (por `id`: cédula, tarea o equipo, D314);
 // cada pantalla pone su acción de servidor, sus textos y, si
 // quiere, un detalle de lo que se borra (Alumnos lo cuenta en el servidor al abrir). Confirmar
 // borra trozo a trozo (TOPE_LOTE); si alguno falla, el diálogo sigue abierto con quiénes y por qué,
 // y esos siguen seleccionados para reintentar. Sin fallos: se cierra con un toast.
-import { Trash2, X } from "lucide-react";
-import { type ReactNode, useRef, useState } from "react";
-import { ErrorEnPantalla } from "@/components/estados/errores";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -203,7 +204,7 @@ export function EliminarEnLote<E>({
                 Cancelar
               </Button>
             </DialogClose>
-            <Button
+            <BotonEnLinea
               type="button"
               variant="danger"
               disabled={!listo || n === 0}
@@ -213,7 +214,7 @@ export function EliminarEnLote<E>({
             >
               <Trash2 aria-hidden="true" />
               {eliminarLoteBoton(mostrados.length)}
-            </Button>
+            </BotonEnLinea>
           </DialogFooter>
         </DialogContent>
       </Dialog>
