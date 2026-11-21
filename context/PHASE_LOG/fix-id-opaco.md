@@ -1,0 +1,1 @@
+2026-11-21 · R2 fix/id-opaco (#164): id público HMAC en ranking (página y API), Inicio, Mi equipo y reparto; traducción id→cédula en partes; D493–D496; QA v2 F-M1 cerrado por pruebas, repro HTTP pendiente al cerrar la ola.

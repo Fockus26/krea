@@ -1,0 +1,1 @@
+2026-11-21 · R6 fix/concurrencia-datos (#162): F-B1 el servidor impone lo aceptado de cada parte también al editar/reenviar la grupal y la edición lo deja en solo lectura (D508); F-B2 opciones de ajuste con concurrencia optimista por actualizadoEn y respuesta cambio (D509); fila 280.

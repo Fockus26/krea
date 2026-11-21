@@ -252,3 +252,6 @@
 | 260 | Ayudas: «Todos vuelven a poder entregar hasta la fecha y hora nuevas.» · «Solo los alumnos (equipos) marcados podrán entregar hasta la fecha y hora nuevas. Desmarca a un alumno para quitarle la prórroga.» | `reabrir-tarea.tsx` | 11-20 Q4 | — | Provisional |
 | 261 | «Alumnos»/«Equipos», «n marcado(s)», «Ya entregó», «Prórroga hasta dd/mm/aaaa · h:mm», «Marca al menos un alumno/equipo.» | `reabrir-tarea.tsx` | 11-20 Q4 (D456) | — | Provisional |
 | 262 | «Reabrir para todos» · «Guardar prórrogas» · «Quitar las prórrogas» · «Guardando…» · toasts «Tarea reabierta para todos» / «Prórrogas guardadas» / «Prórrogas quitadas» | `reabrir-tarea.tsx` | 11-20 Q4 | — | Provisional |
+| 276 | Aviso del lector grupal: «Puedes ver las preguntas. Las respuestas aparecen aquí cuando se envíen.» (`lib/tareas.ts`, D504–D507) | Provisional |
+| 277 | Texto sr-only del nombre accesible de filas y podio del ranking: «Puesto », «punto» / «puntos» (`rank-row.tsx`, `podium.tsx`) | Provisional |
+| 280 | Aviso de cambio en Opciones de ajuste: «Otro profe cambió las opciones mientras las tenías abiertas. Ya ves la lista de ahora: revisa y vuelve a intentarlo.» (`lib/motivos.ts`, D509) | Provisional |

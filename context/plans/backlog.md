@@ -60,3 +60,20 @@
 - (2026-11-20, Q7) `ideal-respuesta.tsx`: el texto de la ideal sin `break-words` (puede desbordar a 320 px). Bajo.
 - (2026-11-20, Q7) `question-editor.tsx`: el `ToggleGroup` de formato no filtra el valor vacío al deseleccionar. Bajo.
 - (2026-11-20, Q6) `sinParteDe` en `enviarEnTransaccion` recibe el reparto sin filtrar por vigencia (funciona; revisar). Bajo.
+
+## QA versión 2 (2026-11-21, `plans/qa-version-2.md`)
+
+- Medio · F-M2 «Pendiente» en tarea evaluada (`funcional/v2-03`)
+- Medio · F-M3 foco al cerrar diálogos de Evaluar (`funcional/v2-04`)
+- Medio · D-M2 enlace de la ideal del profe en oscuro 3,56:1 (`diseno/12`)
+- Medio · D-M3 aria-label del ranking sin texto visible; `aria-controls` de /perfil (`diseno/10`, `11`)
+- Medio · F-M1 cédulas en el ranking — espera decisión de César
+- Medio · D-M1 píldora de nota 10–12 — espera decisión de César
+- Bajo · F-B1 reenvío pisa parte aceptada — espera decisión de César
+- Bajo · F-B2 opciones de ajuste sin versión (`funcional/v2-06`)
+- Bajo · elipsis del ranking a 1024 px · alturas desiguales de tarjetas (/profe/equipos/5a, /equipo) · «él» fijo en vista del integrante
+- Medio · carpeta de imágenes de entrega = sha256(tarea__cédula)[:32] (`lib/entregas.ts:275`): en la ideal de un alumno la URL firmada que ven sus compañeros permite revertir la cédula probando 10⁸ valores (D388). Arreglo: mover objetos en B2 o proxy de firma — decide César
+- Bajo · clase «el último que guarda gana» sin versión: `editarEquipo` (`lib/acciones/equipos.ts`), `editarProfesor` (`lib/acciones/profesores.ts`), `guardarIdeal` (`lib/acciones/ideales.ts`) — mismo arreglo que D509
+- Bajo · tarea evaluada sin puntos por pregunta («No participó») sigue mostrando «Pendiente» en `/tareas/[tarea]` (D505)
+- Decisión de César · Next 16.4.3 con vulnerabilidad conocida: `next upgrade` en unidad aparte
+- Bajo · la 404 dinámica con sesión trae el meta robots `noindex` tres veces (repro `diseno/2`)

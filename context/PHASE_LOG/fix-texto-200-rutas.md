@@ -1,0 +1,1 @@
+2026-11-21 · R4 fix/texto-200-rutas (#166): guarda versionada scripts/qa/texto-200.mjs (D502), botones largos por sitio (D501, extiende D227), columna lateral del ranking desde 1440 y tarjetas hermanas de igual altura (D503). Mergea último: tras los demás, merge de origin/main y volver a correr la guarda.

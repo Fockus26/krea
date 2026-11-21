@@ -1,0 +1,1 @@
+2026-11-21 · R3 fix/contraste-oscuro (#165): tarjeta de puntos con --accent en oscuro, píldora de nota con tinta oscura en 9–13 por contraste medido (D498, pendiente confirmar rango), enlace de aviso con text-text; D497–D500.

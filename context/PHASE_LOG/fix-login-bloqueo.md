@@ -1,0 +1,1 @@
+2026-11-21 · R1 fix/login-bloqueo (#161) · F-A1: el límite de 5 fallos lee el email de JSON y urlencoded (otro tipo 415) y reserva el intento con un upsert atómico antes de evaluar; D491–D492; pruebas db/unit rojo→verde.

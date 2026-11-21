@@ -1,0 +1,1 @@
+2026-11-21 · R5 fix/a11y-estados (#163): 404 dentro del shell, foco al cerrar diálogos (central en ui/dialog), nombre accesible del ranking, panel de pestañas de avatar, tarea evaluada con puntos, copy sin género; D504–D507; filas 276–277.
