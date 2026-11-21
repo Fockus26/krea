@@ -41,6 +41,10 @@ type NumberStepperProps = {
   "aria-labelledby"?: string;
   /** Lo que anuncia el campo sin valor. "Sin puntuar" por defecto. */
   emptyText?: string;
+  /** Texto del `aria-valuetext` con valor (p. ej. «más 2 puntos»). Por defecto, el número con coma. */
+  formatValueText?: (value: number) => string;
+  /** Desde «sin valor», de dónde parte el primer −/+ (por defecto `min`, D103). */
+  startAt?: number;
   id?: string;
   disabled?: boolean;
   readOnly?: boolean;
@@ -70,6 +74,8 @@ function NumberStepper({
   label,
   "aria-labelledby": labelledBy,
   emptyText = STEPPER_EMPTY_TEXT,
+  formatValueText,
+  startAt,
   id,
   disabled,
   readOnly,
@@ -95,7 +101,7 @@ function NumberStepper({
 
   const bump = (dir: 1 | -1) => {
     const parsed = draft === null ? null : parseDecimal(draft);
-    const next = stepFrom(parsed ?? value, dir, range);
+    const next = stepFrom(parsed ?? value, dir, range, startAt);
     commit(next);
     // Un botón que se deshabilita en el límite sacaría el foco de la pantalla
     if (atMin(next, range) || atMax(next, range)) inputRef.current?.focus();
@@ -135,7 +141,7 @@ function NumberStepper({
         autoComplete="off"
         role="spinbutton"
         {...name}
-        {...stepperAria(value, range, emptyText)}
+        {...stepperAria(value, range, emptyText, formatValueText)}
         aria-describedby={aria["aria-describedby"]}
         aria-invalid={aria["aria-invalid"]}
         disabled={disabled}

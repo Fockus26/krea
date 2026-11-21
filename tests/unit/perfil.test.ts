@@ -5,6 +5,7 @@ import {
   baseChipTexto,
   baseSelectorAvatar,
   capitanChipTexto,
+  cedulaPuntos,
   cedulaTexto,
   ESTILOS_AVATAR,
   LARGO_SEMILLA,
@@ -142,5 +143,12 @@ describe("datos de ejemplo (seed)", () => {
   });
   test("quien no es capitán no lleva el chip", () => {
     expect(perfilDe(alumnoPorCedula("45021029")).capitan).toBeUndefined();
+  });
+});
+
+describe("cedulaPuntos", () => {
+  test("cédula con puntos y sin el prefijo C.I.", () => {
+    expect(cedulaPuntos("45009896")).toBe("45.009.896");
+    expect(cedulaPuntos("9876543")).toBe("9.876.543");
   });
 });

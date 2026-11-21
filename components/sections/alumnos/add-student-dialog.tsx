@@ -220,6 +220,7 @@ function AddForm({
       >
         <CedulaInput
           name="cedula"
+          autoComplete="off"
           value={cedula}
           onChange={(e) => setCedula(e.currentTarget.value)}
         />

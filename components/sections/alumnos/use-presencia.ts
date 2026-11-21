@@ -35,7 +35,7 @@ export function usePresenciaAlumnos(yo?: YoPresencia): Presencia | null {
   );
   // Reloj del SERVIDOR (lo trae cada respuesta) más lo que pasó desde entonces aquí
   const [base, setBase] = useState({ servidor: 0, local: 0 });
-  const [, setTic] = useState(0);
+  const [tic, setTic] = useState(0);
   const fallos = useRef(0);
 
   useSondeo(
@@ -72,6 +72,9 @@ export function usePresenciaAlumnos(yo?: YoPresencia): Presencia | null {
     return () => clearInterval(reloj);
   }, [uid]);
 
+  // `tic` va en las dependencias a propósito: sin él el objeto no cambia y las entradas no
+  // caducarían por reloj hasta el próximo sondeo (D521)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `tic` solo fuerza el recálculo
   return useMemo(() => {
     if (!uid) return null;
     const ahora = base.servidor + (Date.now() - base.local);
@@ -83,7 +86,7 @@ export function usePresenciaAlumnos(yo?: YoPresencia): Presencia | null {
         return lista ? editoresVigentes(lista, ahora, uid) : NADIE;
       },
     };
-  }, [uid, nombre, entradas, base]);
+  }, [uid, nombre, entradas, base, tic]);
 }
 
 /** Qué fila marca el pedido: un alumno («Editar alumno») o una entrega («Evaluar», D408). */

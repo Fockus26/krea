@@ -380,7 +380,8 @@ export function AdjustmentForm({
         {/* Única región viva del formulario: la frase completa, estable (no cifras sueltas) */}
         <output aria-live="polite" aria-atomic="true" className="block">
           {previa ? (
-            // `<output>` solo admite contenido de frase: spans con el aspecto de Alert ok/err
+            // `<output>` solo admite contenido de frase (`Alert` es un div con su propio role=status,
+            // que anidaría dos regiones vivas): spans con el aspecto de Alert ok/err (D519)
             <span
               data-variant={previa.variante}
               className={alertVariants({ variant: previa.variante })}

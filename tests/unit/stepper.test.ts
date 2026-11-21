@@ -166,3 +166,27 @@ describe("NumberStepper: HTML publicado", () => {
     expect(html).not.toMatch(/<button[^>]*disabled=""/);
   });
 });
+
+describe("startAt y formatValueText (D518)", () => {
+  const PUNTOS = { min: -20, max: 20, step: 0.5 };
+
+  test("desde null, el primer −/+ parte de startAt y no de min", () => {
+    expect(stepFrom(null, 1, PUNTOS, 0)).toBe(0.5);
+    expect(stepFrom(null, -1, PUNTOS, 0)).toBe(-0.5);
+    expect(stepFrom(null, 1, PUNTOS)).toBe(-20);
+  });
+
+  test("startAt no afecta cuando ya hay valor", () => {
+    expect(stepFrom(3, 1, PUNTOS, 0)).toBe(3.5);
+  });
+
+  test("aria-valuetext usa formatValueText con valor y emptyText sin él", () => {
+    const f = (n: number) => `valor ${n}`;
+    expect(stepperAria(2, PUNTOS, "Sin puntuar", f)["aria-valuetext"]).toBe(
+      "valor 2",
+    );
+    expect(stepperAria(null, PUNTOS, "Sin puntuar", f)["aria-valuetext"]).toBe(
+      "Sin puntuar",
+    );
+  });
+});

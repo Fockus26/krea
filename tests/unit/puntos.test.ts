@@ -32,6 +32,7 @@ import {
   opcionesAjusteLabel,
   puedeAnular,
   puntosTexto,
+  puntosValueText,
   rutaDestinoHistorial,
   separarMotivo,
   sinErrores,
@@ -383,5 +384,15 @@ describe("D260–D261: Historial sin ajustes del Excel y con enlace al destino",
     expect(
       rutaDestinoHistorial({ tipo: "alumno", destinoId: "", seccion: "5C" }),
     ).toBeNull();
+  });
+});
+
+describe("puntosValueText (D518)", () => {
+  test("más / menos con coma es-VE y singular en 1", () => {
+    expect(puntosValueText(2)).toBe("más 2 puntos");
+    expect(puntosValueText(-1.5)).toBe("menos 1,5 puntos");
+    expect(puntosValueText(1)).toBe("más 1 punto");
+    expect(puntosValueText(-1)).toBe("menos 1 punto");
+    expect(puntosValueText(0)).toBe("0 puntos");
   });
 });
