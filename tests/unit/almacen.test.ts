@@ -202,6 +202,48 @@ describe("crearAlmacen (dobles, sin red)", () => {
     ).toEqual({ ok: true });
     expect(llamadas[0]?.method).toBe("DELETE");
   });
+
+  test("copiar (D513): PUT firmado al destino con X-Amz-Copy-Source del origen", async () => {
+    const { f, llamadas } = fetchDoble(200, "<CopyObjectResult/>");
+    expect(
+      await crearAlmacen(CONFIG, { fetch: f }).copiar(
+        "entregas/t1/vieja/x.jpg",
+        "entregas/t1/nueva/x.jpg",
+      ),
+    ).toEqual({ ok: true });
+    const req = llamadas[0];
+    expect(req?.method).toBe("PUT");
+    expect(req?.url).toBe(urlObjeto(CONFIG, "entregas/t1/nueva/x.jpg"));
+    expect(req?.headers.get("x-amz-copy-source")).toBe(
+      "/krea-prueba/entregas/t1/vieja/x.jpg",
+    );
+    expect(req?.headers.get("content-length")).toBe("0");
+    expect(req?.headers.get("authorization")).toContain("x-amz-copy-source");
+  });
+
+  test("copiar: 200 con <Error>, rechazo, red y claves inválidas", async () => {
+    const copiar = (fetch: typeof globalThis.fetch) =>
+      crearAlmacen(CONFIG, { fetch }).copiar("a/b.jpg", "a/c.jpg");
+    expect(
+      await copiar(
+        fetchDoble(200, "<Error><Code>InternalError</Code></Error>").f,
+      ),
+    ).toEqual({ ok: false, error: "rechazado" });
+    expect(await copiar(fetchDoble(404).f)).toEqual({
+      ok: false,
+      error: "rechazado",
+    });
+    const caida = (async () => {
+      throw new TypeError("fetch failed");
+    }) as unknown as typeof fetch;
+    expect(await copiar(caida)).toEqual({ ok: false, error: "red" });
+    await expect(
+      crearAlmacen(CONFIG, { fetch: fetchDoble(200).f }).copiar(
+        "../x.jpg",
+        "a/c.jpg",
+      ),
+    ).rejects.toThrow();
+  });
 });
 
 describe("validarImagenSubida (D195)", () => {

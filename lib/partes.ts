@@ -18,6 +18,7 @@ import {
   type Parte,
   type Respuesta,
   rutasImagen,
+  rutasSinUso,
   type Usuario,
   zIdPublico,
   zRespuesta,
@@ -195,7 +196,6 @@ export function aplicarParte(args: {
     )
       return { ok: false, error: "no-asignada" };
     if (vigente.estado === "aceptada") return { ok: false, error: "estado" };
-    const nuevas = new Set(rutasImagen(accion.respuesta));
     return {
       ok: true,
       parte: {
@@ -205,7 +205,7 @@ export function aplicarParte(args: {
         entregadaEn: ahora,
         actualizadoEn: ahora,
       },
-      sinUso: rutasActual.filter((r) => !nuevas.has(r)),
+      sinUso: rutasSinUso(rutasActual, rutasImagen(accion.respuesta)),
     };
   }
 

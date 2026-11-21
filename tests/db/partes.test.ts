@@ -2,6 +2,7 @@
 // en la transacción real de `lib/acciones/partes.ts`; el envío del capitán calcula `sinParte`; con
 // la entrega enviada o la tarea cerrada todo queda congelado; eliminar la tarea borra las partes.
 import { beforeAll, beforeEach, describe, expect, test } from "bun:test";
+import { carpetaEntrega } from "@/lib/carpeta-entrega";
 import { eliminarEntregaEnTransaccion } from "@/lib/data/devolver-entrega";
 import { enviarEnTransaccion, permisoSubida } from "@/lib/data/entregas";
 import {
@@ -12,7 +13,7 @@ import {
 import { eliminarTareaEnTransaccion } from "@/lib/data/tareas";
 import type { Db } from "@/lib/db";
 import { entregas, partes } from "@/lib/db/schema";
-import { carpetaEntrega, claveImagen } from "@/lib/entregas";
+import { claveImagen } from "@/lib/entregas";
 import { crearIdPublico } from "@/lib/id-publico";
 import { type Equipo, idEntrega, type Tarea, type Usuario } from "@/lib/modelo";
 import { type AccionParte, huellaDePartes } from "@/lib/partes";
@@ -96,7 +97,7 @@ const entregarTexto = (uid: string, preguntaId: string, texto: string) =>
   accion(uid, preguntaId, { tipo: "entregar", respuesta: { texto } });
 
 async function imagen(uuid = UUID_1) {
-  return claveImagen(TAREA, await carpetaEntrega(ENTREGA), uuid);
+  return claveImagen(TAREA, carpetaEntrega(ENTREGA), uuid);
 }
 
 async function envio() {
@@ -260,7 +261,7 @@ describe("reparto (D417)", () => {
       await accion(ADELA, "p2", {
         tipo: "entregar",
         respuesta: {
-          imagenPath: claveImagen(TAREA, await carpetaEntrega("otra"), UUID_1),
+          imagenPath: claveImagen(TAREA, carpetaEntrega("otra"), UUID_1),
         },
       }),
     ).toEqual({ ok: false, error: "incompleta" });

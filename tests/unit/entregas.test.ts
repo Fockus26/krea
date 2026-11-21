@@ -1,7 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import {
-  armarEntrega,
   carpetaEntrega,
+  carpetaEntregaLegada,
+  carpetasDeEntrega,
+  crearCarpetaEntrega,
+} from "@/lib/carpeta-entrega";
+import {
+  armarEntrega,
+  type Carpetas,
   claveImagen,
   comprobarImagenes,
   enOtraEntrega,
@@ -18,6 +24,7 @@ import {
   type Entrega,
   type Equipo,
   idEntrega,
+  rutasSinUso,
   type Tarea,
   type Usuario,
   zEntrega,
@@ -209,18 +216,75 @@ describe("permisoEntrega (D012, D196)", () => {
   });
 });
 
-describe("claves de imagen (D195)", () => {
-  test("carpeta sin la cédula a la vista, estable y de 32 hex", async () => {
+describe("claves de imagen (D195, D512)", () => {
+  test("carpeta sin la cédula a la vista, estable y de 32 hex", () => {
     const id = idEntrega("competencia", CAPITAN.cedula);
-    const c = await carpetaEntrega(id);
+    const c = carpetaEntrega(id);
     expect(c).toMatch(/^[0-9a-f]{32}$/);
     expect(c).not.toContain(CAPITAN.cedula);
-    expect(await carpetaEntrega(id)).toBe(c);
-    expect(await carpetaEntrega(idEntrega("competencia", "1"))).not.toBe(c);
+    expect(carpetaEntrega(id)).toBe(c);
+    expect(carpetaEntrega(idEntrega("competencia", "1"))).not.toBe(c);
   });
 
-  test("claveImagen / esImagenDe", async () => {
-    const c = await carpetaEntrega("competencia__45009896");
+  test("carpeta atada al secreto (D512): sin él no se calcula y no es el SHA-256 de antes", () => {
+    const id = idEntrega("competencia", CAPITAN.cedula);
+    const con = crearCarpetaEntrega("secreto-a");
+    expect(con(id)).toMatch(/^[0-9a-f]{32}$/);
+    expect(con(id)).toBe(crearCarpetaEntrega("secreto-a")(id));
+    expect(crearCarpetaEntrega("secreto-b")(id)).not.toBe(con(id));
+    expect(() => crearCarpetaEntrega("")).toThrow();
+    // La de antes (sin secreto): SHA-256 del id, la que cualquiera recalcula con la tarea y la cédula
+    const sha = new Bun.CryptoHasher("sha256")
+      .update(id)
+      .digest("hex")
+      .slice(0, 32);
+    expect(carpetaEntregaLegada(id)).toBe(sha);
+    expect(con(id)).not.toBe(sha);
+    expect(carpetaEntrega(id)).not.toBe(sha);
+    // Al validar valen las dos mientras se migra (D514): la nueva y la vieja
+    expect(carpetasDeEntrega(id)).toEqual([carpetaEntrega(id), sha]);
+  });
+
+  test("respuestas con la carpeta vieja mientras se migra (D514); la misma imagen no cuenta dos veces", () => {
+    const id = idEntrega(GRUPAL.id, "5a-g2");
+    const [nueva, vieja] = carpetasDeEntrega(id) as [string, string];
+    const preguntas = [
+      { id: "p1", formato: "imagen" as const, maxImagenes: 2 },
+    ];
+    const enNueva = claveImagen(GRUPAL.id, nueva, UUID);
+    const enVieja = claveImagen(GRUPAL.id, vieja, UUID);
+    const otra = claveImagen(GRUPAL.id, vieja, `${UUID.slice(0, -1)}9`);
+    const validar = (
+      rutas: string[],
+      carpetas: Carpetas = carpetasDeEntrega(id),
+    ) =>
+      respuestasValidas(
+        preguntas,
+        { p1: { imagenPaths: rutas } },
+        GRUPAL.id,
+        carpetas,
+      );
+    expect(validar([enVieja, otra])).toEqual({
+      p1: { imagenPaths: [enVieja, otra] },
+    });
+    expect(validar([enNueva, otra])).not.toBeNull();
+    expect(validar([enNueva, enVieja])).toBeNull(); // la misma imagen dos veces
+    expect(validar([enVieja], nueva)).toBeNull(); // solo la nueva: la vieja no entra
+    const ajena = carpetaEntregaLegada(idEntrega(GRUPAL.id, "5a-g1"));
+    expect(validar([claveImagen(GRUPAL.id, ajena, UUID)])).toBeNull();
+  });
+
+  test("rutasSinUso compara el archivo: la misma imagen en otra carpeta sigue en uso", () => {
+    const a = `entregas/t/${"a".repeat(32)}/${UUID}.jpg`;
+    const b = `entregas/t/${"b".repeat(32)}/${UUID}.jpg`;
+    const c = `entregas/t/${"a".repeat(32)}/${UUID.slice(0, -1)}9.jpg`;
+    expect(rutasSinUso([a, c], [b])).toEqual([c]);
+    expect(rutasSinUso([a, a], [])).toEqual([a]);
+    expect(rutasSinUso([], [a])).toEqual([]);
+  });
+
+  test("claveImagen / esImagenDe", () => {
+    const c = carpetaEntrega("competencia__45009896");
     const k = claveImagen("competencia", c, UUID);
     expect(k).toBe(`entregas/competencia/${c}/${UUID}.jpg`);
     expect(esImagenDe(k, "competencia", c)).toBe(true);

@@ -431,6 +431,20 @@ export function rutasImagen(r: Respuesta | null | undefined): string[] {
   return [];
 }
 
+/**
+ * Rutas de `antes` cuya imagen ya no está en `despues` (D396), comparando el archivo
+ * (`{uuid}.jpg`), no la ruta entera: la misma imagen en la carpeta vieja y en la nueva (D512–D514,
+ * un formulario abierto antes de mover las carpetas) sigue en uso y no se borra.
+ */
+export function rutasSinUso(
+  antes: readonly string[],
+  despues: readonly string[],
+): string[] {
+  const archivo = (ruta: string) => ruta.slice(ruta.lastIndexOf("/") + 1);
+  const siguen = new Set(despues.map(archivo));
+  return [...new Set(antes)].filter((ruta) => !siguen.has(archivo(ruta)));
+}
+
 export const zEvaluacion = z.object({
   /** Puntos por pregunta (id → puntos); `null` si la nota vino del Excel sin desglose. */
   puntos: z.record(z.string(), zPuntaje).nullable(),

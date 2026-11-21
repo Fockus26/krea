@@ -8,6 +8,7 @@ import { refresh } from "next/cache";
 import { almacenB2 } from "@/lib/almacen/b2";
 import { validarImagenSubida } from "@/lib/almacen/imagen";
 import type { Almacen } from "@/lib/almacen/s3";
+import { carpetaEntrega } from "@/lib/carpeta-entrega";
 import { exigirSesion, sesionDeCola } from "@/lib/dal";
 import {
   enviarEnTransaccion,
@@ -16,7 +17,6 @@ import {
 } from "@/lib/data/entregas";
 import { baseDeDatos } from "@/lib/db";
 import {
-  carpetaEntrega,
   claveImagen,
   comprobarImagenes,
   type ErrorSubida,
@@ -112,7 +112,7 @@ async function subir(
 
     const clave = claveImagen(
       tareaId.data,
-      await carpetaEntrega(p.permiso.entregaId),
+      carpetaEntrega(p.permiso.entregaId),
       uuid,
     );
     const r = await almacen.subir(clave, bytes, "image/jpeg");
