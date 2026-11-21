@@ -104,9 +104,10 @@ export function avisoCapitanTexto(
 ): { titulo: string; texto: string } {
   return {
     titulo: `La entrega ${nombre}, ${femenino ? "capitana" : "capitán"} de tu equipo.`,
-    // PROVISIONAL (fila 276): sin «él/ella» (el género del capitán no se conoce, D075, D504)
+    // PROVISIONAL (filas 276 y 298): sin «él/ella» (el género del capitán no se conoce, D075,
+    // D504). El borrador del capitán ya se ve antes del envío (D547)
     texto:
-      "Puedes ver las preguntas. Las respuestas aparecen aquí cuando se envíen.",
+      "Puedes ver las preguntas y su borrador mientras responde. Cuenta lo que se entregue.",
   };
 }
 
