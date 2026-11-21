@@ -296,6 +296,10 @@ export function avisoBorradorTexto(
 export const BORRADOR_AYUDA =
   "Así va la tarea. Puede cambiar hasta que se entregue.";
 
+/** Fila 299: lo que anuncia el lector de pantalla cuando llega un borrador más nuevo. */
+export const BORRADOR_ACTUALIZADO = (nombre: string, hora: string): string =>
+  `Borrador de ${nombre} actualizado a las ${hora}.`;
+
 /** Fila 300: el capitán, cuando su borrador ya está en el servidor. */
 export function borradorEquipoTexto(hora: string): string {
   return `Tu equipo ya lo ve · ${hora}`;

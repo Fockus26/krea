@@ -18,6 +18,7 @@ import type {
 import { QuestionCardAnswer } from "@/components/krea/question-card-answer";
 import type { QuestionAnswer } from "@/components/krea/question-card-detail";
 import { ActionBar } from "@/components/sections/shared/action-bar";
+import { RespuestaBorrador } from "@/components/sections/tareas/borrador-capitan";
 import { RespuestaParteVista } from "@/components/sections/tareas/estado-parte";
 import {
   type AccionTomar,
@@ -38,6 +39,13 @@ import {
 import { toast } from "@/components/ui/sonner";
 import type { ResultadoEnvio, ResultadoSubida } from "@/lib/acciones/entregas";
 import { IMAGEN_SUBIDA_MAX_BYTES } from "@/lib/almacen/imagen";
+import {
+  BORRADOR_CAMBIO,
+  BORRADOR_EQUIPO_MS,
+  borradorEquipoTexto,
+  type GuardarBorrador,
+  type ResultadoBorrador,
+} from "@/lib/borrador-grupal";
 import { type EnvioEntrega, mensajeErrorEntrega } from "@/lib/entregas";
 import type { FormatoPreguntaId } from "@/lib/modelo";
 import {
@@ -66,6 +74,7 @@ import {
   claveBorrador,
   type EstadoRespuesta,
   faltaTexto,
+  horaTexto,
   type ImagenBorrador,
   leerBorrador,
   puedeEntregar,
@@ -159,6 +168,24 @@ function aBorrador(img: ImagenRespuesta): ImagenBorrador | null {
     : null;
 }
 
+/** El borrador que se guarda (teléfono y, del capitán, el equipo): textos e imágenes ya subidas. */
+function armarBorrador(
+  textos: Readonly<Record<string, string>>,
+  imagenes: Readonly<Record<string, ImagenRespuesta>>,
+  varias: Readonly<Record<string, readonly ImagenRespuesta[]>>,
+): Borrador {
+  const borrador: Borrador = { ...textos };
+  for (const [id, img] of Object.entries(imagenes)) {
+    const b = aBorrador(img);
+    if (b) borrador[id] = b;
+  }
+  for (const [id, lista] of Object.entries(varias)) {
+    const bs = lista.flatMap((img) => aBorrador(img) ?? []);
+    if (bs.length > 0) borrador[id] = bs;
+  }
+  return borrador;
+}
+
 /** Imágenes iniciales de una pregunta de varias: solo las elegidas (subiendo o listas). */
 function variasIniciales(
   v: RespuestasIniciales[string] | undefined,
@@ -203,7 +230,24 @@ export type TaskAnswerFormProps = {
   tomar?: AccionTomar;
   /** Línea extra de la confirmación: a quién se premarcará «No participó» (D420). */
   avisoEnvio?: string | null;
+  /**
+   * Capitán de una grupal sin enviar (D546): además del teléfono, el borrador se guarda en el
+   * servidor para que el equipo lo vea. `version`: la del borrador con que se pintó la página.
+   */
+  equipo?: {
+    guardar: (e: GuardarBorrador) => Promise<ResultadoBorrador>;
+    version: number;
+  };
+  /** Integrante (con `bloqueadaPor`): lo que el capitán lleva en el borrador, ya firmado (D547). */
+  borradorCapitan?: Readonly<Record<string, QuestionAnswer>>;
 };
+
+/**
+ * Última versión del borrador del equipo que vio esta pestaña, por tarea (D546). Sobrevive a la
+ * navegación dentro de la app: una página guardada en la caché del router trae una versión vieja,
+ * y sin esto el siguiente guardado saldría `cambio` sin que nadie más hubiera escrito.
+ */
+const versionesEquipo = new Map<string, number>();
 
 /** Una pregunta del capitán asignada a otro (D462). */
 export type BloqueoPregunta = {
@@ -252,6 +296,8 @@ export function TaskAnswerForm({
   bloqueos,
   tomar,
   avisoEnvio,
+  equipo,
+  borradorCapitan,
 }: TaskAnswerFormProps) {
   const router = useRouter();
   const helpId = useId();
@@ -259,6 +305,7 @@ export function TaskAnswerForm({
   const titleId = useId();
   const listaRef = useRef<HTMLOListElement>(null);
   const clave = claveBorrador(tareaId, titular);
+  const hayEquipo = Boolean(equipo) && !bloqueadaPor && !edicion;
   const [textos, setTextos] = useState<Record<string, string>>(() => {
     const t: Record<string, string> = {};
     for (const p of preguntas) {
@@ -337,9 +384,10 @@ export function TaskAnswerForm({
     if (bloqueadaPor || restaurado.current) return;
     restaurado.current = true;
     try {
-      const [t, i, v] = desdeBorrador(
-        leerBorrador(window.localStorage.getItem(clave)),
-      );
+      const local = leerBorrador(window.localStorage.getItem(clave));
+      const [t, i, v] = desdeBorrador(local);
+      // Capitán (D546): lo que quedó en el teléfono (quizá escrito sin red) también va al equipo
+      if (hayEquipo && Object.keys(local).length > 0) setEdiciones((n) => n + 1);
       const formato = new Map(
         preguntas.map((p) => [
           p.id,
@@ -371,7 +419,7 @@ export function TaskAnswerForm({
     } catch {
       // Sin almacenamiento (modo privado): se trabaja sin borrador
     }
-  }, [clave, bloqueadaPor, preguntas, acciones]);
+  }, [clave, bloqueadaPor, preguntas, acciones, hayEquipo]);
 
   // Una pregunta que deja de estar bloqueada (D461: el capitán la tomó): arranca con lo de
   // `inicial` (lo último que entregó el integrante) si su campo sigue vacío, y la tarjeta que se
@@ -425,15 +473,7 @@ export function TaskAnswerForm({
   useEffect(() => {
     if (bloqueadaPor || ediciones === 0) return;
     const t = setTimeout(() => {
-      const borrador: Borrador = { ...textos };
-      for (const [id, img] of Object.entries(imagenes)) {
-        const b = aBorrador(img);
-        if (b) borrador[id] = b;
-      }
-      for (const [id, lista] of Object.entries(varias)) {
-        const bs = lista.flatMap((img) => aBorrador(img) ?? []);
-        if (bs.length > 0) borrador[id] = bs;
-      }
+      const borrador = armarBorrador(textos, imagenes, varias);
       try {
         window.localStorage.setItem(clave, JSON.stringify(borrador));
         setGuardado(new Date());
@@ -443,6 +483,76 @@ export function TaskAnswerForm({
     }, BORRADOR_MS);
     return () => clearTimeout(t);
   }, [ediciones, textos, imagenes, varias, clave, bloqueadaPor]);
+
+  // Borrador del equipo (D546): el capitán lo manda al servidor BORRADOR_EQUIPO_MS después del
+  // último cambio, solo si cambió desde el último guardado y con red (sin red se reintenta al
+  // volver). `cambio`: otro dispositivo suyo guardó después; se avisa y el siguiente cambio de
+  // aquí lo reemplaza con la versión nueva. Si el servidor dice que ya no corresponde (enviada,
+  // cerrada, ya no es capitán), se deja de mandar: el sondeo pone la página al día.
+  const versionEquipo = useRef(
+    Math.max(equipo?.version ?? 0, versionesEquipo.get(tareaId) ?? 0),
+  );
+  const enviadoEquipo = useRef<string | null>(null);
+  const equipoEnCurso = useRef(false);
+  const equipoOtraVez = useRef(false);
+  const equipoParado = useRef(false);
+  const [equipoGuardado, setEquipoGuardado] = useState<Date | null>(null);
+  const [equipoCambio, setEquipoCambio] = useState(false);
+  const fijarVersion = (v: number) => {
+    versionEquipo.current = v;
+    versionesEquipo.set(tareaId, v);
+  };
+  async function guardarEquipo() {
+    if (!equipo || !hayEquipo || equipoParado.current) return;
+    if (equipoEnCurso.current) {
+      equipoOtraVez.current = true;
+      return;
+    }
+    const respuestas = armarBorrador(textos, imagenes, varias);
+    const json = JSON.stringify(respuestas);
+    // Sin ediciones no hay nada nuevo que mandar (lo inicial ya es del servidor)
+    if (ediciones === 0 || json === enviadoEquipo.current || !navigator.onLine)
+      return;
+    equipoEnCurso.current = true;
+    let r: ResultadoBorrador;
+    try {
+      r = await equipo.guardar({
+        tareaId,
+        respuestas,
+        version: versionEquipo.current,
+      });
+    } catch {
+      r = { ok: false, error: "red" };
+    }
+    equipoEnCurso.current = false;
+    if (r.ok || r.error === "cambio") {
+      fijarVersion(r.version);
+      enviadoEquipo.current = json;
+      if (r.ok) setEquipoGuardado(new Date());
+      setEquipoCambio(!r.ok);
+    } else if (r.error !== "red") equipoParado.current = true;
+    // Algo cambió mientras se guardaba: otra vuelta con lo de ahora
+    if (equipoOtraVez.current) {
+      equipoOtraVez.current = false;
+      setTimeout(() => void guardarEquipoRef.current(), BORRADOR_EQUIPO_MS);
+    }
+  }
+  const guardarEquipoRef = useRef(guardarEquipo);
+  guardarEquipoRef.current = guardarEquipo;
+  useEffect(() => {
+    if (!hayEquipo || bloqueadaPor || ediciones === 0) return;
+    const t = setTimeout(
+      () => void guardarEquipoRef.current(),
+      BORRADOR_EQUIPO_MS,
+    );
+    return () => clearTimeout(t);
+  }, [ediciones, textos, imagenes, varias, hayEquipo, bloqueadaPor]);
+  useEffect(() => {
+    if (!hayEquipo) return;
+    const alVolver = () => void guardarEquipoRef.current();
+    window.addEventListener("online", alVolver);
+    return () => window.removeEventListener("online", alVolver);
+  }, [hayEquipo]);
 
   const imagenLista = (img: ImagenRespuesta | undefined) =>
     img?.status === "lista" &&
@@ -609,6 +719,9 @@ export function TaskAnswerForm({
   }
 
   function limpiarBorrador() {
+    // Enviada: el del equipo lo borra el servidor en la misma transacción (D544)
+    equipoParado.current = true;
+    versionesEquipo.delete(tareaId);
     try {
       window.localStorage.removeItem(clave);
     } catch {
@@ -730,7 +843,13 @@ export function TaskAnswerForm({
     numero: number,
   ): { bloqueo?: string; children?: ReactNode } {
     const b = bloqueos?.[p.id];
-    if (!b) return {};
+    if (!b) {
+      // Integrante (D547): lo que el capitán lleva en el borrador compartido, en solo lectura
+      const delBorrador = bloqueadaPor ? borradorCapitan?.[p.id] : undefined;
+      return delBorrador
+        ? { children: <RespuestaBorrador respuesta={delBorrador} /> }
+        : {};
+    }
     const conTomar = b.tomable && tomar;
     return {
       bloqueo: b.texto,
@@ -946,6 +1065,15 @@ export function TaskAnswerForm({
                   {borradorTexto(guardado)}
                 </p>
               ) : null}
+              {/* Capitán (D546): el borrador del equipo. PROVISIONAL (filas 300–301) */}
+              {equipoGuardado && !equipoCambio ? (
+                <p className="text-small text-text-2">
+                  {borradorEquipoTexto(horaTexto(equipoGuardado))}
+                </p>
+              ) : null}
+              <p role="status" className="text-small-b text-text empty:hidden">
+                {equipoCambio ? BORRADOR_CAMBIO : null}
+              </p>
             </div>
             <div className="flex flex-col items-end gap-1">
               <Dialog

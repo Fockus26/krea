@@ -3,6 +3,7 @@
 import { Send } from "lucide-react";
 import { useEffect, useId, useState, useTransition } from "react";
 import { ErrorEnPantalla } from "@/components/estados/errores";
+import { RespuestaBorrador } from "@/components/sections/tareas/borrador-capitan";
 import { QuestionCardAnswer } from "@/components/krea/question-card-answer";
 import type { QuestionAnswer } from "@/components/krea/question-card-detail";
 import {
@@ -77,6 +78,7 @@ export function PartesIntegrante({
   autor,
   titular,
   acciones,
+  borrador,
 }: {
   tareaId: string;
   preguntas: readonly PreguntaEntrega[];
@@ -86,6 +88,8 @@ export function PartesIntegrante({
   autor: string;
   titular: string;
   acciones?: AccionesParteIntegrante;
+  /** Borrador del capitán (D547), ya firmado: solo sus preguntas (`borradorVista`). */
+  borrador?: Readonly<Record<string, QuestionAnswer>>;
 }) {
   const titleId = useId();
   return (
@@ -104,6 +108,7 @@ export function PartesIntegrante({
           const parte = partes[i];
           if (!parte?.mia) {
             // Como hoy (D012): sin campos, con el nombre de quien la responde
+            const delBorrador = borrador?.[p.id];
             const bloqueada = {
               numero: i + 1,
               enunciado: p.enunciado,
@@ -111,6 +116,10 @@ export function PartesIntegrante({
               bloqueadaPor: parte?.bloqueadaPor ?? capitan,
               bloqueo: parte?.aviso,
               level: 3 as const,
+              // Lo que el capitán lleva en el borrador compartido, si es una de las suyas (D547)
+              children: delBorrador ? (
+                <RespuestaBorrador respuesta={delBorrador} />
+              ) : undefined,
             };
             return p.formato === "texto" || p.formato === "url" ? (
               <QuestionCardAnswer
