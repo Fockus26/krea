@@ -1,17 +1,19 @@
 import { ComentarioProfe } from "@/components/krea/comentario-profe";
 import { QuestionBar } from "@/components/krea/question-bar";
 import { QuestionHeader } from "@/components/krea/question-header";
+import { RespuestaEnlace } from "@/components/krea/respuesta-enlace";
 import { Card } from "@/components/ui/card";
 
 /** Imagen de una respuesta ya firmada, con su `alt` real. */
 export type AnswerImage = { src: string; alt: string };
 
 /**
- * Respuesta ya entregada: texto, una imagen con su `alt` real (§8; D046 usa `<img>`) o varias
- * (pregunta «Varias imágenes», D373).
+ * Respuesta ya entregada: texto, una imagen con su `alt` real (§8; D046 usa `<img>`), varias
+ * (pregunta «Varias imágenes», D373) o un enlace (D468; se pinta con `RespuestaEnlace`).
  */
 export type QuestionAnswer =
   | { tipo: "texto"; texto: string }
+  | { tipo: "url"; url: string }
   | ({ tipo: "imagen" } & AnswerImage)
   | { tipo: "imagenes"; imagenes: readonly AnswerImage[] };
 
@@ -61,6 +63,8 @@ export function QuestionCardDetail({
             <p className="rounded-nav bg-surface-2 px-3.5 py-3 text-callout text-text whitespace-pre-wrap break-words">
               {respuesta.texto}
             </p>
+          ) : respuesta.tipo === "url" ? (
+            <RespuestaEnlace url={respuesta.url} />
           ) : respuesta.tipo === "imagen" ? (
             // biome-ignore lint/performance/noImgElement: blobs locales y remotos (D046)
             <img

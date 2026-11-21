@@ -47,13 +47,15 @@ import {
   type RespuestaIdeal,
   type ResultadoIdeal,
 } from "@/lib/ideal";
+import type { FormatoPreguntaId } from "@/lib/modelo";
 
 export type PreguntaFormIdeal = {
   id: string;
   numero: number;
   enunciado: string;
   valor: number;
-  formato: "texto" | "imagen";
+  /** En `url` (D468) la ideal del profe sigue siendo texto (D432): puede pegar el enlace ahí. */
+  formato: FormatoPreguntaId;
   /** Solo en la forma «entrega»: la respuesta del autor. */
   respuesta: RespuestaIdeal | null;
 };

@@ -16,7 +16,11 @@ import {
 } from "@/lib/fecha";
 import { NOTA_MAX } from "@/lib/grades";
 import { percent, sumMeterInfo } from "@/lib/meters";
-import { MAX_IMAGENES_MIN, type SeccionId } from "@/lib/modelo";
+import {
+  type FormatoPreguntaId,
+  MAX_IMAGENES_MIN,
+  type SeccionId,
+} from "@/lib/modelo";
 import {
   listaSecciones,
   ordenarSecciones,
@@ -302,7 +306,9 @@ export const FECHA_HORA_LEYENDA = "Fecha y hora de entrega";
 export const HORA_AYUDA = "Opcional. Sin hora, vence al final del día.";
 export const QUITAR_HORA = "Quitar hora";
 
-export type FormatoPregunta = "texto" | "imagen";
+/** Texto, imagen(es) o «Enlace» (`url`, D468). */
+export type FormatoPregunta = FormatoPreguntaId;
+export { ENLACE_FORMATO } from "@/lib/url-respuesta";
 
 /** Límites de §3: de 1 a 20 preguntas; valor 0,5–20 en pasos de 0,5 (D004). */
 export const MIN_PREGUNTAS = 1;

@@ -33,6 +33,7 @@ import {
   REENTREGAR_PARTE,
 } from "@/lib/partes";
 import { BORRADOR_MS } from "@/lib/tareas";
+import { normalizarUrl } from "@/lib/url-respuesta";
 
 /** Server Actions de la parte del integrante; sin ellas (galerías) no se sube ni se entrega. */
 export type AccionesParteIntegrante = {
@@ -51,7 +52,7 @@ export type ParteDeIntegrante =
   | {
       mia: true;
       estado: EstadoParteId;
-      /** Lo que ya entregó: texto o imágenes subidas (para seguir editando). */
+      /** Lo que ya entregó: texto, enlace (D468) o imágenes subidas (para seguir editando). */
       inicial: string | readonly ImagenInicial[] | null;
       /** Lo mismo, firmado para mostrarlo cuando ya está aceptada. */
       respuesta: QuestionAnswer | null;
@@ -111,11 +112,11 @@ export function PartesIntegrante({
               bloqueo: parte?.aviso,
               level: 3 as const,
             };
-            return p.formato === "texto" ? (
+            return p.formato === "texto" || p.formato === "url" ? (
               <QuestionCardAnswer
                 key={p.id}
                 {...bloqueada}
-                formato="texto"
+                formato={p.formato}
                 value=""
                 onValueChange={() => {}}
               />
@@ -188,6 +189,9 @@ function ParteEditable({
   const limite = p.formato === "imagen" ? (p.maxImagenes ?? 1) : 0;
   const clave = claveParte(tareaId, p.id, titular);
   const aceptada = parte.estado === "aceptada";
+  // Texto o enlace (D468): los dos se escriben en `texto` y se guardan en el teléfono
+  const escrita = p.formato === "texto" || p.formato === "url";
+  const [urlTocada, setUrlTocada] = useState(false);
   const [texto, setTexto] = useState(() =>
     typeof parte.inicial === "string" ? parte.inicial : "",
   );
@@ -203,17 +207,22 @@ function ParteEditable({
 
   // El texto a medio escribir vuelve si se recarga (gana sobre lo ya entregado)
   useEffect(() => {
-    if (p.formato !== "texto" || aceptada) return;
+    if (!escrita || aceptada) return;
     try {
       const guardado = window.localStorage.getItem(clave);
-      if (guardado !== null) setTexto(guardado);
+      // Un borrador que no es enlace en una pregunta «Enlace» se descarta (D469)
+      if (
+        guardado !== null &&
+        (p.formato !== "url" || normalizarUrl(guardado).ok)
+      )
+        setTexto(guardado);
     } catch {
       // Sin almacenamiento: se trabaja sin borrador
     }
-  }, [clave, p.formato, aceptada]);
+  }, [clave, escrita, p.formato, aceptada]);
 
   useEffect(() => {
-    if (!editado || p.formato !== "texto") return;
+    if (!editado || !escrita) return;
     const t = setTimeout(() => {
       try {
         window.localStorage.setItem(clave, texto);
@@ -222,14 +231,16 @@ function ParteEditable({
       }
     }, BORRADOR_MS);
     return () => clearTimeout(t);
-  }, [editado, texto, clave, p.formato]);
+  }, [editado, texto, clave, escrita]);
 
   const subiendo = imagenes.some((i) => i.status === "subiendo");
   const completa =
     p.formato === "texto"
       ? texto.trim() !== ""
-      : imagenes.length > 0 &&
-        imagenes.every((i) => i.status === "lista" && Boolean(i.path));
+      : p.formato === "url"
+        ? normalizarUrl(texto).ok
+        : imagenes.length > 0 &&
+          imagenes.every((i) => i.status === "lista" && Boolean(i.path));
   const listo = completa && !subiendo && !enviando && !aceptada;
 
   const setItem = (id: string, v: ImagenRespuesta | null) =>
@@ -288,12 +299,16 @@ function ParteEditable({
     }
     const rutas = imagenes.flatMap((i) => (i.path ? [i.path] : []));
     const [primera] = rutas;
+    const enlace = normalizarUrl(texto);
     const respuesta: Respuesta =
       p.formato === "texto"
         ? { texto }
-        : limite === 1 && primera !== undefined
-          ? { imagenPath: primera }
-          : { imagenPaths: rutas };
+        : p.formato === "url"
+          ? // Normalizado como lo guarda el servidor (D469)
+            { url: enlace.ok ? enlace.url : texto }
+          : limite === 1 && primera !== undefined
+            ? { imagenPath: primera }
+            : { imagenPaths: rutas };
     setError(null);
     start(async () => {
       let r: ResultadoParte;
@@ -380,6 +395,24 @@ function ParteEditable({
           setTexto(v);
           setEditado(true);
         }}
+      >
+        {pie}
+      </QuestionCardAnswer>
+    );
+  }
+
+  if (p.formato === "url") {
+    return (
+      <QuestionCardAnswer
+        {...comun}
+        formato="url"
+        value={texto}
+        onValueChange={(v) => {
+          setTexto(v);
+          setEditado(true);
+        }}
+        mostrarError={urlTocada}
+        onBlur={() => setUrlTocada(true)}
       >
         {pie}
       </QuestionCardAnswer>

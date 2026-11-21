@@ -1,6 +1,7 @@
 import { Check, Clock, Hand, Inbox, Undo2, UserRound } from "lucide-react";
 import type * as React from "react";
 import type { QuestionAnswer } from "@/components/krea/question-card-detail";
+import { RespuestaEnlace } from "@/components/krea/respuesta-enlace";
 import { Badge, type BadgeVariant } from "@/components/ui/badge";
 import type { EstadoParteId } from "@/lib/modelo";
 import { ESTADO_PARTE_TEXTO, SIN_ASIGNAR_TEXTO } from "@/lib/partes";
@@ -58,12 +59,13 @@ export function EstadoParte({
   );
 }
 
-/** Lo que entregó un integrante, ya firmado: texto o imagen(es) con su `alt` (como el detalle). */
+/** Lo que entregó un integrante, ya firmado: texto, enlace (D470) o imagen(es) con su `alt` (como el detalle). */
 export function RespuestaParteVista({
   respuesta,
 }: {
   respuesta: QuestionAnswer;
 }) {
+  if (respuesta.tipo === "url") return <RespuestaEnlace url={respuesta.url} />;
   if (respuesta.tipo === "texto") {
     return (
       <p className="rounded-nav bg-surface-2 px-3.5 py-3 text-callout text-text whitespace-pre-wrap break-words">

@@ -15,7 +15,9 @@ export type PreguntaDetalle = {
    * Respuesta en imagen ya firmada (D195): una o varias (D373). Sin ella se muestra `respuesta`
    * en texto.
    */
-  imagen?: Exclude<QuestionAnswer, { tipo: "texto" }>;
+  imagen?: Extract<QuestionAnswer, { tipo: "imagen" | "imagenes" }>;
+  /** Respuesta de enlace (D468): se pinta como enlace; `respuesta` trae la misma URL. */
+  enlace?: string;
   comentario?: string;
 };
 
@@ -49,7 +51,12 @@ export function QuestionList({
             enunciado={p.enunciado}
             valor={p.valor}
             obtenido={p.obtenido}
-            respuesta={p.imagen ?? { tipo: "texto", texto: p.respuesta }}
+            respuesta={
+              p.imagen ??
+              (p.enlace !== undefined
+                ? { tipo: "url", url: p.enlace }
+                : { tipo: "texto", texto: p.respuesta })
+            }
             comentario={p.comentario}
             level={3}
           />

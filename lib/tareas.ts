@@ -38,8 +38,8 @@ export function entregadaTexto(iso: string): string {
 }
 
 export type EstadoRespuesta = {
-  formato: "texto" | "imagen";
-  /** Texto con contenido (sin espacios) o imagen lista. */
+  formato: "texto" | "imagen" | "url";
+  /** Texto con contenido (sin espacios), imagen lista o enlace válido (D469). */
   completa: boolean;
   /** Solo imágenes: subiendo ahora. */
   subiendo?: boolean;

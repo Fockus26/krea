@@ -1,4 +1,10 @@
-import { Image as ImageIcon, Lock, Type } from "lucide-react";
+import {
+  CircleAlert,
+  Image as ImageIcon,
+  Link as LinkIcon,
+  Lock,
+  Type,
+} from "lucide-react";
 import { type ReactNode, useId } from "react";
 import {
   ImageUpload,
@@ -7,12 +13,20 @@ import {
 import { QuestionHeader } from "@/components/krea/question-header";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   ANSWER_MAX_LENGTH,
   imagenesAyuda,
   lockedMessage,
 } from "@/lib/question";
+import {
+  ENLACE_FORMATO,
+  mensajeErrorUrl,
+  normalizarUrl,
+  URL_MAX_LENGTH,
+  urlConEsquemaTexto,
+} from "@/lib/url-respuesta";
 
 type QuestionCardAnswerBase = {
   numero: number;
@@ -38,6 +52,15 @@ type QuestionCardAnswerProps = QuestionCardAnswerBase &
         value: string;
         onValueChange: (value: string) => void;
       }
+    | {
+        /** «Enlace» (D468): campo de URL con su aviso en línea (D469). */
+        formato: "url";
+        value: string;
+        onValueChange: (value: string) => void;
+        /** Muestra el aviso de un enlace no válido (tras salir del campo). */
+        mostrarError?: boolean;
+        onBlur?: () => void;
+      }
     | { formato: "imagen"; upload: ImageUploadProps }
     | {
         /** Pregunta «Varias imágenes» (D373): una zona por imagen y otra para añadir. */
@@ -60,7 +83,8 @@ export function QuestionCardAnswer(props: QuestionCardAnswerProps) {
     props;
   const titleId = useId();
   const helpId = useId();
-  const FormatIcon = formato === "texto" ? Type : ImageIcon;
+  const FormatIcon =
+    formato === "texto" ? Type : formato === "url" ? LinkIcon : ImageIcon;
   return (
     <li className="list-none">
       <Card className="flex flex-col gap-3">
@@ -76,9 +100,11 @@ export function QuestionCardAnswer(props: QuestionCardAnswerProps) {
           <FormatIcon aria-hidden="true" />
           {formato === "texto"
             ? "Texto"
-            : formato === "imagen"
-              ? "Imagen"
-              : "Imágenes"}
+            : formato === "url"
+              ? ENLACE_FORMATO
+              : formato === "imagen"
+                ? "Imagen"
+                : "Imágenes"}
         </Badge>
         {bloqueo || bloqueadaPor ? (
           <p className="text-small-b flex icono-linea gap-2 rounded-nav bg-surface-2 px-3.5 py-3 text-text-2">
@@ -94,6 +120,15 @@ export function QuestionCardAnswer(props: QuestionCardAnswerProps) {
             placeholder="Escribe tu respuesta aquí"
             value={props.value}
             onChange={(event) => props.onValueChange(event.currentTarget.value)}
+          />
+        ) : props.formato === "url" ? (
+          <CampoUrl
+            titleId={titleId}
+            helpId={helpId}
+            value={props.value}
+            onValueChange={props.onValueChange}
+            mostrarError={props.mostrarError ?? false}
+            onBlur={props.onBlur}
           />
         ) : props.formato === "imagen" ? (
           <ImageUpload {...props.upload} />
@@ -116,5 +151,62 @@ export function QuestionCardAnswer(props: QuestionCardAnswerProps) {
         {props.children}
       </Card>
     </li>
+  );
+}
+
+/**
+ * Campo de una pregunta «Enlace» (D469): nombrado por el enunciado; el aviso sale con
+ * `mostrarError` (tras salir del campo) y si se le pondrá `https://` lo dice debajo.
+ */
+function CampoUrl({
+  titleId,
+  helpId,
+  value,
+  onValueChange,
+  mostrarError,
+  onBlur,
+}: {
+  titleId: string;
+  helpId: string;
+  value: string;
+  onValueChange: (value: string) => void;
+  mostrarError: boolean;
+  onBlur?: () => void;
+}) {
+  const r = normalizarUrl(value);
+  const error = !r.ok && mostrarError ? mensajeErrorUrl(r.error) : null;
+  const ayuda = r.ok && r.conEsquema ? urlConEsquemaTexto(r.url) : null;
+  return (
+    <div className="flex min-w-0 flex-col gap-1.5">
+      <Input
+        type="url"
+        inputMode="url"
+        autoComplete="url"
+        spellCheck={false}
+        aria-labelledby={titleId}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error || ayuda ? helpId : undefined}
+        maxLength={URL_MAX_LENGTH}
+        // PROVISIONAL (CONTENT_CHECKLIST fila 273)
+        placeholder="https://"
+        value={value}
+        onChange={(event) => onValueChange(event.currentTarget.value)}
+        onBlur={onBlur}
+      />
+      {error ? (
+        <p
+          id={helpId}
+          role="alert"
+          className="text-small-b flex icono-linea gap-1.5 text-error"
+        >
+          <CircleAlert aria-hidden="true" className="size-4 shrink-0" />
+          {error}
+        </p>
+      ) : ayuda ? (
+        <p id={helpId} className="text-small min-w-0 break-all text-text-2">
+          {ayuda}
+        </p>
+      ) : null}
+    </div>
   );
 }

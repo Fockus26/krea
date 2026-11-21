@@ -1,6 +1,12 @@
 "use client";
 
-import { CircleAlert, Image as ImageIcon, Trash2, Type } from "lucide-react";
+import {
+  CircleAlert,
+  Image as ImageIcon,
+  Link as LinkIcon,
+  Trash2,
+  Type,
+} from "lucide-react";
 import { NumberStepper } from "@/components/krea/number-stepper";
 import { Button } from "@/components/ui/button";
 import { cardVariants } from "@/components/ui/card";
@@ -9,6 +15,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { MAX_IMAGENES_TOPE } from "@/lib/modelo";
 import {
   CANTIDAD_IMAGENES,
+  ENLACE_FORMATO,
   type ErroresPregunta,
   type FormatoPregunta,
   LIMITE_IMAGENES,
@@ -147,6 +154,10 @@ export function QuestionEditor({
             <ToggleGroupItem value="imagen">
               <ImageIcon aria-hidden="true" />
               Imagen
+            </ToggleGroupItem>
+            <ToggleGroupItem value="url">
+              <LinkIcon aria-hidden="true" />
+              {ENLACE_FORMATO}
             </ToggleGroupItem>
           </ToggleGroup>
         </div>

@@ -6,9 +6,13 @@
 // Solo se encolan dos cosas (decisión de César, 2026-11-07): la entrega del alumno y crear o
 // editar una tarea del profe. Lo demás que escribe no pasa por aquí.
 
-/** Respuesta ya lista: texto, o imagen(es) ya subida(s) (rutas en B2; varias, D373). */
+/**
+ * Respuesta ya lista: texto, enlace (D468; el servidor lo vuelve a validar), o imagen(es) ya
+ * subida(s) (rutas en B2; varias, D373).
+ */
 export type RespuestaCola =
   | { texto: string }
+  | { url: string }
   | { imagenPath: string }
   | { imagenPaths: string[] };
 

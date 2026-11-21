@@ -670,6 +670,8 @@ export function basesIntegrantesTexto(
 
 export type RespuestaEvaluar =
   | { tipo: "texto"; texto: string }
+  /** Enlace (D468): la tarjeta lo vuelve a validar antes de pintar el `href`. */
+  | { tipo: "url"; url: string }
   /** Una o varias (D373), en orden; cada una con su `alt`. */
   | { tipo: "imagen"; imagenes: ReadonlyArray<{ ruta: string; alt: string }> };
 
@@ -743,6 +745,7 @@ function respuestaDe(
   if (!r) return { tipo: "texto", texto: SIN_RESPUESTA };
   if ("texto" in r)
     return { tipo: "texto", texto: r.texto.trim() || SIN_RESPUESTA };
+  if ("url" in r) return { tipo: "url", url: r.url };
   return {
     tipo: "imagen",
     imagenes: imagenesConAlt(rutasImagen(r), autor, numero),

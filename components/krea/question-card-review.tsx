@@ -6,6 +6,7 @@ import type {
   QuestionAnswer,
 } from "@/components/krea/question-card-detail";
 import { QuestionHeader } from "@/components/krea/question-header";
+import { RespuestaEnlace } from "@/components/krea/respuesta-enlace";
 import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { COMMENT_MAX_LENGTH } from "@/lib/question";
@@ -95,6 +96,8 @@ export function QuestionCardReview({
           <p className="rounded-nav bg-surface-2 px-3.5 py-3 text-callout text-text whitespace-pre-wrap break-words">
             {respuesta.texto}
           </p>
+        ) : respuesta.tipo === "url" ? (
+          <RespuestaEnlace url={respuesta.url} />
         ) : respuesta.tipo === "imagen" ? (
           <ImagenRevision imagen={respuesta} enunciado={enunciado} />
         ) : (

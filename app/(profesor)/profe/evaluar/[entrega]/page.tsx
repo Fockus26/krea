@@ -33,6 +33,7 @@ import {
 } from "@/lib/datos/profesor";
 import { catalogoSecciones } from "@/lib/datos/secciones";
 import { puedeDevolver } from "@/lib/devolver-entrega";
+import { estadoEfectivo } from "@/lib/estado-tarea";
 import {
   basesIntegrantesTexto,
   colaFiltradaCon,
@@ -132,7 +133,7 @@ export default async function EvaluarEntregaPage({
   );
   const preguntas = v.preguntas.map(({ respuesta, ...p }) => {
     let r: QuestionAnswer;
-    if (respuesta.tipo === "texto") r = respuesta;
+    if (respuesta.tipo === "texto" || respuesta.tipo === "url") r = respuesta;
     else {
       const imagenes = respuestaFirmada(respuesta.imagenes, urls);
       r = imagenes ?? { tipo: "texto", texto: IMAGEN_NO_DISPONIBLE };
@@ -151,6 +152,8 @@ export default async function EvaluarEntregaPage({
             : [];
         }),
       );
+  // Después de los datos: vencida sin prórroga = cerrada para este titular (D451, D471)
+  const ahora = Date.now();
 
   return (
     <>
@@ -195,8 +198,10 @@ export default async function EvaluarEntregaPage({
         }}
         enviadaEn={entrega.enviadaEn}
         evaluadaEn={entrega.evaluacion?.evaluadaEn ?? null}
-        puedeDevolver={puedeDevolver(entrega, tarea)}
-        tareaCerrada={tarea.estado !== "abierta"}
+        puedeDevolver={puedeDevolver(entrega, tarea, ahora)}
+        tareaCerrada={
+          estadoEfectivo(tarea, ahora, entrega.titularId) !== "abierta"
+        }
         acciones={ACCIONES_ENTREGA}
         despuesHref={v.colaHref}
       />

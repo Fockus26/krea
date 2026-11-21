@@ -107,7 +107,7 @@ export function lockedMessage(capitan: string): string {
 export function respuestaFirmada(
   imagenes: ReadonlyArray<{ ruta: string; alt: string }>,
   urls: ReadonlyMap<string, string>,
-): Exclude<QuestionAnswer, { tipo: "texto" }> | null {
+): Extract<QuestionAnswer, { tipo: "imagen" | "imagenes" }> | null {
   const firmadas: AnswerImage[] = imagenes.flatMap(({ ruta, alt }) => {
     const src = urls.get(ruta);
     return src ? [{ src, alt }] : [];
