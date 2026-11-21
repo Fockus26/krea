@@ -11,6 +11,11 @@ export function cedulaTexto(cedula: string): string {
   return `C.I. ${conPuntos}`;
 }
 
+/** "45009896" → "45.009.896": la cédula con puntos y sin el prefijo «C.I.» (listas de Puntos). */
+export function cedulaPuntos(cedula: string): string {
+  return cedulaTexto(cedula).replace(/^C\.I\. /, "");
+}
+
 /** "Capitán · 5A-G2" (el lienzo dice "Capitana" para Raquel: el género va por prop, D075). */
 export function capitanChipTexto(equipoId: string, femenino = false): string {
   const corto = equipoId.toUpperCase();

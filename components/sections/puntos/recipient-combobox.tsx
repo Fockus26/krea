@@ -165,7 +165,7 @@ export function RecipientCombobox({
             spellCheck={false}
             aria-autocomplete="list"
             aria-expanded={open}
-            aria-controls={listboxId}
+            aria-controls={open ? listboxId : undefined}
             aria-haspopup="listbox"
             aria-activedescendant={
               activoValido ? optionId(activoValido) : undefined

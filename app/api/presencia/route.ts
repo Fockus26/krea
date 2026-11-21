@@ -15,7 +15,7 @@ import { leerUsuario } from "@/lib/data/usuarios";
 import { baseDeDatos } from "@/lib/db";
 import {
   claveDePedido,
-  NOMBRE_PRESENCIA_MAX,
+  nombrePresencia,
   zIdEntrega,
   zPedidoPresencia,
 } from "@/lib/presencia";
@@ -84,11 +84,7 @@ async function escribir(req: Request) {
   } else {
     const yo = await leerUsuario(db, s.uid);
     if (!yo) return Response.json({ error: "sin-sesion" }, { status: 401 });
-    const nombre = `${yo.nombres} ${yo.apellidos}`.slice(
-      0,
-      NOMBRE_PRESENCIA_MAX,
-    );
-    await marcarPresencia(db, clave, s.uid, nombre, Date.now());
+    await marcarPresencia(db, clave, s.uid, nombrePresencia(yo), Date.now());
   }
   return new Response(null, { status: 204 });
 }

@@ -4,7 +4,7 @@
 import type { DicebearEstilo } from "@/lib/dicebear";
 import { BASE_MAX, BASE_MIN, NOTA_APROBATORIA } from "@/lib/grades";
 import type { SeccionId } from "@/lib/modelo";
-import { cedulaTexto } from "@/lib/perfil";
+import { cedulaPuntos, cedulaTexto } from "@/lib/perfil";
 import { esCodigoSeccion, ordenarSecciones } from "@/lib/secciones";
 
 /** Una fila de la tabla: lo que la pantalla necesita ya resuelto (la fuente real llega en la fase 07). */
@@ -164,7 +164,7 @@ export function tablaLabel(seccion: SeccionId): string {
 
 /** "45051954" → "45.051.954": puntos de miles solo para mostrar (reutiliza el de Perfil). */
 export function cedulaConPuntos(cedula: string): string {
-  return cedulaTexto(cedula).replace(/^C\.I\. /, "");
+  return cedulaPuntos(cedula);
 }
 
 /** Subtítulo del diálogo Editar: "Fernanda Olga Miranda Montero · C.I. 45.087.827 · 5A". */

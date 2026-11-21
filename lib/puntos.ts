@@ -60,6 +60,17 @@ export function puntosTexto(n: number): string {
   return `${formatDecimal(n, STEP_DEFAULT)} pts`;
 }
 
+/**
+ * `aria-valuetext` del stepper de puntos: «más 2 puntos», «menos 1,5 puntos» (el «−» tipográfico
+ * no se lee bien en voz alta), «0 puntos».
+ */
+export function puntosValueText(n: number): string {
+  const abs = formatDecimal(Math.abs(n), STEP_DEFAULT);
+  const unidad = Math.abs(n) === 1 ? "punto" : "puntos";
+  if (n === 0) return `0 ${unidad}`;
+  return `${n > 0 ? "más" : "menos"} ${abs} ${unidad}`;
+}
+
 /** Búsqueda por nombre sin tildes ni mayúsculas; consulta vacía = todos. */
 export function filtrarCandidatos<T extends { nombre: string }>(
   lista: readonly T[],

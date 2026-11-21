@@ -48,15 +48,18 @@ const ICON_COLOR: Record<AlertVariant, string> = {
 function Alert({
   variant = "info",
   role,
+  icon,
   className,
   children,
   ...props
 }: Omit<React.ComponentProps<"div">, "role"> & {
   variant?: AlertVariant;
+  /** Ícono propio (p. ej. tendencia ↑/↓); por defecto el de la variante. */
+  icon?: LucideIcon;
   /** Por defecto `alert` en `err` y `status` en el resto (§2.14). */
   role?: AlertRole;
 }) {
-  const Icon = ICONS[variant];
+  const Icon = icon ?? ICONS[variant];
   return (
     <div
       data-slot="alert"

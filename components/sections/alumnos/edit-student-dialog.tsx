@@ -141,6 +141,8 @@ export function EditStudentDialog({
           onListo={(cambios) => {
             onGuardado(alumno.cedula, cambios);
             setAbierto(false);
+            // Sin esto la URL conserva `?alumno=` tras guardar (D521)
+            onAbierto?.(alumno.cedula, false);
           }}
           onVigente={(actual) => onGuardado(alumno.cedula, actual)}
           onYaNoExiste={
@@ -387,6 +389,7 @@ function EditForm({
             compact
             required
             rows={2}
+            autoGrow
             placeholder="Ej. Acuerdo de conducta firmado el 20/10/2026"
             value={motivo}
             onChange={(e) => setMotivo(e.currentTarget.value)}

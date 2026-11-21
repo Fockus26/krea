@@ -80,8 +80,11 @@ export function stepFrom(
   actual: number | null,
   dir: 1 | -1,
   range: StepRange,
+  /** Desde «sin valor», el punto de partida del primer −/+ (por defecto `min`, D103). */
+  startAt?: number,
 ): number {
-  return actual === null ? range.min : stepValue(actual, dir, range);
+  if (actual !== null) return stepValue(actual, dir, range);
+  return startAt === undefined ? range.min : stepValue(startAt, dir, range);
 }
 
 /** Lo que muestra el campo: vacío sin valor (nunca "0", D003); si no, con coma. */
@@ -97,6 +100,7 @@ export function stepperAria(
   value: number | null,
   { min, max, step = STEP_DEFAULT }: StepRange,
   emptyText: string = STEPPER_EMPTY_TEXT,
+  formatValueText?: (value: number) => string,
 ): {
   "aria-valuenow": number | undefined;
   "aria-valuemin": number;
@@ -107,6 +111,11 @@ export function stepperAria(
     "aria-valuenow": value ?? undefined,
     "aria-valuemin": min,
     "aria-valuemax": max,
-    "aria-valuetext": value === null ? emptyText : formatDecimal(value, step),
+    "aria-valuetext":
+      value === null
+        ? emptyText
+        : formatValueText
+          ? formatValueText(value)
+          : formatDecimal(value, step),
   };
 }

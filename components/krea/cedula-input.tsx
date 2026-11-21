@@ -7,7 +7,7 @@ import { CEDULA_MAX, pasteCedula, sanitizeCedula } from "@/lib/cedula";
 
 type CedulaInputProps = Omit<
   InputProps,
-  "type" | "inputMode" | "autoComplete" | "maxLength" | "leading"
+  "type" | "inputMode" | "maxLength" | "leading"
 >;
 
 /** Escribe `value` en el input como si lo hubiera tecleado la persona (React lo ve como `input`). */
@@ -21,8 +21,8 @@ function setNativeValue(el: HTMLInputElement, value: string) {
 }
 
 /**
- * Cédula — HANDOFF §2.2: `inputmode="numeric"`, `autocomplete="username"`, `maxlength=9`, solo
- * dígitos. Al escribir y al pegar se descartan puntos, espacios y "V-". La validación (7–9
+ * Cédula — HANDOFF §2.2: `inputmode="numeric"`, `autocomplete="username"` (se pasa `off` donde
+ * la cédula es la de otra persona: formularios del profesor, D520), `maxlength=9`, solo dígitos. Al escribir y al pegar se descartan puntos, espacios y "V-". La validación (7–9
  * dígitos) es `validateCedula` de `lib/cedula.ts`: se la pasas al `error` del `Field`.
  */
 function CedulaInput({ onChange, onPaste, ...props }: CedulaInputProps) {
