@@ -64,9 +64,12 @@ export function PantallaNotFoundConSesion() {
 export function PantallaNotFound({
   sesion,
   usuario,
+  enShell = false,
 }: {
   sesion?: SesionEstado;
   usuario?: NavUsuario | null;
+  /** Dentro del shell con sesión (D504): sin cabecera ni `main` propios. */
+  enShell?: boolean;
 }) {
   const ruta = useRutaActual();
   const s = sesion !== undefined ? sesion : ruta ? sesionPorRuta(ruta) : null;
@@ -75,6 +78,7 @@ export function PantallaNotFound({
     <StatusScreen
       sesion={s}
       usuario={usuario}
+      enShell={enShell}
       codigo="404"
       eyebrow="Error 404"
       titulo="Esta página se fue de recreo"
