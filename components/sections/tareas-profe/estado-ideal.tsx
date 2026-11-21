@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { ErrorEnPantalla } from "@/components/estados/errores";
 import { Alert } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { BOTON_LARGO_SM, Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   Dialog,
@@ -101,14 +101,24 @@ export function EstadoIdeal({
         ) : null}
         <div className="flex flex-wrap gap-2">
           {estado.tipo === "vigente" ? (
-            <Button asChild variant="secondary" size="sm">
+            <Button
+              asChild
+              variant="secondary"
+              size="sm"
+              className={BOTON_LARGO_SM}
+            >
               <Link href={rutaIdealProfe(tareaId)}>
                 <PencilLine aria-hidden="true" />
                 {EDITAR_IDEAL_TEXTO}
               </Link>
             </Button>
           ) : (
-            <Button asChild variant="secondary" size="sm">
+            <Button
+              asChild
+              variant="secondary"
+              size="sm"
+              className={BOTON_LARGO_SM}
+            >
               <Link href={rutaIdealProfe(tareaId, { forma: "profe" })}>
                 <PencilLine aria-hidden="true" />
                 {ESCRIBIR_IDEAL_TEXTO}
@@ -120,6 +130,7 @@ export function EstadoIdeal({
               type="button"
               variant="ghost-danger"
               size="sm"
+              className={BOTON_LARGO_SM}
               onClick={() => {
                 setError(null);
                 setAbierto(true);

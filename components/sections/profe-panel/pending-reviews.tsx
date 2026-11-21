@@ -4,7 +4,7 @@ import { EmptyState } from "@/components/krea/empty-state";
 import { GradePill } from "@/components/krea/grade-pill";
 import { TeamLogo } from "@/components/krea/team-logo";
 import { UserAvatar } from "@/components/krea/user-avatar";
-import { Button } from "@/components/ui/button";
+import { BOTON_LARGO_SM, Button } from "@/components/ui/button";
 import {
   Card,
   CardHeader,
@@ -61,7 +61,7 @@ export function PendingReviews({
       <CardHeader>
         <CardTitle level={2}>Por evaluar</CardTitle>
         {primera ? (
-          <Button asChild size="sm">
+          <Button asChild size="sm" className={BOTON_LARGO_SM}>
             <Link href={`${HREF_COLA}/${primera.id}`}>
               Evaluar la primera
               <ArrowRight aria-hidden="true" />

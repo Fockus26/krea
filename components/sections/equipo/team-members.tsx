@@ -31,7 +31,7 @@ export function TeamMembers({
   capitanFemenino?: boolean;
 }) {
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
         <CardTitle level={2}>Integrantes</CardTitle>
         <p className="text-small text-text-2">

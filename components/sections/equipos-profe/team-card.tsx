@@ -103,7 +103,7 @@ export function TeamCard({
   });
 
   return (
-    <Card className="flex flex-col gap-4">
+    <Card className="flex h-full flex-col gap-4">
       {/* Si la columna del nombre no llega a 8rem (texto grande, D226), baja debajo del logo */}
       <div className="flex flex-wrap items-start gap-4">
         {/* biome-ignore lint/a11y/noStaticElementInteractions: solo recibe el arrastre; la acción accesible es el botón */}

@@ -992,6 +992,17 @@
     align-items: start;
   }
 }
+/* Como g-side pero la columna lateral aparece desde xl (1440): a 1024 con la barra lateral de 248 el nombre de la fila del ranking quedaba en ~60 px (D503) */
+@utility g-side-xl {
+  display: grid;
+  gap: var(--gap-grid);
+  grid-template-columns: minmax(0, 1fr);
+  @media (width >= 90rem) {
+    grid-template-columns: minmax(0, 1fr) var(--w-side-col);
+    column-gap: 2rem;
+    align-items: start;
+  }
+}
 /* Alturas y anchos de la navegación (AppShell) */
 @utility h-topbar {
   height: var(--h-topbar);

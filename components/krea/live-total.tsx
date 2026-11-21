@@ -90,19 +90,23 @@ export function LiveTotal({
       data-slot="live-total"
       data-complete={info.completo || undefined}
       className={cn(
-        "flex items-center gap-4 rounded-md bg-surface px-4 py-3 shadow-2",
+        "flex flex-wrap items-center gap-x-4 gap-y-2 rounded-md bg-surface px-4 py-3 shadow-2",
         className,
       )}
     >
       <span aria-hidden="true" className="shrink-0">
         <GradePill nota={info.nota} size="md" raspado={raspado} />
       </span>
-      <div aria-hidden="true" className="flex min-w-0 flex-1 flex-col gap-1">
-        <div className="flex items-center justify-between gap-2">
+      {/* Con texto grande la píldora y el total no caben en una línea: el total baja (D501) */}
+      <div
+        aria-hidden="true"
+        className="flex min-w-[min(--spacing(40),100%)] flex-1 flex-col gap-1"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-x-2">
           <span className="text-h4 whitespace-nowrap nums">{info.display}</span>
           <span
             className={cn(
-              "flex items-center gap-1 text-small-b whitespace-nowrap",
+              "flex items-center gap-1 text-small-b",
               METER_TEXT_CLASSES[tone],
             )}
           >

@@ -2,7 +2,7 @@
 
 import { Hand } from "lucide-react";
 import { useState, useTransition } from "react";
-import { Button } from "@/components/ui/button";
+import { BOTON_LARGO_SM, Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogClose,
@@ -91,7 +91,12 @@ export function TomarParte({
       }}
     >
       <DialogTrigger asChild>
-        <Button variant="secondary" size="sm" disabled={pendiente}>
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={pendiente}
+          className={BOTON_LARGO_SM}
+        >
           <Hand aria-hidden="true" />
           {TOMAR_PARTE}
           {/* Con varias preguntas, cada botón se distingue con lector de pantalla */}

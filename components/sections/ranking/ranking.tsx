@@ -26,9 +26,9 @@ type Props = {
 };
 
 /*
- * Pantalla Ranking (HANDOFF §3 Ranking): encabezado y, bajo 1024, el `<details>` de ayuda;
- * después `g-side` (izquierda podio + lista, derecha 360 con reglas y feed, solo ≥ 1024). Una sola
- * columna por debajo de 1024, en el orden del DOM. Presentacional: recibe todo por props (D066).
+ * Pantalla Ranking (HANDOFF §3 Ranking): encabezado y, bajo 1440, el `<details>` de ayuda;
+ * después `g-side-xl` (izquierda podio + lista, derecha 360 con reglas y feed, solo ≥ 1440, D503). Una sola
+ * columna por debajo de 1440, en el orden del DOM. Presentacional: recibe todo por props (D066).
  */
 export function Ranking({
   rol,
@@ -48,12 +48,12 @@ export function Ranking({
         cantidad={items.length}
         enlaces={enlaces}
       />
-      <RankingHowTo className="lg:hidden" />
-      <div className="g-side max-lg:gap-6">
+      <RankingHowTo className="xl:hidden" />
+      <div className="g-side-xl max-xl:gap-6">
         <RankingBoard vista={vista} items={items} rol={rol} seccion={seccion} />
         <aside
           aria-label="Reglas y movimientos"
-          className="flex flex-col gap-6 max-lg:hidden"
+          className="flex flex-col gap-6 max-xl:hidden"
         >
           <RankingRules />
           <RankingFeed movimientos={movimientos} ahora={ahora} />

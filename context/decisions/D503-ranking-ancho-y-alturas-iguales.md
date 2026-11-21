@@ -1,0 +1,5 @@
+# D503 · Responsive · Ranking: la columna lateral desde 1440 (nombres sin elipsis a 1024) y tarjetas hermanas de la misma altura · Implemented
+
+**Decision:** (1) `Ranking` usa `g-side-xl` (nueva, como `g-side` pero con la columna de 360 desde `xl` = 1440): a 1024 con la barra lateral de 248 el tablero quedaba en ~320 px y el nombre de cada fila en ~60 px («Raquel Figueroa» con elipsis); ahora el tablero ocupa todo el ancho hasta 1439 y `RankingHowTo` (la ayuda) se muestra bajo 1440. (2) Tarjetas hermanas en una misma fila se estiran: `/profe/equipos/[seccion]` (la rejilla sin `items-start`, `TeamCard` con `h-full`) y `/equipo` (`g-home` con `lg:items-stretch!`, `TeamMembers` con `h-full`). `/profe` no cambia: D382 decidió que cada tarjeta lleve su altura.
+**Why:** QA de la versión 2, D-B1 y D-B2. Sin alturas fijas: solo el estiramiento de la rejilla.
+**Discarded alternative:** achicar el avatar o el padding de la fila a 1024 (el nombre sigue por debajo del texto); masonry (D216 no lo pide y descuadra el orden de lectura).
