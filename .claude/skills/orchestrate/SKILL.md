@@ -67,6 +67,13 @@ and do not launch the wave.
 
 ## 0. Split a phase into waves
 
+**A phase with UI needs its design first.** Before mapping anything, check that
+`design/HANDOFF.md` exists and covers this phase's screens. If it does not, stop and offer
+César the three ways on: Claude Design with the kickoff's brief, a design canvas in this
+session, or building from the brief with the visual decisions taken per unit. A phase of
+dashboard pages was mapped and launched with no handoff, and César had to stop the wave to
+decide the design (kit-deploy).
+
 With the project's `phases/0N-*.md`, the relevant inventory and that phase's part of the
 handoff (in pieces, not whole): list the units, group them into waves with the rules of §3
 and write `context/plans/phase-0N-<name>.md` (template: `phase-plan-template.md` in this
@@ -94,7 +101,34 @@ are about to ask:
 - **Is there a way to verify it?** Before asking for a DOM test, check that the project has
   a DOM test environment (`happy-dom`/`jsdom` in `package.json`); if not, ask for "verify by
   measuring with Playwright". Before calling something a bug, measure it (e.g. two `font-*`
-  classes that `cn` already resolves are not a bug).
+  classes that `cn` already resolves are not a bug). If César suppressed visual QA (no
+  server, no `design-qa`) and the unit adds a color, the prompt asks for the contrast pairs
+  computed in light **and** dark in the report: a new color that did not show in dark
+  reached `main` because nobody saw it (KREA).
+- **Is what you will state as exact true?** A shared shape, a type change ("widening it to
+  `string` compiles the same") or a trap of a library: check it before writing it — a quick
+  `typecheck` with the change in a free slot, the version in `node_modules`. The worker
+  takes the brief as fact: that claim failed in 11 assignments (KREA), and a trap about
+  Radix was false for the installed version (KREA). The same for everything the prompt
+  cites (KREA ×5):
+  - a state, a view or a text it points to **exists** (an "empty state of /secciones/evaluar"
+    that did not exist left the worker writing its own copy);
+  - counts and texts are **copied from the canvas** (`.dc.html`), not remembered ("4 samples"
+    where the canvas paints 5);
+  - demo data of earlier waves the unit combines **match** (ids of one list that are not in
+    the other);
+  - each requirement fits the **API of the components the unit may not edit** — if not, the
+    prompt authorizes the API change or says it from the start;
+  - an a11y trap (two `nav` with the same name) is real **at the same breakpoint**: two
+    elements that never coexist are not one.
+  What you already verified is stated once with path:line; do not also ask the worker to
+  re-check it (extra reads for something the brief had settled: KREA).
+- **Which tests watch these files?** A project test that guards them (`tokens.test.ts` that
+  forbids hex in `app/`, even in comments) goes in the prompt's traps: the worker found it
+  when it failed (KREA).
+- **States: all the combinations.** With two selectors on one view (role × tab), the prompt
+  lists the product, not each one apart: two states without a destination were missing
+  (KREA).
 - **Is there an image involved?** Open it before proposing its `alt` or its text: an alt
   written without seeing it describes nothing.
 - **Does it change tokens?** Read the CSS the build generates (`.next/static/css`, `dist/`),
@@ -122,6 +156,9 @@ asked now, in a single round (max. 4 questions, with a recommended option):
 - May they apply **additive** database changes (new columns) through the MCP, or leave them
   written for César?
 - Product decisions the request leaves open that change the unit's design.
+- **The scope of a rule when the request does not fix it** ("in this area" or "everywhere"):
+  a prompt narrowed a rule to one area by interpretation, it had to apply to all cases, and
+  César fixed it after the merge (KREA).
 
 Do not ask about the closing QA: the server and test accounts for `wave-qa` are already
 authorized (§8).
@@ -137,6 +174,10 @@ the PR with its alternative.
 - **Waves:** units that step on each other (same files) go in different waves; cross-cutting
   work (global styles, shared modal headers) goes last, on an updated `main`.
 - A unit with no repo code (external template) runs without a pool slot and without a PR.
+- **Shared primitives of the wave:** list the base components the wave's units will need
+  and do not have yet (`components/ui/*`: a select, a dialog, a table) and give each to one
+  unit only — or to the components wave, before. Two page units each added
+  `components/ui/native-select.tsx` and the PRs collided (kit-deploy).
 
 ## 4. Reserve numbers
 
@@ -151,6 +192,8 @@ So that parallel units do not collide, assign each one:
 | Range of custom error codes, if the project uses them (SQLSTATE of `raise … using errcode`): closed and disjoint per unit, never "F5+" (two units overlapped: melao) | MS010–MS014 |
 | Model · effort (`reference/TOKEN-ECONOMY.md` §12) | `sonnet` · medium |
 | Docker for this unit (local database, containers) | yes / no |
+| Local build for this unit (`next build`, `qa:local -- --preview`) | yes / no |
+| Test services on fixed ports for this unit (emulators, a test database the suite starts) | yes / no |
 
 **Two units sharing a shape** (the same table, column, type or event): fix its name and type
 in the brief's "Shared shapes" before launching. Otherwise the second one improvises its own
@@ -159,6 +202,13 @@ in the brief's "Shared shapes" before launching. Otherwise the second one improv
 **Handoff values without a token** (144/136 px, 140 ms): the prompt says beforehand which it
 is — "the nearest existing token" or "new tokens `--x`/`--y`, recorded in a decision". A worker
 cannot ask, and "zero magic values" with no token left it stuck (melao).
+A token nobody foresaw, when the brief forbids touching the global stylesheet: the worker
+uses the nearest one, lists the missing token in its report ("Missing tokens"), and you add
+them in one PR when the wave closes (§9). "Do not touch `globals.css`" against "add the token
+you need" left values without a token in two units (KREA ×2).
+
+**The last unit of a phase reserves one more decision ID**, for the phase's closing
+decision: it had none and the number was improvised (KREA).
 
 **Docker yes/no is decided here**, not left to the worker: "Docker only if the other unit
 finished" could not be followed, since a worker cannot know that (world-flags). At most one
@@ -175,7 +225,30 @@ git fetch origin --quiet
 git ls-tree --name-only origin/main context/decisions/ | sort | tail -3
 ```
 
-And above that, the ranges reserved in still-open PRs of another batch, if any.
+And above that, the ranges reserved in still-open PRs of another batch, if any. Another
+session working in the main folder can still take them meanwhile (D047–D048 went that way:
+kit-deploy): a worker that finds its ID used on `main` takes the next free one after merging
+`origin/main`, renames its file and says so in its report — it does not stop.
+
+**`CONTENT_CHECKLIST` rows, the same way: against the file's real last row** (it is local:
+in the main folder) plus the ranges of still-open units, never against the plan. A row
+reserved as free for a later wave had already been used by another PR (KREA ×2). Reserve
+one extra row per unit: within its range the worker distributes them freely (5 copy bands
+with 4 rows forced a merge: KREA).
+
+**Test services on fixed ports yes/no is decided here too, like Docker:** at most one unit
+per wave runs them. Firebase's emulators with several slots did not start in 60 s, collided
+on the fixed ports and contaminated each other's runs (KREA ×8). The others verify through
+CI (`gh pr checks`) when it runs those tests; the technology's reference says how (e.g.
+`tech/firebase.md` § Emulators in parallel).
+
+**Local build yes/no is decided here too:** at most two units per wave get "yes" — the ones
+whose verification cannot be done without the build (Playwright guards of reflow or a11y
+measurements, a service worker, a change in `next.config` that CI cannot show). The rest run
+typecheck, lint and tests, measure on their dev server and read the build from CI. With four
+slots compiling at once, `next build` took 6–25 min, hung twice and crashed in PostCSS on
+Windows; Playwright over `next dev` hung on `load` (workout ×5, kit-deploy ×2). What a "no"
+unit could only measure on dev goes to the wave's QA list.
 
 The slot and its port are not reserved here: `wt take` assigns them at launch (wt2 → 4302, §6).
 
@@ -252,6 +325,18 @@ When each report arrives:
 When César asks for changes on a PR or `main` moved: continue the worker with `SendMessage`
 (it keeps its context) instead of launching a new one. The slot stays its own until merge.
 
+**`main` moved under an open PR:** the worker runs `git merge origin/main` on its branch and
+pushes normally. Never a rebase of a pushed branch: it needs a force-push, which the brief
+and the project's `CLAUDE.md` forbid and auto mode denies; a rebased PR was left in conflict
+and had to be republished on another branch (kit-deploy).
+
+**Resuming a worker that was cut** (API error, watchdog): look at its slot before writing the
+message — `git -C <slot> status --short` and `git -C <slot> log --oneline origin/main..HEAD`
+— and say what is there, not what you suppose. Do not cite `.qa/progress.md` or
+`.qa/pr-body.md` unless you saw them and they are newer than the unit's start: two resume
+messages named a `progress.md` no worker had written and guessed the step from its last
+line, and another took a `pr-body.md` of a previous PR as recent (kit-deploy ×2, workout).
+
 **One extra round per PR, at most.** The worker fixes everything of its class or zone in the
 first pass (its prompt says so). What it reports "in passing" after that, if Medium or Low,
 goes to `backlog.md`, not to another `SendMessage`: chaining "a bug in passing → another
@@ -277,7 +362,10 @@ or two units share a page or a table. A wave of sections, copy or styles gets no
 the workers' gates (`a11y`, the versioned class scripts) cover it, and its visual review is
 the version QA's `design-qa` (phase 09). `wave-qa` is never a visual audit either. Why: the
 full audit per wave and per page was most of the QA tokens, and its visual findings were
-classes one end-of-version sweep fixes at once (César, 2026-10-23). Note it in the closing
+classes one end-of-version sweep fixes at once (César, 2026-10-23).
+**A project with `QA: al final` in its `CLAUDE.md`** gets no `wave-qa` at all, and its
+workers no server (verify by code and tests): it is asked once, not in every wave. César
+asked KREA for no QA until the end of the project and had to repeat it. Note it in the closing
 (§9): "QA: no aplica — ola sin flujos de riesgo".
 
 ```bash
@@ -353,6 +441,8 @@ tests what is public and flags it), and in the closing ask César to add them
 1. Phase plan: the wave's status, its "Closings" row, fixes added to the next wave, and the
    **start prompt** of the next one.
 2. `CURRENT_PHASE.md`: "Now" with the phase and the next wave; "Blocked" with the QA items.
+   If the reports listed "Missing tokens" (§4), one PR adds them and replaces the nearest
+   ones the workers used, before the next wave.
 3. **Back up the local state:** `bun run context:backup` (copies the local `context/` to the
    `context-state` branch; see `git-flow` §2.1.2). Without it, losing the main folder means
    the next session does not know where the project stood. If the project does not have

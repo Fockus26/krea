@@ -94,3 +94,16 @@ export async function assignRoleFirebase(
   void project;
   void headers;
 }
+
+/**
+ * KREA (D183, D327): la cuenta de prueba es una CÉDULA que ya crea `scripts/seed-db.ts` (la app
+ * tiene `disableSignUp`, no hay ruta de registro). qa-local no la vuelve a crear.
+ */
+export async function existingAccount({
+  email,
+}: {
+  email: string;
+  role: string;
+}): Promise<boolean> {
+  return /^\d{7,9}$/.test(email);
+}

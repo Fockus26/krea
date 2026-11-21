@@ -157,12 +157,78 @@ supabase/                   migrations, seed, auth templates (in git)
 - A `'use client'` module exports only components: a constant imported from it into a
   Server Component arrives as a client reference, not a value (`undefined`, 500). What is
   shared goes in `lib/`.
+- A Server Component passes a client one only serializable props: never a function (a
+  `href` builder, a formatter). It fails at render, not in `typecheck`. Pass the data
+  (a map of hrefs) or move the function into the client module (KREA).
+
+- A module with `import 'server-only'` does not load in `bun test` (KREA). Split it: the logic
+  in a pure module that takes its dependencies as arguments (tested), and a thin `server-only`
+  wrapper that injects them (not tested).
+
+### Cache Components (`cacheComponents: true`)
+
+What KREA hit (Next 16), each one a broken build or a 500 found late:
+
+- **A dynamic route keeps `generateStaticParams`, returning at least one real param.** An
+  empty array is a build error, and removing it under a layout that reads the path broke the
+  build.
+- **Variants of an internal view** (a reference page, a state gallery) go as a route
+  `[state]` with `generateStaticParams`, not `?state=`: reading `searchParams` outside
+  `<Suspense>` fails the prerender ("uncached or runtime data during prerendering").
+- **`opengraph-image.tsx`:** no `await fetch` of fonts at module level (it hung the build).
+  The TTF in the repo, read inside the function (`readFile`), or loaded lazily there.
+- **The build passes with errors that only show in dev with a session** (`Date.now()`,
+  uncached data). So: a test that lists every `page.tsx` and fails if its segment has no
+  `loading.tsx` (a hand-made list missed 6 subroutes), and, when the backend closes, a pass
+  over every route in dev with the test accounts that counts console errors.
 
 ### Dev server (Turbopack)
 
 - With several servers at once (pool workers), Turbopack may time out its subprocesses
   ("Node.js subprocess crashed … deadline has elapsed") and leave a 500 in the `.next/dev`
   cache. A restart is not enough: shut down, delete `.next/dev` and restart.
+- `typecheck` (`next typegen`) with errors about routes that no longer exist: stale types in
+  `.next/dev/types` or `.next/types` from another branch. Delete both and run it again;
+  `wt take` already does it when it puts a new branch in a slot (KREA ×5).
+
+- `next build` dying on Windows with exit code `0xc0000142` while PostCSS runs (Turbopack,
+  several slots building): retry once; if it dies the same way, the PR's CI build is the one
+  that counts, and say so in the report (workout ×2).
+
+### Migrating an app from Vite
+
+What tripped workout's move from Vite + React to Next 16, with both living together for a
+while:
+
+- **`src/pages/` is the Pages Router for Next.** Vite's screens folder with that name breaks
+  `next build`. Rename it before the first build (`src/screens/`), or keep Next's code out of
+  `src/` with an empty `pages/` at the root.
+- **A root `postcss.config.*` is read by Vite too.** While both builds live, Vite's PostCSS
+  goes inline in `vite.config` (`css.postcss`) and Next keeps the file; each with its own
+  `tsconfig`.
+- **`public/` wins over `app/`.** Vite's `public/manifest.webmanifest` and `icon.svg` were
+  served instead of Next's `app/manifest.ts` and `app/icon.svg`, with no warning. Move
+  Vite's `public/` aside (`publicDir`) before the brand unit, and check with `curl` which one
+  answers.
+- **What moves from one app to the other, besides the screens:** the auth session
+  (`localStorage` in the SPA, cookies with a server: every user logs in again unless it is
+  migrated), the URLs users saved (hash routes `/#/x` need a redirect), the service worker
+  and whatever it cached, and the stored keys of local state.
+- **Removing Vite:** `vitest` asks for `vite` as a peer. Keep it in devDependencies while the
+  tests run on Vitest.
+- **A service worker over the App Router:** the cache key is the exact URL, `_rsc` query
+  included — in Next 16 it is a hash of the router tree, not noise to strip. And a cached
+  HTML served under another URL makes `useParams()` return the param of the cached tree
+  (seen on 16.4): read the URL from `window.location` in that case.
+- `qa:local` starts the `dev` / `build` scripts of `package.json`: while both apps live, make
+  sure those are Next's, or QA tests the old app.
+
+### Biome
+
+- Two `// biome-ignore` in a row on one JSX node do not chain: only the first applies. For
+  several rules or lines, a range: `// biome-ignore-start lint/<group>/<rule>: <reason>` …
+  `// biome-ignore-end lint/<group>/<rule>: <reason>` (in JSX, inside `{/* */}`) (KREA,
+  Biome 2.4).
 
 ### TypeScript
 
@@ -176,6 +242,43 @@ supabase/                   migrations, seed, auth templates (in git)
 - With MUI, this section does not apply: tokens live in `createTheme()`.
 
 - Conditional classes with `cn()` (`clsx` + `tailwind-merge`).
+- **`cn` only resolves the conflicts it knows.** A utility of the project's own
+  (`@utility text-small-b`, `shadow-done`, `rounded-done`) next to Tailwind's (`text-xs`,
+  `shadow-1`, `rounded-md`) keeps both, and the one the CSS emits last wins — with `dark:`
+  the winner changed (KREA ×3). Each one is registered once, in the `cn` file, and checked
+  with a `cn(...)` in the unit's test:
+
+  ```ts
+  import { extendTailwindMerge } from 'tailwind-merge'
+  const twMerge = extendTailwindMerge({
+    extend: {
+      // a token in @theme (--text-small-b, --shadow-done) → its theme key
+      theme: { text: ['small-b'], shadow: ['done'], radius: ['done'] },
+      // a hand-written @utility → its class group
+      classGroups: { 'font-size': ['text-small-b'] },
+    },
+  })
+  ```
+- **Tailwind v4 scans everything git does not ignore**, not only the code: `context/`,
+  `.claude/` and the handoff are tracked, and a `mt-[13px]` quoted in a kit rule ended up in
+  the CSS (workout). The global stylesheet names its sources:
+
+  ```css
+  @import "tailwindcss" source(none);
+  @source "../app";
+  @source "../components";
+  @source "../lib";
+  ```
+  (paths relative to the stylesheet; add each folder that holds class names.)
+- **`cn` reads a font-size token as a color.** `text-small` next to `text-text-2`: with the
+  default `tailwind-merge`, the second removed the first with no error (workout). Every
+  `--text-*` size of the theme goes in `extendTailwindMerge` (the block above), with a test
+  that walks the `--text-*` variables of the CSS and checks each survives a `cn()` with a
+  color.
+- **A theme variable that depends on a per-element variable goes in `@theme inline`.** In
+  plain `@theme` it resolves where it is defined (`:root`), so overriding the inner variable
+  on an element does nothing: an `--animate-*` built on `var(--duration)` ignored the
+  override (workout; Tailwind docs, "Referencing other variables").
 - Mobile first: base classes are mobile, the `md:`/`lg:` prefixes widen.
 - **Zero arbitrary values** (`w-[347px]`, `text-[#3a7bd5]`). If one is needed, either a token
   is missing or it is a decision to record.

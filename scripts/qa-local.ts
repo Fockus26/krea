@@ -21,11 +21,13 @@
  *      (`qa-<package name>-mailpit`), reused if running, on free ports. They stay up afterwards.
  *   2. One database per QA port (`qa_<port>`, so slots do not collide), owned by a role that is
  *      not a superuser, like the real one. Dropped and recreated unless `--no-reset`. Then
- *      `bun run db:migrate` and `drizzle/seed.sql`.
+ *      `bun run db:migrate`, `drizzle/seed.sql` and `scripts/seed-db.ts` if the project has it.
  *   3. The server with `DATABASE_URL`/`DIRECT_URL` at the container and `SMTP_*` at Mailpit. Every
  *      Supabase variable goes to a dead address: code not yet migrated cannot reach the real one.
  *   4. Before printing `QA ready`, the `.env.test.local` accounts through Better Auth's sign-up
- *      endpoint, then `email_verified = true` by SQL; the role in `assignRolePostgres`.
+ *      endpoint, then `email_verified = true` by SQL; the role in `assignRolePostgres`. An app
+ *      with `disableSignUp` creates them in `scripts/seed-db.ts` and says so in
+ *      `existingAccount` (`scripts/qa-roles.ts`); that hook works for every backend.
  *   `--db-only` stops after step 2 and prints the URLs: for tests against the database, without
  *   a server.
  *
@@ -39,6 +41,13 @@
  *      `supabase stop` between them, and the database container's log if the last one fails:
  *      the first start on a machine failed with `StatusDbNotRunningError` (world-flags ×3) and
  *      storage's "Starting database from backup" twice in a row (melao).
+ *      Nothing here waits without a limit: Docker is asked first (`docker version`, 30 s),
+ *      every `supabase` command has a cap (20 min; `QA_SUPABASE_TIMEOUT_MIN`), each failed
+ *      attempt prints its error, a database still recovering is waited for instead of
+ *      stopped, and an `unhealthy` one ends with the recovery command. Why: with Docker
+ *      Desktop not answering, a run sat for hours on the restart with nothing printed while
+ *      the other workers waited for Docker; the reason of a failed start only showed on the
+ *      third attempt, and the `stop` between attempts cut Postgres' recovery (workout ×7).
  *   2. `supabase db reset`: an empty database with the current tree's migrations and seed
  *      (in a pool slot, `main`'s), with its output live (it takes minutes). If it fails
  *      (`DbSetupError`, melao ×2), stop + start + reset once more. The local database is
@@ -81,8 +90,11 @@
  * whatever needs data fails instead of touching the real database.
  *
  * With `--preview`: the same backend, but `bun run build` with those variables and then the
- * project's `preview` script (Astro, Vite) or `start` (Next) on the port. For Playwright
- * against the build; it was done by hand (world-flags).
+ * project's `qa:serve` script if it has one, otherwise `preview` (Astro, Vite) or `start`
+ * (Next), on the port and with `NODE_ENV=production`. For Playwright against the build: the
+ * service worker and the rate limits only behave as in production there. `qa:serve` is for an
+ * adapter with no preview server (`@astrojs/vercel`: kit `tech/astro.md`); it gets
+ * `--port <port>` like the others. It was done by hand (world-flags).
  *
  * Before starting it checks the port is free: if not, it aborts (the server would jump to
  * the next one without warning and could land on another pool slot's). To stop it on
@@ -158,10 +170,29 @@ interface QaRoles {
     role: string,
     ctx: { sql: (statement: string) => string },
   ): Promise<void>;
+  existingAccount(account: {
+    email: string;
+    role: string;
+  }): boolean | Promise<boolean>;
 }
 const roles: Partial<QaRoles> = existsSync("scripts/qa-roles.ts")
   ? await import(pathToFileURL("scripts/qa-roles.ts").href)
   : {};
+
+// An account the project's own seed already creates (`existingAccount` in qa-roles.ts) is not
+// created again nor given its role here. Without the hook, KREA re-applied by hand a block
+// inside this file after every kit update.
+async function seeded(a: { email?: string; role: string }): Promise<boolean> {
+  if (
+    !a.email ||
+    !(await roles.existingAccount?.({ email: a.email, role: a.role }))
+  )
+    return false;
+  console.log(
+    `  = test account: role ${a.role} (created by the project's seed)`,
+  );
+  return true;
+}
 
 // App variable ← field of `supabase status -o json`, for Next (NEXT_PUBLIC_*), Vite (VITE_*)
 // and Astro (PUBLIC_*). Add the one your project uses here if it has another name (the
@@ -346,22 +377,54 @@ const SUPABASE_ENV = {
   ...process.env, // whatever César set wins
 };
 
+// Docker Desktop can stop answering without exiting. `docker version` and not `docker info`:
+// info hung while version and ps answered (workout).
+function dockerAnswers(): boolean {
+  const r = spawnSync(
+    "docker",
+    ["version", "--format", "{{.Server.Version}}"],
+    { encoding: "utf8", timeout: 30_000 },
+  );
+  return r.status === 0;
+}
+
+function requireDocker(): void {
+  if (dockerAnswers()) return;
+  abort(
+    "Docker does not answer (docker version, 30 s). Open Docker Desktop — or restart it if it is open and stuck — and run this again.",
+  );
+}
+
+const SUPABASE_CAP_MIN = Number(process.env.QA_SUPABASE_TIMEOUT_MIN) || 20;
+
 type Run = ReturnType<typeof spawnSync>;
 // `live`: output straight to the terminal (long steps). Returns the result; never aborts.
+// Capped: a command that outlives the cap comes back as a failure instead of hanging.
 function supabaseRun(a: string[], live = false): Run {
   return spawnSync("supabase", a, {
     encoding: "utf8",
     stdio: live ? "inherit" : "pipe",
     shell: process.platform === "win32",
     env: SUPABASE_ENV,
+    timeout: SUPABASE_CAP_MIN * 60_000,
   });
 }
 
+function failure(r: Run): string {
+  if (r.error && (r.error as NodeJS.ErrnoException).code === "ETIMEDOUT") {
+    return `no answer in ${SUPABASE_CAP_MIN} min (cap: QA_SUPABASE_TIMEOUT_MIN)`;
+  }
+  return String(r.stderr || r.stdout || r.error?.message || "").trim();
+}
+
 function supabaseFail(a: string[], r: Run, extra = ""): never {
-  const detail = String(r.stderr || r.stdout || "").trim();
-  const docker = /docker|daemon|pipe/i.test(detail)
-    ? "\n→ Is Docker Desktop running?"
-    : "";
+  const detail = failure(r);
+  // Only when it really does not answer: every Supabase error names Docker, and the hint
+  // sent people to restart a Docker that was fine (kit test, 2026-11-18).
+  const docker =
+    /docker|daemon|pipe/i.test(detail) && !dockerAnswers()
+      ? "\n→ Is Docker Desktop running?"
+      : "";
   abort(`supabase ${a.join(" ")} failed:\n${detail}${docker}${extra}`);
 }
 
@@ -406,23 +469,72 @@ function runningSiteUrl(): string | null {
   return r.stdout.match(/^GOTRUE_SITE_URL=(.*)$/m)?.[1]?.trim() ?? null;
 }
 
+// '' when the container does not exist or has no health check.
+function dbHealth(): string {
+  if (!projectId) return "";
+  const r = spawnSync(
+    "docker",
+    [
+      "inspect",
+      "-f",
+      "{{if .State.Health}}{{.State.Health.Status}}{{end}}",
+      `supabase_db_${projectId}`,
+    ],
+    {
+      encoding: "utf8",
+      timeout: 30_000,
+    },
+  );
+  return r.status === 0 ? r.stdout.trim() : "";
+}
+
+const sleepSync = (ms: number) =>
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+
+// After Docker hangs, Postgres can stay in its recovery fsync and fail every start.
+const UNHEALTHY_HINT =
+  "\n→ The local database is unhealthy. Recovery: `supabase stop --no-backup` (it deletes the local" +
+  "\n  database's data; the next run recreates it from the migrations and the seed) and run this again.";
+
 function supabaseStart(): void {
+  requireDocker();
   const current = runningSiteUrl();
   if (current && current !== SITE) {
     console.log(
       `… the local stack sends links to ${current}: restarting it for ${SITE} (data kept)`,
     );
-    supabaseRun(["stop"]);
+    const stop = supabaseRun(["stop"]);
+    if (stop.status !== 0) supabaseFail(["stop"], stop);
   }
   const attempts = 3;
   for (let i = 1; i <= attempts; i++) {
     const r = supabaseRun(["start"]);
     if (r.status === 0) return;
-    if (i === attempts)
-      supabaseFail(["start"], r, dockerLogs(`supabase_db_${projectId}`));
+    let health = dbHealth();
+    if (i === attempts) {
+      supabaseFail(
+        ["start"],
+        r,
+        dockerLogs(`supabase_db_${projectId}`) +
+          (health === "unhealthy" ? UNHEALTHY_HINT : ""),
+      );
+    }
     console.log(
-      `… supabase start failed (attempt ${i}/${attempts}); supabase stop and again`,
+      `… supabase start failed (attempt ${i}/${attempts}):\n${failure(r).split("\n").slice(-8).join("\n")}`,
     );
+    requireDocker();
+    if (health === "starting") {
+      // Stopping it now cuts the recovery and the next start begins it again (~20 min: workout).
+      console.log(
+        "… the database is still starting (recovery?): waiting for it, up to 10 min, instead of stopping it",
+      );
+      for (let s = 0; s < 120 && health === "starting"; s++) {
+        sleepSync(5000);
+        health = dbHealth();
+      }
+      if (health === "healthy") continue;
+    }
+    console.log("… supabase stop and again");
     supabaseRun(["stop"]);
   }
 }
@@ -444,8 +556,14 @@ function supabaseReset(): void {
 
 // Local sign-up without the confirmations the hosted project asks for: a repro passes here
 // and not there, and it hid the double confirmation of an email change (melao).
+// Only inside [auth.email]: `[auth.sms] enable_confirmations = false` (its default) raised
+// this warning in a project whose email confirmations were on (workout).
+const authEmail =
+  configToml.match(
+    /^\[auth\.email\][^\n]*\n([\s\S]*?)(?=^\[|$(?![\s\S]))/m,
+  )?.[1] ?? "";
 for (const key of ["enable_confirmations", "double_confirm_changes"]) {
-  if (new RegExp(`^\\s*${key}\\s*=\\s*false`, "m").test(configToml)) {
+  if (new RegExp(`^\\s*${key}\\s*=\\s*false`, "m").test(authEmail)) {
     console.warn(
       `! supabase/config.toml: ${key} = false. If the hosted project has it on, local QA skips that step.`,
     );
@@ -520,11 +638,14 @@ async function startServer(
   env.BETTER_AUTH_URL = SITE;
   let script = "dev";
   if (preview) {
-    script = pkgScripts.preview ? "preview" : "start";
-    if (!pkgScripts[script])
+    script = ["qa:serve", "preview", "start"].find((s) => pkgScripts[s]) ?? "";
+    if (!script)
       abort(
-        '--preview: the project has neither a "preview" nor a "start" script.',
+        '--preview: the project has no "qa:serve", "preview" or "start" script.',
       );
+    // Not `env.NODE_ENV = …`: Next 16's types declare it read-only and a new project's
+    // typecheck failed on this file (kit-deploy).
+    Object.assign(env, { NODE_ENV: "production" });
     console.log("… bun run build (with the local backend's variables)");
     const build = launch("bun", ["run", "build"], env);
     const code = await new Promise<number | null>((done) =>
@@ -641,11 +762,7 @@ if (
   const docker = (a: string[], input?: string) =>
     spawnSync("docker", a, { encoding: "utf8", input });
 
-  const version = docker(["version", "--format", "{{.Server.Version}}"]);
-  if (version.status !== 0)
-    abort(
-      `Docker does not answer. Is Docker Desktop running?\n${version.stderr}`,
-    );
+  requireDocker();
 
   async function freePort(from: number): Promise<number> {
     for (let p = from; p < from + 200; p++) {
@@ -704,7 +821,8 @@ if (
 
   // TCP, not the socket: during the image's init Postgres only listens on the socket.
   let ready = false;
-  for (let i = 0; i < 120 && !ready; i++) {
+  // 5 minutes: the container's first initdb on a hard disk passed the 2 it had (kit-deploy).
+  for (let i = 0; i < 300 && !ready; i++) {
     ready =
       docker([
         "exec",
@@ -719,7 +837,7 @@ if (
       ]).status === 0;
     if (!ready) await new Promise((r) => setTimeout(r, 1000));
   }
-  if (!ready) abort(`Postgres did not answer in 2 minutes.${dockerLogs(PG)}`);
+  if (!ready) abort(`Postgres did not answer in 5 minutes.${dockerLogs(PG)}`);
 
   const sqlIn = (db: string, statement: string): string => {
     const r = docker(
@@ -759,6 +877,12 @@ if (
 
   const databaseUrl = `postgresql://${ROLE}:${ROLE}@127.0.0.1:${pgPort}/${DB}`;
 
+  if (!pkgScripts["db:migrate"]) {
+    abort(
+      'package.json has no "db:migrate" script, which applies the migrations to the QA database.\n' +
+        'Add it — Drizzle: "db:migrate": "drizzle-kit migrate" (the kit\'s reference/tech/vps-postgres.md).',
+    );
+  }
   console.log("… bun run db:migrate");
   const migrate = spawnSync("bun", ["run", "db:migrate"], {
     stdio: "inherit",
@@ -769,6 +893,21 @@ if (
   if (reset && existsSync("drizzle/seed.sql")) {
     console.log("… drizzle/seed.sql");
     sqlIn(DB, readFileSync("drizzle/seed.sql", "utf8"));
+  }
+  // A seed that needs code (Better Auth's hashes, accounts in an app with `disableSignUp`,
+  // where the sign-up route below does not exist): the project's own, against this database.
+  if (reset && existsSync("scripts/seed-db.ts")) {
+    console.log("… scripts/seed-db.ts");
+    const seed = spawnSync("bun", ["scripts/seed-db.ts"], {
+      stdio: "inherit",
+      shell: process.platform === "win32",
+      env: {
+        ...process.env,
+        DATABASE_URL: databaseUrl,
+        DIRECT_URL: databaseUrl,
+      },
+    });
+    if (seed.status !== 0) abort("scripts/seed-db.ts failed.");
   }
 
   console.log(
@@ -789,6 +928,7 @@ if (
     SMTP_USER: "",
     SMTP_PASS: "",
     SMTP_FROM: "QA <qa@example.test>",
+    EMAIL_FROM: "QA <qa@example.test>", // projects that copied the guide before 3.24.0 read this name
   });
 
   await startServer(env, async () => {
@@ -799,6 +939,7 @@ if (
         );
         continue;
       }
+      if (await seeded(a)) continue;
       const r = await fetch(`${SITE}/api/auth/sign-up/email`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Origin: SITE },
@@ -810,7 +951,7 @@ if (
       });
       if (r.status === 404) {
         console.warn(
-          "! The app has no Better Auth sign-up route yet: test accounts skipped.",
+          "! The app has no Better Auth sign-up route (not yet, or `disableSignUp`): test accounts skipped. Create them in scripts/seed-db.ts and mark them in existingAccount (scripts/qa-roles.ts).",
         );
         return;
       }
@@ -845,18 +986,28 @@ if (firebaseJson?.emulators && !existsSync("supabase/config.toml")) {
     answers("127.0.0.1", Number(hostPort.split(":")[1]));
 
   // Waits up to `seconds`, printing progress every 15 s so a slow first start does not look hung.
-  async function waitFor(hostPort: string, seconds: number): Promise<void> {
+  // Returns false if the CLI exited first: on a cold HDD Firestore took 71 s, firebase-tools
+  // gave up at 60, and the old message blamed Java (KREA).
+  async function waitFor(
+    hostPort: string,
+    seconds: number,
+    cli?: ChildProcess,
+  ): Promise<boolean> {
     for (let i = 1; i <= seconds; i++) {
-      if (await up(hostPort)) return;
+      if (await up(hostPort)) return true;
+      if (cli && cli.exitCode !== null) return false;
       if (i % 15 === 0)
         console.log(`  … waiting for the emulator on ${hostPort} (${i} s)`);
       await new Promise((r) => setTimeout(r, 1000));
     }
     abort(
-      `The emulator on ${hostPort} did not answer in ${seconds} s (is Java installed?).`,
+      `The emulator on ${hostPort} did not answer in ${seconds} s. Look at the firebase output above;` +
+        " if it never started, check `java -version` and that the port is free.",
     );
   }
 
+  // Without it, firebase-tools can sit silently on its update check (KREA).
+  process.env.NO_UPDATE_NOTIFIER = "1";
   const emulatorEnv = {
     ...process.env,
     FIREBASE_AUTH_EMULATOR_HOST: AUTH,
@@ -869,22 +1020,42 @@ if (firebaseJson?.emulators && !existsSync("supabase/config.toml")) {
     console.log(
       "… firebase emulators:start (the first time on a machine: minutes)",
     );
-    if (pkgScripts.emulators?.includes("--project"))
-      launch("bun", ["run", "emulators"], process.env);
-    else if (pkgScripts.emulators)
-      launch(
-        "bun",
-        ["run", "emulators", "--", "--project", FIREBASE_QA_PROJECT],
-        process.env,
+    const start = () =>
+      pkgScripts.emulators?.includes("--project")
+        ? launch("bun", ["run", "emulators"], process.env)
+        : pkgScripts.emulators
+          ? launch(
+              "bun",
+              ["run", "emulators", "--", "--project", FIREBASE_QA_PROJECT],
+              process.env,
+            )
+          : launch(
+              "bun",
+              [
+                "x",
+                "firebase",
+                "emulators:start",
+                "--project",
+                FIREBASE_QA_PROJECT,
+              ],
+              process.env,
+            );
+    let cli = start();
+    let ready =
+      (await waitFor(AUTH, 240, cli)) && (await waitFor(FIRESTORE, 240, cli));
+    if (!ready) {
+      // The second start is warm (the emulator's JAR and the JVM are cached): once, not a loop.
+      console.log(
+        "… firebase exited before the emulators were ready (a cold start over its 60 s?): retrying once",
       );
-    else
-      launch(
-        "bun",
-        ["x", "firebase", "emulators:start", "--project", FIREBASE_QA_PROJECT],
-        process.env,
+      cli = start();
+      ready =
+        (await waitFor(AUTH, 240, cli)) && (await waitFor(FIRESTORE, 240, cli));
+    }
+    if (!ready)
+      abort(
+        "firebase emulators:start exited twice before the emulators were ready: see its output above.",
       );
-    await waitFor(AUTH, 240);
-    await waitFor(FIRESTORE, 240);
   }
 
   if (reset && existsSync("scripts/seed-emulator.ts")) {
@@ -910,23 +1081,7 @@ if (firebaseJson?.emulators && !existsSync("supabase/config.toml")) {
       );
       continue;
     }
-    // KREA (D183): la cuenta de prueba es una CÉDULA del seed (scripts/seed-emulator.ts ya la
-    // creó con uid = cédula y sus claims). Solo se le pone la contraseña de .env.test.local.
-    // No cabe en qa-roles.ts (que solo actúa después de crear la cuenta): re-aplicar tras
-    // cada actualización del kit que reemplace este script.
-    if (/^\d{7,9}$/.test(a.email)) {
-      const u = await fetch(`${authApi}/accounts:update`, {
-        method: "POST",
-        headers: owner,
-        body: JSON.stringify({ localId: a.email, password: a.password }),
-      });
-      if (!u.ok)
-        abort(
-          `Test account ${a.role}: cédula not in the seed (${u.status}); run without --no-reset`,
-        );
-      console.log(`  = test account: role ${a.role} (seed)`);
-      continue;
-    }
+    if (await seeded(a)) continue;
     const r = await fetch(`${authApi}/accounts`, {
       method: "POST",
       headers: owner,
@@ -1038,6 +1193,7 @@ for (const a of accounts) {
     );
     continue;
   }
+  if (await seeded(a)) continue;
   const r = await fetch(`${api}/auth/v1/admin/users`, {
     method: "POST",
     headers,

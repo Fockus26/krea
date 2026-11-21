@@ -23,7 +23,9 @@
   listening on that port (orphaned servers from the previous unit).
 
   `.qa/` (each slot's measuring scripts and logs) is ignored by git in every slot: `init`
-  and `take` add it to `.git/info/exclude`.
+  and `take` add it to `.git/info/exclude`. When `take` puts a different branch in the slot,
+  it removes the previous unit's `.qa/pr-body.md`, `progress.md`, `*.log` and `.next/dev`,
+  `.next/types`; the scripts in `.qa/` stay.
 
   The `.env*` files (except `.env.example`) are copied from the main folder only if git
   ignores them in the slot: they are never committed.
@@ -166,6 +168,30 @@ function ExcludeQa {
   }
 }
 
+# What the slot's previous unit left that a new one would take as its own. `.qa/.branch`
+# records whose they are; when the branch changes, they go:
+# - `.qa/pr-body.md`, `.qa/progress.md`, `.qa/*.log`: a Write over the old body failed
+#   ("not read"), "when resuming, read progress.md" pointed to another unit, and one
+#   `gh pr create --body-file` published another PR's body (KREA ×14). The measuring and
+#   repro scripts in `.qa/` stay: they are reused.
+# - `.next/dev` and `.next/types`: types of routes the new branch does not have gave false
+#   `typecheck` errors (KREA ×5). Next regenerates them.
+function ClearLeftovers([string] $path, [string] $branch) {
+  $qa = Join-Path $path '.qa'
+  $mark = Join-Path $qa '.branch'
+  if ((Test-Path $mark) -and ((Get-Content -LiteralPath $mark -Raw).Trim() -eq $branch)) { return }
+  if (Test-Path $qa) {
+    $old = @(Get-ChildItem -LiteralPath $qa -File | Where-Object { $_.Name -in 'pr-body.md', 'progress.md' -or $_.Extension -eq '.log' })
+    if ($old) { $old | Remove-Item -Force; Write-Host "  - .qa/: $($old.Count) file(s) of the previous unit removed (pr-body, progress, logs)" }
+  }
+  foreach ($d in 'dev', 'types') {
+    $p = Join-Path (Join-Path $path '.next') $d
+    if (Test-Path $p) { Remove-Item $p -Recurse -Force; Write-Host "  - .next/$d removed (stale route types)" }
+  }
+  New-Item -ItemType Directory -Force $qa | Out-Null
+  Set-Content -LiteralPath $mark $branch
+}
+
 function ShowStatus {
   $rows = foreach ($d in Slots) {
     $branch = Branch $d.FullName
@@ -209,7 +235,14 @@ switch ($Command) {
     } else {
       $free = Slots | Where-Object { IsFree $_.FullName } | Select-Object -First 1
       if (-not $free) {
-        throw "No free slots in $pool. Wait for one to be freed (wt free <wtN>) or grow the pool (wt init -Count <bigger N>)."
+        # A detached slot with changes is nobody's unit: usually an untracked file that came
+        # with the base (a `bun.lock` outside git left every slot like this, and "No free
+        # slots" did not say why: workout).
+        $stuck = Slots | Where-Object { -not (Branch $_.FullName) } | ForEach-Object {
+          "  $($_.Name): detached with changes -> $((Dirty $_.FullName | Select-Object -First 3) -join '; ')"
+        }
+        $why = if ($stuck) { "`nNot in use, but not clean (commit, ignore or delete those files in the slot):`n$($stuck -join "`n")" } else { '' }
+        throw "No free slots in $pool. Wait for one to be freed (wt free <wtN>) or grow the pool (wt init -Count <bigger N>).$why"
       }
       $Slot = $free.Name
       $path = $free.FullName
@@ -233,6 +266,7 @@ switch ($Command) {
     } else {
       GitOk -C $path switch --quiet -c $Name --no-track $Base
     }
+    ClearLeftovers $path $Name
     Install $path -IfChanged
     CopyEnv $path
 
