@@ -520,13 +520,15 @@ export type Entrega = z.infer<typeof zEntrega>;
 
 /**
  * Estado de una pregunta que el capitán repartió (D417): `asignada` (aún sin entregar),
- * `entregada` al capitán, `aceptada` por él o `devuelta` para rehacerla.
+ * `entregada` al capitán, `aceptada` por él o `devuelta` para rehacerla. `tomada` (D461): el
+ * capitán la responde él («La respondo yo») y la fila se queda con su `asignado` (D420).
  */
 export const ESTADOS_PARTE = [
   "asignada",
   "entregada",
   "aceptada",
   "devuelta",
+  "tomada",
 ] as const;
 export type EstadoParteId = (typeof ESTADOS_PARTE)[number];
 

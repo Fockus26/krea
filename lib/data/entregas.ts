@@ -41,7 +41,12 @@ import {
   zEntrega,
   zTarea,
 } from "@/lib/modelo";
-import { permisoParte, repartoCongelado, sinParteDe } from "@/lib/partes";
+import {
+  permisoParte,
+  repartoCongelado,
+  repartoParaEnviar,
+  sinParteDe,
+} from "@/lib/partes";
 
 export type ResultadoEnvio = { ok: true } | { ok: false; error: ErrorEnvio };
 
@@ -151,7 +156,12 @@ async function permisoSubidaParte(
       ),
   ]);
   if (repartoCongelado(existente ?? null)) return sinPermiso;
-  if (parte?.asignado !== c.usuario.cedula || parte.estado === "aceptada")
+  // Aceptada o tomada por el capitán (D461): ya no la sube él
+  if (
+    parte?.asignado !== c.usuario.cedula ||
+    parte.estado === "aceptada" ||
+    parte.estado === "tomada"
+  )
     return sinPermiso;
   const { capitan: _, equipoId: __, ...permiso } = pp.permiso;
   return { ok: true, permiso };
@@ -198,6 +208,7 @@ export async function enviarEnTransaccion(
     let integrantes: string[] = [];
     let excluidos = new Set<string>();
     let reparto: Array<Pick<Parte, "asignado" | "estado">> = [];
+    let enviadas = respuestas;
     // Al editar, los integrantes no se recalculan (D396): no hace falta leer el equipo
     if (p.permiso.tipo === "grupal" && m.modo === "nueva") {
       const [miembros, otras, filasPartes] = await enSerie([
@@ -212,14 +223,29 @@ export async function enviarEnTransaccion(
           ),
         // Las demás entregas de la tarea (pocas: una por equipo de la sección)
         tx.select().from(entregas).where(eq(entregas.tareaId, tareaId)),
-        // El reparto del equipo (D420): de él sale `sinParte`
+        // El reparto del equipo (D420): de él sale `sinParte` y lo aceptado (D463)
         tx
-          .select({ asignado: partes.asignado, estado: partes.estado })
+          .select({
+            preguntaId: partes.preguntaId,
+            asignado: partes.asignado,
+            estado: partes.estado,
+            respuesta: partes.respuesta,
+          })
           .from(partes)
           .where(eq(partes.entregaId, entregaId)),
       ]);
       reparto = filasPartes;
       integrantes = miembros.map((m) => m.cedula);
+      // Lo aceptado entra desde el reparto (la del cliente se ignora); lo asignado sin aceptar
+      // frena el envío. Sus imágenes ya pasaron por B2 al entregarlas y son de esta carpeta (D417).
+      const r = repartoParaEnviar(
+        c.tarea.preguntas,
+        filasPartes,
+        integrantes,
+        c.equipo?.capitanId ?? null,
+      );
+      if (!r.ok) return { ok: false, error: "partes-pendientes" };
+      enviadas = { ...respuestas, ...r.respuestas };
       excluidos = enOtraEntrega(
         validas(otras.map(entregaDeFila)).map(({ id, ...entrega }) => ({
           id,
@@ -235,7 +261,7 @@ export async function enviarEnTransaccion(
       usuario: c.usuario,
       integrantes,
       excluidos,
-      respuestas,
+      respuestas: enviadas,
       carpeta: await carpetaEntrega(entregaId),
       ahora,
     });

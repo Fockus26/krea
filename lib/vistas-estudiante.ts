@@ -14,7 +14,10 @@ import type { PreguntaDetalle } from "@/components/sections/notas/question-list"
 import type { FilaEntregada } from "@/components/sections/tareas/delivered-tasks";
 import type { ParteDeIntegrante } from "@/components/sections/tareas/partes-integrante";
 import type { FilaRepartoPanel } from "@/components/sections/tareas/reparto-panel";
-import type { PreguntaEntrega } from "@/components/sections/tareas/task-answer-form";
+import type {
+  BloqueoPregunta,
+  PreguntaEntrega,
+} from "@/components/sections/tareas/task-answer-form";
 import { type DicebearEstilo, esEstiloDicebear } from "@/lib/dicebear";
 import { faltanRespuestas, inicialEdicion, yaEnviada } from "@/lib/entregas";
 import { enJuegoTexto, ganadoresPremio, premioGanadoTexto } from "@/lib/equipo";
@@ -48,12 +51,13 @@ import {
 } from "@/lib/modelo";
 import { fechaNotaTexto, NO_PARTICIPASTE, promedioNotas } from "@/lib/notas";
 import {
-  aceptadas,
   avisoSinParteTexto,
+  bloqueoTexto,
   PARTE_IMAGEN_SIN_VISTA,
   PARTE_SIN_NOMBRE,
   partesDeIntegrante,
   partesVigentes,
+  parteTomadaTexto,
   type RespuestaParte,
   repartoCapitan,
   sinParteDe,
@@ -90,11 +94,10 @@ export type RepartoVista =
       filas: FilaRepartoPanel[];
       /** A quién se puede asignar: el equipo sin el capitán. */
       integrantes: Array<{ cedula: string; nombre: string }>;
-      /** Lo aceptado, para precargar su formulario (D418). */
+      /** Lo último que entregó el integrante en las que el capitán tomó (D461): precarga el campo. */
       inicial: ReturnType<typeof inicialEdicion>;
-      prioridad: string[];
-      /** Mayor `actualizadoEn` de lo aceptado: la `key` que remonta el formulario. */
-      version: number;
+      /** Las asignadas a otro (vigentes y no tomadas): solo lectura en su formulario (D462). */
+      bloqueos: Record<string, BloqueoPregunta>;
       /** Confirmación de «Entregar»: quién quedará «No participó» (D420). */
       aviso: string | null;
     }
@@ -151,8 +154,10 @@ function parteFirmada(
 }
 
 /**
- * /tareas/[tarea] con reparto (D422): `capitan` ve el panel y su formulario precargado con lo
- * aceptado; `integrante` (con al menos una pregunta suya) ve sus partes; si no, `null` (como hoy).
+ * /tareas/[tarea] con reparto (D422): `capitan` ve el panel y su formulario, con las preguntas de
+ * otros en solo lectura (D462) y las que tomó precargadas con lo último que le entregaron (D461);
+ * `integrante` (con al menos una pregunta suya, aunque se la hayan tomado) ve sus partes; si no,
+ * `null` (como hoy).
  */
 export function repartoVista(
   e: EntradaReparto & { urls: ReadonlyMap<string, string> },
@@ -168,32 +173,47 @@ export function repartoVista(
   };
 
   if (v.estado === "responder") {
-    const acept = aceptadas(e.partes, miembros, capitanId);
     const vigentes = partesVigentes(e.partes, miembros, capitanId);
+    const filas = repartoCapitan(v.preguntas, e.partes, miembros, capitanId);
+    const bloqueos: Record<string, BloqueoPregunta> = {};
+    const filasPanel = filas.map((f, i): FilaRepartoPanel => {
+      const respuesta = f.respuesta
+        ? parteFirmada(f.respuesta, corto(f.asignado), i + 1, e.urls)
+        : null;
+      if (f.asignado && f.estado && f.estado !== "tomada") {
+        const nombre = corto(f.asignado);
+        bloqueos[f.preguntaId] = {
+          texto: bloqueoTexto(f.estado, nombre),
+          // Lo que entregó (también la devuelta): el capitán lo ve, no lo edita
+          respuesta: f.estado === "asignada" ? null : respuesta,
+          aceptada: f.estado === "aceptada",
+          nombre,
+          tomable: f.estado === "asignada" || f.estado === "devuelta",
+        };
+      }
+      return {
+        preguntaId: f.preguntaId,
+        numero: i + 1,
+        enunciado: v.preguntas[i]?.enunciado ?? "",
+        asignado: f.asignado,
+        nombre: f.asignado ? corto(f.asignado) : null,
+        estado: f.estado,
+        respuesta,
+      };
+    });
     return {
       modo: "capitan",
-      filas: repartoCapitan(v.preguntas, e.partes, miembros, capitanId).map(
-        (f, i) => ({
-          preguntaId: f.preguntaId,
-          numero: i + 1,
-          enunciado: v.preguntas[i]?.enunciado ?? "",
-          asignado: f.asignado,
-          estado: f.estado,
-          respuesta: f.respuesta
-            ? parteFirmada(f.respuesta, corto(f.asignado), i + 1, e.urls)
-            : null,
-        }),
-      ),
+      filas: filasPanel,
       integrantes: e.companeros
         .filter((c) => c.cedula !== capitanId)
         .map((c) => ({ cedula: c.cedula, nombre: nombreCorto(c) })),
+      // Al tomar una devuelta, lo último que entregó precarga el campo (su borrador gana)
       inicial: inicialEdicion(
         v.preguntas,
-        v.preguntas.map((p) => acept.respuestas[p.id] ?? null),
+        filas.map((f) => (f.estado === "tomada" ? f.respuesta : null)),
         e.urls,
       ),
-      prioridad: Object.keys(acept.respuestas),
-      version: acept.version,
+      bloqueos,
       aviso: avisoSinParteTexto(
         sinParteDe(vigentes, miembros, e.usuario.cedula).map(corto),
       ),
@@ -220,6 +240,10 @@ export function repartoVista(
           mia: false,
           bloqueadaPor:
             primerNombre(quien?.nombres ?? "") || capitan || "el capitán",
+          // Era suya y el capitán la tomó (D461)
+          ...(m.tomada
+            ? { aviso: parteTomadaTexto(capitan || "El capitán") }
+            : {}),
         };
       }
       const p = v.preguntas[i];

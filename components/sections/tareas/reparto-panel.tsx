@@ -1,13 +1,16 @@
 "use client";
 
-import { Check, RefreshCw, Undo2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Check, Undo2 } from "lucide-react";
 import { useEffect, useId, useRef, useTransition } from "react";
 import type { QuestionAnswer } from "@/components/krea/question-card-detail";
 import {
   EstadoParte,
   RespuestaParteVista,
 } from "@/components/sections/tareas/estado-parte";
+import {
+  type AccionTomar,
+  TomarParte,
+} from "@/components/sections/tareas/tomar-parte";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -26,11 +29,12 @@ import {
   mensajeErrorParte,
   PARTE_ACEPTADA_TOAST,
   PARTE_DEVUELTA_TOAST,
-  REPARTO_ACTUALIZAR_AYUDA,
   REPARTO_ASIGNAR_ETIQUETA,
   REPARTO_AYUDA,
+  REPARTO_EN_VIVO_AYUDA,
   REPARTO_NADIE,
   REPARTO_TITULO,
+  repartoTomadaOpcion,
 } from "@/lib/partes";
 
 /** Server Actions del reparto (el capitán); sin ellas (galerías) los controles no hacen nada. */
@@ -48,6 +52,8 @@ export type AccionesReparto = {
     tareaId: string;
     preguntaId: string;
   }) => Promise<ResultadoParte>;
+  /** «La respondo yo» (D461). */
+  tomar: AccionTomar;
 };
 
 export type FilaRepartoPanel = {
@@ -55,19 +61,23 @@ export type FilaRepartoPanel = {
   numero: number;
   enunciado: string;
   asignado: string | null;
+  /** Nombre corto de `asignado` (`null` sin asignar). */
+  nombre: string | null;
   estado: EstadoParteId | null;
   /** Lo que entregó el integrante, ya firmado; `null` si aún nada. */
   respuesta: QuestionAnswer | null;
 };
 
 const NADIE = "nadie";
+/** Valor del Select de una parte tomada: el capitán la responde, sigue a nombre del integrante. */
+const TOMADA = "tomada";
 
 /**
  * Panel «Reparto» del capitán (D422), encima de su formulario: por pregunta, a quién está
  * asignada (Select con los integrantes, sin el capitán), su estado (ícono + palabra) y, si ya se
- * la entregaron, la respuesta con «Aceptar» y «Devolver». Lista de tarjetas (a 320 px no cabe
- * una tabla). No hay tiempo real: «Actualizar» trae lo nuevo (D424). Cada acción es una Server
- * Action con `refresh()`: lo aceptado llega al formulario desde el servidor (D418).
+ * la entregaron, la respuesta con «Aceptar» y «Devolver»; si no se la entregaron, «La respondo yo»
+ * (D461). Lista de tarjetas (a 320 px no cabe una tabla). Se actualiza solo (`RepartoEnVivo`,
+ * D465). Cada acción es una Server Action con `refresh()`: el servidor es la fuente (D463).
  */
 export function RepartoPanel({
   tareaId,
@@ -81,30 +91,16 @@ export function RepartoPanel({
   integrantes: ReadonlyArray<{ cedula: string; nombre: string }>;
   acciones?: AccionesReparto;
 }) {
-  const router = useRouter();
   const tituloId = useId();
-  const [actualizando, startActualizar] = useTransition();
   return (
     <Card>
       <section aria-labelledby={tituloId} className="flex flex-col gap-3">
-        {/* «Actualizar», «Lo que entregó»: PROVISIONAL (CONTENT_CHECKLIST fila 230) */}
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 id={tituloId} className="text-h2 text-text">
-            {REPARTO_TITULO}
-          </h2>
-          <Button
-            variant="secondary"
-            size="sm"
-            loading={actualizando}
-            loadingLabel="Actualizando…"
-            onClick={() => startActualizar(() => router.refresh())}
-          >
-            <RefreshCw aria-hidden="true" />
-            Actualizar
-          </Button>
-        </div>
+        {/* «Lo que entregó»: PROVISIONAL (CONTENT_CHECKLIST fila 230) */}
+        <h2 id={tituloId} className="text-h2 text-text">
+          {REPARTO_TITULO}
+        </h2>
         <p className="text-small text-text-2">{REPARTO_AYUDA}</p>
-        <p className="text-small text-text-2">{REPARTO_ACTUALIZAR_AYUDA}</p>
+        <p className="text-small text-text-2">{REPARTO_EN_VIVO_AYUDA}</p>
         <ol className="m-0 flex list-none flex-col gap-3 p-0">
           {filas.map((f) => (
             <FilaParte
@@ -170,6 +166,11 @@ function FilaParte({
     });
   }
 
+  const tomada = fila.estado === "tomada";
+  // «La respondo yo» (D461): solo lo que no le entregaron
+  const tomable =
+    fila.asignado !== null &&
+    (fila.estado === "asignada" || fila.estado === "devuelta");
   const conRespuesta =
     fila.respuesta !== null &&
     (fila.estado === "entregada" ||
@@ -190,11 +191,13 @@ function FilaParte({
           {REPARTO_ASIGNAR_ETIQUETA}
         </span>
         <Select
-          value={fila.asignado ?? NADIE}
+          value={tomada ? TOMADA : (fila.asignado ?? NADIE)}
           disabled={pendiente || !acciones}
           onValueChange={(v) => {
+            if (v === TOMADA || !acciones) return;
             const asignado = v === NADIE ? null : v;
-            if (asignado === fila.asignado || !acciones) return;
+            // Elegir otra vez al integrante de una tomada se la devuelve (D461)
+            if (asignado === fila.asignado && !tomada) return;
             correr(() => acciones.asignar({ ...clave, asignado }));
           }}
         >
@@ -206,6 +209,11 @@ function FilaParte({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={NADIE}>{REPARTO_NADIE}</SelectItem>
+            {tomada ? (
+              <SelectItem value={TOMADA}>
+                {repartoTomadaOpcion(fila.nombre ?? "")}
+              </SelectItem>
+            ) : null}
             {integrantes.map((m) => (
               <SelectItem key={m.cedula} value={m.cedula}>
                 {m.nombre}
@@ -219,6 +227,16 @@ function FilaParte({
         <div className="flex flex-col gap-1.5">
           <p className="text-eyebrow text-text-2">Lo que entregó</p>
           <RespuestaParteVista respuesta={fila.respuesta} />
+        </div>
+      ) : null}
+      {acciones && tomable ? (
+        <div className="flex flex-wrap gap-2">
+          <TomarParte
+            {...clave}
+            numero={fila.numero}
+            nombre={fila.nombre ?? ""}
+            accion={acciones.tomar}
+          />
         </div>
       ) : null}
       {acciones &&
