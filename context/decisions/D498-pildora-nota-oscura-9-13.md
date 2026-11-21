@@ -1,0 +1,5 @@
+# D498 · Colors · El número de la píldora va en tinta oscura sin sombra en las notas 9–13 (las que no llegan a AA) · Implemented
+
+**Decision:** `gradeNumeroClass(n)` (`lib/grades.ts`) devuelve `text-grade-ink` (#111111, sin sombra) cuando el blanco sobre `gradeColor(n)` da menos de 1,8:1 (notas 9 a 13, los amarillos y limas) y `GRADE_NUMERO_CLASS` (blanco con sombra, D347) en el resto. Aplica en `GradePill`, el ejemplo de `ranking-rules.tsx`, la leyenda (usa `GradePill`) y la imagen OG (pastilla del 10). Decide la función por contraste medido, no por una lista.
+**Why:** decisión de César (2026-11-21, QA versión 2 D-M1): cumplir AA solo donde el blanco con sombra falla; el resto de la escala sigue como eligió en D347. César habló de «10–12», que eran las notas del hallazgo; medido con axe (blanco + sombra) fallan 9,5 a 13 (3,35–4,37:1), así que el rango real es 9–13 (la regla AA manda). Con tinta oscura esas notas dan más de 10:1. Las notas 8,5 y 13,5 pasan en blanco y no cambian.
+**Discarded alternative:** limitar a 10–12 tal cual (dejaría 9,5, 12,5 y 13 en 3,97–4,37:1); tinta oscura en toda la escala con `gradeInk` (D236, cambia la apariencia entera).

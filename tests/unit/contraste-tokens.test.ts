@@ -78,6 +78,13 @@ for (const tema of ["claro", "oscuro"] as const) {
       const pares: Array<[string, string, string]> = [
         ["--on-accent sobre --accent (botón primario)", on, accent],
         ["--on-accent sobre --accent-hover", on, hover],
+        // Tarjeta de puntos de Inicio (D497): claro rellena con --accent-ink; oscuro con --accent
+        // (el primer par de arriba), porque ahí --accent-ink es el tono claro para texto.
+        ...(tema === "claro"
+          ? ([
+              ["--on-accent sobre --accent-ink (tarjeta de puntos)", on, ink],
+            ] as Array<[string, string, string]>)
+          : []),
         ["--accent-ink sobre --bg", ink, t["--bg"]],
         ["--accent-ink sobre --surface", ink, t["--surface"]],
         ["--accent-ink sobre --surface-2", ink, t["--surface-2"]],
@@ -216,5 +223,24 @@ describe("botón ocupado vs deshabilitado (D285)", () => {
         );
       }
     }
+  });
+});
+
+describe("tarjeta de puntos de Inicio (D497)", () => {
+  test("en oscuro el relleno es --accent, no --accent-ink", () => {
+    const src = readFileSync(
+      join(
+        import.meta.dir,
+        "..",
+        "..",
+        "components",
+        "sections",
+        "inicio",
+        "points-card.tsx",
+      ),
+      "utf8",
+    );
+    expect(src).toContain("bg-accent-ink");
+    expect(src).toContain("dark:bg-accent");
   });
 });

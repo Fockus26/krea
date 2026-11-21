@@ -31,7 +31,7 @@ export function ErrorEnPantalla({
       {enlace ? (
         <Link
           href={enlace.href}
-          className="mt-1 inline-block text-small-b text-accent-ink underline underline-offset-2"
+          className="mt-1 inline-block text-small-b text-text underline underline-offset-2"
         >
           {enlace.label}
         </Link>

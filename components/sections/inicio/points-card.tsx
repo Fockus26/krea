@@ -37,12 +37,15 @@ export function PointsCard({
   return (
     <section
       aria-labelledby={id}
-      // accent-ink = accent salvo en rojo claro, donde accent deja sin margen el texto (D217)
-      className="relative overflow-hidden rounded-lg bg-accent-ink p-6 text-on-accent shadow-2 dark:shadow-none"
+      // Claro: accent-ink = accent salvo en rojo, donde accent deja sin margen el texto (D217).
+      // Oscuro: accent-ink es el tono claro para texto sobre fondo oscuro; el relleno es --accent,
+      // ya oscurecido para el texto blanco (D301, D497). El círculo grande aclara el fondo bajo
+      // «en 5A» y lo deja en 3,5–4,4:1: en oscuro no se pinta (D497).
+      className="relative overflow-hidden rounded-lg bg-accent-ink p-6 dark:bg-accent text-on-accent shadow-2 dark:shadow-none"
     >
       <span
         aria-hidden="true"
-        className="absolute -top-9 -right-7 size-40 rounded-pill bg-splash opacity-20"
+        className="absolute -top-9 -right-7 size-40 rounded-pill bg-splash opacity-20 dark:hidden"
       />
       <span
         aria-hidden="true"
