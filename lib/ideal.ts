@@ -24,6 +24,7 @@ import {
   type Usuario,
   zInstante,
 } from "@/lib/modelo";
+import { semillaConCedula } from "@/lib/perfil";
 
 /* ---------- Límites ---------- */
 
@@ -243,7 +244,10 @@ export function autorDe(
     ? {
         tipo: "alumno",
         nombre: `${u.nombres} ${u.apellidos}`.replace(/\s+/g, " ").trim(),
-        avatar: u.avatar,
+        // Una semilla que aún contiene su cédula no sale a otros alumnos (D388, D496)
+        avatar: semillaConCedula(u.avatar.semilla, entrega.titularId)
+          ? null
+          : u.avatar,
       }
     : { tipo: "alumno", nombre: AUTOR_DESCONOCIDO, avatar: null };
 }

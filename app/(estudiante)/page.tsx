@@ -14,6 +14,7 @@ import {
   integrantesDe,
   logoDeEquipo,
 } from "@/lib/datos/estudiante";
+import { idPublico } from "@/lib/datos/id-publico";
 import { diaDeInstante } from "@/lib/fecha";
 import { mensajeDelDia } from "@/lib/mensaje-diario";
 import { inicioVista, promedioDelAlumno } from "@/lib/vistas-estudiante";
@@ -30,7 +31,7 @@ export default async function InicioPage() {
   ]);
   // Instante de la petición (tras `datosAlumno()`, nunca en el prerender): «vence» / «venció» (D357)
   const ahora = Date.now();
-  const d = inicioVista(datos, companeros, ahora);
+  const d = inicioVista(datos, companeros, idPublico, ahora);
   // Día de Caracas leído tras `datosAlumno()` (sesión = dato de la petición, D098): nunca en el
   // prerender. Cambia cada día, no cada recarga (D274).
   const mensaje = mensajeDelDia(promedioDelAlumno(datos), diaDeInstante(ahora));

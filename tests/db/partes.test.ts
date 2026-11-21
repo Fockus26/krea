@@ -13,6 +13,7 @@ import { eliminarTareaEnTransaccion } from "@/lib/data/tareas";
 import type { Db } from "@/lib/db";
 import { entregas, partes } from "@/lib/db/schema";
 import { carpetaEntrega, claveImagen } from "@/lib/entregas";
+import { crearIdPublico } from "@/lib/id-publico";
 import { type Equipo, idEntrega, type Tarea, type Usuario } from "@/lib/modelo";
 import { type AccionParte, huellaDePartes } from "@/lib/partes";
 import { baseNueva } from "./base";
@@ -32,6 +33,8 @@ const TAREA = "x2-grupal";
 const ENTREGA = idEntrega(TAREA, EQUIPO);
 const UUID_1 = "0b5c3a52-7d0e-4f53-9d0b-0f1e2d3c4b5a";
 const UUID_2 = "1b5c3a52-7d0e-4f53-9d0b-0f1e2d3c4b5b";
+/** El cliente nombra al integrante por su id público (D495). */
+const ID = crearIdPublico("secreto-de-prueba-partes");
 
 const usuario = (cedula: string, equipoId: string | null): Usuario => ({
   cedula,
@@ -81,9 +84,14 @@ const accion = (
     uid,
     { tareaId: TAREA, preguntaId, accion: a },
     ahora,
+    ID,
   );
+/** Asigna a la cédula `asignado` como lo hace el panel: con su id público. */
 const asignar = (uid: string, preguntaId: string, asignado: string | null) =>
-  accion(uid, preguntaId, { tipo: "asignar", asignado });
+  accion(uid, preguntaId, {
+    tipo: "asignar",
+    asignado: asignado === null ? null : ID(asignado),
+  });
 const entregarTexto = (uid: string, preguntaId: string, texto: string) =>
   accion(uid, preguntaId, { tipo: "entregar", respuesta: { texto } });
 
@@ -119,6 +127,38 @@ beforeEach(async () => {
 });
 
 describe("reparto (D417)", () => {
+  test("asignar traduce el id público a la cédula del integrante; nada más vale (D495)", async () => {
+    // La cédula misma ya no sirve: el cliente nunca la tiene
+    expect(
+      await accion(CAPITAN, "p1", { tipo: "asignar", asignado: ADELA }),
+    ).toEqual({ ok: false, error: "integrante" });
+    // El id de alguien de otro equipo, o uno inventado, tampoco
+    expect(
+      await accion(CAPITAN, "p1", { tipo: "asignar", asignado: ID(OTRO) }),
+    ).toEqual({ ok: false, error: "integrante" });
+    expect(
+      await accion(CAPITAN, "p1", {
+        tipo: "asignar",
+        asignado: "AAAAAAAAAAAAAAAAAAAAAA",
+      }),
+    ).toEqual({ ok: false, error: "integrante" });
+    // Con otro secreto, el id de Adela no es el suyo
+    const otroSecreto = crearIdPublico("otro-secreto");
+    expect(
+      await accion(CAPITAN, "p1", {
+        tipo: "asignar",
+        asignado: otroSecreto(ADELA),
+      }),
+    ).toEqual({ ok: false, error: "integrante" });
+    expect(await leerPartes(db(), ENTREGA)).toEqual([]);
+    // Su id público: la parte queda a nombre de su cédula en la base
+    expect(
+      await accion(CAPITAN, "p1", { tipo: "asignar", asignado: ID(ADELA) }),
+    ).toEqual({ ok: true });
+    const [p] = await leerPartes(db(), ENTREGA);
+    expect(p?.asignado).toBe(ADELA);
+  });
+
   test("asignar, reasignar y quitar: solo el capitán y solo a integrantes", async () => {
     expect(await asignar(ADELA, "p1", LUIS)).toEqual({
       ok: false,

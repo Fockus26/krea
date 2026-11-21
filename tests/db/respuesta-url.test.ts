@@ -5,6 +5,7 @@ import { enviarEnTransaccion, permisoSubida } from "@/lib/data/entregas";
 import { accionParteEnTransaccion, leerPartes } from "@/lib/data/partes";
 import type { Db } from "@/lib/db";
 import { entregas, partes } from "@/lib/db/schema";
+import { crearIdPublico } from "@/lib/id-publico";
 import {
   type Equipo,
   idEntrega,
@@ -123,6 +124,7 @@ describe("entrega con pregunta «Enlace» (D469)", () => {
 });
 
 describe("parte de enlace (D468, D469)", () => {
+  const ID = crearIdPublico("secreto-de-prueba-enlace");
   const accion = (
     uid: string,
     a: Parameters<typeof accionParteEnTransaccion>[2]["accion"],
@@ -132,10 +134,13 @@ describe("parte de enlace (D468, D469)", () => {
       uid,
       { tareaId: GRU, preguntaId: "p1", accion: a },
       AHORA,
+      ID,
     );
 
   test("el asignado entrega un enlace válido; uno inseguro es `incompleta`", async () => {
-    expect(await accion(CAPITAN, { tipo: "asignar", asignado: ANA })).toEqual({
+    expect(
+      await accion(CAPITAN, { tipo: "asignar", asignado: ID(ANA) }),
+    ).toEqual({
       ok: true,
     });
     expect(

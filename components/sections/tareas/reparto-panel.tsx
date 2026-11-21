@@ -42,6 +42,7 @@ export type AccionesReparto = {
   asignar: (e: {
     tareaId: string;
     preguntaId: string;
+    /** Id público del integrante (D495), o `null` para quitarla. */
     asignado: string | null;
   }) => Promise<ResultadoParte>;
   aceptar: (e: {
@@ -60,6 +61,7 @@ export type FilaRepartoPanel = {
   preguntaId: string;
   numero: number;
   enunciado: string;
+  /** Id público del integrante (D495): el servidor lo traduce a su cédula al asignar. */
   asignado: string | null;
   /** Nombre corto de `asignado` (`null` sin asignar). */
   nombre: string | null;
@@ -88,7 +90,7 @@ export function RepartoPanel({
   tareaId: string;
   filas: readonly FilaRepartoPanel[];
   /** Los integrantes a los que se puede asignar (sin el capitán). */
-  integrantes: ReadonlyArray<{ cedula: string; nombre: string }>;
+  integrantes: ReadonlyArray<{ id: string; nombre: string }>;
   acciones?: AccionesReparto;
 }) {
   const tituloId = useId();
@@ -125,7 +127,7 @@ function FilaParte({
 }: {
   tareaId: string;
   fila: FilaRepartoPanel;
-  integrantes: ReadonlyArray<{ cedula: string; nombre: string }>;
+  integrantes: ReadonlyArray<{ id: string; nombre: string }>;
   acciones?: AccionesReparto;
 }) {
   const etiquetaId = useId();
@@ -215,7 +217,7 @@ function FilaParte({
               </SelectItem>
             ) : null}
             {integrantes.map((m) => (
-              <SelectItem key={m.cedula} value={m.cedula}>
+              <SelectItem key={m.id} value={m.id}>
                 {m.nombre}
               </SelectItem>
             ))}

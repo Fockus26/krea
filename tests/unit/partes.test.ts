@@ -3,6 +3,7 @@
 import { describe, expect, test } from "bun:test";
 import { accesoPartes } from "@/lib/acceso";
 import { mapasEvaluar, vistaEvaluar } from "@/lib/evaluar-datos";
+import { crearIdPublico } from "@/lib/id-publico";
 import { type Entrega, type Parte, type Tarea, zEntrega } from "@/lib/modelo";
 import {
   aplicarParte,
@@ -591,6 +592,7 @@ describe("vistaEvaluar con reparto (D420)", () => {
 });
 
 describe("repartoVista (D422)", () => {
+  const ID = crearIdPublico("secreto-de-prueba-reparto");
   const cabecera = {
     tipo: "grupal" as const,
     eyebrow: "Grupal · Equipo",
@@ -637,6 +639,7 @@ describe("repartoVista (D422)", () => {
     equipo: { capitanId: CAP },
     companeros,
     partes,
+    idDe: ID,
   });
   const urls = new Map([["entregas/t1/c/l.jpg", "https://firmada/l"]]);
 
@@ -649,11 +652,14 @@ describe("repartoVista (D422)", () => {
     const r = repartoVista({ ...e, urls });
     expect(r?.modo).toBe("capitan");
     if (r?.modo !== "capitan") return;
-    expect(r.integrantes.map((m) => m.cedula)).toEqual([ADELA, LUIS]);
+    // Cada integrante va por su id público, nunca por su cédula (D495)
+    expect(r.integrantes.map((m) => m.id)).toEqual([ID(ADELA), ID(LUIS)]);
     expect(r.filas.map((f) => [f.asignado, f.nombre, f.estado])).toEqual([
-      [ADELA, "Adela Pérez", "aceptada"],
-      [LUIS, "Luis Pérez", "entregada"],
+      [ID(ADELA), "Adela Pérez", "aceptada"],
+      [ID(LUIS), "Luis Pérez", "entregada"],
     ]);
+    const json = JSON.stringify(r);
+    for (const c of [ADELA, LUIS]) expect(json).not.toContain(c);
     expect(r.filas[1]?.respuesta).toMatchObject({
       tipo: "imagen",
       src: "https://firmada/l",

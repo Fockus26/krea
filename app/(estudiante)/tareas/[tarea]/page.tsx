@@ -33,6 +33,7 @@ import {
   integrantesDe,
   partesDelEquipo,
 } from "@/lib/datos/estudiante";
+import { idPublico } from "@/lib/datos/id-publico";
 import { idealAlumno } from "@/lib/datos/ideal";
 import { urlsFirmadas } from "@/lib/datos/imagenes";
 import { inicialEdicion, puedeEditar } from "@/lib/entregas";
@@ -97,6 +98,8 @@ export default async function TareaPage({ params }: Props) {
     usuario: datos.usuario,
     equipo: datos.equipo,
     companeros,
+    // Las cédulas de los compañeros no salen: el reparto los nombra por su id público (D495)
+    idDe: idPublico,
     partes:
       conReparto && datos.equipo
         ? await partesDelEquipo(id, datos.equipo.id)
