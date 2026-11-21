@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRef } from "react";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -123,14 +124,14 @@ export function PrizeCardTeacher({
           {estado.tipo === "empate" ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
+                <BotonEnLinea
                   variant="ghost"
                   icon
                   aria-label={menuPremioLabel(titular)}
                   className="shrink-0"
                 >
                   <EllipsisVertical aria-hidden="true" className="size-5" />
-                </Button>
+                </BotonEnLinea>
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"

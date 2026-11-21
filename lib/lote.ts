@@ -2,8 +2,10 @@
 // el recorrido uno a uno con resultado por id (cédula, tarea o equipo), el troceo del cliente y
 // los textos. Lo usan Alumnos, Profesores, Tareas y Equipos; cada pantalla pone su borrado de uno
 // (el mismo que el de su diálogo individual).
+
 import { z } from "zod";
 import { zCedula } from "@/lib/modelo";
+import { siNoEsDeploy } from "@/lib/recarga-deploy";
 
 /**
  * Ids por llamada (D299): cada borrado es una transacción con el ranking de la sección, así que
@@ -68,7 +70,7 @@ export async function eliminarPorTrozos<E>(
   const out: ResultadoItem<E>[] = [];
   for (const trozo of partirEnLotes(ids)) {
     const r = await eliminar(trozo).catch(
-      (): ResultadoLote<E> => ({ ok: false, error: "red" }),
+      siNoEsDeploy<ResultadoLote<E>>({ ok: false, error: "red" }),
     );
     if (r.ok) out.push(...r.resultados);
     else

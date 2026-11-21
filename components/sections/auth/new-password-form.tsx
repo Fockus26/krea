@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { type FormEvent, type ReactNode, useState } from "react";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
 import { PasswordInput } from "@/components/krea/password-input";
+import { hayRed } from "@/components/krea/use-en-linea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
@@ -74,6 +76,7 @@ export function NewPasswordForm({
 
   function enviar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!hayRed()) return;
     setEnviado(true);
     if (v.estado !== "ok" || igual !== true) {
       focusPrimerInvalido(e.currentTarget);
@@ -138,7 +141,7 @@ export function NewPasswordForm({
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         ) : null}
-        <Button
+        <BotonEnLinea
           type="submit"
           size="lg"
           block
@@ -146,7 +149,7 @@ export function NewPasswordForm({
           loadingLabel="Guardando…"
         >
           Guardar contraseña
-        </Button>
+        </BotonEnLinea>
       </form>
     </div>
   );

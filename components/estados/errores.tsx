@@ -3,6 +3,7 @@
 import { RefreshCw } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
@@ -79,10 +80,10 @@ export function ErrorGuardarNota({
         siguen aquí.
       </ErrorEnPantalla>
       <div className="flex flex-wrap gap-2">
-        <Button type="button" onClick={onReintentar}>
+        <BotonEnLinea type="button" onClick={onReintentar}>
           <RefreshCw aria-hidden="true" />
           Reintentar guardar
-        </Button>
+        </BotonEnLinea>
         {onCopiar ? (
           <Button type="button" variant="ghost" onClick={onCopiar}>
             Copiar comentarios

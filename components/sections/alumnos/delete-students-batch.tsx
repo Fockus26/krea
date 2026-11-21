@@ -1,7 +1,4 @@
 "use client";
-// Eliminar varios alumnos (W22, D298–D300). Como el de uno (D268): al abrir pide al servidor la
-// suma de lo que se perdería y no deja confirmar hasta tenerla. El resto (barra, confirmación,
-// resultado por alumno) es la pieza compartida `EliminarEnLote`.
 import { useRef, useState } from "react";
 import { ErrorEnPantalla } from "@/components/estados/errores";
 import {
@@ -21,6 +18,10 @@ import {
   sinNotaTexto,
 } from "@/lib/alumnos-alta";
 import { ALUMNOS, partirEnLotes, type ResultadoLote } from "@/lib/lote";
+// Eliminar varios alumnos (W22, D298–D300). Como el de uno (D268): al abrir pide al servidor la
+// suma de lo que se perdería y no deja confirmar hasta tenerla. El resto (barra, confirmación,
+// resultado por alumno) es la pieza compartida `EliminarEnLote`.
+import { siNoEsDeploy } from "@/lib/recarga-deploy";
 
 type Resumen =
   | { estado: "contando" }
@@ -40,7 +41,7 @@ async function resumirTodo(
   };
   for (const trozo of partirEnLotes(cedulas)) {
     const r = await resumir(trozo).catch(
-      (): ResultadoResumenLote => ({ ok: false, error: "red" }),
+      siNoEsDeploy<ResultadoResumenLote>({ ok: false, error: "red" }),
     );
     if (!r.ok) return r;
     total.notas += r.resumen.notas;

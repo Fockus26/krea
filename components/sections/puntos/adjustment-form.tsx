@@ -10,11 +10,13 @@ import {
   Users,
 } from "lucide-react";
 import * as React from "react";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
+import { hayRed } from "@/components/krea/use-en-linea";
 import { focusPrimerInvalido } from "@/components/sections/auth/focus-invalid";
 import { SelectorSeccion } from "@/components/sections/shared/selector-seccion";
 import { alertVariants } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { BOTON_LARGO_LG, Button } from "@/components/ui/button";
+import { BOTON_LARGO_LG } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
@@ -139,6 +141,7 @@ export function AdjustmentForm({
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!hayRed()) return;
     if (enviando.current) return;
     const err = validarAjuste(borrador);
     if (!sinErrores(err) || !destino || !motivo || valor === null) {
@@ -408,14 +411,14 @@ export function AdjustmentForm({
           ) : null}
         </output>
 
-        <Button
+        <BotonEnLinea
           type="submit"
           size="lg"
           className={cn("self-start", BOTON_LARGO_LG)}
         >
           <Check aria-hidden="true" />
           Aplicar ajuste
-        </Button>
+        </BotonEnLinea>
       </form>
     </Card>
   );

@@ -1,11 +1,12 @@
 "use client";
+import { Trash2 } from "lucide-react";
+import { useRef, useState } from "react";
+import { ErrorEnPantalla } from "@/components/estados/errores";
 // «Eliminar alumno» desde su ficha (W12, D268). Al abrir pide al servidor cuántas notas
 // individuales y ajustes se perderían (acción de solo lectura) y lo dice antes de confirmar; no
 // deja confirmar hasta tenerlo. Confirmar borra su cuenta y sus datos; las grupales se quedan con
 // su equipo. Si falla, el diálogo sigue abierto con el error (D171).
-import { Trash2 } from "lucide-react";
-import { useRef, useState } from "react";
-import { ErrorEnPantalla } from "@/components/estados/errores";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -33,6 +34,7 @@ import {
   sinNotaTexto,
 } from "@/lib/alumnos-alta";
 import type { ResultadoLote } from "@/lib/lote";
+import { siNoEsDeploy } from "@/lib/recarga-deploy";
 
 export type AccionesBorrarAlumno = {
   resumir: (cedula: string) => Promise<ResultadoResumenBorrado>;
@@ -78,7 +80,7 @@ export function DeleteStudentDialog({
     setResumen({ estado: "contando" });
     void acciones
       .resumir(alumno.cedula)
-      .catch((): ResultadoResumenBorrado => ({ ok: false, error: "red" }))
+      .catch(siNoEsDeploy<ResultadoResumenBorrado>({ ok: false, error: "red" }))
       .then((r) => {
         if (n !== pedido.current) return;
         setResumen(
@@ -96,7 +98,7 @@ export function DeleteStudentDialog({
     setError(null);
     const r = await acciones
       .eliminar(alumno.cedula)
-      .catch((): ResultadoBorrarAlumno => ({ ok: false, error: "red" }));
+      .catch(siNoEsDeploy<ResultadoBorrarAlumno>({ ok: false, error: "red" }));
     enviando.current = false;
     setBorrando(false);
     if (!r.ok) {
@@ -174,7 +176,7 @@ export function DeleteStudentDialog({
               Cancelar
             </Button>
           </DialogClose>
-          <Button
+          <BotonEnLinea
             type="button"
             variant="danger"
             disabled={resumen.estado !== "listo"}
@@ -184,7 +186,7 @@ export function DeleteStudentDialog({
           >
             <Trash2 aria-hidden="true" />
             Eliminar
-          </Button>
+          </BotonEnLinea>
         </DialogFooter>
       </DialogContent>
     </Dialog>

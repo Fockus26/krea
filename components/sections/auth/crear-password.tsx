@@ -1,13 +1,14 @@
 "use client";
-// «Crea tu contraseña» (D232): la cuenta entró con la contraseña temporal que le dio el profe y
-// ninguna otra ruta de su rol carga hasta crear la suya. Reutiliza Nueva contraseña (validación en
-// vivo, foco al primer inválido); guarda con `crearPassword` y va a su inicio con la sesión nueva.
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { crearPassword } from "@/lib/acciones/perfil";
 import { PASSWORD_MIN } from "@/lib/auth";
 import { ERROR_CAMBIO_PASSWORD } from "@/lib/perfil";
+// «Crea tu contraseña» (D232): la cuenta entró con la contraseña temporal que le dio el profe y
+// ninguna otra ruta de su rol carga hasta crear la suya. Reutiliza Nueva contraseña (validación en
+// vivo, foco al primer inválido); guarda con `crearPassword` y va a su inicio con la sesión nueva.
+import { relanzarSiEsDeploy } from "@/lib/recarga-deploy";
 import { NewPasswordForm } from "./new-password-form";
 
 export function CrearPassword() {
@@ -29,7 +30,8 @@ export function CrearPassword() {
           return;
         }
         setError(ERROR_CAMBIO_PASSWORD[r.error]);
-      } catch {
+      } catch (e) {
+        relanzarSiEsDeploy(e);
         setError(ERROR_CAMBIO_PASSWORD.red);
       } finally {
         enviando.current = false;

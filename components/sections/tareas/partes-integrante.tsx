@@ -3,9 +3,10 @@
 import { Send } from "lucide-react";
 import { useEffect, useId, useState, useTransition } from "react";
 import { ErrorEnPantalla } from "@/components/estados/errores";
-import { RespuestaBorrador } from "@/components/sections/tareas/borrador-capitan";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
 import { QuestionCardAnswer } from "@/components/krea/question-card-answer";
 import type { QuestionAnswer } from "@/components/krea/question-card-detail";
+import { RespuestaBorrador } from "@/components/sections/tareas/borrador-capitan";
 import {
   EstadoParte,
   RespuestaParteVista,
@@ -14,7 +15,6 @@ import type {
   ImagenRespuesta,
   PreguntaEntrega,
 } from "@/components/sections/tareas/task-answer-form";
-import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/sonner";
 import type { ResultadoSubida } from "@/lib/acciones/entregas";
 import type { ResultadoParte } from "@/lib/acciones/partes";
@@ -33,6 +33,7 @@ import {
   partesTomadasAvisoTexto,
   REENTREGAR_PARTE,
 } from "@/lib/partes";
+import { relanzarSiEsDeploy } from "@/lib/recarga-deploy";
 import { BORRADOR_MS } from "@/lib/tareas";
 import { normalizarUrl } from "@/lib/url-respuesta";
 
@@ -286,7 +287,8 @@ function ParteEditable({
     let r: ResultadoSubida;
     try {
       r = await acciones.subir(form);
-    } catch {
+    } catch (fallo) {
+      relanzarSiEsDeploy(fallo);
       r = { ok: false, error: "red" };
     }
     if (r.ok) setItem(id, { status: "lista", file, path: r.imagenPath });
@@ -323,7 +325,8 @@ function ParteEditable({
       let r: ResultadoParte;
       try {
         r = await acciones.entregar({ tareaId, preguntaId: p.id, respuesta });
-      } catch {
+      } catch (fallo) {
+        relanzarSiEsDeploy(fallo);
         r = { ok: false, error: "red" };
       }
       if (!r.ok) {
@@ -364,7 +367,7 @@ function ParteEditable({
       ) : null}
       {aceptada ? null : (
         <div className="flex flex-col items-start gap-1">
-          <Button
+          <BotonEnLinea
             onClick={entregar}
             disabled={!listo}
             loading={enviando}
@@ -375,7 +378,7 @@ function ParteEditable({
             {parte.estado === "asignada" ? ENTREGAR_PARTE : REENTREGAR_PARTE}
             {/* Con varias partes, cada botón se distingue con lector de pantalla */}
             <span className="sr-only">{` (pregunta ${numero})`}</span>
-          </Button>
+          </BotonEnLinea>
           {listo || enviando ? null : (
             <p id={ayudaId} className="text-small text-text-2">
               Se activa cuando respondas la pregunta.

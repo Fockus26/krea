@@ -66,6 +66,7 @@ import {
   useOpCola,
 } from "@/lib/offline/navegador";
 import { FALTA_ACEPTAR_AYUDA, faltaAceptarTexto } from "@/lib/partes";
+import { relanzarSiEsDeploy } from "@/lib/recarga-deploy";
 import {
   avanceEntrega,
   BORRADOR_MS,
@@ -622,7 +623,8 @@ export function TaskAnswerForm({
     let r: ResultadoSubida;
     try {
       r = await acciones.subir(form);
-    } catch {
+    } catch (fallo) {
+      relanzarSiEsDeploy(fallo);
       r = { ok: false, error: "red" };
     }
     // Si mientras subía la cambió o la quitó, este resultado ya no es el suyo
@@ -699,7 +701,8 @@ export function TaskAnswerForm({
     let r: ResultadoSubida;
     try {
       r = await acciones.subir(form);
-    } catch {
+    } catch (fallo) {
+      relanzarSiEsDeploy(fallo);
       r = { ok: false, error: "red" };
     }
     if (r.ok)
@@ -782,7 +785,8 @@ export function TaskAnswerForm({
         let r: ResultadoEnvio;
         try {
           r = await acciones.enviar({ tareaId, respuestas, opId });
-        } catch {
+        } catch (fallo) {
+          relanzarSiEsDeploy(fallo);
           r = { ok: false, error: "red" };
         }
         if (r.ok) {

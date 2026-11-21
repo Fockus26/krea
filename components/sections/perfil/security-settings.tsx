@@ -4,7 +4,9 @@ import { KeyRound, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState, useTransition } from "react";
 import { ErrorEnPantalla } from "@/components/estados/errores";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
 import { PasswordInput } from "@/components/krea/password-input";
+import { hayRed } from "@/components/krea/use-en-linea";
 import { focusPrimerInvalido } from "@/components/sections/auth/focus-invalid";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -141,6 +143,7 @@ function CambiarPassword({
 
   function enviar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!hayRed()) return;
     setEnviado(true);
     setErrorServidor(null);
     const form = e.currentTarget;
@@ -223,9 +226,9 @@ function CambiarPassword({
         <DialogClose asChild>
           <Button variant="secondary">Cancelar</Button>
         </DialogClose>
-        <Button type="submit" loading={pending}>
+        <BotonEnLinea type="submit" loading={pending}>
           Guardar contraseña
-        </Button>
+        </BotonEnLinea>
       </DialogFooter>
     </form>
   );

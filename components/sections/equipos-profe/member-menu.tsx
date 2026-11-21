@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowRightLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,19 +38,19 @@ export function MemberMenu({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         {origen === null ? (
-          <Button variant="secondary" size="sm">
+          <BotonEnLinea variant="secondary" size="sm">
             Asignar…
             <span className="sr-only"> a {nombre} a un equipo</span>
-          </Button>
+          </BotonEnLinea>
         ) : (
-          <Button
+          <BotonEnLinea
             variant="ghost"
             size="sm"
             icon
             aria-label={moverLabel(nombre)}
           >
             <ArrowRightLeft aria-hidden="true" />
-          </Button>
+          </BotonEnLinea>
         )}
       </DropdownMenuTrigger>
       <DropdownMenuContent

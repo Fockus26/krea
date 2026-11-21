@@ -2,6 +2,7 @@
 
 import { ClipboardCheck, Trash2 } from "lucide-react";
 import * as React from "react";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
 import { EmptyState } from "@/components/krea/empty-state";
 import { useFlip } from "@/components/krea/use-flip";
 import { EliminarEnLote } from "@/components/sections/shared/eliminar-en-lote";
@@ -22,6 +23,7 @@ import {
 import { toast } from "@/components/ui/sonner";
 import { parseCssTime } from "@/lib/flip";
 import { type ResultadoLote, TAREAS } from "@/lib/lote";
+import { relanzarSiEsDeploy } from "@/lib/recarga-deploy";
 import {
   ELIMINAR_TAREA_BOTON,
   type ErrorTarea,
@@ -161,7 +163,8 @@ export function TeacherTaskList({
       let r: ResultadoTarea;
       try {
         r = await eliminar(t.id);
-      } catch {
+      } catch (fallo) {
+        relanzarSiEsDeploy(fallo);
         r = { ok: false, error: "red" };
       }
       // «No existe»: otro profe ya la borró; para quien mira, el resultado es el mismo
@@ -273,7 +276,7 @@ export function TeacherTaskList({
                       Cancelar
                     </Button>
                   </DialogClose>
-                  <Button
+                  <BotonEnLinea
                     variant="danger"
                     onClick={confirmarEliminar}
                     loading={pendiente}
@@ -281,7 +284,7 @@ export function TeacherTaskList({
                   >
                     <Trash2 aria-hidden="true" />
                     {ELIMINAR_TAREA_BOTON}
-                  </Button>
+                  </BotonEnLinea>
                 </DialogFooter>
               </>
             ) : null}

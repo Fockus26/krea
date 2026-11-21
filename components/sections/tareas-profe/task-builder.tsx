@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import { BotonEnLinea } from "@/components/krea/boton-en-linea";
 import { DatePicker } from "@/components/krea/date-picker";
 import { SumMeter } from "@/components/krea/sum-meter";
 import { TimePicker } from "@/components/krea/time-picker";
@@ -51,6 +52,7 @@ import {
   useOpCola,
 } from "@/lib/offline/navegador";
 import { ayudaPremio } from "@/lib/premios";
+import { relanzarSiEsDeploy } from "@/lib/recarga-deploy";
 import {
   type AccionTarea,
   AVISO_CERRADA,
@@ -289,7 +291,8 @@ export function TaskBuilder({
       if (!envio || navigator.onLine) {
         try {
           r = await llamar(opId);
-        } catch {
+        } catch (fallo) {
+          relanzarSiEsDeploy(fallo);
           r = { ok: false, error: "red" };
         }
       }
@@ -488,14 +491,14 @@ export function TaskBuilder({
               Cancelar
             </Button>
           </DialogClose>
-          <Button
+          <BotonEnLinea
             onClick={cerrarTarea}
             loading={pendiente}
             loadingLabel="Cerrando…"
           >
             <Lock aria-hidden="true" />
             Cerrar tarea
-          </Button>
+          </BotonEnLinea>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -564,7 +567,7 @@ export function TaskBuilder({
               Cancelar
             </Button>
           </DialogClose>
-          <Button
+          <BotonEnLinea
             variant="danger"
             onClick={eliminarConfirmado}
             loading={pendiente}
@@ -572,7 +575,7 @@ export function TaskBuilder({
           >
             <Trash2 aria-hidden="true" />
             {ELIMINAR_TAREA_BOTON}
-          </Button>
+          </BotonEnLinea>
         </DialogFooter>
       </DialogContent>
     </Dialog>
