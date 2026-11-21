@@ -823,6 +823,7 @@ export function TaskAnswerForm({
                 enunciado={p.enunciado}
                 valor={p.valor}
                 bloqueadaPor={bloqueadaPor}
+                {...bloqueoDe(p, i + 1)}
                 level={3}
                 formato="url"
                 value={textos[p.id] ?? ""}
