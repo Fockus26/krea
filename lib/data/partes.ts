@@ -5,6 +5,7 @@
 // Cada acción bloquea la fila de la tarea (`FOR UPDATE`), igual que el envío: así ninguna parte
 // cambia mientras el capitán envía, y con la entrega ya enviada todo queda congelado (D419).
 import { and, eq, sql } from "drizzle-orm";
+import { carpetasDeEntrega } from "@/lib/carpeta-entrega";
 import { contexto } from "@/lib/data/entregas";
 import {
   entregaDeFila,
@@ -14,7 +15,6 @@ import {
 } from "@/lib/data/filas";
 import { type Db, enSerie, type Tx } from "@/lib/db";
 import { entregas, partes, usuarios } from "@/lib/db/schema";
-import { carpetasDeEntrega } from "@/lib/carpeta-entrega";
 import { respuestasValidas } from "@/lib/entregas";
 import { cedulaDeId, type IdAlumno } from "@/lib/id-publico";
 import { type Parte, rutasImagen } from "@/lib/modelo";

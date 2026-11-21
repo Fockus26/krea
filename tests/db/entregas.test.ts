@@ -2,12 +2,12 @@
 // La subida a B2 no se prueba aquí (dobles en tests/unit/almacen.test.ts); las rutas de imagen
 // se arman igual que la Server Action.
 import { beforeAll, describe, expect, test } from "bun:test";
+import { carpetaEntrega, carpetaEntregaLegada } from "@/lib/carpeta-entrega";
 import {
   entregasDeIntegrante,
   enviarEnTransaccion,
   permisoSubida,
 } from "@/lib/data/entregas";
-import { carpetaEntrega, carpetaEntregaLegada } from "@/lib/carpeta-entrega";
 import type { Db } from "@/lib/db";
 import { claveImagen } from "@/lib/entregas";
 import {
@@ -300,7 +300,10 @@ describe("editar la entrega (D395–D397)", () => {
       await enviarEnTransaccion(
         db(),
         SOLO,
-        { tareaId: T, respuestas: { p1: { imagenPath: vieja }, p2: { texto: "Segunda" } } },
+        {
+          tareaId: T,
+          respuestas: { p1: { imagenPath: vieja }, p2: { texto: "Segunda" } },
+        },
         AHORA + 90_000,
       ),
     ).toEqual({ ok: true });
@@ -312,7 +315,10 @@ describe("editar la entrega (D395–D397)", () => {
       await enviarEnTransaccion(
         db(),
         SOLO,
-        { tareaId: T, respuestas: { p1: { imagenPath: ajena }, p2: { texto: "Segunda" } } },
+        {
+          tareaId: T,
+          respuestas: { p1: { imagenPath: ajena }, p2: { texto: "Segunda" } },
+        },
         AHORA + 91_000,
       ),
     ).toEqual({ ok: false, error: "incompleta" });

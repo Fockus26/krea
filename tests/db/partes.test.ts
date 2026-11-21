@@ -2,6 +2,7 @@
 // en la transacción real de `lib/acciones/partes.ts`; el envío del capitán calcula `sinParte`; con
 // la entrega enviada o la tarea cerrada todo queda congelado; eliminar la tarea borra las partes.
 import { beforeAll, beforeEach, describe, expect, test } from "bun:test";
+import { carpetaEntrega } from "@/lib/carpeta-entrega";
 import { eliminarEntregaEnTransaccion } from "@/lib/data/devolver-entrega";
 import { enviarEnTransaccion, permisoSubida } from "@/lib/data/entregas";
 import {
@@ -10,7 +11,6 @@ import {
   leerVersionPartes,
 } from "@/lib/data/partes";
 import { eliminarTareaEnTransaccion } from "@/lib/data/tareas";
-import { carpetaEntrega } from "@/lib/carpeta-entrega";
 import type { Db } from "@/lib/db";
 import { entregas, partes } from "@/lib/db/schema";
 import { claveImagen } from "@/lib/entregas";
