@@ -349,6 +349,18 @@ export async function leerEntrega(
   return f ? entregaDeFila(f) : null;
 }
 
+/** Las grupales de un equipo (por su titular), figuren o no en ellas los integrantes de hoy (D526). */
+export async function entregasGrupalesDeEquipo(
+  db: Tx,
+  equipoId: string,
+): Promise<Array<{ id: string } & Entrega>> {
+  const filas = await db
+    .select()
+    .from(entregas)
+    .where(and(eq(entregas.tipo, "grupal"), eq(entregas.titularId, equipoId)));
+  return validas(filas.map(entregaDeFila));
+}
+
 /** Entregas donde aparece la cédula como integrante (índice GIN sobre el arreglo). */
 export async function entregasDeIntegrante(
   db: Tx,
