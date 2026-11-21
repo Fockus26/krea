@@ -7,6 +7,7 @@ import {
 } from "@/lib/carpeta-entrega";
 import {
   armarEntrega,
+  type Carpetas,
   claveImagen,
   comprobarImagenes,
   enOtraEntrega,
@@ -253,7 +254,10 @@ describe("claves de imagen (D195, D512)", () => {
     const enNueva = claveImagen(GRUPAL.id, nueva, UUID);
     const enVieja = claveImagen(GRUPAL.id, vieja, UUID);
     const otra = claveImagen(GRUPAL.id, vieja, `${UUID.slice(0, -1)}9`);
-    const validar = (rutas: string[], carpetas = carpetasDeEntrega(id)) =>
+    const validar = (
+      rutas: string[],
+      carpetas: Carpetas = carpetasDeEntrega(id),
+    ) =>
       respuestasValidas(
         preguntas,
         { p1: { imagenPaths: rutas } },
