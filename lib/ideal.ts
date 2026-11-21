@@ -307,9 +307,10 @@ export function estadoIdealProfe(
 
 /* ---------- Vista del alumno ---------- */
 
-/** Respuesta de una pregunta de la ideal: texto, o rutas de imagen que la página firma. */
+/** Respuesta de una pregunta de la ideal: texto, enlace (D468) o rutas de imagen que la página firma. */
 export type RespuestaIdeal =
   | { tipo: "texto"; texto: string }
+  | { tipo: "url"; url: string }
   | { tipo: "imagen"; rutas: string[] };
 
 export type PreguntaIdeal = {
@@ -335,6 +336,7 @@ function respuestaDe(r: Respuesta | undefined): RespuestaIdeal | null {
   if (!r) return null;
   if ("texto" in r)
     return r.texto.trim() ? { tipo: "texto", texto: r.texto } : null;
+  if ("url" in r) return { tipo: "url", url: r.url };
   return { tipo: "imagen", rutas: rutasImagen(r) };
 }
 

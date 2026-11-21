@@ -195,7 +195,7 @@ export default async function TareaPage({ params }: Props) {
                       valor={p.valor}
                       obtenido={null}
                       respuesta={
-                        r.tipo === "texto"
+                        r.tipo === "texto" || r.tipo === "url"
                           ? r
                           : (imagen ?? {
                               tipo: "texto",

@@ -16,6 +16,7 @@ import {
 } from "@/lib/modelo";
 import { zOpId } from "@/lib/offline/operacion";
 import { ANSWER_MAX_LENGTH } from "@/lib/question";
+import { normalizarUrl } from "@/lib/url-respuesta";
 
 type ConId<T> = { id: string } & T;
 
@@ -198,19 +199,20 @@ export type ImagenEnviada = {
 };
 
 /**
- * Lo enviado → respuestas iniciales del formulario al editar (D395): el texto tal cual; cada
- * imagen ya subida con su ruta (se puede quitar o reemplazar) y, si se firmó, su vista previa.
- * Una pregunta sin respuesta guardada queda vacía.
+ * Lo enviado → respuestas iniciales del formulario al editar (D395): el texto y el enlace (D468)
+ * tal cual; cada imagen ya subida con su ruta (se puede quitar o reemplazar) y, si se firmó, su
+ * vista previa. Una pregunta sin respuesta guardada, o de otro formato, queda vacía.
  */
 export function inicialEdicion(
   preguntas: ReadonlyArray<{
     id: string;
-    formato: "texto" | "imagen";
+    formato: Tarea["preguntas"][number]["formato"];
     maxImagenes?: number;
   }>,
   respuestas: ReadonlyArray<
     | { tipo: "texto"; texto: string }
     | { tipo: "imagen"; imagenPaths: readonly string[] }
+    | { tipo: "url"; url: string }
     | null
   >,
   urls: ReadonlyMap<string, string>,
@@ -221,6 +223,10 @@ export function inicialEdicion(
     if (!r) return;
     if (r.tipo === "texto") {
       if (p.formato === "texto") out[p.id] = r.texto;
+      return;
+    }
+    if (r.tipo === "url") {
+      if (p.formato === "url") out[p.id] = r.url;
       return;
     }
     if (p.formato !== "imagen") return;
@@ -313,8 +319,9 @@ export function esImagenDe(
 
 /**
  * Respuestas normalizadas: una por pregunta, del formato de la pregunta. Textos sin espacios
- * en los extremos, no vacíos y de hasta `ANSWER_MAX_LENGTH`; imágenes de esta entrega, de 1 al
- * límite de la pregunta y sin repetir (D373). Una pregunta de una imagen se guarda `imagenPath`;
+ * en los extremos, no vacíos y de hasta `ANSWER_MAX_LENGTH`; enlaces que pasan `normalizarUrl`
+ * (solo `http(s)`, sin credenciales; se guardan normalizados, D469); imágenes de esta entrega, de 1
+ * al límite de la pregunta y sin repetir (D373). Una pregunta de una imagen se guarda `imagenPath`;
  * la de varias, `imagenPaths` (aunque el alumno haya subido una sola).
  */
 export function respuestasValidas(
@@ -336,8 +343,13 @@ export function respuestasValidas(
       const texto = r.texto.trim();
       if (texto === "" || texto.length > ANSWER_MAX_LENGTH) return null;
       out[p.id] = { texto };
+    } else if (p.formato === "url") {
+      if (!("url" in r)) return null;
+      const u = normalizarUrl(r.url);
+      if (!u.ok) return null;
+      out[p.id] = { url: u.url };
     } else {
-      if ("texto" in r) return null;
+      if ("texto" in r || "url" in r) return null;
       const rutas = rutasImagen(r);
       const limite = limiteImagenes(p);
       if (rutas.length === 0 || rutas.length > limite) return null;

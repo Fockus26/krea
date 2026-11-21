@@ -25,6 +25,7 @@ import { toast } from "@/components/ui/sonner";
 import type { ResultadoEnvio, ResultadoSubida } from "@/lib/acciones/entregas";
 import { IMAGEN_SUBIDA_MAX_BYTES } from "@/lib/almacen/imagen";
 import { type EnvioEntrega, mensajeErrorEntrega } from "@/lib/entregas";
+import type { FormatoPreguntaId } from "@/lib/modelo";
 import {
   claveEntrega,
   IMAGEN_SIN_SUBIR,
@@ -54,11 +55,13 @@ import {
   leerBorrador,
   puedeEntregar,
 } from "@/lib/tareas";
+import { normalizarUrl } from "@/lib/url-respuesta";
 
 export type PreguntaEntrega = {
   id: string;
   enunciado: string;
-  formato: "texto" | "imagen";
+  /** `url` = «Enlace» (D468): su valor vive con los textos (estado y borrador). */
+  formato: FormatoPreguntaId;
   /** «Varias imágenes» (D373): de 2 a 10. Ausente = una sola. */
   maxImagenes?: number;
   valor: number;
@@ -111,7 +114,10 @@ const imagenDeBorrador = (v: ImagenBorrador): ImagenRespuesta => ({
   path: v.imagenPath,
 });
 
-/** Borrador del dispositivo → textos e imágenes ya subidas (sin vista previa: no se descargan). */
+/**
+ * Borrador del dispositivo → textos (y enlaces, D468) e imágenes ya subidas (sin vista previa: no
+ * se descargan).
+ */
 function desdeBorrador(
   b: Borrador,
 ): [
@@ -219,7 +225,8 @@ export function TaskAnswerForm({
     const t: Record<string, string> = {};
     for (const p of preguntas) {
       const v = inicial[p.id];
-      if (p.formato === "texto") t[p.id] = typeof v === "string" ? v : "";
+      if (p.formato === "texto" || p.formato === "url")
+        t[p.id] = typeof v === "string" ? v : "";
     }
     return t;
   });
@@ -244,6 +251,10 @@ export function TaskAnswerForm({
         .filter(esVarias)
         .map((p) => [p.id, variasIniciales(inicial[p.id])]),
     ),
+  );
+  // Preguntas «Enlace» que el alumno ya dejó: su aviso en línea se muestra desde entonces (D469)
+  const [urlsTocadas, setUrlsTocadas] = useState<ReadonlySet<string>>(
+    () => new Set(),
   );
   // Error de la zona «añadir» de cada pregunta de varias (tipo, peso o la subida falló)
   const [errorAgregar, setErrorAgregar] = useState<Record<string, string>>({});
@@ -303,12 +314,17 @@ export function TaskAnswerForm({
       );
       const soloDe = <T,>(
         m: Record<string, T>,
-        f: "texto" | "imagen" | "varias",
+        f: FormatoPreguntaId | "varias",
       ) =>
         Object.fromEntries(
           Object.entries(m).filter(([id]) => formato.get(id) === f),
         );
-      setTextos((prev) => ({ ...prev, ...soloDe(t, "texto") }));
+      // Un enlace se guarda como un texto: solo vuelve si es un enlace válido (un texto viejo de
+      // cuando la pregunta era de texto se descarta, D469)
+      const enlaces = Object.fromEntries(
+        Object.entries(soloDe(t, "url")).filter(([, v]) => normalizarUrl(v).ok),
+      );
+      setTextos((prev) => ({ ...prev, ...soloDe(t, "texto"), ...enlaces }));
       // Una imagen sin ruta no se subió: el borrador de las galerías no la restaura
       if (acciones) {
         setImagenes((prev) => ({ ...prev, ...soloDe(i, "imagen") }));
@@ -356,6 +372,8 @@ export function TaskAnswerForm({
   const estados: EstadoRespuesta[] = preguntas.map((p) => {
     if (p.formato === "texto")
       return { formato: "texto", completa: (textos[p.id] ?? "").trim() !== "" };
+    if (p.formato === "url")
+      return { formato: "url", completa: normalizarUrl(textos[p.id] ?? "").ok };
     if (esVarias(p)) {
       const lista = varias[p.id] ?? [];
       return {
@@ -525,7 +543,11 @@ export function TaskAnswerForm({
     for (const p of preguntas) {
       if (p.formato === "texto")
         respuestas[p.id] = { texto: textos[p.id] ?? "" };
-      else if (esVarias(p)) {
+      else if (p.formato === "url") {
+        // Normalizado como lo guarda el servidor (le pone `https://` si faltaba)
+        const u = normalizarUrl(textos[p.id] ?? "");
+        respuestas[p.id] = { url: u.ok ? u.url : (textos[p.id] ?? "") };
+      } else if (esVarias(p)) {
         // Las ya subidas van en la respuesta; las del teléfono, a la cola (se suman al subir)
         const lista = varias[p.id] ?? [];
         const rutas = lista.flatMap((i) => (i.path ? [i.path] : []));
@@ -659,6 +681,27 @@ export function TaskAnswerForm({
                         onRemove: () => quitarError(p.id),
                       }
                     : null
+                }
+              />
+            ) : p.formato === "url" ? (
+              <QuestionCardAnswer
+                key={p.id}
+                numero={i + 1}
+                enunciado={p.enunciado}
+                valor={p.valor}
+                bloqueadaPor={bloqueadaPor}
+                level={3}
+                formato="url"
+                value={textos[p.id] ?? ""}
+                onValueChange={(v) => {
+                  setTextos((prev) => ({ ...prev, [p.id]: v }));
+                  setEdiciones((n) => n + 1);
+                }}
+                mostrarError={urlsTocadas.has(p.id)}
+                onBlur={() =>
+                  setUrlsTocadas((prev) =>
+                    prev.has(p.id) ? prev : new Set(prev).add(p.id),
+                  )
                 }
               />
             ) : p.formato === "texto" ? (

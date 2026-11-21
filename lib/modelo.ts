@@ -9,6 +9,7 @@ import { z } from "zod";
 import { esClaveValida } from "@/lib/almacen/clave";
 import { esDiaValido, RE_HORA } from "@/lib/fecha";
 import { BASE_MAX, BASE_MIN, NOTA_MAX } from "@/lib/grades";
+import { URL_MAX_LENGTH } from "@/lib/url-respuesta";
 
 /* ---------- Colecciones ---------- */
 
@@ -215,10 +216,15 @@ export const zMaxImagenes = z
   .min(MAX_IMAGENES_MIN)
   .max(MAX_IMAGENES_TOPE);
 
+/** Formatos de respuesta de una pregunta: texto, imagen(es) o enlace (D468). */
+export const FORMATOS_PREGUNTA = ["texto", "imagen", "url"] as const;
+export type FormatoPreguntaId = (typeof FORMATOS_PREGUNTA)[number];
+
 export const zPregunta = z.object({
   id: z.string().min(1).max(40),
   enunciado: texto(500),
-  formato: z.enum(["texto", "imagen"]),
+  /** «Enlace» (`url`, D468): la respuesta es un enlace `http(s)` (`lib/url-respuesta.ts`). */
+  formato: z.enum(FORMATOS_PREGUNTA),
   /**
    * Solo en imagen (D373): cuántas imágenes puede subir el alumno, de 2 a 10. Ausente = una sola
    * (las preguntas de antes siguen igual, sin migración).
@@ -231,7 +237,7 @@ export type Pregunta = z.infer<typeof zPregunta>;
 
 /** Imágenes que admite la pregunta: 1 salvo «Varias imágenes» (D373). */
 export function limiteImagenes(p: {
-  formato: "texto" | "imagen";
+  formato: FormatoPreguntaId;
   maxImagenes?: number | null | undefined;
 }): number {
   return p.formato === "imagen" ? (p.maxImagenes ?? 1) : 0;
@@ -402,11 +408,14 @@ export const ESTADOS_ENTREGA = ["borrador", "entregada", "evaluada"] as const;
 export type EstadoEntregaId = (typeof ESTADOS_ENTREGA)[number];
 
 /**
- * Respuesta: texto, una imagen (`imagenPath`) o varias (`imagenPaths`, D373). Una pregunta de una
- * imagen sigue guardando `imagenPath`; quien lee las rutas usa `rutasImagen`.
+ * Respuesta: texto, una imagen (`imagenPath`), varias (`imagenPaths`, D373) o un enlace (`url`,
+ * D468). Una pregunta de una imagen sigue guardando `imagenPath`; quien lee las rutas usa
+ * `rutasImagen`. Ojo: `"texto" in r` falso ya no implica imagen.
  */
 export const zRespuesta = z.union([
   z.object({ texto: z.string().max(5000) }),
+  // La regla del enlace (protocolo, credenciales) la aplica `respuestasValidas` (D469)
+  z.object({ url: z.string().min(1).max(URL_MAX_LENGTH) }),
   z.object({ imagenPath: z.string().min(1) }),
   z.object({
     imagenPaths: z.array(z.string().min(1)).min(1).max(MAX_IMAGENES_TOPE),
@@ -414,7 +423,7 @@ export const zRespuesta = z.union([
 ]);
 export type Respuesta = z.infer<typeof zRespuesta>;
 
-/** Rutas de imagen de una respuesta, en orden (ninguna si es de texto). */
+/** Rutas de imagen de una respuesta, en orden (ninguna si es de texto o enlace). */
 export function rutasImagen(r: Respuesta | null | undefined): string[] {
   if (!r) return [];
   if ("imagenPaths" in r) return [...r.imagenPaths];

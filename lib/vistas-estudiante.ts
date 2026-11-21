@@ -141,7 +141,7 @@ function parteFirmada(
   numero: number,
   urls: ReadonlyMap<string, string>,
 ): QuestionAnswer {
-  if (r.tipo === "texto") return r;
+  if (r.tipo === "texto" || r.tipo === "url") return r;
   return (
     respuestaFirmada(imagenesConAlt(r.imagenPaths, autor, numero), urls) ?? {
       tipo: "texto",
@@ -513,7 +513,11 @@ export function detalleNota(
               ? RESPUESTA_SIN_REGISTRO
               : "texto" in r
                 ? r.texto.trim() || RESPUESTA_SIN_REGISTRO
-                : RESPUESTA_IMAGEN,
+                : "url" in r
+                  ? r.url
+                  : RESPUESTA_IMAGEN,
+            // Enlace (D468): la tarjeta lo pinta como enlace externo si pasa `hrefSeguro`
+            ...(r && "url" in r ? { enlace: r.url } : {}),
             // La página la cambia por la imagen con una URL firmada (D195); si no, queda el texto
             ...(rutasImagen(r).length > 0
               ? { imagenPaths: rutasImagen(r) }
@@ -985,7 +989,8 @@ export function tareasVista(
 /** Respuesta ya enviada por pregunta (la imagen se firma en la página, solo si se muestra). */
 export type RespuestaEnviada =
   | { tipo: "texto"; texto: string }
-  | { tipo: "imagen"; imagenPaths: string[] };
+  | { tipo: "imagen"; imagenPaths: string[] }
+  | { tipo: "url"; url: string };
 
 export type CabeceraEntrega = {
   tipo: Tarea["tipo"];
@@ -1097,6 +1102,7 @@ export function entregaVista(
         if ("texto" in r) {
           return r.texto.trim() ? { tipo: "texto", texto: r.texto } : null;
         }
+        if ("url" in r) return { tipo: "url", url: r.url };
         return { tipo: "imagen", imagenPaths: rutasImagen(r) };
       }),
     };

@@ -24,6 +24,7 @@ import {
   type DecisionPremio,
   type Entrega,
   type Equipo,
+  FORMATOS_PREGUNTA,
   type Prorrogas,
   rutasImagen,
   type SeccionId,
@@ -91,7 +92,7 @@ export const zEntradaTarea = z.object({
       z.object({
         id: z.string().regex(/^[A-Za-z0-9_-]{1,40}$/, "Id inválido"),
         enunciado: z.string().trim().max(500),
-        formato: z.enum(["texto", "imagen"]),
+        formato: z.enum(FORMATOS_PREGUNTA),
         // Varias imágenes (D373); ausente o `null` = una sola. En texto se ignora al guardar
         maxImagenes: zMaxImagenes.nullable().optional(),
         valor: zPuntaje.refine((n) => n > 0).nullable(),

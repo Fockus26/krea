@@ -2,6 +2,7 @@
 // formulario del profe: la respuesta (texto o imágenes ya firmadas, D195) y el recuadro del porqué.
 // Sin estado ni efectos: valen en servidor y en cliente.
 import { Sparkles } from "lucide-react";
+import { RespuestaEnlace } from "@/components/krea/respuesta-enlace";
 import { TeamLogo } from "@/components/krea/team-logo";
 import { UserAvatar } from "@/components/krea/user-avatar";
 import {
@@ -64,6 +65,7 @@ export function IdealRespuesta({
   if (!respuesta) {
     return <p className="text-small text-text-2">{SIN_RESPUESTA_TEXTO}</p>;
   }
+  if (respuesta.tipo === "url") return <RespuestaEnlace url={respuesta.url} />;
   if (respuesta.tipo === "texto") {
     return (
       <p className="whitespace-pre-line rounded-nav bg-surface-2 px-3.5 py-3 text-callout text-text">

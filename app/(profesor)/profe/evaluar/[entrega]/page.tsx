@@ -132,7 +132,7 @@ export default async function EvaluarEntregaPage({
   );
   const preguntas = v.preguntas.map(({ respuesta, ...p }) => {
     let r: QuestionAnswer;
-    if (respuesta.tipo === "texto") r = respuesta;
+    if (respuesta.tipo === "texto" || respuesta.tipo === "url") r = respuesta;
     else {
       const imagenes = respuestaFirmada(respuesta.imagenes, urls);
       r = imagenes ?? { tipo: "texto", texto: IMAGEN_NO_DISPONIBLE };

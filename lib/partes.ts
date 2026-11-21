@@ -249,7 +249,8 @@ export function aplicarParte(args: {
 /** Respuesta guardada → la forma que pintan las páginas (como `RespuestaEnviada`). */
 export type RespuestaParte =
   | { tipo: "texto"; texto: string }
-  | { tipo: "imagen"; imagenPaths: string[] };
+  | { tipo: "imagen"; imagenPaths: string[] }
+  | { tipo: "url"; url: string };
 
 export function respuestaParte(
   r: Respuesta | null | undefined,
@@ -257,6 +258,7 @@ export function respuestaParte(
   if (!r) return null;
   if ("texto" in r)
     return r.texto.trim() ? { tipo: "texto", texto: r.texto } : null;
+  if ("url" in r) return { tipo: "url", url: r.url };
   return { tipo: "imagen", imagenPaths: rutasImagen(r) };
 }
 
