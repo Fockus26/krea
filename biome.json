@@ -13,11 +13,12 @@
       "!.next",
       "!dist",
       "!build",
-      "!**/.claude/worktrees",
       "!.claude/kit-reference",
       "!design/prototype",
       "!design/canvas",
-      "!drizzle/meta"
+      "!drizzle/meta",
+      "!.claude/worktrees",
+      "!**/.claude/kit-reference"
     ]
   },
   "formatter": {
