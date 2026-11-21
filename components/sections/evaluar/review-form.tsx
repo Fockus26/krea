@@ -10,7 +10,7 @@ import type { QuestionAnswer } from "@/components/krea/question-card-detail";
 import { QuestionCardReview } from "@/components/krea/question-card-review";
 import { ScorePicker } from "@/components/krea/score-picker";
 import { ActionBar } from "@/components/sections/shared/action-bar";
-import { Button } from "@/components/ui/button";
+import { BOTON_LARGO, Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { toast } from "@/components/ui/sonner";
@@ -499,6 +499,7 @@ export function ReviewForm({
           disabled={!completo}
           aria-describedby={motivoMovilId}
           onClick={guardar}
+          className={BOTON_LARGO}
         >
           <Check aria-hidden="true" />
           Guardar y seguir

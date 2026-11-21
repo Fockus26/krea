@@ -5,6 +5,7 @@ import { RespuestaEnlace } from "@/components/krea/respuesta-enlace";
 import { Badge, type BadgeVariant } from "@/components/ui/badge";
 import type { EstadoParteId } from "@/lib/modelo";
 import { ESTADO_PARTE_TEXTO, SIN_ASIGNAR_TEXTO } from "@/lib/partes";
+import { cn } from "@/lib/utils";
 
 const ESTADOS: Record<
   EstadoParteId | "sin-asignar",
@@ -52,7 +53,11 @@ export function EstadoParte({
 }) {
   const { variant, icon: Icon, label } = ESTADOS[estado ?? "sin-asignar"];
   return (
-    <Badge variant={variant} className={className}>
+    // Con texto grande el chip parte su rótulo en vez de salirse (D501)
+    <Badge
+      variant={variant}
+      className={cn("h-auto max-w-full whitespace-normal", className)}
+    >
       <Icon aria-hidden="true" />
       {label}
     </Badge>

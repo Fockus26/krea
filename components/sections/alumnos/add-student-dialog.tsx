@@ -8,7 +8,7 @@ import { UserPlus } from "lucide-react";
 import { type FormEvent, useId, useRef, useState } from "react";
 import { ErrorEnPantalla } from "@/components/estados/errores";
 import { CedulaInput } from "@/components/krea/cedula-input";
-import { Button } from "@/components/ui/button";
+import { BOTON_LARGO, Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogClose,
@@ -88,7 +88,7 @@ export function AddStudentDialog({
   return (
     <Dialog open={abierto} onOpenChange={setAbierto}>
       <DialogTrigger asChild>
-        <Button id={AGREGAR_ALUMNO_ID}>
+        <Button id={AGREGAR_ALUMNO_ID} className={BOTON_LARGO}>
           <UserPlus aria-hidden="true" />
           Agregar alumno
         </Button>

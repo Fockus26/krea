@@ -14,7 +14,7 @@ import { focusPrimerInvalido } from "@/components/sections/auth/focus-invalid";
 import { SelectorSeccion } from "@/components/sections/shared/selector-seccion";
 import { alertVariants } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { BOTON_LARGO_LG, Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
@@ -407,7 +407,11 @@ export function AdjustmentForm({
           ) : null}
         </output>
 
-        <Button type="submit" size="lg" className="self-start">
+        <Button
+          type="submit"
+          size="lg"
+          className={cn("self-start", BOTON_LARGO_LG)}
+        >
           <Check aria-hidden="true" />
           Aplicar ajuste
         </Button>

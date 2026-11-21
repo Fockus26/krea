@@ -73,7 +73,7 @@ export function ReviewHeader({
         <nav
           // PROVISIONAL (CONTENT_CHECKLIST 81): nombre de la navegación de la cola
           aria-label="Cola por evaluar"
-          className="flex w-full gap-2 lg:w-auto"
+          className="flex w-full flex-wrap gap-2 lg:w-auto"
         >
           {anteriorHref ? (
             <Button asChild variant="ghost" size="sm" className={NAV_BTN}>

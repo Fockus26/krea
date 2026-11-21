@@ -38,7 +38,7 @@ export default async function EquipoPage() {
     <>
       <TeamHero equipo={{ ...d.equipo, logo }} />
       {/* ≥ 1024: g-home con integrantes | notas + premios; debajo, 1-2-3 en el orden del DOM */}
-      <div className="g-home max-md:gap-6">
+      <div className="g-home max-md:gap-6 lg:items-stretch!">
         <TeamMembers integrantes={d.integrantes} />
         <div className="flex flex-col gap-6">
           <TeamGrades filas={d.notas} />

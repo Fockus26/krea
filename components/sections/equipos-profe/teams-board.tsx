@@ -361,7 +361,7 @@ export function TeamsBoard({
       {vista === "lista" ? null : (
         <>
           {/* Tres columnas solo desde 1440: con la barra lateral, antes la tarjeta no cabe (D216) */}
-          <ul className="g2 m-0 list-none items-start p-0 xl:grid-cols-3">
+          <ul className="g2 m-0 list-none p-0 xl:grid-cols-3">
             {equipos.map((eq) => {
               const e = estado.equipos[eq.id];
               if (!e) return null;

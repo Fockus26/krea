@@ -11,6 +11,7 @@
     "shots": "node scripts/pr-screenshots.ts .pr-shots.json",
     "qa:segmentado": "node scripts/qa/segmentado.mjs",
     "check:paginas": "node scripts/qa/paginas.mjs",
+    "qa:texto-200": "node scripts/qa/texto-200.mjs",
     "test:related": "bun scripts/test-related.ts --dir=tests/unit --dir=tests/db",
     "context:backup": "bash scripts/context-backup.sh",
     "typecheck": "next typegen && tsc --noEmit",

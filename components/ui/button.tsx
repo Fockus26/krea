@@ -85,6 +85,20 @@ const buttonCva = cva(
   },
 );
 
+/*
+ * Botones con rótulo largo (D227, D501): con el texto del sistema al 200 % un rótulo de dos palabras
+ * ya no cabe en 390 px. Estas clases (por tamaño) lo parten en dos líneas en vez de salirse; con
+ * texto normal no cambian nada (el alto mínimo es el de siempre). `Button` conserva
+ * `whitespace-nowrap`: se aplican solo a los botones que la guarda de `scripts/qa/texto-200.mjs`
+ * midió fuera.
+ */
+export const BOTON_LARGO =
+  "h-auto min-h-11 max-w-full shrink py-2 text-center whitespace-normal";
+export const BOTON_LARGO_SM =
+  "h-auto min-h-9 max-w-full shrink py-1 text-center whitespace-normal max-lg:h-auto max-lg:min-h-11";
+export const BOTON_LARGO_LG =
+  "h-auto min-h-13 max-w-full shrink py-2 text-center whitespace-normal";
+
 /** Clases del botón ya fusionadas con `cn` (los compuestos pisan padding/ancho del tamaño). */
 function buttonVariants(
   options?: VariantProps<typeof buttonCva>,

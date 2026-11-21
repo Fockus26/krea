@@ -7,7 +7,7 @@ import { ColaEnVivo } from "@/components/sections/evaluar/cola-en-vivo";
 import { ColaFiltros } from "@/components/sections/evaluar/cola-filtros";
 import { PorEvaluarFila } from "@/components/sections/profe-panel/pending-reviews";
 import { PageHeader } from "@/components/sections/shared/page-header";
-import { Button } from "@/components/ui/button";
+import { BOTON_LARGO, Button } from "@/components/ui/button";
 import { Card, CardList } from "@/components/ui/card";
 import {
   colaEvaluar,
@@ -107,7 +107,7 @@ export default async function EvaluarColaPage({
         }
         actions={
           primera && primera.estado === "entregada" ? (
-            <Button asChild>
+            <Button asChild className={BOTON_LARGO}>
               <Link href={rutaEntrega(primera.id, filtros)}>
                 Evaluar la primera
                 <ArrowRight aria-hidden="true" />
