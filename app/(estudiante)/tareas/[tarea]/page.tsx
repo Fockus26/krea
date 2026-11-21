@@ -12,6 +12,7 @@ import {
 import { IdealEnlace } from "@/components/sections/tareas/ideal-enlace";
 import { PartesIntegrante } from "@/components/sections/tareas/partes-integrante";
 import { PrizeCard } from "@/components/sections/tareas/prize-card";
+import { RepartoEnVivo } from "@/components/sections/tareas/reparto-en-vivo";
 import { RepartoPanel } from "@/components/sections/tareas/reparto-panel";
 import { TaskAnswerForm } from "@/components/sections/tareas/task-answer-form";
 import { TaskDelivered } from "@/components/sections/tareas/task-delivered";
@@ -24,6 +25,7 @@ import {
   asignarParte,
   devolverParte,
   entregarParte,
+  tomarParte,
 } from "@/lib/acciones/partes";
 import { verificarSesion } from "@/lib/dal";
 import {
@@ -36,6 +38,7 @@ import { urlsFirmadas } from "@/lib/datos/imagenes";
 import { inicialEdicion, puedeEditar } from "@/lib/entregas";
 import { cerradaParaTodos } from "@/lib/estado-tarea";
 import { rutaIdealAlumno } from "@/lib/ideal";
+import { huellaDePartes } from "@/lib/partes";
 import { imagenesConAlt, respuestaFirmada } from "@/lib/question";
 import { TAREA_GRUPAL_SEED } from "@/lib/seed-firestore";
 import {
@@ -66,6 +69,7 @@ const ACCIONES_REPARTO = {
   asignar: asignarParte,
   aceptar: aceptarParte,
   devolver: devolverParte,
+  tomar: tomarParte,
 };
 const ACCIONES_PARTE = { subir: subirImagenRespuesta, entregar: entregarParte };
 
@@ -83,16 +87,18 @@ export default async function TareaPage({ params }: Props) {
   const d = entregaVista(datos, id, companeros, ahora);
   if (d.estado === "no-existe") notFound();
 
-  // Grupal abierta sin enviar: el reparto del equipo (D422)
+  // Grupal abierta sin enviar: el reparto del equipo (D422), que se actualiza solo (D465)
+  const conReparto =
+    d.tipo === "grupal" &&
+    datos.equipo !== null &&
+    (d.estado === "responder" || d.estado === "lector");
   const entradaReparto = {
     vista: d,
     usuario: datos.usuario,
     equipo: datos.equipo,
     companeros,
     partes:
-      d.tipo === "grupal" &&
-      datos.equipo &&
-      (d.estado === "responder" || d.estado === "lector")
+      conReparto && datos.equipo
         ? await partesDelEquipo(id, datos.equipo.id)
         : [],
   };
@@ -136,6 +142,12 @@ export default async function TareaPage({ params }: Props) {
       {hayIdeal ? <IdealEnlace href={rutaIdealAlumno(id)} /> : null}
       {d.estado === "lector" && d.capitan ? (
         <CaptainNotice capitan={d.capitan} />
+      ) : null}
+      {conReparto ? (
+        <RepartoEnVivo
+          tareaId={id}
+          version={huellaDePartes(entradaReparto.partes)}
+        />
       ) : null}
 
       {d.estado === "entregada" ? (
@@ -251,15 +263,15 @@ export default async function TareaPage({ params }: Props) {
             />
           ) : null}
           <TaskAnswerForm
-            // Lo aceptado cambió: se remonta con lo nuevo precargado (D418)
-            key={reparto?.modo === "capitan" ? reparto.version : 0}
+            // Sin `key` que cambie: un refresco (en vivo, D465) no pierde lo que está escribiendo
             tareaId={id}
             titulo={d.titulo}
             preguntas={d.preguntas}
             inicial={reparto?.modo === "capitan" ? reparto.inicial : undefined}
-            prioridad={
-              reparto?.modo === "capitan" ? reparto.prioridad : undefined
+            bloqueos={
+              reparto?.modo === "capitan" ? reparto.bloqueos : undefined
             }
+            tomar={reparto?.modo === "capitan" ? tomarParte : undefined}
             avisoEnvio={reparto?.modo === "capitan" ? reparto.aviso : null}
             bloqueadaPor={
               d.estado === "lector"

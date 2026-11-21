@@ -29,6 +29,7 @@ import {
   PARTE_ENTREGADA_TOAST,
   PARTES_TITULO,
   partesAvisoTexto,
+  partesTomadasAvisoTexto,
   REENTREGAR_PARTE,
 } from "@/lib/partes";
 import { BORRADOR_MS } from "@/lib/tareas";
@@ -56,8 +57,11 @@ export type ParteDeIntegrante =
       /** Lo mismo, firmado para mostrarlo cuando ya está aceptada. */
       respuesta: QuestionAnswer | null;
     }
-  /** La responde otra persona: el nombre corto de quien (otro integrante o el capitán). */
-  | { mia: false; bloqueadaPor: string };
+  /**
+   * La responde otra persona: el nombre corto de quien (otro integrante o el capitán). `aviso`: era
+   * suya y el capitán la tomó (D461), en lugar del candado de siempre.
+   */
+  | { mia: false; bloqueadaPor: string; aviso?: string };
 
 /**
  * Lo que ve el integrante con preguntas asignadas (D422): las suyas respondibles, cada una con su
@@ -89,7 +93,12 @@ export function PartesIntegrante({
       <h2 id={titleId} className="text-h2 text-text">
         {PARTES_TITULO}
       </h2>
-      <p className="text-callout text-text-2">{partesAvisoTexto(capitan)}</p>
+      <p className="text-callout text-text-2">
+        {/* Todas las suyas tomadas (D461): ve la tarea como lector, con el aviso */}
+        {partes.some((p) => p.mia)
+          ? partesAvisoTexto(capitan)
+          : partesTomadasAvisoTexto(capitan)}
+      </p>
       <ol className="m-0 flex list-none flex-col gap-4 p-0">
         {preguntas.map((p, i) => {
           const parte = partes[i];
@@ -100,6 +109,7 @@ export function PartesIntegrante({
               enunciado: p.enunciado,
               valor: p.valor,
               bloqueadaPor: parte?.bloqueadaPor ?? capitan,
+              bloqueo: parte?.aviso,
               level: 3 as const,
             };
             return p.formato === "texto" || p.formato === "url" ? (

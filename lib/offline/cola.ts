@@ -267,6 +267,8 @@ const ENTREGA_RECHAZADA = new Set([
   "sin-equipo",
   "no-capitan",
   "incompleta",
+  // Grupal por partes (D463): hasta que el capitán acepte, reintentar no sirve
+  "partes-pendientes",
   "imagen-tipo",
   "imagen-peso",
   "imagen-falta",
@@ -340,6 +342,9 @@ export function mensajeRechazoEntrega(error: string): string {
     case "no-capitan":
     case "sin-equipo":
       return "No se pudo enviar: ahora solo el capitán de tu equipo puede entregar esta tarea.";
+    // PROVISIONAL (CONTENT_CHECKLIST fila 270)
+    case "partes-pendientes":
+      return "No se pudo enviar: falta aceptar alguna parte de tu equipo en el Reparto.";
     default:
       return "No se pudo enviar: revisa tus respuestas y vuelve a entregar.";
   }

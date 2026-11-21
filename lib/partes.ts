@@ -45,6 +45,8 @@ export type AccionParte =
   | { tipo: "asignar"; asignado: string | null }
   | { tipo: "aceptar" }
   | { tipo: "devolver" }
+  /** Capitán: «La respondo yo» con una parte que no le entregaron (D461). */
+  | { tipo: "tomar" }
   | { tipo: "entregar"; respuesta: Respuesta };
 
 /* ---------- Permiso ---------- */
@@ -132,7 +134,8 @@ const ENTREGO: readonly EstadoParteId[] = ["entregada", "aceptada"];
 /**
  * `sinParte` de la entrega al enviar (D420): integrantes de la entrega, salvo quien envía, con al
  * menos una pregunta asignada y ninguna entregada ni aceptada. En el orden de `integrantes`.
- * Sin reparto (ninguna parte) → vacío: nadie queda marcado.
+ * Sin reparto (ninguna parte) → vacío: nadie queda marcado. Una `tomada` (D461) sigue siendo suya
+ * y no cuenta como entregada: si no entregó otra, queda premarcado; si entregó otra, no.
  */
 export function sinParteDe(
   partes: ReadonlyArray<Pick<Parte, "asignado" | "estado">>,
@@ -162,8 +165,11 @@ export type ResultadoParte =
  * Aplica una acción a la parte de una pregunta (D417, D418). `actual` es la fila tal cual (puede
  * no estar vigente); `quien` ya pasó `permisoParte`. Capitán: asignar (reasignar descarta la
  * respuesta anterior; asignar al mismo no cambia nada), quitar, aceptar una `entregada`, devolver
- * una `entregada` o `aceptada`. Integrante asignado: entregar mientras no esté `aceptada` (la
- * `respuesta` ya viene normalizada por `respuestasValidas`).
+ * una `entregada` o `aceptada`, tomar una `asignada` o `devuelta` (D461: «La respondo yo»; la fila
+ * se queda con su `asignado` y lo último que entregó). Asignar al mismo una `tomada` se la devuelve
+ * tal cual estaba (`devuelta` si ya había entregado algo, si no `asignada`). Integrante asignado:
+ * entregar mientras no esté `aceptada` ni `tomada` (la `respuesta` ya viene normalizada por
+ * `respuestasValidas`).
  */
 export function aplicarParte(args: {
   actual: Parte | null;
@@ -180,7 +186,12 @@ export function aplicarParte(args: {
   const rutasActual = rutasImagen(actual?.respuesta);
 
   if (accion.tipo === "entregar") {
-    if (quien.capitan || vigente?.asignado !== quien.cedula)
+    // Tomada (D461): ya no es suya, la responde el capitán
+    if (
+      quien.capitan ||
+      vigente?.asignado !== quien.cedula ||
+      vigente.estado === "tomada"
+    )
       return { ok: false, error: "no-asignada" };
     if (vigente.estado === "aceptada") return { ok: false, error: "estado" };
     const nuevas = new Set(rutasImagen(accion.respuesta));
@@ -206,9 +217,19 @@ export function aplicarParte(args: {
     if (!miembros.includes(accion.asignado) || accion.asignado === capitanId) {
       return { ok: false, error: "integrante" };
     }
-    // Asignar al mismo: nada cambia (ni su respuesta)
+    // Asignar al mismo: nada cambia (ni su respuesta); una tomada vuelve a ser suya (D461)
     if (vigente?.asignado === accion.asignado) {
-      return { ok: true, parte: vigente, sinUso: [] };
+      if (vigente.estado !== "tomada")
+        return { ok: true, parte: vigente, sinUso: [] };
+      return {
+        ok: true,
+        parte: {
+          ...vigente,
+          estado: vigente.respuesta ? "devuelta" : "asignada",
+          actualizadoEn: ahora,
+        },
+        sinUso: [],
+      };
     }
     return {
       ok: true,
@@ -229,6 +250,17 @@ export function aplicarParte(args: {
     return {
       ok: true,
       parte: { ...vigente, estado: "aceptada", actualizadoEn: ahora },
+      sinUso: [],
+    };
+  }
+
+  // Tomar (D461): solo lo que no le entregaron; lo último que entregó se queda (precarga el campo)
+  if (accion.tipo === "tomar") {
+    if (vigente?.estado !== "asignada" && vigente?.estado !== "devuelta")
+      return { ok: false, error: "estado" };
+    return {
+      ok: true,
+      parte: { ...vigente, estado: "tomada", actualizadoEn: ahora },
       sinUso: [],
     };
   }
@@ -299,12 +331,17 @@ export type ParteIntegrante =
       /** Solo la suya (D423): la del resto no llega a su teléfono. */
       respuesta: RespuestaParte | null;
     }
-  /** No es suya: la responde `asignado` (otro integrante) o, con `null`, el capitán. */
-  | { mia: false; asignado: string | null };
+  /**
+   * No es suya: la responde `asignado` (otro integrante) o, con `null`, el capitán. `tomada`: era
+   * suya y el capitán la tomó (D461).
+   */
+  | { mia: false; asignado: string | null; tomada?: true };
 
 /**
  * Lo que ve el integrante (D422): por pregunta, si es suya (con su estado y lo que entregó) o de
- * quién es. `null` si no tiene ninguna asignada: ve la tarea como hoy (solo lectura).
+ * quién es. `null` si no tiene ninguna asignada: ve la tarea como hoy (solo lectura). Una `tomada`
+ * (D461) deja de ser suya (la responde el capitán), pero sigue viendo el reparto con el aviso, aunque
+ * el capitán le haya tomado todas.
  */
 export function partesDeIntegrante(
   preguntas: ReadonlyArray<{ id: string }>,
@@ -317,6 +354,8 @@ export function partesDeIntegrante(
   if (!vigentes.some((p) => p.asignado === cedula)) return null;
   return preguntas.map((p): ParteIntegrante => {
     const parte = vigentes.find((x) => x.preguntaId === p.id);
+    if (parte?.asignado === cedula && parte.estado === "tomada")
+      return { mia: false, asignado: null, tomada: true };
     if (parte?.asignado === cedula) {
       return {
         mia: true,
@@ -324,29 +363,77 @@ export function partesDeIntegrante(
         respuesta: respuestaParte(parte.respuesta),
       };
     }
-    return { mia: false, asignado: parte?.asignado ?? null };
+    // La tomada de otro también la responde el capitán
+    return {
+      mia: false,
+      asignado: parte?.estado === "tomada" ? null : (parte?.asignado ?? null),
+    };
   });
 }
 
 /**
- * Lo aceptado precarga el formulario del capitán (D418): respuesta por pregunta y la versión (el
- * mayor `actualizadoEn` de las aceptadas) para remontarlo cuando cambia. Gana sobre su borrador.
+ * Lo que el reparto pone en el envío del capitán (D463): por cada parte vigente de una pregunta de
+ * la tarea, la `aceptada` entra con la respuesta del integrante (la del cliente se ignora); la
+ * `tomada` la responde el capitán (no entra aquí); cualquier otra (`asignada`, `entregada`,
+ * `devuelta`, o aceptada sin respuesta) deja el envío en `partes-pendientes`.
  */
-export function aceptadas(
-  partes: readonly Parte[],
+export function repartoParaEnviar(
+  preguntas: ReadonlyArray<{ id: string }>,
+  partes: ReadonlyArray<
+    Pick<Parte, "preguntaId" | "asignado" | "estado" | "respuesta">
+  >,
   miembros: readonly string[],
   capitanId: string | null,
-): { respuestas: Record<string, RespuestaParte>; version: number } {
-  const respuestas: Record<string, RespuestaParte> = {};
-  let version = 0;
+): { ok: true; respuestas: Record<string, Respuesta> } | { ok: false } {
+  const ids = new Set(preguntas.map((p) => p.id));
+  const respuestas: Record<string, Respuesta> = {};
   for (const p of partesVigentes(partes, miembros, capitanId)) {
-    if (p.estado !== "aceptada") continue;
-    const r = respuestaParte(p.respuesta);
-    if (!r) continue;
-    respuestas[p.preguntaId] = r;
-    version = Math.max(version, p.actualizadoEn);
+    if (!ids.has(p.preguntaId) || p.estado === "tomada") continue;
+    if (p.estado !== "aceptada" || !p.respuesta) return { ok: false };
+    respuestas[p.preguntaId] = p.respuesta;
   }
-  return { respuestas, version };
+  return { ok: true, respuestas };
+}
+
+/* ---------- Reparto en vivo (D465) ---------- */
+
+/** Ruta del sondeo del reparto (integrantes del equipo actual). */
+export const RUTA_VERSION_PARTES = "/api/partes/version";
+
+export function rutaVersionPartes(
+  tareaId: string,
+  desde: string | null,
+): string {
+  const q = new URLSearchParams({ tarea: tareaId });
+  if (desde) q.set("desde", desde);
+  return `${RUTA_VERSION_PARTES}?${q.toString()}`;
+}
+
+/**
+ * Huella barata del reparto de una entrega: cuántas partes hay, el mayor `actualizadoEn` y, si la
+ * entrega ya salió, su `enviadaEn`. Asignar, entregar, aceptar, devolver o tomar sube el máximo;
+ * quitar baja la cantidad; enviar suma el envío (el integrante pasa a ver la tarea entregada).
+ */
+export function huellaPartes(r: {
+  filas: number;
+  maxActualizado: number | null;
+  enviadaEn: number | null;
+}): string {
+  return [r.filas, r.maxActualizado ?? 0, r.enviadaEn ?? 0].join(".");
+}
+
+/** La misma huella desde las partes que ya leyó la página (sin entrega enviada: hay reparto). */
+export function huellaDePartes(
+  partes: ReadonlyArray<Pick<Parte, "actualizadoEn">>,
+): string {
+  return huellaPartes({
+    filas: partes.length,
+    maxActualizado:
+      partes.length > 0
+        ? Math.max(...partes.map((p) => p.actualizadoEn))
+        : null,
+    enviadaEn: null,
+  });
 }
 
 /** ¿La entrega del equipo ya salió? Con ella enviada, el reparto queda congelado (D419). */
@@ -364,6 +451,8 @@ export const ESTADO_PARTE_TEXTO: Record<EstadoParteId, string> = {
   entregada: "Entregada al capitán",
   aceptada: "Aceptada",
   devuelta: "Devuelta",
+  // PROVISIONAL (CONTENT_CHECKLIST fila 265)
+  tomada: "La respondes tú en su lugar",
 };
 /** Pregunta sin asignar en el panel del capitán. Fila 223. */
 export const SIN_ASIGNAR_TEXTO = "La respondes tú";
@@ -378,10 +467,66 @@ export const PARTE_SIN_NOMBRE = "Alguien del equipo";
 export const REPARTO_TITULO = "Reparto";
 export const REPARTO_AYUDA =
   "Opcional: asigna preguntas a tu equipo. Cada quien te entrega la suya y tú decides si la aceptas. Solo tú envías la tarea.";
-export const REPARTO_ACTUALIZAR_AYUDA =
-  "Lo que te entreguen aparece al tocar «Actualizar».";
+/** Sustituye a «Actualizar» (D465): lo nuevo llega solo. PROVISIONAL, fila 269. */
+export const REPARTO_EN_VIVO_AYUDA =
+  "Se actualiza solo: lo que te entreguen aparece aquí sin recargar.";
 export const REPARTO_ASIGNAR_ETIQUETA = "Asignada a";
 export const REPARTO_NADIE = "Nadie (la respondes tú)";
+
+/* «La respondo yo» (D461). PROVISIONAL, fila 265. */
+export const TOMAR_PARTE = "La respondo yo";
+/** Opción del Select de una parte tomada: sigue a nombre del integrante (D420). */
+export function repartoTomadaOpcion(nombre: string): string {
+  return `Tú, en lugar de ${nombre}`;
+}
+export const TOMAR_PARTE_TITULO = "¿La respondes tú?";
+export function tomarParteAviso(nombre: string): string {
+  return `${nombre} ya no podrá entregarla. Si no entrega ninguna otra pregunta, quedará como «No participó» al enviar la tarea.`;
+}
+export const PARTE_TOMADA_TOAST = "Ahora la respondes tú";
+
+/**
+ * Candado de una pregunta del formulario del capitán asignada a otro (D462), según su estado.
+ * PROVISIONAL, fila 266.
+ */
+export function bloqueoTexto(
+  estado: Exclude<EstadoParteId, "tomada">,
+  nombre: string,
+): string {
+  switch (estado) {
+    case "asignada":
+      return `Asignada a ${nombre}: aún no te la entrega.`;
+    case "entregada":
+      return `${nombre} te la entregó: acéptala o devuélvela en Reparto.`;
+    case "aceptada":
+      return `Aceptada: es la respuesta de ${nombre}.`;
+    case "devuelta":
+      return `Se la devolviste a ${nombre}: aún no te la vuelve a entregar.`;
+  }
+}
+
+/**
+ * Barra de envío del capitán (D462): qué partes faltan por aceptar. PROVISIONAL, fila 267.
+ * «Falta aceptar la pregunta 2 (Ana)» · «Falta aceptar las preguntas 2 (Ana) y 3 (Luis)».
+ */
+export function faltaAceptarTexto(
+  pendientes: ReadonlyArray<{ numero: number; nombre: string }>,
+): string | null {
+  if (pendientes.length === 0) return null;
+  const items = pendientes.map((p) => `${p.numero} (${p.nombre})`);
+  if (items.length === 1) return `Falta aceptar la pregunta ${items[0]}`;
+  return `Falta aceptar las preguntas ${items.slice(0, -1).join(", ")} y ${items[items.length - 1]}`;
+}
+export const FALTA_ACEPTAR_AYUDA =
+  "Se activa cuando respondas las tuyas y aceptes las de tu equipo.";
+
+/** Integrante con una parte tomada (D461). PROVISIONAL, fila 268. */
+export function parteTomadaTexto(capitan: string): string {
+  return `${capitan} decidió responder esta pregunta.`;
+}
+export function partesTomadasAvisoTexto(capitan: string): string {
+  return `${capitan} decidió responder las preguntas que te había asignado y envía la tarea completa.`;
+}
 
 /** Integrante con preguntas asignadas. Fila 225. */
 export const PARTES_TITULO = "Tus preguntas";
@@ -438,6 +583,9 @@ export function mensajeErrorParte(error: ErrorParte): string {
       return "Esta pregunta ya no es tuya: el capitán la quitó o se la dio a otra persona.";
     case "estado":
       return "Esa parte cambió mientras la tenías abierta. Actualiza la página para verla.";
+    // Solo sale al enviar la tarea (D463); aquí no debería llegar
+    case "partes-pendientes":
+      return "Falta aceptar alguna parte de tu equipo.";
     case "integrante":
       return "Esa persona ya no está en tu equipo. Actualiza la página.";
     case "incompleta":

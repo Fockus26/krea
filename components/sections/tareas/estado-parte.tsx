@@ -1,4 +1,4 @@
-import { Check, Clock, Inbox, Undo2, UserRound } from "lucide-react";
+import { Check, Clock, Hand, Inbox, Undo2, UserRound } from "lucide-react";
 import type * as React from "react";
 import type { QuestionAnswer } from "@/components/krea/question-card-detail";
 import { RespuestaEnlace } from "@/components/krea/respuesta-enlace";
@@ -30,6 +30,12 @@ const ESTADOS: Record<
     variant: "warn",
     icon: Undo2,
     label: ESTADO_PARTE_TEXTO.devuelta,
+  },
+  // «La respondo yo» (D461): como sin asignar, pero con otra palabra e ícono
+  tomada: {
+    variant: "neutral",
+    icon: Hand,
+    label: ESTADO_PARTE_TEXTO.tomada,
   },
 };
 

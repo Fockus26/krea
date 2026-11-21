@@ -2,14 +2,28 @@
 
 import { Clock, Save, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useRef, useState, useTransition } from "react";
+import {
+  type ReactNode,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { ErrorEnPantalla } from "@/components/estados/errores";
 import type {
   ImageUploadFile,
   ImageUploadStatus,
 } from "@/components/krea/image-upload";
 import { QuestionCardAnswer } from "@/components/krea/question-card-answer";
+import type { QuestionAnswer } from "@/components/krea/question-card-detail";
 import { ActionBar } from "@/components/sections/shared/action-bar";
+import { RespuestaParteVista } from "@/components/sections/tareas/estado-parte";
+import {
+  type AccionTomar,
+  TomarParte,
+  tomarFocoPendiente,
+} from "@/components/sections/tareas/tomar-parte";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -43,6 +57,7 @@ import {
   encolarOp,
   useOpCola,
 } from "@/lib/offline/navegador";
+import { FALTA_ACEPTAR_AYUDA, faltaAceptarTexto } from "@/lib/partes";
 import {
   avanceEntrega,
   BORRADOR_MS,
@@ -179,12 +194,29 @@ export type TaskAnswerFormProps = {
    */
   edicion?: { alSalir: (enfocar?: boolean) => void; enfocar?: boolean };
   /**
-   * Grupal por partes (D418): preguntas cuya respuesta de `inicial` gana sobre el borrador del
-   * teléfono (las partes aceptadas). La página remonta el formulario (`key`) cuando cambian.
+   * Grupal por partes (D462): preguntas asignadas a otro integrante, en solo lectura para el
+   * capitán (candado con su texto y lo que entregó). No van en el envío: lo aceptado lo pone el
+   * servidor (D463). «Entregar» espera a que todas estén aceptadas.
    */
-  prioridad?: readonly string[];
+  bloqueos?: Readonly<Record<string, BloqueoPregunta>>;
+  /** «La respondo yo» en la tarjeta bloqueada (D461); sin ella (galerías), no se ofrece. */
+  tomar?: AccionTomar;
   /** Línea extra de la confirmación: a quién se premarcará «No participó» (D420). */
   avisoEnvio?: string | null;
+};
+
+/** Una pregunta del capitán asignada a otro (D462). */
+export type BloqueoPregunta = {
+  /** Texto del candado según el estado de la parte. */
+  texto: string;
+  /** Lo que entregó, ya firmado (`null` si aún nada). */
+  respuesta: QuestionAnswer | null;
+  /** Aceptada: lista para el envío. */
+  aceptada: boolean;
+  /** Nombre corto de quien la tiene. */
+  nombre: string;
+  /** Asignada o devuelta: el capitán puede tomarla (D461). */
+  tomable: boolean;
 };
 
 /**
@@ -202,6 +234,9 @@ export type TaskAnswerFormProps = {
  * hasta el límite; la pregunta cuenta como respondida con al menos una y ninguna subiendo.
  * Con `edicion` (D395) edita una entrega ya enviada: `inicial` trae lo enviado, el botón es
  * «Guardar cambios» (misma confirmación) y «Cancelar» vuelve sin cambios (y sin borrador).
+ * Grupal por partes (D462): con `bloqueos`, esas preguntas van sin campo y fuera del envío. Un
+ * refresco del servidor no remonta el formulario: si una deja de estar bloqueada (el capitán la
+ * tomó, D461), su campo arranca con lo de `inicial` salvo que ya tuviera algo, y recibe el foco.
  */
 export function TaskAnswerForm({
   tareaId,
@@ -214,12 +249,15 @@ export function TaskAnswerForm({
   acciones,
   entregadaHref,
   edicion,
-  prioridad,
+  bloqueos,
+  tomar,
   avisoEnvio,
 }: TaskAnswerFormProps) {
   const router = useRouter();
   const helpId = useId();
+  const faltaId = useId();
   const titleId = useId();
+  const listaRef = useRef<HTMLOListElement>(null);
   const clave = claveBorrador(tareaId, titular);
   const [textos, setTextos] = useState<Record<string, string>>(() => {
     const t: Record<string, string> = {};
@@ -292,25 +330,21 @@ export function TaskAnswerForm({
     if (enfocar) document.getElementById(titleId)?.focus();
   }, [enfocar, titleId]);
 
-  // Recupera el borrador del dispositivo una vez (gana sobre lo inicial, salvo en las preguntas
-  // de `prioridad`: una parte aceptada, D418). Un refresco del servidor trae props nuevas: el ref
-  // evita pisar lo que el alumno ya escribió.
+  // Recupera el borrador del dispositivo una vez (gana sobre lo inicial). Un refresco del servidor
+  // trae props nuevas: el ref evita pisar lo que el alumno ya escribió.
   const restaurado = useRef(false);
-  const prioritarias = (prioridad ?? []).join("\u0000");
   useEffect(() => {
     if (bloqueadaPor || restaurado.current) return;
     restaurado.current = true;
-    const ganaInicial = new Set(
-      prioritarias ? prioritarias.split("\u0000") : [],
-    );
     try {
       const [t, i, v] = desdeBorrador(
         leerBorrador(window.localStorage.getItem(clave)),
       );
       const formato = new Map(
-        preguntas
-          .filter((p) => !ganaInicial.has(p.id))
-          .map((p) => [p.id, esVarias(p) ? ("varias" as const) : p.formato]),
+        preguntas.map((p) => [
+          p.id,
+          esVarias(p) ? ("varias" as const) : p.formato,
+        ]),
       );
       const soloDe = <T,>(
         m: Record<string, T>,
@@ -337,7 +371,55 @@ export function TaskAnswerForm({
     } catch {
       // Sin almacenamiento (modo privado): se trabaja sin borrador
     }
-  }, [clave, bloqueadaPor, preguntas, acciones, prioritarias]);
+  }, [clave, bloqueadaPor, preguntas, acciones]);
+
+  // Una pregunta que deja de estar bloqueada (D461: el capitán la tomó): arranca con lo de
+  // `inicial` (lo último que entregó el integrante) si su campo sigue vacío, y la tarjeta que se
+  // abre recibe el foco si la tomó desde aquí o desde el Reparto
+  const bloqueadas = preguntas
+    .filter((p) => bloqueos?.[p.id])
+    .map((p) => p.id)
+    .join("\u0000");
+  const bloqueadasAntes = useRef(bloqueadas);
+  useEffect(() => {
+    if (bloqueadasAntes.current === bloqueadas) return;
+    const antes = new Set(bloqueadasAntes.current.split("\u0000"));
+    const siguen = new Set(bloqueadas.split("\u0000"));
+    bloqueadasAntes.current = bloqueadas;
+    const abiertas = preguntas.filter(
+      (p) => antes.has(p.id) && !siguen.has(p.id),
+    );
+    for (const p of abiertas) {
+      const v = inicial[p.id];
+      if (v === undefined) continue;
+      if (p.formato === "texto") {
+        if (typeof v === "string")
+          setTextos((prev) =>
+            (prev[p.id] ?? "").trim() ? prev : { ...prev, [p.id]: v },
+          );
+      } else if (esVarias(p)) {
+        setVarias((prev) =>
+          (prev[p.id]?.length ?? 0) > 0
+            ? prev
+            : { ...prev, [p.id]: variasIniciales(v) },
+        );
+      } else if (typeof v !== "string" && !Array.isArray(v)) {
+        const img = v as ImagenRespuesta;
+        setImagenes((prev) =>
+          prev[p.id] && prev[p.id]?.status !== "vacia"
+            ? prev
+            : { ...prev, [p.id]: img },
+        );
+      }
+    }
+    const i = preguntas.findIndex(
+      (p) => abiertas.includes(p) && tomarFocoPendiente(p.id),
+    );
+    if (i >= 0)
+      listaRef.current?.children[i]
+        ?.querySelector<HTMLElement>("textarea, button:not([disabled])")
+        ?.focus();
+  }, [bloqueadas, preguntas, inicial]);
 
   // Borrador automático: 2 s después del último cambio
   useEffect(() => {
@@ -369,7 +451,14 @@ export function TaskAnswerForm({
     ...Object.values(imagenes),
     ...Object.values(varias).flat(),
   ].some((i) => i.status === "lista" && i.pendiente);
-  const estados: EstadoRespuesta[] = preguntas.map((p) => {
+  // Las bloqueadas (D462) no se responden aquí: cuentan como listas solo si están aceptadas
+  const pendientes = preguntas.flatMap((p, i) => {
+    const b = bloqueos?.[p.id];
+    return b && !b.aceptada ? [{ numero: i + 1, nombre: b.nombre }] : [];
+  });
+  const faltaAceptar = faltaAceptarTexto(pendientes);
+  const propias = preguntas.filter((p) => !bloqueos?.[p.id]);
+  const estados: EstadoRespuesta[] = propias.map((p) => {
     if (p.formato === "texto")
       return { formato: "texto", completa: (textos[p.id] ?? "").trim() !== "" };
     if (p.formato === "url")
@@ -390,7 +479,8 @@ export function TaskAnswerForm({
   });
   const { faltan, subiendo } = avanceEntrega(estados);
   // Ya en la cola: no se entrega otra vez (la primera puede estar entrando ahora mismo)
-  const listo = puedeEntregar(estados) && !enviando && !enEspera;
+  const listo =
+    puedeEntregar(estados) && pendientes.length === 0 && !enviando && !enEspera;
 
   const setImagen = (id: string, v: ImagenRespuesta) =>
     setImagenes((prev) => ({ ...prev, [id]: v }));
@@ -540,7 +630,8 @@ export function TaskAnswerForm({
     }
     const respuestas: EnvioEntrega["respuestas"] = {};
     const locales: ImagenCola[] = [];
-    for (const p of preguntas) {
+    // Las asignadas a otro no van: el servidor pone lo aceptado (D463)
+    for (const p of propias) {
       if (p.formato === "texto")
         respuestas[p.id] = { texto: textos[p.id] ?? "" };
       else if (p.formato === "url") {
@@ -597,7 +688,9 @@ export function TaskAnswerForm({
           if (
             r.error === "ya-entregada" ||
             r.error === "ya-evaluada" ||
-            r.error === "cerrada"
+            r.error === "cerrada" ||
+            // El reparto cambió (D463): trae los bloqueos de ahora
+            r.error === "partes-pendientes"
           ) {
             // Al editar, la página deja de ofrecer el formulario: el aviso queda en un toast
             if (edicion) toast.error(mensajeErrorEntrega(r.error));
@@ -628,6 +721,45 @@ export function TaskAnswerForm({
     });
   }
 
+  /**
+   * Asignada a otro (D462): candado con su texto y, en el pie, lo que entregó y «La respondo yo».
+   * Se esparce en cada `QuestionCardAnswer`, sea cual sea su formato.
+   */
+  function bloqueoDe(
+    p: PreguntaEntrega,
+    numero: number,
+  ): { bloqueo?: string; children?: ReactNode } {
+    const b = bloqueos?.[p.id];
+    if (!b) return {};
+    const conTomar = b.tomable && tomar;
+    return {
+      bloqueo: b.texto,
+      children:
+        b.respuesta || conTomar ? (
+          <div className="flex flex-col gap-2">
+            {b.respuesta ? (
+              <>
+                {/* PROVISIONAL (CONTENT_CHECKLIST fila 230) */}
+                <p className="text-eyebrow text-text-2">Lo que entregó</p>
+                <RespuestaParteVista respuesta={b.respuesta} />
+              </>
+            ) : null}
+            {conTomar ? (
+              <div className="flex flex-wrap gap-2">
+                <TomarParte
+                  tareaId={tareaId}
+                  preguntaId={p.id}
+                  numero={numero}
+                  nombre={b.nombre}
+                  accion={tomar}
+                />
+              </div>
+            ) : null}
+          </div>
+        ) : undefined,
+    };
+  }
+
   return (
     <>
       <section aria-labelledby={titleId} className="flex flex-col gap-3">
@@ -639,7 +771,7 @@ export function TaskAnswerForm({
         >
           {edicion ? "Edita tus respuestas" : "Preguntas"}
         </h2>
-        <ol className="m-0 flex list-none flex-col gap-4 p-0">
+        <ol ref={listaRef} className="m-0 flex list-none flex-col gap-4 p-0">
           {preguntas.map((p, i) =>
             esVarias(p) ? (
               <QuestionCardAnswer
@@ -648,6 +780,7 @@ export function TaskAnswerForm({
                 enunciado={p.enunciado}
                 valor={p.valor}
                 bloqueadaPor={bloqueadaPor}
+                {...bloqueoDe(p, i + 1)}
                 level={3}
                 formato="imagenes"
                 limite={p.maxImagenes ?? 1}
@@ -711,6 +844,7 @@ export function TaskAnswerForm({
                 enunciado={p.enunciado}
                 valor={p.valor}
                 bloqueadaPor={bloqueadaPor}
+                {...bloqueoDe(p, i + 1)}
                 level={3}
                 formato="texto"
                 value={textos[p.id] ?? ""}
@@ -726,6 +860,7 @@ export function TaskAnswerForm({
                 enunciado={p.enunciado}
                 valor={p.valor}
                 bloqueadaPor={bloqueadaPor}
+                {...bloqueoDe(p, i + 1)}
                 level={3}
                 formato="imagen"
                 upload={{
@@ -785,9 +920,19 @@ export function TaskAnswerForm({
                     </span>
                   </>
                 ) : (
-                  <span className="text-small-b text-text">
-                    {faltaTexto(faltan, subiendo)}
-                  </span>
+                  <>
+                    {/* Con todo lo suyo listo y partes por aceptar, solo lo que falta (D462) */}
+                    {faltaAceptar && faltan === 0 && subiendo === 0 ? null : (
+                      <span className="text-small-b text-text">
+                        {faltaTexto(faltan, subiendo)}
+                      </span>
+                    )}
+                    {faltaAceptar ? (
+                      <span id={faltaId} className="text-small-b text-text">
+                        {faltaAceptar}
+                      </span>
+                    ) : null}
+                  </>
                 )}
                 {imagenesSinSubir && !enEspera ? (
                   <span className="text-small text-text-2">
@@ -821,7 +966,13 @@ export function TaskAnswerForm({
                   <DialogTrigger asChild>
                     <Button
                       disabled={!listo}
-                      aria-describedby={listo ? undefined : helpId}
+                      aria-describedby={
+                        listo
+                          ? undefined
+                          : faltaAceptar && !enEspera
+                            ? `${faltaId} ${helpId}`
+                            : helpId
+                      }
                     >
                       {edicion ? (
                         <Save aria-hidden="true" />
@@ -871,7 +1022,9 @@ export function TaskAnswerForm({
               </Dialog>
               {listo || enviando || enEspera ? null : (
                 <p id={helpId} className="text-small text-text-2">
-                  Se activa cuando respondas todas las preguntas.
+                  {pendientes.length > 0
+                    ? FALTA_ACEPTAR_AYUDA
+                    : "Se activa cuando respondas todas las preguntas."}
                 </p>
               )}
             </div>

@@ -1,15 +1,21 @@
 // Grupal por partes (D416–D424): la lógica pura del reparto, el `sinParte` del envío, el modelo y
 // el premarcado de Evaluar.
 import { describe, expect, test } from "bun:test";
+import { accesoPartes } from "@/lib/acceso";
 import { mapasEvaluar, vistaEvaluar } from "@/lib/evaluar-datos";
 import { type Entrega, type Parte, type Tarea, zEntrega } from "@/lib/modelo";
 import {
-  aceptadas,
   aplicarParte,
   avisoSinParteTexto,
+  bloqueoTexto,
+  faltaAceptarTexto,
+  huellaDePartes,
+  huellaPartes,
   partesDeIntegrante,
   permisoParte,
   repartoCapitan,
+  repartoParaEnviar,
+  rutaVersionPartes,
   sinParteDe,
 } from "@/lib/partes";
 import {
@@ -229,6 +235,60 @@ describe("aplicarParte (D417)", () => {
     });
   });
 
+  test("tomar (D461): solo el capitán y solo una asignada o devuelta; conserva lo entregado", () => {
+    expect(aplicar(parte(), { tipo: "tomar" })).toEqual({
+      ok: true,
+      parte: parte({ estado: "tomada", actualizadoEn: 9 }),
+      sinUso: [],
+    });
+    const devuelta = parte({ estado: "devuelta", respuesta: { texto: "a" } });
+    expect(aplicar(devuelta, { tipo: "tomar" })).toMatchObject({
+      ok: true,
+      parte: { estado: "tomada", asignado: ADELA, respuesta: { texto: "a" } },
+    });
+    for (const estado of ["entregada", "aceptada", "tomada"] as const)
+      expect(aplicar(parte({ estado }), { tipo: "tomar" })).toEqual({
+        ok: false,
+        error: "estado",
+      });
+    expect(aplicar(null, { tipo: "tomar" })).toEqual({
+      ok: false,
+      error: "estado",
+    });
+    expect(
+      aplicar(parte(), { tipo: "tomar" }, { cedula: ADELA, capitan: false }),
+    ).toEqual({ ok: false, error: "no-capitan" });
+  });
+
+  test("tomada: el integrante ya no entrega; asignarla al mismo se la devuelve; a otro, como siempre", () => {
+    const adela = { cedula: ADELA, capitan: false };
+    const tomada = parte({ estado: "tomada", respuesta: { texto: "a" } });
+    expect(
+      aplicar(tomada, { tipo: "entregar", respuesta: { texto: "x" } }, adela),
+    ).toEqual({ ok: false, error: "no-asignada" });
+    expect(aplicar(tomada, { tipo: "asignar", asignado: ADELA })).toEqual({
+      ok: true,
+      parte: { ...tomada, estado: "devuelta", actualizadoEn: 9 },
+      sinUso: [],
+    });
+    expect(
+      aplicar(parte({ estado: "tomada" }), {
+        tipo: "asignar",
+        asignado: ADELA,
+      }),
+    ).toMatchObject({ ok: true, parte: { estado: "asignada" } });
+    expect(aplicar(tomada, { tipo: "asignar", asignado: LUIS })).toEqual({
+      ok: true,
+      parte: parte({ asignado: LUIS, actualizadoEn: 9 }),
+      sinUso: [],
+    });
+    expect(aplicar(tomada, { tipo: "asignar", asignado: null })).toEqual({
+      ok: true,
+      parte: null,
+      sinUso: [],
+    });
+  });
+
   test("una parte de alguien que ya no está en el equipo cuenta como sin asignar (D421)", () => {
     const deOtro = parte({ asignado: "39999999", estado: "entregada" });
     expect(aplicar(deOtro, { tipo: "aceptar" })).toEqual({
@@ -245,6 +305,13 @@ describe("sinParteDe (D420)", () => {
   const p = (asignado: string, estado: Parte["estado"]) => ({
     asignado,
     estado,
+  });
+
+  test("tomada (D461): no cuenta como entregada; si entregó otra, no queda marcado", () => {
+    expect(sinParteDe([p(ADELA, "tomada")], MIEMBROS, CAP)).toEqual([ADELA]);
+    expect(
+      sinParteDe([p(ADELA, "tomada"), p(ADELA, "aceptada")], MIEMBROS, CAP),
+    ).toEqual([]);
   });
 
   test("tenía pregunta y no entregó ninguna; la entregada sin aceptar cuenta", () => {
@@ -297,11 +364,112 @@ describe("vistas del reparto", () => {
     expect(partesDeIntegrante(preguntas, [], MIEMBROS, CAP, ADELA)).toBeNull();
   });
 
-  test("lo aceptado precarga al capitán, con la versión para remontar el formulario", () => {
-    expect(aceptadas(partes, MIEMBROS, CAP)).toEqual({
-      respuestas: { p1: { tipo: "texto", texto: "Hecha" } },
-      version: 5,
+  test("tomada (D461): deja de ser del integrante, con aviso; la de otro también la responde el capitán", () => {
+    const conTomadas = [
+      parte({ estado: "tomada", respuesta: { texto: "Vieja" } }),
+      parte({ preguntaId: "p2", asignado: LUIS, estado: "tomada" }),
+    ];
+    // Todas las suyas tomadas: sigue viendo el reparto (como lector, con el aviso)
+    expect(
+      partesDeIntegrante(preguntas, conTomadas, MIEMBROS, CAP, ADELA),
+    ).toEqual([
+      { mia: false, asignado: null, tomada: true },
+      { mia: false, asignado: null },
+      { mia: false, asignado: null },
+    ]);
+  });
+
+  test("al enviar (D463): lo aceptado entra desde el reparto; lo pendiente frena; tomada y sin asignar no", () => {
+    const qs = [{ id: "p1" }, { id: "p2" }, { id: "p3" }];
+    const aceptada = parte({
+      estado: "aceptada",
+      respuesta: { texto: "De Adela" },
     });
+    const tomada = parte({
+      preguntaId: "p2",
+      asignado: LUIS,
+      estado: "tomada",
+    });
+    expect(repartoParaEnviar(qs, [aceptada, tomada], MIEMBROS, CAP)).toEqual({
+      ok: true,
+      respuestas: { p1: { texto: "De Adela" } },
+    });
+    for (const estado of ["asignada", "entregada", "devuelta"] as const)
+      expect(
+        repartoParaEnviar(
+          qs,
+          [aceptada, parte({ preguntaId: "p3", asignado: LUIS, estado })],
+          MIEMBROS,
+          CAP,
+        ),
+      ).toEqual({ ok: false });
+    // Aceptada sin respuesta (no debería pasar): pendiente
+    expect(
+      repartoParaEnviar(qs, [parte({ estado: "aceptada" })], MIEMBROS, CAP),
+    ).toEqual({ ok: false });
+    // De alguien que ya no está (D421) o de una pregunta que ya no existe: no cuenta
+    expect(
+      repartoParaEnviar(
+        qs,
+        [
+          parte({ asignado: "39999999" }),
+          parte({ preguntaId: "borrada", estado: "asignada" }),
+        ],
+        MIEMBROS,
+        CAP,
+      ),
+    ).toEqual({ ok: true, respuestas: {} });
+  });
+
+  test("huella del reparto (D465): cantidad, último cambio y envío", () => {
+    expect(huellaDePartes([])).toBe("0.0.0");
+    expect(huellaDePartes(partes)).toBe("2.5.0");
+    expect(huellaPartes({ filas: 2, maxActualizado: 5, enviadaEn: null })).toBe(
+      huellaDePartes(partes),
+    );
+    expect(huellaPartes({ filas: 2, maxActualizado: 5, enviadaEn: 7 })).toBe(
+      "2.5.7",
+    );
+    expect(rutaVersionPartes("t1", null)).toBe("/api/partes/version?tarea=t1");
+    expect(rutaVersionPartes("t1", "2.5.0")).toBe(
+      "/api/partes/version?tarea=t1&desde=2.5.0",
+    );
+  });
+
+  test("la ruta en vivo (D465): solo un alumno con equipo y sin contraseña temporal", () => {
+    const alumno = {
+      uid: ADELA,
+      rol: "estudiante" as const,
+      seccion: "5A" as const,
+      equipoId: "eq",
+    };
+    expect(accesoPartes(alumno)).toBe("ok");
+    expect(accesoPartes(null)).toBe("sin-sesion");
+    expect(accesoPartes({ ...alumno, debeCambiarPassword: true })).toBe(
+      "sin-sesion",
+    );
+    expect(accesoPartes({ ...alumno, equipoId: null })).toBe("prohibido");
+    expect(accesoPartes({ ...alumno, rol: "profesor" })).toBe("prohibido");
+  });
+
+  test("copy del capitán (D462): candado por estado y lo que falta aceptar", () => {
+    expect(bloqueoTexto("asignada", "Adela")).toBe(
+      "Asignada a Adela: aún no te la entrega.",
+    );
+    expect(bloqueoTexto("aceptada", "Adela")).toBe(
+      "Aceptada: es la respuesta de Adela.",
+    );
+    expect(faltaAceptarTexto([])).toBeNull();
+    expect(faltaAceptarTexto([{ numero: 2, nombre: "Adela" }])).toBe(
+      "Falta aceptar la pregunta 2 (Adela)",
+    );
+    expect(
+      faltaAceptarTexto([
+        { numero: 1, nombre: "Adela" },
+        { numero: 2, nombre: "Luis" },
+        { numero: 4, nombre: "Eva" },
+      ]),
+    ).toBe("Falta aceptar las preguntas 1 (Adela), 2 (Luis) y 4 (Eva)");
   });
 
   test("aviso al entregar: singular, plural y nadie", () => {
@@ -472,7 +640,7 @@ describe("repartoVista (D422)", () => {
   });
   const urls = new Map([["entregas/t1/c/l.jpg", "https://firmada/l"]]);
 
-  test("capitán: panel, lo aceptado precargado y la versión", () => {
+  test("capitán: panel y lo de otros en solo lectura, con su candado por estado (D462)", () => {
     const e = entrada(
       { ...cabecera, estado: "responder", autor: "Carla" },
       CAP,
@@ -482,19 +650,78 @@ describe("repartoVista (D422)", () => {
     expect(r?.modo).toBe("capitan");
     if (r?.modo !== "capitan") return;
     expect(r.integrantes.map((m) => m.cedula)).toEqual([ADELA, LUIS]);
-    expect(r.filas.map((f) => [f.asignado, f.estado])).toEqual([
-      [ADELA, "aceptada"],
-      [LUIS, "entregada"],
+    expect(r.filas.map((f) => [f.asignado, f.nombre, f.estado])).toEqual([
+      [ADELA, "Adela Pérez", "aceptada"],
+      [LUIS, "Luis Pérez", "entregada"],
     ]);
     expect(r.filas[1]?.respuesta).toMatchObject({
       tipo: "imagen",
       src: "https://firmada/l",
     });
-    expect(r.inicial).toEqual({ p1: "Hecha" });
-    expect(r.prioridad).toEqual(["p1"]);
-    expect(r.version).toBe(7);
+    // Lo aceptado ya no precarga un campo: va en solo lectura y entra desde el servidor (D463)
+    expect(r.inicial).toEqual({});
+    expect(r.bloqueos.p1).toEqual({
+      texto: "Aceptada: es la respuesta de Adela Pérez.",
+      respuesta: { tipo: "texto", texto: "Hecha" },
+      aceptada: true,
+      nombre: "Adela Pérez",
+      tomable: false,
+    });
+    expect(r.bloqueos.p2).toMatchObject({
+      texto: "Luis Pérez te la entregó: acéptala o devuélvela en Reparto.",
+      respuesta: { tipo: "imagen", src: "https://firmada/l" },
+      aceptada: false,
+      tomable: false,
+    });
     // Los dos entregaron algo: nadie queda marcado
     expect(r.aviso).toBeNull();
+  });
+
+  test("capitán: asignada y devuelta se pueden tomar; la tomada se abre precargada (D461)", () => {
+    const e = entrada(
+      { ...cabecera, estado: "responder", autor: "Carla" },
+      CAP,
+    );
+    const r = repartoVista({
+      ...e,
+      partes: [
+        parte({ estado: "tomada", respuesta: { texto: "De Adela" } }),
+        parte({ preguntaId: "p2", asignado: LUIS, estado: "asignada" }),
+      ],
+      urls,
+    });
+    if (r?.modo !== "capitan") throw new Error("capitán");
+    expect(Object.keys(r.bloqueos)).toEqual(["p2"]);
+    expect(r.bloqueos.p2).toMatchObject({
+      respuesta: null,
+      aceptada: false,
+      tomable: true,
+    });
+    expect(r.inicial).toEqual({ p1: "De Adela" });
+    expect(r.aviso).toBe(
+      "Adela Pérez y Luis Pérez quedarán como “No participó”: tenían preguntas y no entregaron ninguna.",
+    );
+  });
+
+  test("integrante: la tomada lleva el aviso del capitán (D461)", () => {
+    const e = entrada({ ...cabecera, estado: "lector", capitan: null }, ADELA);
+    const r = repartoVista({
+      ...e,
+      partes: [parte({ estado: "tomada" })],
+      urls,
+    });
+    expect(r).toEqual({
+      modo: "integrante",
+      capitan: "Carla",
+      partes: [
+        {
+          mia: false,
+          bloqueadaPor: "Carla",
+          aviso: "Carla decidió responder esta pregunta.",
+        },
+        { mia: false, bloqueadaPor: "Carla" },
+      ],
+    });
   });
 
   test("integrante: solo su parte y su imagen; la otra, bloqueada con el nombre de quien la tiene", () => {

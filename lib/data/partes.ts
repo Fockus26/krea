@@ -4,7 +4,7 @@
 //
 // Cada acción bloquea la fila de la tarea (`FOR UPDATE`), igual que el envío: así ninguna parte
 // cambia mientras el capitán envía, y con la entrega ya enviada todo queda congelado (D419).
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { contexto } from "@/lib/data/entregas";
 import {
   entregaDeFila,
@@ -20,6 +20,7 @@ import {
   type AccionParte,
   aplicarParte,
   type ErrorParte,
+  huellaPartes,
   permisoParte,
   repartoCongelado,
 } from "@/lib/partes";
@@ -120,6 +121,37 @@ export async function accionParteEnTransaccion(
         });
     }
     return r.sinUso.length > 0 ? { ok: true, sinUso: r.sinUso } : { ok: true };
+  });
+}
+
+/**
+ * Huella del reparto de la entrega de un equipo para el sondeo (D465): cantidad de partes, mayor
+ * `actualizado_en` y, si la entrega ya salió, su `enviada_en`. Dos lecturas por clave, sin bloqueo.
+ */
+export async function leerVersionPartes(
+  db: Tx,
+  entregaId: string,
+): Promise<string> {
+  const [[resumen], [entrega]] = await enSerie([
+    db
+      .select({
+        filas: sql<number>`count(*)::int`,
+        max: sql<number | null>`max(${partes.actualizadoEn})`,
+      })
+      .from(partes)
+      .where(eq(partes.entregaId, entregaId)),
+    db
+      .select({ estado: entregas.estado, enviadaEn: entregas.enviadaEn })
+      .from(entregas)
+      .where(eq(entregas.id, entregaId)),
+  ]);
+  return huellaPartes({
+    filas: Number(resumen?.filas ?? 0),
+    maxActualizado: resumen?.max == null ? null : Number(resumen.max),
+    enviadaEn:
+      entrega && entrega.estado !== "borrador"
+        ? Number(entrega.enviadaEn ?? 0)
+        : null,
   });
 }
 
