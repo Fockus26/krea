@@ -8,6 +8,8 @@ import {
   infoEquipos,
   rankingDeSeccion,
 } from "@/lib/datos/estudiante";
+import { idPublico } from "@/lib/datos/id-publico";
+import { rankingPublico } from "@/lib/id-publico";
 import type { Vista } from "@/lib/ranking-vista";
 
 // Las pestañas Estudiantes | Equipos son enlaces entre rutas (D095): `/ranking` y `/ranking/equipos`.
@@ -16,7 +18,7 @@ const ENLACES = { estudiantes: "/ranking", equipos: "/ranking/equipos" };
 /**
  * Ranking del estudiante (HANDOFF §3): su sección, «tú» = la sesión. El servidor pinta la primera
  * instantánea y el cliente la mantiene en vivo (D190), sin rótulo «En vivo» (D257). Compartido
- * por las dos rutas.
+ * por las dos rutas. Las filas llevan el id público, nunca la cédula de los compañeros (D494).
  */
 export async function RankingEstudiante({ vista }: { vista: Vista }) {
   const { usuario, seccion } = await alumnoActual();
@@ -44,8 +46,8 @@ export async function RankingEstudiante({ vista }: { vista: Vista }) {
     <RankingEnVivo
       seccion={seccion}
       vista={vista}
-      inicial={ranking}
-      tu={{ cedula: usuario.cedula, equipoId: usuario.equipoId }}
+      inicial={rankingPublico(ranking, idPublico)}
+      tu={{ id: idPublico(usuario.cedula), equipoId: usuario.equipoId }}
       info={info}
       enlaces={{ vista: ENLACES }}
     />

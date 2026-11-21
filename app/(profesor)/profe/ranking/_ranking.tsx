@@ -13,6 +13,7 @@ import {
   rankingsTodos,
 } from "@/lib/datos/profesor";
 import { catalogoSecciones } from "@/lib/datos/secciones";
+import { conCedula } from "@/lib/id-publico";
 import { infoDeEquipos } from "@/lib/ranking-en-vivo";
 import type { Vista } from "@/lib/ranking-vista";
 import { seccionDeSlug, seccionesDe, slugSeccion } from "@/lib/secciones";
@@ -23,7 +24,7 @@ const RUTA = "/profe/ranking";
 const href = (seccion: string, vista: Vista) =>
   `${RUTA}/${slugSeccion(seccion)}${vista === "equipos" ? "/equipos" : ""}`;
 
-const SIN_TU = { cedula: null, equipoId: null };
+const SIN_TU = { id: null, equipoId: null };
 
 /**
  * Ranking del profesor (HANDOFF §3; W8): `ranking/{seccion}` en vivo como el del estudiante
@@ -108,7 +109,8 @@ export async function RankingProfe({
       vista={vista}
       inicial={ranking}
       tu={SIN_TU}
-      info={infoDeEquipos(propios, logos)}
+      // El profe ve cédulas: cada fila enlaza a Alumnos (D494)
+      info={infoDeEquipos(propios, logos, conCedula)}
       enlaces={enlaces}
     />
   );

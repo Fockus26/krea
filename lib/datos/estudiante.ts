@@ -24,8 +24,10 @@ import {
   usuarioDeFila,
 } from "@/lib/data/usuarios";
 import { db, opcional } from "@/lib/datos/comun";
+import { idPublico } from "@/lib/datos/id-publico";
 import { urlsFirmadas } from "@/lib/datos/imagenes";
 import { ajustes, entregas, equipos, tareas, usuarios } from "@/lib/db/schema";
+import { conSemillaPublica } from "@/lib/id-publico";
 import {
   type Entrega,
   type Equipo,
@@ -87,7 +89,10 @@ export const rankingDeSeccion = cache(
     leerRanking(db(), seccion),
 );
 
-/** Integrantes actuales de un equipo (perfiles: solo el servidor los lee). */
+/**
+ * Integrantes actuales de un equipo (perfiles: solo el servidor los lee). La semilla que aún
+ * tuviera la cédula se cambia por el id público: las vistas la mandan al cliente (D496).
+ */
 export const integrantesDe = cache(
   async (equipoId: string): Promise<Usuario[]> => {
     const filas = await db()
@@ -96,7 +101,9 @@ export const integrantesDe = cache(
       .where(
         and(eq(usuarios.equipoId, equipoId), eq(usuarios.rol, "estudiante")),
       );
-    return validas(filas.map(usuarioDeFila));
+    return validas(filas.map(usuarioDeFila)).map((u) =>
+      conSemillaPublica(u, idPublico),
+    );
   },
 );
 
@@ -170,9 +177,10 @@ export async function entregasGrupales(seccion: SeccionId): Promise<Entrega[]> {
 }
 
 /**
- * Tema, capitán y logo de los equipos de la sección (lo que el ranking no trae). Los logos son de
- * su propia sección, que el alumno ya ve en el ranking, y solo se firman si la vista los pinta
- * (`conLogos`: la de equipos; la capa gratuita de B2 cuenta cada descarga, D212).
+ * Tema, capitán (su id público, D494) y logo de los equipos de la sección (lo que el ranking no
+ * trae). Los logos son de su propia sección, que el alumno ya ve en el ranking, y solo se firman
+ * si la vista los pinta (`conLogos`: la de equipos; la capa gratuita de B2 cuenta cada descarga,
+ * D212).
  */
 export async function infoEquipos(
   seccion: SeccionId,
@@ -186,7 +194,7 @@ export async function infoEquipos(
   const logos = conLogos
     ? await urlsFirmadas(lista.flatMap((e) => (e.logoPath ? [e.logoPath] : [])))
     : new Map<string, string>();
-  return infoDeEquipos(lista, logos);
+  return infoDeEquipos(lista, logos, idPublico);
 }
 
 /** URL firmada del logo de su equipo (Inicio y Mi equipo), o `null` sin logo. */

@@ -4,8 +4,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ErrorEnPantalla, SesionVencida } from "@/components/estados/errores";
 import { RankAnnouncer } from "@/components/krea/rank-announcer";
 import {
-  type RankingSeccion,
+  type RankingPublico,
   type SeccionId,
+  zRankingPublico,
   zRankingSeccion,
 } from "@/lib/modelo";
 import type { RankEvento } from "@/lib/rank-row";
@@ -45,7 +46,8 @@ export function RankingEnVivo({
   rol?: "estudiante" | "profesor";
   seccion: SeccionId;
   vista: Vista;
-  inicial: RankingSeccion;
+  /** Para el alumno, con ids públicos (D494); para el profe, con cédulas (enlazan a Alumnos). */
+  inicial: RankingPublico;
   tu: Tu;
   info: InfoEquipos;
   enlaces: {
@@ -115,7 +117,10 @@ export function RankingEnVivo({
           return;
         }
         if (!res.ok) throw new Error(String(res.status));
-        const r = zRankingSeccion.safeParse(await res.json());
+        // La API responde con la forma de la sesión: cédulas al profe, ids públicos al alumno
+        const r = (
+          rol === "profesor" ? zRankingSeccion : zRankingPublico
+        ).safeParse(await res.json());
         if (!r.success) return;
         version.current = r.data.actualizadoEn;
         anotar(true);

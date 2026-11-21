@@ -19,7 +19,7 @@ import {
   type Respuesta,
   rutasImagen,
   type Usuario,
-  zCedula,
+  zIdPublico,
   zRespuesta,
 } from "@/lib/modelo";
 
@@ -31,7 +31,8 @@ const zClaveParte = z.object({ tareaId: zIdTarea, preguntaId: zIdPregunta });
 
 /** Capitán: asigna la pregunta a un integrante, o la quita (`asignado: null`, la responde él). */
 export const zAsignarParte = zClaveParte.extend({
-  asignado: zCedula.nullable(),
+  /** El id público del integrante (D495): la capa de datos lo traduce a su cédula. */
+  asignado: zIdPublico.nullable(),
 });
 /** Capitán: acepta o devuelve una parte entregada. */
 export const zDecidirParte = zClaveParte;

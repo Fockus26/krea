@@ -15,6 +15,7 @@ import {
 import { type Db, enSerie, type Tx } from "@/lib/db";
 import { entregas, partes, usuarios } from "@/lib/db/schema";
 import { carpetaEntrega, respuestasValidas } from "@/lib/entregas";
+import { cedulaDeId, type IdAlumno } from "@/lib/id-publico";
 import { type Parte, rutasImagen } from "@/lib/modelo";
 import {
   type AccionParte,
@@ -43,12 +44,15 @@ export async function leerPartes(db: Tx, entregaId: string): Promise<Parte[]> {
  * comprueba que la grupal siga abierta y la entrega sin enviar, lee los integrantes actuales y la
  * parte, y escribe lo que decide `aplicarParte` (o borra la fila al quitar la asignación). Las
  * imágenes que la parte deja sin usar vuelven en `sinUso` para borrarlas tras el commit (D396).
+ * Al asignar, `asignado` llega con el id público del integrante (D495): se traduce a la cédula
+ * buscando entre los integrantes actuales del equipo con `idDe`; si no es de ninguno, `integrante`.
  */
 export async function accionParteEnTransaccion(
   db: Db,
   uid: string,
   entrada: { tareaId: string; preguntaId: string; accion: AccionParte },
   ahora: number,
+  idDe: IdAlumno,
 ): Promise<ResultadoParteTx> {
   const { tareaId, preguntaId, accion } = entrada;
   return db.transaction(async (tx): Promise<ResultadoParteTx> => {
@@ -83,6 +87,15 @@ export async function accionParteEnTransaccion(
       return { ok: false, error: "enviada" };
 
     let a = accion;
+    if (a.tipo === "asignar" && a.asignado !== null) {
+      const cedula = cedulaDeId(
+        a.asignado,
+        miembros.map((m) => m.cedula),
+        idDe,
+      );
+      if (!cedula) return { ok: false, error: "integrante" };
+      a = { tipo: "asignar", asignado: cedula };
+    }
     if (a.tipo === "entregar") {
       const normal = respuestasValidas(
         [pregunta],

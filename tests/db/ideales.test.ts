@@ -222,11 +222,23 @@ describe("lectura del alumno (D433, D434)", () => {
     await ponerTarea(db(), T, tarea("individual", "evaluada"));
     const d = await idealDelAlumno(db(), "5A", T, ANTES);
     expect(d?.ideal.entregaId).toBe(E1);
+    // La semilla de prueba es su cédula: no sale a otros alumnos, el autor va sin avatar (D496)
     expect(d?.autor).toEqual({
       tipo: "alumno",
       nombre: `Alumno ${A1} Prueba Z2`,
-      avatar: { estilo: "adventurer-neutral", semilla: A1 },
+      avatar: null,
     });
+    const semilla = "0f1e2d3c4b5a69788796a5b4c3d2e1f0";
+    await ponerUsuario(db(), {
+      ...alumno(A1),
+      avatar: { estilo: "adventurer-neutral", semilla },
+    });
+    expect((await idealDelAlumno(db(), "5A", T, ANTES))?.autor).toEqual({
+      tipo: "alumno",
+      nombre: `Alumno ${A1} Prueba Z2`,
+      avatar: { estilo: "adventurer-neutral", semilla },
+    });
+    await ponerUsuario(db(), alumno(A1));
     expect(d?.entrega?.respuestas.p1).toEqual({ texto: `Respuesta de ${A1}` });
   });
 
