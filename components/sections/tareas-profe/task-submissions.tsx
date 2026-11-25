@@ -226,7 +226,20 @@ export function TaskSubmissions({
                           </Link>
                         </Button>
                       ) : null}
-                      {f.accion && f.accionHref ? (
+                      {f.notaSinEntrega ? (
+                        <PonerNota
+                          tareaId={tareaId}
+                          titularId={f.titularId}
+                          nombre={f.nombre}
+                          tipo={f.tipo}
+                          poner={ponerNota}
+                          corregir={
+                            f.puntaje !== null && f.evaluadaEn !== null
+                              ? { puntaje: f.puntaje, evaluadaEn: f.evaluadaEn }
+                              : undefined
+                          }
+                        />
+                      ) : f.accion && f.accionHref ? (
                         <Button asChild variant="secondary" size="sm">
                           <Link
                             href={f.accionHref}

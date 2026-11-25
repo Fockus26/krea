@@ -31,13 +31,14 @@ import type {
  * Crea la entrega `tareaId__titularId` ya evaluada, sin respuestas ni puntaje por pregunta
  * (`puntos: null`), con la base vigente de cada integrante (D403). Individual: el alumno de una
  * sección de la tarea. Grupal: el equipo de una sección de la tarea y sus integrantes de hoy (foto
- * fija, como al enviar, D221). Si ya hay una entrega enviada o evaluada, no la pisa: se corrige
+ * fija, como al enviar, D221). Si ya hay una nota puesta así (`enviadaEn === null`), la corrige
+ * (D583) con el `evaluadaEn` que veía el profe; una entrega del alumno no se pisa: se corrige
  * desde Evaluar.
  */
 export async function ponerNotaSinEntregaEnTransaccion(
   db: Db,
   autorId: string,
-  { tareaId, titularId, puntaje }: PonerNotaSinEntrega,
+  { tareaId, titularId, puntaje, evaluadaEn }: PonerNotaSinEntrega,
   ahora: number,
 ): Promise<ResultadoNotaSinEntrega> {
   return db.transaction(async (tx): Promise<ResultadoNotaSinEntrega> => {
@@ -93,9 +94,6 @@ export async function ponerNotaSinEntregaEnTransaccion(
     }
     if (!t.secciones.includes(seccion))
       return { ok: false, error: "no-existe" };
-    if (integrantes.length === 0)
-      return { ok: false, error: "sin-integrantes" };
-
     const datos = await leerSeccion(tx, seccion);
     const id = idEntrega(tareaId, titularId);
     const [fe] = await tx
@@ -103,38 +101,70 @@ export async function ponerNotaSinEntregaEnTransaccion(
       .from(entregas)
       .where(eq(entregas.id, id))
       .for("update");
-    if (fe) {
-      const previa = entregaDeFila(fe);
-      // Enviada, evaluada o una fila que no valida: no se pisa
-      if (!previa || yaEnviada(previa))
-        return { ok: false, error: "ya-entregada" };
-    }
+    const previa = fe ? entregaDeFila(fe) : null;
+    // Una fila que no valida no se pisa
+    if (fe && !previa) return { ok: false, error: "ya-entregada" };
 
-    // La base de esta tarea (D403): la vigente de cada integrante al poner la nota
-    const bases: Record<string, number> = {};
-    for (const c of integrantes) {
-      const u = datos.usuarios.find((x) => x.cedula === c);
-      if (u) bases[c] = u.base;
+    let nueva: Entrega;
+    if (previa && yaEnviada(previa)) {
+      // Corregir una nota puesta sin entrega (D583): solo cambia el puntaje; integrantes, bases y
+      // comentarios se quedan, y la anterior va a `evaluacionAnterior` como en Evaluar (D205).
+      // Con respuestas o enviada por el alumno, se corrige desde Evaluar.
+      const anterior = previa.evaluacion;
+      if (
+        previa.estado !== "evaluada" ||
+        previa.enviadaEn !== null ||
+        !anterior
+      )
+        return { ok: false, error: "ya-entregada" };
+      // Ya está así (un reintento, o dos profes con la misma nota): ok sin escribir
+      if (anterior.puntaje === puntaje && anterior.puntos === null)
+        return { ok: true };
+      // Sin `evaluadaEn` el profe veía «Sin entregar»: otro la puso mientras tanto
+      if (evaluadaEn === undefined || anterior.evaluadaEn !== evaluadaEn)
+        return { ok: false, error: "cambio" };
+      const { id: _, ...e } = previa;
+      nueva = {
+        ...e,
+        evaluacion: {
+          ...anterior,
+          puntos: null,
+          puntaje,
+          evaluadaPor: autorId,
+          evaluadaEn: ahora,
+        },
+        evaluacionAnterior: anterior,
+      };
+    } else {
+      if (evaluadaEn !== undefined) return { ok: false, error: "cambio" };
+      if (integrantes.length === 0)
+        return { ok: false, error: "sin-integrantes" };
+      // La base de esta tarea (D403): la vigente de cada integrante al poner la nota
+      const bases: Record<string, number> = {};
+      for (const c of integrantes) {
+        const u = datos.usuarios.find((x) => x.cedula === c);
+        if (u) bases[c] = u.base;
+      }
+      nueva = {
+        tareaId,
+        tipo: t.tipo,
+        titularId,
+        seccion,
+        integrantes,
+        estado: "evaluada",
+        respuestas: {},
+        enviadaPor: null,
+        enviadaEn: null,
+        evaluacion: {
+          puntos: null,
+          comentarios: {},
+          puntaje,
+          evaluadaPor: autorId,
+          evaluadaEn: ahora,
+          bases,
+        },
+      };
     }
-    const nueva: Entrega = {
-      tareaId,
-      tipo: t.tipo,
-      titularId,
-      seccion,
-      integrantes,
-      estado: "evaluada",
-      respuestas: {},
-      enviadaPor: null,
-      enviadaEn: null,
-      evaluacion: {
-        puntos: null,
-        comentarios: {},
-        puntaje,
-        evaluadaPor: autorId,
-        evaluadaEn: ahora,
-        bases,
-      },
-    };
     const doc = zEntrega.safeParse(nueva);
     if (!doc.success) return { ok: false, error: "invalida" };
     const fila = filaDeEntrega(id, doc.data);

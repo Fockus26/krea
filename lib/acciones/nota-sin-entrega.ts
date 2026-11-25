@@ -25,7 +25,8 @@ export async function ponerNotaSinEntrega(
       envio.data,
       Date.now(),
     );
-    if (r.ok) refresh();
+    // `cambio` / `ya-entregada`: la vista del profe estaba vieja, que vea la de ahora
+    if (r.ok || r.error === "cambio" || r.error === "ya-entregada") refresh();
     return r;
   } catch (e) {
     console.error(

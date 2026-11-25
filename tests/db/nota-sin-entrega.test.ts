@@ -133,9 +133,10 @@ describe("poner nota sin entrega (Postgres)", () => {
   });
 
   test("no pisa una entrega que ya existe", async () => {
+    // Otra nota sobre la que ya puso (veía «Sin entregar»): no la pisa (D583)
     expect(await poner(T_IND, A, 10)).toEqual({
       ok: false,
-      error: "ya-entregada",
+      error: "cambio",
     });
     expect((await entrega(idEntrega(T_IND, A))).evaluacion?.puntaje).toBe(16);
 
@@ -228,5 +229,84 @@ describe("nota sin entrega y las demás acciones", () => {
       "sin-envio",
     );
     expect(esElegible(e, T_GRU)).toBe(false);
+  });
+});
+
+describe("corregir una nota puesta sin entrega (D583)", () => {
+  test("cambia solo el puntaje, guarda la anterior y mueve el ranking", async () => {
+    const id = idEntrega(T_IND, A);
+    const antes = await entrega(id);
+    const vista = antes.evaluacion?.evaluadaEn ?? 0;
+    const puntosAntes =
+      (await docs.rankingDe(db(), "5C"))?.alumnos[A]?.puntos ?? 0;
+    const r = await ponerNotaSinEntregaEnTransaccion(
+      db(),
+      PROFE,
+      { tareaId: T_IND, titularId: A, puntaje: 18, evaluadaEn: vista },
+      AHORA + 100,
+    );
+    expect(r).toEqual({ ok: true });
+    const e = await entrega(id);
+    expect(e.evaluacion?.puntaje).toBe(18);
+    expect(e.evaluacion?.puntos).toBeNull();
+    expect(e.evaluacion?.bases).toEqual(antes.evaluacion?.bases);
+    expect(e.evaluacion?.evaluadaEn).toBe(AHORA + 100);
+    expect(e.evaluacionAnterior?.puntaje).toBe(16);
+    expect(e.integrantes).toEqual(antes.integrantes);
+    // 16 → 18 con base 15: +1,5
+    expect((await docs.rankingDe(db(), "5C"))?.alumnos[A]?.puntos).toBe(
+      puntosAntes + 1.5,
+    );
+  });
+
+  test("con la nota vieja (otro la cambió) o sin ella (veía «Sin entregar»): cambio", async () => {
+    const vieja = await ponerNotaSinEntregaEnTransaccion(
+      db(),
+      PROFE,
+      { tareaId: T_IND, titularId: A, puntaje: 10, evaluadaEn: 1 },
+      AHORA + 200,
+    );
+    expect(vieja).toEqual({ ok: false, error: "cambio" });
+    expect(await poner(T_IND, A, 10)).toEqual({ ok: false, error: "cambio" });
+    // La misma nota que ya tiene (reintento): ok sin escribir
+    expect(await poner(T_IND, A, 18)).toEqual({ ok: true });
+    expect((await entrega(idEntrega(T_IND, A))).evaluacion?.puntaje).toBe(18);
+  });
+
+  test("una entrega del alumno no se corrige por aquí", async () => {
+    const id = idEntrega(T_IND, B);
+    expect(
+      await ponerNotaSinEntregaEnTransaccion(
+        db(),
+        PROFE,
+        { tareaId: T_IND, titularId: B, puntaje: 10, evaluadaEn: 1 },
+        AHORA + 300,
+      ),
+    ).toEqual({ ok: false, error: "ya-entregada" });
+    expect((await entrega(id)).estado).toBe("entregada");
+  });
+
+  test("grupal: corrige aunque hoy el equipo no tenga integrantes; conserva los de la nota", async () => {
+    const id = idEntrega(T_GRU, EQ);
+    const antes = await entrega(id);
+    await docs.ponerUsuario(db(), alumno(A, 15, { equipoId: EQ_VACIO }));
+    await docs.ponerUsuario(db(), alumno(B, 18, { equipoId: EQ_VACIO }));
+    const r = await ponerNotaSinEntregaEnTransaccion(
+      db(),
+      PROFE,
+      {
+        tareaId: T_GRU,
+        titularId: EQ,
+        puntaje: 12,
+        evaluadaEn: antes.evaluacion?.evaluadaEn ?? 0,
+      },
+      AHORA + 400,
+    );
+    expect(r).toEqual({ ok: true });
+    const e = await entrega(id);
+    expect(e.integrantes).toEqual(antes.integrantes);
+    expect(e.evaluacion?.puntaje).toBe(12);
+    await docs.ponerUsuario(db(), alumno(A, 15));
+    await docs.ponerUsuario(db(), alumno(B, 18));
   });
 });

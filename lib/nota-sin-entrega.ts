@@ -13,6 +13,11 @@ export const zPonerNotaSinEntrega = z.object({
   titularId: zTitularId,
   /** Sobre 20, en pasos de 0,5 (D004); la nota sale con la base vigente de cada uno (D403). */
   puntaje: zPuntaje,
+  /**
+   * Corregir (D583): el `evaluadaEn` de la nota que veía el profe. Si otro la cambió, `cambio`.
+   * Ausente = poner una nota nueva.
+   */
+  evaluadaEn: z.number().int().nonnegative().optional(),
 });
 export type PonerNotaSinEntrega = z.infer<typeof zPonerNotaSinEntrega>;
 
@@ -28,6 +33,8 @@ export type ErrorNotaSinEntrega =
   | "sin-integrantes"
   /** Ya hay una entrega (la mandó mientras tanto): se corrige desde Evaluar. */
   | "ya-entregada"
+  /** Otro profe cambió (o puso) la nota mientras el diálogo estaba abierto. */
+  | "cambio"
   | "invalida"
   | "red";
 
@@ -44,7 +51,9 @@ export function errorNotaSinEntregaTexto(e: ErrorNotaSinEntrega): string {
     case "sin-integrantes":
       return "El equipo no tiene integrantes a quienes poner esta nota (o ya la tienen con su equipo anterior).";
     case "ya-entregada":
-      return "Ya hay una entrega. Recarga la página y usa «Evaluar» o «Corregir».";
+      return "Ya hay una entrega del alumno. Ya ves la de ahora: usa «Evaluar» o «Corregir».";
+    case "cambio":
+      return "Otro profe cambió esta nota mientras la editabas. Ya ves la de ahora: revísala y vuelve a intentarlo.";
     case "invalida":
       return "El puntaje va de 0 a 20, en pasos de 0,5.";
     case "red":
@@ -54,3 +63,7 @@ export function errorNotaSinEntregaTexto(e: ErrorNotaSinEntrega): string {
 
 /** Nombre accesible del botón de la fila: incluye a quién. */
 export const ponerNotaLabel = (nombre: string) => `Poner nota a ${nombre}`;
+
+/** Nombre accesible de «Corregir» sobre una nota puesta sin entrega (D583). */
+export const corregirNotaLabel = (nombre: string) =>
+  `Corregir la nota de ${nombre}`;

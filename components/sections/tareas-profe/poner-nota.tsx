@@ -20,6 +20,7 @@ import { joinIds } from "@/components/ui/field";
 import { toast } from "@/components/ui/sonner";
 import { NOTA_MAX } from "@/lib/grades";
 import {
+  corregirNotaLabel,
   errorNotaSinEntregaTexto,
   type PonerNotaSinEntrega,
   ponerNotaLabel,
@@ -35,7 +36,9 @@ export type AccionPonerNota = (
  * «Poner nota» (D581) en una fila «Sin entregar» de Notas de la tarea: un diálogo con el puntaje
  * sobre 20 (pasos de 0,5) para quien no entregó por la web, sin respuestas ni puntaje por pregunta.
  * Al guardar, el `refresh()` del servidor pone la fila en «Evaluada» (con «Corregir») y el botón
- * desaparece: el foco va al `<h1>`. Sin la acción (galería), guardar solo muestra el toast.
+ * desaparece: el foco va al `<h1>`. Con `corregir` (D583) es el «Corregir» de una nota ya puesta así:
+ * arranca con su puntaje y manda el `evaluadaEn` que se veía; si otro la cambió, se cierra con un
+ * aviso y la vista se refresca. Sin la acción (galería), guardar solo muestra el toast.
  * Copy PROVISIONAL (CONTENT_CHECKLIST fila 281).
  */
 export function PonerNota({
@@ -44,12 +47,15 @@ export function PonerNota({
   nombre,
   tipo,
   poner,
+  corregir,
 }: {
   tareaId: string;
   titularId: string;
   nombre: string;
   tipo: "individual" | "grupal";
   poner?: AccionPonerNota;
+  /** La nota puesta sin entrega que se corrige (D583); sin ella, «Poner nota». */
+  corregir?: { puntaje: number; evaluadaEn: number };
 }) {
   const uid = useId();
   const boton = useRef<HTMLButtonElement>(null);
@@ -60,7 +66,7 @@ export function PonerNota({
   const enviando = useRef(false);
 
   const abrir = () => {
-    setPuntaje(null);
+    setPuntaje(corregir?.puntaje ?? null);
     setError(null);
     setAbierto(true);
   };
@@ -80,7 +86,12 @@ export function PonerNota({
     setGuardando(true);
     setError(null);
     const r: ResultadoNotaSinEntrega = poner
-      ? await poner({ tareaId, titularId, puntaje }).catch(
+      ? await poner({
+          tareaId,
+          titularId,
+          puntaje,
+          ...(corregir ? { evaluadaEn: corregir.evaluadaEn } : {}),
+        }).catch(
           siNoEsDeploy<ResultadoNotaSinEntrega>({ ok: false, error: "red" }),
         )
       : { ok: true };
@@ -88,6 +99,12 @@ export function PonerNota({
     setGuardando(false);
     if (r.ok) {
       toast.success(`Nota guardada para ${nombre}`);
+      setAbierto(false);
+      return;
+    }
+    // La vista estaba vieja: el `refresh()` del servidor ya la trae, el diálogo se cierra
+    if (r.error === "cambio" || r.error === "ya-entregada") {
+      toast.error(errorNotaSinEntregaTexto(r.error));
       setAbierto(false);
       return;
     }
@@ -102,10 +119,12 @@ export function PonerNota({
         variant="secondary"
         size="sm"
         aria-haspopup="dialog"
-        aria-label={ponerNotaLabel(nombre)}
+        aria-label={
+          corregir ? corregirNotaLabel(nombre) : ponerNotaLabel(nombre)
+        }
         onClick={abrir}
       >
-        Poner nota
+        {corregir ? "Corregir" : "Poner nota"}
       </Button>
       <Dialog
         open={abierto}
@@ -126,7 +145,9 @@ export function PonerNota({
           }}
         >
           <DialogHeader>
-            <DialogTitle>Poner nota · {nombre}</DialogTitle>
+            <DialogTitle>
+              {corregir ? "Corregir nota" : "Poner nota"} · {nombre}
+            </DialogTitle>
             {/* PROVISIONAL (CONTENT_CHECKLIST fila 281) */}
             <DialogDescription>
               {tipo === "grupal"

@@ -74,6 +74,11 @@ export type FilaEntregaTarea = {
   evaluadaEn: number | null;
   /** «Marcar como entrega ideal»: solo evaluada con 20 / 20 (D431); `null` si no es elegible. */
   idealHref: string | null;
+  /**
+   * Nota puesta sin entrega (D581: evaluada y nunca enviada por el alumno): «Corregir» reabre el
+   * diálogo de «Poner nota» con el puntaje actual (D583), no Evaluar.
+   */
+  notaSinEntrega: boolean;
 };
 
 /** La tarea de las filas: sin `estado`, ninguna fila ofrece «Devolver» (D411). */
@@ -160,6 +165,7 @@ function filaDeEntrega(
     idealHref: esElegible(e, tarea.id)
       ? rutaIdealProfe(tarea.id, { entrega: e.id })
       : null,
+    notaSinEntrega: evaluada && e.enviadaEn === null,
   };
 }
 
@@ -214,6 +220,7 @@ export function filasEntregasTarea(datos: {
     enviadaEn: null,
     evaluadaEn: null,
     idealHref: null,
+    notaSinEntrega: false,
   });
 
   if (tarea.tipo === "grupal") {
