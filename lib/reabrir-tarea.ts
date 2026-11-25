@@ -3,6 +3,7 @@
 // del diálogo. Lo usan `lib/data/tareas.ts` (dentro de la transacción), la página del
 // constructor y las pruebas.
 import { z } from "zod";
+import { normalizar } from "@/lib/alumnos";
 import {
   estadoEfectivo,
   prorrogaDe,
@@ -22,6 +23,7 @@ import {
   type Prorrogas,
   type SeccionId,
   type TareaDoc,
+  type TipoTareaId,
   type Usuario,
   zDia,
   zHora,
@@ -370,3 +372,32 @@ export function toastReabrir(
   if (para === "todos") return "Tarea reabierta para todos";
   return quitaTodas ? "Prórrogas quitadas" : "Prórrogas guardadas";
 }
+
+/**
+ * Buscador de «Para algunos» (D582): los titulares cuyo nombre contiene la consulta, sin importar
+ * mayúsculas, tildes ni espacios de más. Vacía, todos. Filtrar no marca ni desmarca a nadie.
+ * Copy PROVISIONAL (CONTENT_CHECKLIST fila 282).
+ */
+export function filtrarTitulares<T extends Pick<TitularReabrir, "nombre">>(
+  titulares: readonly T[],
+  consulta: string,
+): T[] {
+  const q = normalizar(consulta);
+  if (!q) return [...titulares];
+  return titulares.filter((t) => normalizar(t.nombre).includes(q));
+}
+
+/** «Mostrando 3 de 28» mientras se busca; vacío sin consulta (frase estable para `aria-live`). */
+export function resultadosBusquedaTexto(
+  visibles: number,
+  total: number,
+  consulta: string,
+): string {
+  if (!normalizar(consulta)) return "";
+  return visibles === 0
+    ? `Nadie coincide con «${consulta.trim()}»`
+    : `Mostrando ${visibles} de ${total}`;
+}
+
+export const BUSCAR_TITULAR = (tipo: TipoTareaId) =>
+  tipo === "grupal" ? "Buscar equipo" : "Buscar alumno";

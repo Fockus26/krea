@@ -122,13 +122,16 @@ export type ResultadoIdeal =
 
 /** ¿Puede ser la ideal? Entrega de ESA tarea, evaluada y con puntaje 20 / 20 (D431). */
 export function esElegible(
-  e: Pick<Entrega, "tareaId" | "estado" | "evaluacion">,
+  e: Pick<Entrega, "tareaId" | "estado" | "evaluacion"> &
+    Partial<Pick<Entrega, "enviadaEn">>,
   tareaId: string,
 ): boolean {
   return (
     e.tareaId === tareaId &&
     e.estado === "evaluada" &&
-    e.evaluacion?.puntaje === NOTA_MAX
+    e.evaluacion?.puntaje === NOTA_MAX &&
+    // Una nota puesta sin entrega (D581) no tiene respuestas que mostrar como ideal
+    e.enviadaEn !== null
   );
 }
 

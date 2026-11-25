@@ -10,6 +10,10 @@ import {
   AccionesEntrega,
 } from "@/components/sections/evaluar/acciones-entrega";
 import { SelectorSeccion } from "@/components/sections/shared/selector-seccion";
+import {
+  type AccionPonerNota,
+  PonerNota,
+} from "@/components/sections/tareas-profe/poner-nota";
 import { Badge, type BadgeVariant } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -63,10 +67,11 @@ const SIN_DATO = <span aria-hidden="true">—</span>;
  * base y nota (`GradePill`; Pendiente si no hay, D003). «Ver» abre la entrega para leerla (`?ver`)
  * y «Evaluar»/«Corregir» sin `?ver` (D401). Cada fila con entrega suma «Más acciones»:
  * «Devolver al alumno» (evaluada y tarea abierta, D411) y «Eliminar entrega» (D413); con la tarea
- * cerrada, una línea bajo el conteo explica por qué no hay «Devolver». La sección elegida viaja en
- * la URL sin recargar.
+ * cerrada, una línea bajo el conteo explica por qué no hay «Devolver». Cada fila «Sin entregar»
+ * lleva «Poner nota» (D581). La sección elegida viaja en la URL sin recargar.
  */
 export function TaskSubmissions({
+  tareaId,
   titulo,
   filas,
   secciones,
@@ -74,7 +79,9 @@ export function TaskSubmissions({
   acciones,
   tareaCerrada = false,
   idealEntregaId = null,
+  ponerNota,
 }: {
+  tareaId: string;
   titulo: string;
   filas: readonly FilaEntregaTarea[];
   /** Secciones de la tarea con filas, ordenadas. */
@@ -86,6 +93,8 @@ export function TaskSubmissions({
   tareaCerrada?: boolean;
   /** Entrega que hoy es la ideal vigente de la tarea (D430): su fila lleva la etiqueta. */
   idealEntregaId?: string | null;
+  /** «Poner nota» a quien no entregó (Server Action); sin ella (galería), solo el toast. */
+  ponerNota?: AccionPonerNota;
 }) {
   const [seccion, setSeccion] = useState(seccionInicial);
   const visibles = filasDeSeccion(filas, seccion);
@@ -217,7 +226,20 @@ export function TaskSubmissions({
                           </Link>
                         </Button>
                       ) : null}
-                      {f.accion && f.accionHref ? (
+                      {f.notaSinEntrega ? (
+                        <PonerNota
+                          tareaId={tareaId}
+                          titularId={f.titularId}
+                          nombre={f.nombre}
+                          tipo={f.tipo}
+                          poner={ponerNota}
+                          corregir={
+                            f.puntaje !== null && f.evaluadaEn !== null
+                              ? { puntaje: f.puntaje, evaluadaEn: f.evaluadaEn }
+                              : undefined
+                          }
+                        />
+                      ) : f.accion && f.accionHref ? (
                         <Button asChild variant="secondary" size="sm">
                           <Link
                             href={f.accionHref}
@@ -226,6 +248,15 @@ export function TaskSubmissions({
                             {ACCION_TEXTO[f.accion]}
                           </Link>
                         </Button>
+                      ) : null}
+                      {f.estado === "sin-entregar" ? (
+                        <PonerNota
+                          tareaId={tareaId}
+                          titularId={f.titularId}
+                          nombre={f.nombre}
+                          tipo={f.tipo}
+                          poner={ponerNota}
+                        />
                       ) : null}
                       {f.entregaId ? (
                         <AccionesEntrega

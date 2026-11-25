@@ -11,6 +11,7 @@ import {
   eliminarEntrega,
 } from "@/lib/acciones/devolver-entrega";
 import { quitarIdealTarea } from "@/lib/acciones/ideales";
+import { ponerNotaSinEntrega } from "@/lib/acciones/nota-sin-entrega";
 import { reabrirTarea } from "@/lib/acciones/tareas";
 import { verificarSesion } from "@/lib/dal";
 import { idealProfe } from "@/lib/datos/ideal";
@@ -50,7 +51,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 // Notas de una tarea (D398–D401): una fila por alumno o equipo con su estado, puntaje, base y nota,
-// y el camino a corregir la evaluación; «Devolver al alumno» y «Eliminar entrega» en el menú de
+// y el camino a corregir la evaluación (o «Poner nota» a quien no entregó, D581); «Devolver al alumno» y «Eliminar entrega» en el menú de
 // cada fila (D411–D415). Arriba, el estado de la entrega ideal (D430–D435): las filas con 20 / 20
 // suman «Marcar como entrega ideal» al menú. La sección viaja en `?seccion=`. Un borrador no tiene entregas: vuelve
 // al constructor.
@@ -124,11 +125,13 @@ export default async function EntregasTareaPage({
         quitar={quitarIdealTarea}
       />
       <TaskSubmissions
+        tareaId={id}
         titulo={t.titulo}
         filas={filas}
         secciones={secciones}
         seccionInicial={seccionElegida(pedida, secciones)}
         acciones={ACCIONES}
+        ponerNota={ponerNotaSinEntrega}
         tareaCerrada={cerrada}
         idealEntregaId={
           estadoIdeal.tipo === "vigente" ? estadoIdeal.entregaId : null

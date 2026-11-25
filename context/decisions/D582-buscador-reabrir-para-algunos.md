@@ -1,0 +1,5 @@
+# D582 · Components · Buscador en «Reabrir tarea › Para algunos»: filtra la lista por nombre, no cambia los marcados · Implemented
+
+**Decision:** pedido de César (2026-11-24). Sobre las casillas de «Para algunos» (D455), un `Input type="search"` («Buscar alumno» / «Buscar equipo», etiqueta `sr-only`, lupa y «Borrar la búsqueda» como en Alumnos). `filtrarTitulares` (`lib/reabrir-tarea.ts`, puro) compara con `normalizar` (sin tildes, mayúsculas ni espacios de más); las secciones sin coincidencias no se pintan. Un `output aria-live` dice «Mostrando N de M» o «Nadie coincide con «x»» (vacío sin consulta). Filtrar solo oculta filas: los marcados ocultos siguen marcados, cuentan en «n marcados» y se envían. Enter en el buscador no confirma; Escape con texto solo lo vacía (`onEscapeKeyDown`), no cierra el diálogo. La búsqueda se vacía al abrir el diálogo. Copy PROVISIONAL.
+**Why:** con una sección entera en la lista, encontrar a dos o tres alumnos era recorrerla a ojo.
+**Discarded alternative:** que el buscador desmarque lo oculto — se perderían prórrogas sin verlo; «Marcar los visibles» — no se pidió.
