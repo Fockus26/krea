@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleAlert, LockOpen } from "lucide-react";
+import { CircleAlert, LockOpen, Search, X } from "lucide-react";
 import * as React from "react";
 import { BotonEnLinea } from "@/components/krea/boton-en-linea";
 import { DatePicker } from "@/components/krea/date-picker";
@@ -18,14 +18,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/sonner";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { comparaFecha, formatFechaHora } from "@/lib/fecha";
 import type { TipoTareaId } from "@/lib/modelo";
 import {
+  BUSCAR_TITULAR,
   botonConfirmarReabrir,
   type ReabrirTarea as EnvioReabrir,
   type ErroresReabrir,
+  filtrarTitulares,
   marcadosTexto,
   PRORROGA_HASTA,
   REABRIR_BOTON,
@@ -36,6 +39,7 @@ import {
   REABRIR_TITULO,
   reabrirAyuda,
   reabrirListaTitulo,
+  resultadosBusquedaTexto,
   type TitularReabrir,
   toastReabrir,
   validarReabrir,
@@ -109,15 +113,26 @@ export function ReabrirTarea({
   const [campos, setCampos] = React.useState(inicial);
   const [errores, setErrores] = React.useState<ErroresReabrir>({});
   const [pendiente, startTransition] = React.useTransition();
+  // Buscador de «Para algunos» (D582): solo oculta filas; los marcados siguen marcados
+  const [consulta, setConsulta] = React.useState("");
+  const buscador = React.useRef<HTMLInputElement>(null);
 
   const { para, marcados } = campos;
   const quitaTodas = para === "algunos" && marcados.size === 0;
   const secciones = [...new Set(titulares.map((t) => t.seccion))];
+  const visibles = filtrarTitulares(titulares, consulta);
+  const hayConsulta = consulta.length > 0;
+  const resultados = resultadosBusquedaTexto(
+    visibles.length,
+    titulares.length,
+    consulta,
+  );
   const errorListaId = `${id}-lista-error`;
 
   const abrir = () => {
     setCampos(inicial());
     setErrores({});
+    setConsulta("");
     setAbierto(true);
   };
 
@@ -134,7 +149,8 @@ export function ReabrirTarea({
       const raiz = contenido.current;
       const campo =
         raiz?.querySelector<HTMLElement>('[aria-invalid="true"]') ??
-        raiz?.querySelector<HTMLElement>('[role="checkbox"]');
+        raiz?.querySelector<HTMLElement>('[role="checkbox"]') ??
+        buscador.current;
       campo?.focus();
     });
 
@@ -325,8 +341,56 @@ export function ReabrirTarea({
                     {errores.titulares}
                   </p>
                 ) : null}
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor={`${id}-buscar`} className="sr-only">
+                    {BUSCAR_TITULAR(tipo)}
+                  </label>
+                  <Input
+                    ref={buscador}
+                    id={`${id}-buscar`}
+                    type="search"
+                    autoComplete="off"
+                    placeholder={BUSCAR_TITULAR(tipo)}
+                    leading={<Search aria-hidden="true" />}
+                    value={consulta}
+                    onChange={(e) => setConsulta(e.currentTarget.value)}
+                    // Enter en el buscador no confirma el diálogo
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") e.preventDefault();
+                    }}
+                    // La X nativa de `type="search"` cede a la propia (como en Alumnos)
+                    inputClassName="[&::-webkit-search-cancel-button]:appearance-none"
+                    trailing={
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        icon
+                        aria-label="Borrar la búsqueda"
+                        inert={!hayConsulta}
+                        data-visible={hayConsulta || undefined}
+                        className="-mr-2 scale-75 opacity-0 transition-[opacity,scale] duration-fast ease-krea data-visible:scale-100 data-visible:opacity-100"
+                        onClick={() => {
+                          setConsulta("");
+                          buscador.current?.focus();
+                        }}
+                      >
+                        <X aria-hidden="true" />
+                      </Button>
+                    }
+                  />
+                  <output
+                    aria-live="polite"
+                    aria-atomic="true"
+                    className="nums text-small text-text-2 empty:hidden"
+                  >
+                    {resultados}
+                  </output>
+                </div>
                 {secciones.map((s) => {
                   const tituloId = `${id}-seccion-${s}`;
+                  const deSeccion = visibles.filter((t) => t.seccion === s);
+                  if (deSeccion.length === 0) return null;
                   return (
                     // biome-ignore lint/a11y/useSemanticElements: un fieldset anidado repetiría la leyenda de la lista en cada casilla
                     <div
@@ -339,45 +403,43 @@ export function ReabrirTarea({
                         Sección {s}
                       </p>
                       <ul className="m-0 flex list-none flex-col p-0">
-                        {titulares
-                          .filter((t) => t.seccion === s)
-                          .map((t) => {
-                            const casilla = `${id}-t-${t.id}`;
-                            const texto = detalle(t);
-                            return (
-                              <li
-                                key={t.id}
-                                className="flex min-h-11 items-center gap-3 py-1"
-                              >
-                                <Checkbox
-                                  id={casilla}
-                                  checked={marcados.has(t.id)}
-                                  aria-describedby={
-                                    texto ? `${casilla}-detalle` : undefined
-                                  }
-                                  onCheckedChange={(c) =>
-                                    marcar(t.id, c === true)
-                                  }
-                                />
-                                <div className="flex min-w-0 flex-col">
-                                  <label
-                                    htmlFor={casilla}
-                                    className="cursor-pointer break-words text-body text-text"
+                        {deSeccion.map((t) => {
+                          const casilla = `${id}-t-${t.id}`;
+                          const texto = detalle(t);
+                          return (
+                            <li
+                              key={t.id}
+                              className="flex min-h-11 items-center gap-3 py-1"
+                            >
+                              <Checkbox
+                                id={casilla}
+                                checked={marcados.has(t.id)}
+                                aria-describedby={
+                                  texto ? `${casilla}-detalle` : undefined
+                                }
+                                onCheckedChange={(c) =>
+                                  marcar(t.id, c === true)
+                                }
+                              />
+                              <div className="flex min-w-0 flex-col">
+                                <label
+                                  htmlFor={casilla}
+                                  className="cursor-pointer break-words text-body text-text"
+                                >
+                                  {t.nombre}
+                                </label>
+                                {texto ? (
+                                  <span
+                                    id={`${casilla}-detalle`}
+                                    className="nums text-small text-text-2"
                                   >
-                                    {t.nombre}
-                                  </label>
-                                  {texto ? (
-                                    <span
-                                      id={`${casilla}-detalle`}
-                                      className="nums text-small text-text-2"
-                                    >
-                                      {texto}
-                                    </span>
-                                  ) : null}
-                                </div>
-                              </li>
-                            );
-                          })}
+                                    {texto}
+                                  </span>
+                                ) : null}
+                              </div>
+                            </li>
+                          );
+                        })}
                       </ul>
                     </div>
                   );
