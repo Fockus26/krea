@@ -6,7 +6,7 @@
 
 [Live site](https://krea.fockus.dev) · In production · ![CI](https://github.com/Fockus26/krea/actions/workflows/ci.yml/badge.svg)
 
-<!-- Poster of the trailer (demo data): the teacher's view of a section's ranking, with the podium. It goes here once docs/showcase/media/poster.jpg is in the repo. -->
+![A teacher's view of a section's live ranking, with the podium (demo data)](docs/showcase/media/poster.jpg)
 
 ## What it does
 
