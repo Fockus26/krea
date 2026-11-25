@@ -73,3 +73,6 @@ storage-debug.log
 
 # datos reales de alumnos (import-excel.py): nunca en git; data/seed/ es su copia anonimizada (D490)
 data/privado/
+
+# project-showcase: cuadros de la toma del tráiler (se regeneran)
+docs/showcase/take/
