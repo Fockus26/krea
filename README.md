@@ -6,7 +6,7 @@
 
 [Live site](https://krea.fockus.dev) · In production · ![CI](https://github.com/Fockus26/krea/actions/workflows/ci.yml/badge.svg)
 
-<!-- Poster of the trailer (demo data): the teacher's grading screen. Pending: docs/showcase/media/poster.jpg -->
+<!-- Poster of the trailer (demo data): the teacher's view of a section's ranking, with the podium. It goes here once docs/showcase/media/poster.jpg is in the repo. -->
 
 ## What it does
 
@@ -73,7 +73,7 @@ Requirements: [Bun](https://bun.sh), Node 23.6 or later, and Docker.
 bun install
 ```
 
-Create `.env.test.local` with the two demo accounts. The "email" is an ID number from the anonymous seed (`.env.example` lists one of each role); the passwords are any value you choose, for local use only:
+Create `.env.test.local` with the two demo accounts. The "email" is an ID number from the anonymous seed (`.env.example` lists one of each role). Every seed account shares one password: the value of `SEED_PASSWORD`, or the default written at the top of `scripts/seed-db.ts`; use it here too:
 
 ```bash
 ESTUDIANTE_EMAIL_TEST=
