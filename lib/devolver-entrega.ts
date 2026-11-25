@@ -38,6 +38,8 @@ export type ErrorDevolverEntrega =
   | "no-evaluada"
   /** La tarea ya no está abierta (D411). */
   | "tarea-cerrada"
+  /** Nota puesta sin entrega (D581): no hay respuestas que devolver; se elimina. */
+  | "sin-envio"
   | "red";
 
 export type ResultadoDevolver =
@@ -59,6 +61,8 @@ export function errorDevolverTexto(e: ErrorDevolverEntrega): string {
       return "Esta entrega ya no tiene nota, así que no hay nada que devolver. Recarga la página.";
     case "tarea-cerrada":
       return "La tarea ya está cerrada: solo se puede devolver una entrega mientras la tarea siga abierta.";
+    case "sin-envio":
+      return "Esta nota se puso sin entrega: no hay respuestas que devolver. Usa «Eliminar entrega» para quitarla.";
     case "red":
       return "No se pudo completar. Revisa tu conexión e inténtalo de nuevo.";
     default:
@@ -74,7 +78,11 @@ export function errorDevolverTexto(e: ErrorDevolverEntrega): string {
  * que aún no lo pasan), el estado guardado, y el servidor vuelve a comprobarlo.
  */
 export function puedeDevolver(
-  entrega: Pick<Entrega, "estado"> & { titularId?: string },
+  entrega: Pick<Entrega, "estado"> & {
+    titularId?: string;
+    /** `null` = nota puesta sin entrega (D581): no se devuelve, se elimina. */
+    enviadaEn?: number | null;
+  },
   /** Sin la tarea o sin su estado, no se ofrece. */
   tarea:
     | ({ estado?: TareaDoc["estado"] } & Partial<
@@ -85,6 +93,7 @@ export function puedeDevolver(
   ahora?: number,
 ): boolean {
   if (entrega.estado !== "evaluada" || !tarea?.estado) return false;
+  if (entrega.enviadaEn === null) return false;
   return (
     estadoEn(
       {
@@ -104,7 +113,8 @@ export function puedeDevolver(
  * sin nota → `no-evaluada`; otra nota → `cambio`; tarea cerrada → `tarea-cerrada`.
  */
 export function comprobarDevolver(
-  entrega: Pick<Entrega, "estado" | "evaluacion" | "titularId">,
+  entrega: Pick<Entrega, "estado" | "evaluacion" | "titularId"> &
+    Partial<Pick<Entrega, "enviadaEn">>,
   tarea: TareaConVencimiento,
   evaluadaEn: number,
   /** Instante de la petición: vencida sin prórroga del titular = cerrada (D451). */
@@ -113,6 +123,7 @@ export function comprobarDevolver(
   if (entrega.estado !== "evaluada" || !entrega.evaluacion)
     return "no-evaluada";
   if (entrega.evaluacion.evaluadaEn !== evaluadaEn) return "cambio";
+  if (entrega.enviadaEn === null) return "sin-envio";
   if (estadoEn(tarea, ahora, entrega.titularId) !== "abierta")
     return "tarea-cerrada";
   return null;

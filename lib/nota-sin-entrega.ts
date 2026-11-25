@@ -21,7 +21,10 @@ export type ErrorNotaSinEntrega =
   | "sin-tarea"
   /** El alumno o el equipo ya no existe (o no es de las secciones de la tarea). */
   | "no-existe"
-  /** El equipo no tiene integrantes: no hay a quién ponerle la nota. */
+  /**
+   * El equipo no tiene integrantes a quienes ponerle la nota (vacío, o todos ya la tienen en otra
+   * entrega de la tarea con su equipo anterior, D221).
+   */
   | "sin-integrantes"
   /** Ya hay una entrega (la mandó mientras tanto): se corrige desde Evaluar. */
   | "ya-entregada"
@@ -39,7 +42,7 @@ export function errorNotaSinEntregaTexto(e: ErrorNotaSinEntrega): string {
     case "no-existe":
       return "Este alumno o equipo ya no existe en las secciones de la tarea.";
     case "sin-integrantes":
-      return "El equipo no tiene integrantes: agrega alguno antes de ponerle nota.";
+      return "El equipo no tiene integrantes a quienes poner esta nota (o ya la tienen con su equipo anterior).";
     case "ya-entregada":
       return "Ya hay una entrega. Recarga la página y usa «Evaluar» o «Corregir».";
     case "invalida":

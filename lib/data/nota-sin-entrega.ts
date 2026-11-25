@@ -6,11 +6,16 @@
 // bloquea el envío del alumno, así un envío y esta nota no se cruzan) y luego la sección
 // (`leerSeccion`). Cambia puntos: la entrega y el ranking se escriben en la MISMA transacción (D175).
 import { and, eq } from "drizzle-orm";
-import { entregaDeFila, filaDeEntrega, tareaDeFila } from "@/lib/data/filas";
+import {
+  entregaDeFila,
+  filaDeEntrega,
+  tareaDeFila,
+  validas,
+} from "@/lib/data/filas";
 import { conEntrega, escribirRanking, leerSeccion } from "@/lib/data/ranking";
 import type { Db } from "@/lib/db";
 import { entregas, equipos, tareas, usuarios } from "@/lib/db/schema";
-import { yaEnviada } from "@/lib/entregas";
+import { enOtraEntrega, yaEnviada } from "@/lib/entregas";
 import {
   type Entrega,
   idEntrega,
@@ -59,7 +64,23 @@ export async function ponerNotaSinEntregaEnTransaccion(
         .where(
           and(eq(usuarios.equipoId, titularId), eq(usuarios.rol, "estudiante")),
         );
-      integrantes = miembros.map((m) => m.cedula).sort();
+      // Quien ya figura en otra entrega enviada de la tarea (entregó con su equipo viejo y lo
+      // movieron) conserva esa nota y no entra en esta: si no, contaría dos veces (D221, F-A2)
+      const otras = await tx
+        .select()
+        .from(entregas)
+        .where(eq(entregas.tareaId, tareaId));
+      const excluidos = enOtraEntrega(
+        validas(otras.map(entregaDeFila)).map(({ id, ...entrega }) => ({
+          id,
+          entrega,
+        })),
+        idEntrega(tareaId, titularId),
+      );
+      integrantes = miembros
+        .map((m) => m.cedula)
+        .filter((c) => !excluidos.has(c))
+        .sort();
     } else {
       const [u] = await tx
         .select({ rol: usuarios.rol, seccion: usuarios.seccion })

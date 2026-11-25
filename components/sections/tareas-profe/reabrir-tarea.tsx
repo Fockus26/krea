@@ -232,6 +232,13 @@ export function ReabrirTarea({
       >
         <DialogContent
           ref={contenido}
+          // Escape con texto en el buscador solo lo vacía: cerrar perdería los marcados
+          onEscapeKeyDown={(e) => {
+            if (consulta && document.activeElement === buscador.current) {
+              e.preventDefault();
+              setConsulta("");
+            }
+          }}
           onCloseAutoFocus={(e) => {
             e.preventDefault();
             // Reabierta para todos, el botón ya no está: el foco va al título de la página

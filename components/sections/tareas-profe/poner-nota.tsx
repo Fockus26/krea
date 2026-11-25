@@ -148,11 +148,20 @@ export function PonerNota({
                 Puntaje
               </span>
               <p id={`${uid}-ayuda`} className="text-small text-text-2">
-                Sobre 20, sin puntaje por pregunta. Si después{" "}
-                {tipo === "grupal" ? "el capitán sube" : "sube"} las respuestas
-                mientras la tarea siga abierta, la nota se queda.
+                Sobre 20, sin puntaje por pregunta. La nota se queda aunque{" "}
+                {tipo === "grupal" ? "el capitán suba" : "suba"} las respuestas
+                después (solo si la tarea está abierta para{" "}
+                {tipo === "grupal" ? "el equipo" : "él"}).
               </p>
-              <div id={`${uid}-puntaje`}>
+              {/* Enter en el campo no guarda: el stepper ajusta el valor al rango (175 → 20) y
+                  el profe tiene que verlo antes de pulsar «Guardar nota» */}
+              {/* biome-ignore lint/a11y/noStaticElementInteractions: solo intercepta el Enter del campo de adentro */}
+              <div
+                id={`${uid}-puntaje`}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.preventDefault();
+                }}
+              >
                 <NumberStepper
                   value={puntaje}
                   onChange={(n) => {

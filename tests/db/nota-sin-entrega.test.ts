@@ -4,7 +4,9 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 import { ponerNotaSinEntregaEnTransaccion } from "@/lib/data/nota-sin-entrega";
 import type { Db } from "@/lib/db";
+import { comprobarDevolver, puedeDevolver } from "@/lib/devolver-entrega";
 import { modoEnvio } from "@/lib/entregas";
+import { esElegible } from "@/lib/ideal";
 import {
   type Entrega,
   type Equipo,
@@ -179,5 +181,52 @@ describe("poner nota sin entrega (Postgres)", () => {
       error: "sin-integrantes",
     });
     expect(await docs.entrega(db(), idEntrega(T_GRU, EQ_VACIO))).toBeNull();
+  });
+});
+
+describe("nota sin entrega y las demás acciones", () => {
+  test("grupal: quien ya está en otra entrega de la tarea no entra (D221)", async () => {
+    const T = "n1-gru-mov";
+    const EQ_NUEVO = "n1-g3";
+    await docs.ponerTarea(db(), T, tarea("grupal"));
+    await docs.ponerEquipo(db(), EQ_NUEVO, equipo("5C-G3 Nuevo N1"));
+    // A entregó con EQ y luego lo movieron a EQ_NUEVO
+    await docs.ponerEntrega(db(), idEntrega(T, EQ), {
+      tareaId: T,
+      tipo: "grupal",
+      titularId: EQ,
+      seccion: "5C",
+      integrantes: [A, B],
+      estado: "entregada",
+      respuestas: { p1: { texto: "Respuesta" } },
+      enviadaPor: A,
+      enviadaEn: AHORA - 1000,
+      evaluacion: null,
+    });
+    const C = "39581004";
+    await docs.ponerUsuario(db(), alumno(A, 15, { equipoId: EQ_NUEVO }));
+    await docs.ponerUsuario(db(), alumno(C, 12, { equipoId: EQ_NUEVO }));
+    expect(await poner(T, EQ_NUEVO, 14)).toEqual({ ok: true });
+    const e = await entrega(idEntrega(T, EQ_NUEVO));
+    expect(e.integrantes).toEqual([C]);
+    expect(e.evaluacion?.bases).toEqual({ [C]: 12 });
+    // Todos ya tienen nota con otro equipo: no hay a quién
+    await docs.ponerUsuario(db(), alumno(B, 18, { equipoId: EQ_VACIO }));
+    expect(await poner(T, EQ_VACIO, 14)).toEqual({
+      ok: false,
+      error: "sin-integrantes",
+    });
+    await docs.ponerUsuario(db(), alumno(A, 15));
+    await docs.ponerUsuario(db(), alumno(B, 18));
+  });
+
+  test("no se devuelve ni se marca como ideal (no tiene respuestas)", async () => {
+    const e = await entrega(idEntrega(T_GRU, EQ));
+    const t = tarea("grupal");
+    expect(puedeDevolver(e, t, AHORA)).toBe(false);
+    expect(comprobarDevolver(e, t, e.evaluacion?.evaluadaEn ?? 0, AHORA)).toBe(
+      "sin-envio",
+    );
+    expect(esElegible(e, T_GRU)).toBe(false);
   });
 });
